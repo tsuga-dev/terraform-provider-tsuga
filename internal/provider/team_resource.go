@@ -9,12 +9,14 @@ import (
 
 	"terraform-provider-tsuga/internal/resource_team"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 var _ resource.Resource = (*teamResource)(nil)
 var _ resource.ResourceWithConfigure = (*teamResource)(nil)
+var _ resource.ResourceWithImportState = (*dashboardResource)(nil)
 
 func NewTeamResource() resource.Resource {
 	return &teamResource{}
@@ -47,6 +49,10 @@ func (r *teamResource) Metadata(ctx context.Context, req resource.MetadataReques
 
 func (r *teamResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = resource_team.TeamResourceSchema(ctx)
+}
+
+func (r *teamResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
 func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
