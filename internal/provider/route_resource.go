@@ -164,7 +164,7 @@ func (r *routeResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read route: %s", err))
 		return
 	}
-	defer httpResp.Body.Close()
+	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode == http.StatusNotFound {
 		resp.State.RemoveResource(ctx)
@@ -259,7 +259,7 @@ func (r *routeResource) createOrUpdateRoute(ctx context.Context, method, path st
 		diags.AddError("Client Error", fmt.Sprintf("Unable to %s route: %s", operation, err))
 		return resource_route.RouteModel{}, diags
 	}
-	defer httpResp.Body.Close()
+	defer func() { _ = httpResp.Body.Close() }()
 
 	if err := r.client.checkResponse(httpResp); err != nil {
 		diags.AddError("API Error", fmt.Sprintf("Unable to %s route: %s", operation, err))
@@ -300,7 +300,7 @@ func (r *routeResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete route: %s", err))
 		return
 	}
-	defer httpResp.Body.Close()
+	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode != http.StatusNotFound {
 		if err := r.client.checkResponse(httpResp); err != nil {
