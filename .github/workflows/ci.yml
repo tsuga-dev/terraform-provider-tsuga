@@ -1,0 +1,145 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+concurrency:
+  # In PRs, a new push cancels the current workflow run
+  group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  codegen-check:
+    name: Check Codegen
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # pin@v4
+        with:
+          node-version: "22.16.0"
+
+      - name: Set up Go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # pin@v6.1
+        with:
+          go-version: "1.24.5"
+
+      - name: Install tfplugingen-openapi
+        run: |
+          go install github.com/hashicorp/terraform-plugin-codegen-openapi/cmd/tfplugingen-openapi@v0.3.0
+
+      - name: Install tfplugingen-framework
+        run: |
+          go install github.com/hashicorp/terraform-plugin-codegen-framework/cmd/tfplugingen-framework@v0.4.1
+
+      - name: Run codegen script
+        run: sh codegen.sh
+
+      - name: Check for uncommitted changes
+        run: |
+          git diff --exit-code || (echo "ERROR: Code generation produced changes. Please run 'sh codegen.sh' and commit the results." && exit 1)
+
+  docgen-check:
+    name: Check Docgen
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # pin@v6.1
+        with:
+          go-version: "1.24.5"
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: latest
+          terraform_wrapper: false
+
+      - name: Run docgen script
+        run: sh docgen.sh
+
+      - name: Check for uncommitted changes
+        run: |
+          git diff --exit-code || (echo "ERROR: Doc generation produced changes. Please run 'sh docgen.sh' and commit the results." && exit 1)
+
+  terraform-test:
+    name: Terraform Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # pin@v6.1
+        with:
+          go-version: "1.24.5"
+
+      - name: Build provider
+        run: go build -o terraform-provider-tsuga
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # pin@v3
+        with:
+          terraform_version: latest
+          terraform_wrapper: false
+
+      - name: Setup provider for local testing
+        run: |
+          mkdir -p ~/.terraform.d/plugins/hashicorp.com/edu/tsuga/0.1.0/linux_amd64
+          cp terraform-provider-tsuga ~/.terraform.d/plugins/hashicorp.com/edu/tsuga/0.1.0/linux_amd64/
+
+      - name: Remove existing terraform state
+        run: rm -f terraform.tfstate terraform.tfstate.backup
+
+      - name: Terraform init
+        run: terraform init
+
+      - name: Terraform format check
+        run: terraform fmt -check
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform acceptance tests
+        env:
+          TSUGA_BASE_URL: "https://api.tsuga-staging.com"
+          TSUGA_TOKEN: ${{ secrets.TSUGA_TOKEN }}
+          TF_ACC: 1
+        run: |
+          go test -v ./...
+
+  go-test:
+    name: Go Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # pin@v6.1
+        with:
+          go-version: "1.24.5"
+
+      - name: Go Lint
+        uses: golangci/golangci-lint-action@e7fa5ac41e1cf5b7d48e45e42232ce7ada589601 # pin@v9
+        with:
+          version: v2.6
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Go format
+        run: go fmt ./...
+
+      - name: Go test
+        run: go test -v ./...
+
+      - name: Go vet
+        run: go vet ./...

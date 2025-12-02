@@ -1,0 +1,17 @@
+provider:
+  name: tsuga
+
+resources:
+  team:
+    create:
+      path: /v1/teams
+      method: POST
+    read:
+      path: /v1/teams/{id}
+      method: GET
+    update:
+      path: /v1/teams/{id}
+      method: PUT
+    delete:
+      path: /v1/teams/{id}
+      method: DELETE

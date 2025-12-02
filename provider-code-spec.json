@@ -1,0 +1,137 @@
+{
+	"provider": {
+		"name": "tsuga"
+	},
+	"resources": [
+		{
+			"name": "team",
+			"schema": {
+				"attributes": [
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthAtMost(250)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Name to assign to the team",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthBetween(1, 100)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "tags",
+						"list_nested": {
+							"computed_optional_required": "computed_optional",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "key",
+										"string": {
+											"computed_optional_required": "required",
+											"validators": [
+												{
+													"custom": {
+														"imports": [
+															{
+																"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+															}
+														],
+														"schema_definition": "stringvalidator.LengthAtMost(128)"
+													}
+												}
+											]
+										}
+									},
+									{
+										"name": "value",
+										"string": {
+											"computed_optional_required": "required",
+											"validators": [
+												{
+													"custom": {
+														"imports": [
+															{
+																"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+															}
+														],
+														"schema_definition": "stringvalidator.LengthAtMost(256)"
+													}
+												}
+											]
+										}
+									}
+								]
+							},
+							"description": "List of key/value tags applied to the resource",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+											}
+										],
+										"schema_definition": "listvalidator.SizeAtMost(50)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "visibility",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Controls whether the resources of the team are discoverable by users",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"public\",\n\"private\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Identifier of the team"
+						}
+					}
+				]
+			}
+		}
+	],
+	"version": "0.1"
+}
