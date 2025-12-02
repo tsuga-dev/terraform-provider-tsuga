@@ -79,7 +79,7 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create team: %s", err))
 		return
 	}
-	defer httpResp.Body.Close()
+	defer func() { _ = httpResp.Body.Close() }()
 
 	if err := r.client.checkResponse(httpResp); err != nil {
 		resp.Diagnostics.AddError("API Error", fmt.Sprintf("Unable to create team: %s", err))
@@ -134,7 +134,7 @@ func (r *teamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read team: %s", err))
 		return
 	}
-	defer httpResp.Body.Close()
+	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode == http.StatusNotFound {
 		resp.State.RemoveResource(ctx)
@@ -212,7 +212,7 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update team: %s", err))
 		return
 	}
-	defer httpResp.Body.Close()
+	defer func() { _ = httpResp.Body.Close() }()
 
 	if err := r.client.checkResponse(httpResp); err != nil {
 		resp.Diagnostics.AddError("API Error", fmt.Sprintf("Unable to update team: %s", err))
@@ -266,7 +266,7 @@ func (r *teamResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete team: %s", err))
 		return
 	}
-	defer httpResp.Body.Close()
+	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode != http.StatusNotFound {
 		if err := r.client.checkResponse(httpResp); err != nil {

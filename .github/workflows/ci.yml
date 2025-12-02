@@ -27,7 +27,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # pin@v6.1
         with:
-          go-version: "1.24.5"
+          go-version: "1.25.3"
 
       - name: Install tfplugingen-openapi
         run: |
@@ -54,7 +54,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # pin@v6.1
         with:
-          go-version: "1.24.5"
+          go-version: "1.25.3"
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
@@ -79,7 +79,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # pin@v6.1
         with:
-          go-version: "1.24.5"
+          go-version: "1.25.3"
 
       - name: Build provider
         run: go build -o terraform-provider-tsuga
@@ -125,7 +125,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # pin@v6.1
         with:
-          go-version: "1.24.5"
+          go-version: "1.25.3"
 
       - name: Go Lint
         uses: golangci/golangci-lint-action@e7fa5ac41e1cf5b7d48e45e42232ce7ada589601 # pin@v9

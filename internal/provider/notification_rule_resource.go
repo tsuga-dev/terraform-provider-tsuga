@@ -153,7 +153,7 @@ func (r *notificationRuleResource) Read(ctx context.Context, req resource.ReadRe
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read notification rule: %s", err))
 		return
 	}
-	defer httpResp.Body.Close()
+	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode == http.StatusNotFound {
 		resp.State.RemoveResource(ctx)
@@ -255,7 +255,7 @@ func (r *notificationRuleResource) createOrUpdateNotificationRule(ctx context.Co
 		diags.AddError("Client Error", fmt.Sprintf("Unable to %s notification rule: %s", operation, err))
 		return resource_notification_rule.NotificationRuleModel{}, diags
 	}
-	defer httpResp.Body.Close()
+	defer func() { _ = httpResp.Body.Close() }()
 
 	if err := r.client.checkResponse(httpResp); err != nil {
 		diags.AddError("API Error", fmt.Sprintf("Unable to %s notification rule: %s", operation, err))
@@ -296,7 +296,7 @@ func (r *notificationRuleResource) Delete(ctx context.Context, req resource.Dele
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete notification rule: %s", err))
 		return
 	}
-	defer httpResp.Body.Close()
+	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode != http.StatusNotFound {
 		if err := r.client.checkResponse(httpResp); err != nil {
