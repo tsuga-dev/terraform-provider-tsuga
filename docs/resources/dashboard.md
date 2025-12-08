@@ -3,12 +3,12 @@
 page_title: "tsuga_dashboard Resource - tsuga"
 subcategory: ""
 description: |-
-  
+  Visualization of telemetry data with customizable graphs and filters
 ---
 
 # tsuga_dashboard (Resource)
 
-
+Visualization of telemetry data with customizable graphs and filters
 
 ## Example Usage
 

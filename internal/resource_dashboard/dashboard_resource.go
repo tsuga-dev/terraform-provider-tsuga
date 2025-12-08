@@ -16,6 +16,7 @@ import (
 
 func DashboardResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
+		Description: "Visualization of telemetry data with customizable graphs and filters",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,

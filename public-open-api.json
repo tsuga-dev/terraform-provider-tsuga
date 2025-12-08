@@ -36,6 +36,7 @@
             "description": "Ordered widgets that compose the dashboard",
             "type": "array",
             "items": {
+              "title": "Graph",
               "type": "object",
               "properties": {
                 "id": {
@@ -125,10 +126,12 @@
             }
           },
           "tags": {
+            "title": "Tags",
             "maxItems": 50,
             "description": "List of key/value tags applied to the resource",
             "type": "array",
             "items": {
+              "title": "Tag",
               "type": "object",
               "properties": {
                 "key": {
@@ -145,6 +148,33 @@
                 "value"
               ]
             }
+          },
+          "timePreset": {
+            "type": "string",
+            "enum": [
+              "past-15-minutes",
+              "past-30-minutes",
+              "past-1-hour",
+              "past-2-hours",
+              "past-4-hours",
+              "past-6-hours",
+              "past-12-hours",
+              "past-24-hours",
+              "past-2-days",
+              "past-3-days",
+              "past-7-days",
+              "past-30-days",
+              "past-3-months",
+              "current-day",
+              "current-week",
+              "current-month",
+              "current-year",
+              "previous-day",
+              "previous-week",
+              "previous-month",
+              "previous-3-months",
+              "previous-year"
+            ]
           }
         },
         "required": [
@@ -195,6 +225,108 @@
           "statusCode"
         ]
       },
+      "Monitor": {
+        "title": "Monitor",
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Identifier of the monitor",
+            "type": "string"
+          },
+          "name": {
+            "description": "Display name of the monitor",
+            "type": "string"
+          },
+          "message": {
+            "description": "Message to be displayed if a notification is triggered",
+            "type": "string"
+          },
+          "tags": {
+            "title": "Tags",
+            "maxItems": 50,
+            "description": "List of key/value tags applied to the resource",
+            "type": "array",
+            "items": {
+              "title": "Tag",
+              "type": "object",
+              "properties": {
+                "key": {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                "value": {
+                  "maxLength": 256,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key",
+                "value"
+              ]
+            }
+          },
+          "configuration": {
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type"
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MonitorConfigurationMetric"
+              },
+              {
+                "$ref": "#/components/schemas/MonitorConfigurationLog"
+              },
+              {
+                "$ref": "#/components/schemas/MonitorConfigurationAnomalyLog"
+              },
+              {
+                "$ref": "#/components/schemas/MonitorConfigurationAnomalyMetric"
+              }
+            ]
+          },
+          "priority": {
+            "description": "Priority of the monitor",
+            "type": "number",
+            "enum": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          },
+          "owner": {
+            "description": "Team ID that owns and manages the monitor",
+            "type": "string"
+          },
+          "dashboardId": {
+            "description": "Identifier of a dashboard related to the monitor",
+            "type": "string"
+          },
+          "permissions": {
+            "description": "This controls which data the monitor can see.",
+            "type": "string",
+            "enum": [
+              "all",
+              "owning-team-only",
+              "owning-team-and-public"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "configuration",
+          "priority",
+          "owner",
+          "permissions"
+        ],
+        "description": "Monitor allowing to send alerts based on telemetry data"
+      },
       "Rule": {
         "type": "object",
         "properties": {
@@ -240,10 +372,12 @@
             "type": "boolean"
           },
           "tags": {
+            "title": "Tags",
             "maxItems": 50,
             "description": "List of key/value tags applied to the resource",
             "type": "array",
             "items": {
+              "title": "Tag",
               "type": "object",
               "properties": {
                 "key": {
@@ -378,6 +512,7 @@
         "description": "Rules to trigger notifications to targets based on alert events"
       },
       "Route": {
+        "title": "Route",
         "type": "object",
         "properties": {
           "id": {
@@ -399,10 +534,12 @@
             "type": "string"
           },
           "tags": {
+            "title": "Tags",
             "maxItems": 50,
             "description": "List of key/value tags applied to the resource",
             "type": "array",
             "items": {
+              "title": "Tag",
               "type": "object",
               "properties": {
                 "key": {
@@ -462,10 +599,12 @@
                       ]
                     },
                     "tags": {
+                      "title": "Tags",
                       "maxItems": 50,
                       "description": "List of key/value tags applied to the resource",
                       "type": "array",
                       "items": {
+                        "title": "Tag",
                         "type": "object",
                         "properties": {
                           "key": {
@@ -553,10 +692,12 @@
                       ]
                     },
                     "tags": {
+                      "title": "Tags",
                       "maxItems": 50,
                       "description": "List of key/value tags applied to the resource",
                       "type": "array",
                       "items": {
+                        "title": "Tag",
                         "type": "object",
                         "properties": {
                           "key": {
@@ -766,10 +907,12 @@
                       ]
                     },
                     "tags": {
+                      "title": "Tags",
                       "maxItems": 50,
                       "description": "List of key/value tags applied to the resource",
                       "type": "array",
                       "items": {
+                        "title": "Tag",
                         "type": "object",
                         "properties": {
                           "key": {
@@ -854,10 +997,12 @@
                       ]
                     },
                     "tags": {
+                      "title": "Tags",
                       "maxItems": 50,
                       "description": "List of key/value tags applied to the resource",
                       "type": "array",
                       "items": {
+                        "title": "Tag",
                         "type": "object",
                         "properties": {
                           "key": {
@@ -890,8 +1035,9 @@
                             "type": "object",
                             "properties": {
                               "query": {
+                                "format": "tsuga-query",
                                 "minLength": 0,
-                                "maxLength": 50000,
+                                "maxLength": 10000,
                                 "description": "Query that determines whether logs enter this branch",
                                 "type": "string"
                               },
@@ -978,10 +1124,12 @@
                 ]
               },
               "tags": {
+                "title": "Tags",
                 "maxItems": 50,
                 "description": "List of key/value tags applied to the resource",
                 "type": "array",
                 "items": {
+                  "title": "Tag",
                   "type": "object",
                   "properties": {
                     "key": {
@@ -1069,10 +1217,12 @@
                 ]
               },
               "tags": {
+                "title": "Tags",
                 "maxItems": 50,
                 "description": "List of key/value tags applied to the resource",
                 "type": "array",
                 "items": {
+                  "title": "Tag",
                   "type": "object",
                   "properties": {
                     "key": {
@@ -1282,10 +1432,12 @@
                 ]
               },
               "tags": {
+                "title": "Tags",
                 "maxItems": 50,
                 "description": "List of key/value tags applied to the resource",
                 "type": "array",
                 "items": {
+                  "title": "Tag",
                   "type": "object",
                   "properties": {
                     "key": {
@@ -1370,10 +1522,12 @@
                 ]
               },
               "tags": {
+                "title": "Tags",
                 "maxItems": 50,
                 "description": "List of key/value tags applied to the resource",
                 "type": "array",
                 "items": {
+                  "title": "Tag",
                   "type": "object",
                   "properties": {
                     "key": {
@@ -1406,8 +1560,9 @@
                       "type": "object",
                       "properties": {
                         "query": {
+                          "format": "tsuga-query",
                           "minLength": 0,
-                          "maxLength": 50000,
+                          "maxLength": 10000,
                           "description": "Query that determines whether logs enter this branch",
                           "type": "string"
                         },
@@ -1470,10 +1625,12 @@
             ]
           },
           "tags": {
+            "title": "Tags",
             "maxItems": 50,
             "description": "List of key/value tags applied to the resource",
             "type": "array",
             "items": {
+              "title": "Tag",
               "type": "object",
               "properties": {
                 "key": {
@@ -1499,44 +1656,8 @@
         ],
         "description": "Collection of users used to manage ownership and access to resources"
       },
-      "AggregateCount": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "description": "Counts the total number of records",
-            "type": "string",
-            "enum": [
-              "count"
-            ]
-          }
-        },
-        "required": [
-          "type"
-        ]
-      },
-      "AggregateSum": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "description": "Sums the values of the selected field",
-            "type": "string",
-            "enum": [
-              "sum"
-            ]
-          },
-          "field": {
-            "minLength": 0,
-            "maxLength": 250,
-            "description": "Attribute containing the values to aggregate",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "field"
-        ]
-      },
       "AggregateAverage": {
+        "title": "Average",
         "type": "object",
         "properties": {
           "type": {
@@ -1558,29 +1679,8 @@
           "field"
         ]
       },
-      "AggregateMin": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "description": "Finds the smallest value of the field",
-            "type": "string",
-            "enum": [
-              "min"
-            ]
-          },
-          "field": {
-            "minLength": 0,
-            "maxLength": 250,
-            "description": "Attribute containing the values to aggregate",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "field"
-        ]
-      },
       "AggregateMax": {
+        "title": "Max",
         "type": "object",
         "properties": {
           "type": {
@@ -1602,14 +1702,38 @@
           "field"
         ]
       },
-      "AggregateUniqueCount": {
+      "AggregateMin": {
+        "title": "Min",
         "type": "object",
         "properties": {
           "type": {
-            "description": "Counts the distinct values of the field",
+            "description": "Finds the smallest value of the field",
             "type": "string",
             "enum": [
-              "unique-count"
+              "min"
+            ]
+          },
+          "field": {
+            "minLength": 0,
+            "maxLength": 250,
+            "description": "Attribute containing the values to aggregate",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "field"
+        ]
+      },
+      "AggregateSum": {
+        "title": "Sum",
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "Sums the values of the selected field",
+            "type": "string",
+            "enum": [
+              "sum"
             ]
           },
           "field": {
@@ -1625,6 +1749,7 @@
         ]
       },
       "AggregatePercentile": {
+        "title": "Percentile",
         "type": "object",
         "properties": {
           "type": {
@@ -1650,7 +1775,47 @@
           "percentile"
         ]
       },
+      "AggregateUniqueCount": {
+        "title": "UniqueCount",
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "Counts the distinct values of the field",
+            "type": "string",
+            "enum": [
+              "unique-count"
+            ]
+          },
+          "field": {
+            "minLength": 0,
+            "maxLength": 250,
+            "description": "Attribute containing the values to aggregate",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "field"
+        ]
+      },
+      "AggregateCount": {
+        "title": "Count",
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "Counts the total number of records",
+            "type": "string",
+            "enum": [
+              "count"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
       "FunctionPerSecond": {
+        "title": "PerSecond",
         "type": "object",
         "properties": {
           "type": {
@@ -1666,6 +1831,7 @@
         ]
       },
       "FunctionPerMinute": {
+        "title": "PerMinute",
         "type": "object",
         "properties": {
           "type": {
@@ -1681,6 +1847,7 @@
         ]
       },
       "FunctionPerHour": {
+        "title": "PerHour",
         "type": "object",
         "properties": {
           "type": {
@@ -1696,6 +1863,7 @@
         ]
       },
       "FunctionRate": {
+        "title": "Rate",
         "type": "object",
         "properties": {
           "type": {
@@ -1711,6 +1879,7 @@
         ]
       },
       "FunctionRolling": {
+        "title": "Rolling",
         "type": "object",
         "properties": {
           "type": {
@@ -1813,10 +1982,13 @@
           },
           "addresses": {
             "minItems": 1,
+            "maxItems": 20,
             "description": "Email addresses that will receive the alert",
             "type": "array",
             "items": {
               "format": "email",
+              "minLength": 0,
+              "maxLength": 254,
               "type": "string"
             }
           }
@@ -2061,6 +2233,590 @@
           "integrationName"
         ]
       },
+      "MonitorConfigurationMetric": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "metric"
+            ]
+          },
+          "condition": {
+            "type": "object",
+            "properties": {
+              "formula": {
+                "minLength": 0,
+                "maxLength": 250,
+                "type": "string"
+              },
+              "operator": {
+                "type": "string",
+                "enum": [
+                  "greater_than",
+                  "less_than",
+                  "equal",
+                  "not_equal",
+                  "greater_than_or_equal",
+                  "less_than_or_equal"
+                ]
+              },
+              "threshold": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "formula",
+              "operator",
+              "threshold"
+            ]
+          },
+          "noDataBehavior": {
+            "type": "string",
+            "enum": [
+              "alert",
+              "resolve",
+              "keep_last_status",
+              "consider_zero"
+            ]
+          },
+          "timeframe": {
+            "description": "Timeframe of the monitor in minutes",
+            "type": "number"
+          },
+          "groupByFields": {
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "minLength": 1,
+              "maxLength": 250,
+              "type": "string"
+            }
+          },
+          "aggregationAlertLogic": {
+            "type": "string",
+            "enum": [
+              "no_aggregation",
+              "all",
+              "any",
+              "each",
+              "proportion"
+            ]
+          },
+          "proportionAlertThreshold": {
+            "minimum": 1,
+            "maximum": 99,
+            "multipleOf": 1,
+            "type": "number"
+          },
+          "queries": {
+            "minItems": 1,
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "minLength": 0,
+                  "maxLength": 250,
+                  "type": "string"
+                },
+                "filter": {
+                  "format": "tsuga-query",
+                  "minLength": 0,
+                  "maxLength": 10000,
+                  "type": "string"
+                },
+                "aggregate": {
+                  "title": "MetricAggregate",
+                  "type": "object",
+                  "discriminator": {
+                    "propertyName": "type"
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/AggregateAverage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMax"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMin"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateSum"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregatePercentile"
+                    }
+                  ]
+                },
+                "value_if_no_data": {
+                  "type": "string",
+                  "enum": [
+                    "Zero",
+                    "NaN"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "filter",
+                "aggregate"
+              ]
+            }
+          }
+        },
+        "required": [
+          "type",
+          "condition",
+          "noDataBehavior",
+          "timeframe",
+          "groupByFields",
+          "queries"
+        ]
+      },
+      "MonitorConfigurationLog": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "log"
+            ]
+          },
+          "condition": {
+            "type": "object",
+            "properties": {
+              "formula": {
+                "minLength": 0,
+                "maxLength": 250,
+                "type": "string"
+              },
+              "operator": {
+                "type": "string",
+                "enum": [
+                  "greater_than",
+                  "less_than",
+                  "equal",
+                  "not_equal",
+                  "greater_than_or_equal",
+                  "less_than_or_equal"
+                ]
+              },
+              "threshold": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "formula",
+              "operator",
+              "threshold"
+            ]
+          },
+          "noDataBehavior": {
+            "type": "string",
+            "enum": [
+              "alert",
+              "resolve",
+              "keep_last_status",
+              "consider_zero"
+            ]
+          },
+          "timeframe": {
+            "description": "Timeframe of the monitor in minutes",
+            "type": "number"
+          },
+          "groupByFields": {
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "minLength": 1,
+              "maxLength": 250,
+              "type": "string"
+            }
+          },
+          "aggregationAlertLogic": {
+            "type": "string",
+            "enum": [
+              "no_aggregation",
+              "all",
+              "any",
+              "each",
+              "proportion"
+            ]
+          },
+          "proportionAlertThreshold": {
+            "minimum": 1,
+            "maximum": 99,
+            "multipleOf": 1,
+            "type": "number"
+          },
+          "queries": {
+            "minItems": 1,
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "minLength": 0,
+                  "maxLength": 250,
+                  "type": "string"
+                },
+                "filter": {
+                  "format": "tsuga-query",
+                  "minLength": 0,
+                  "maxLength": 10000,
+                  "type": "string"
+                },
+                "aggregate": {
+                  "title": "LogAggregate",
+                  "type": "object",
+                  "discriminator": {
+                    "propertyName": "type"
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/AggregateUniqueCount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateCount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateAverage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMax"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMin"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateSum"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregatePercentile"
+                    }
+                  ]
+                },
+                "value_if_no_data": {
+                  "type": "string",
+                  "enum": [
+                    "Zero",
+                    "NaN"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "filter",
+                "aggregate"
+              ]
+            }
+          }
+        },
+        "required": [
+          "type",
+          "condition",
+          "noDataBehavior",
+          "timeframe",
+          "groupByFields",
+          "queries"
+        ]
+      },
+      "MonitorConfigurationAnomalyLog": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "anomaly-log"
+            ]
+          },
+          "condition": {
+            "type": "object",
+            "properties": {
+              "formula": {
+                "minLength": 0,
+                "maxLength": 250,
+                "type": "string"
+              },
+              "conditionType": {
+                "type": "string",
+                "enum": [
+                  "rate",
+                  "error",
+                  "cpu",
+                  "general",
+                  "to_be_set"
+                ]
+              }
+            },
+            "required": [
+              "formula",
+              "conditionType"
+            ]
+          },
+          "noDataBehavior": {
+            "type": "string",
+            "enum": [
+              "alert",
+              "resolve",
+              "keep_last_status"
+            ]
+          },
+          "timeframe": {
+            "description": "Timeframe of the monitor in minutes",
+            "type": "number"
+          },
+          "groupByFields": {
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "minLength": 1,
+              "maxLength": 250,
+              "type": "string"
+            }
+          },
+          "aggregationAlertLogic": {
+            "type": "string",
+            "enum": [
+              "no_aggregation",
+              "all",
+              "any",
+              "each",
+              "proportion"
+            ]
+          },
+          "proportionAlertThreshold": {
+            "minimum": 1,
+            "maximum": 99,
+            "multipleOf": 1,
+            "type": "number"
+          },
+          "queries": {
+            "minItems": 1,
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "minLength": 0,
+                  "maxLength": 250,
+                  "type": "string"
+                },
+                "filter": {
+                  "format": "tsuga-query",
+                  "minLength": 0,
+                  "maxLength": 10000,
+                  "type": "string"
+                },
+                "aggregate": {
+                  "title": "LogAggregate",
+                  "type": "object",
+                  "discriminator": {
+                    "propertyName": "type"
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/AggregateUniqueCount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateCount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateAverage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMax"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMin"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateSum"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregatePercentile"
+                    }
+                  ]
+                },
+                "value_if_no_data": {
+                  "type": "string",
+                  "enum": [
+                    "Zero",
+                    "NaN"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "filter",
+                "aggregate"
+              ]
+            }
+          }
+        },
+        "required": [
+          "type",
+          "condition",
+          "noDataBehavior",
+          "timeframe",
+          "groupByFields",
+          "queries"
+        ]
+      },
+      "MonitorConfigurationAnomalyMetric": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "anomaly-metric"
+            ]
+          },
+          "condition": {
+            "type": "object",
+            "properties": {
+              "formula": {
+                "minLength": 0,
+                "maxLength": 250,
+                "type": "string"
+              },
+              "conditionType": {
+                "type": "string",
+                "enum": [
+                  "rate",
+                  "error",
+                  "cpu",
+                  "general",
+                  "to_be_set"
+                ]
+              }
+            },
+            "required": [
+              "formula",
+              "conditionType"
+            ]
+          },
+          "noDataBehavior": {
+            "type": "string",
+            "enum": [
+              "alert",
+              "resolve",
+              "keep_last_status"
+            ]
+          },
+          "timeframe": {
+            "description": "Timeframe of the monitor in minutes",
+            "type": "number"
+          },
+          "groupByFields": {
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "minLength": 1,
+              "maxLength": 250,
+              "type": "string"
+            }
+          },
+          "aggregationAlertLogic": {
+            "type": "string",
+            "enum": [
+              "no_aggregation",
+              "all",
+              "any",
+              "each",
+              "proportion"
+            ]
+          },
+          "proportionAlertThreshold": {
+            "minimum": 1,
+            "maximum": 99,
+            "multipleOf": 1,
+            "type": "number"
+          },
+          "queries": {
+            "minItems": 1,
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "minLength": 0,
+                  "maxLength": 250,
+                  "type": "string"
+                },
+                "filter": {
+                  "format": "tsuga-query",
+                  "minLength": 0,
+                  "maxLength": 10000,
+                  "type": "string"
+                },
+                "aggregate": {
+                  "title": "MetricAggregate",
+                  "type": "object",
+                  "discriminator": {
+                    "propertyName": "type"
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/AggregateAverage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMax"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMin"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateSum"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregatePercentile"
+                    }
+                  ]
+                },
+                "value_if_no_data": {
+                  "type": "string",
+                  "enum": [
+                    "Zero",
+                    "NaN"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "filter",
+                "aggregate"
+              ]
+            }
+          }
+        },
+        "required": [
+          "type",
+          "condition",
+          "noDataBehavior",
+          "timeframe",
+          "groupByFields",
+          "queries"
+        ]
+      },
       "ProcessorParamsCreatorFormatString": {
         "type": "object",
         "properties": {
@@ -2223,6 +2979,7 @@
         ]
       },
       "DataNormalizerDuration": {
+        "title": "Duration",
         "type": "object",
         "properties": {
           "type": {
@@ -2252,6 +3009,7 @@
         ]
       },
       "DataNormalizerData": {
+        "title": "Data",
         "type": "object",
         "properties": {
           "type": {
@@ -2280,6 +3038,7 @@
         ]
       },
       "DataNormalizerCustom": {
+        "title": "Custom",
         "type": "object",
         "properties": {
           "type": {
@@ -2300,6 +3059,7 @@
         ]
       },
       "DataNormalizerDate": {
+        "title": "Date",
         "type": "object",
         "properties": {
           "type": {
@@ -2315,6 +3075,7 @@
         ]
       },
       "DataNormalizerLevel": {
+        "title": "Level",
         "type": "object",
         "properties": {
           "type": {
@@ -2330,6 +3091,7 @@
         ]
       },
       "GraphVisualizationTimeseries": {
+        "title": "Timeseries",
         "type": "object",
         "properties": {
           "type": {
@@ -2353,41 +3115,75 @@
             "description": "Aggregations that may be combined together in the same query",
             "type": "array",
             "items": {
+              "title": "AggregationQuery",
               "type": "object",
               "properties": {
                 "aggregate": {
-                  "type": "object",
-                  "discriminator": {
-                    "propertyName": "type"
-                  },
-                  "required": [
-                    "type"
-                  ],
-                  "oneOf": [
+                  "anyOf": [
                     {
-                      "$ref": "#/components/schemas/AggregateCount"
+                      "title": "LogAggregate",
+                      "type": "object",
+                      "discriminator": {
+                        "propertyName": "type"
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "oneOf": [
+                        {
+                          "$ref": "#/components/schemas/AggregateUniqueCount"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateCount"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateAverage"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateMax"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateMin"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateSum"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregatePercentile"
+                        }
+                      ]
                     },
                     {
-                      "$ref": "#/components/schemas/AggregateSum"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregateAverage"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregateMin"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregateMax"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregateUniqueCount"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregatePercentile"
+                      "title": "MetricAggregate",
+                      "type": "object",
+                      "discriminator": {
+                        "propertyName": "type"
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "oneOf": [
+                        {
+                          "$ref": "#/components/schemas/AggregateAverage"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateMax"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateMin"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateSum"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregatePercentile"
+                        }
+                      ]
                     }
                   ]
                 },
                 "filter": {
+                  "format": "tsuga-query",
                   "minLength": 0,
                   "maxLength": 10000,
                   "type": "string"
@@ -2397,6 +3193,7 @@
                   "description": "Post-processing functions applied to aggregation results",
                   "type": "array",
                   "items": {
+                    "title": "Function",
                     "type": "object",
                     "discriminator": {
                       "propertyName": "type"
@@ -2447,6 +3244,7 @@
             "description": "Fields used to group the results",
             "type": "array",
             "items": {
+              "title": "AggregationGroupBy",
               "type": "object",
               "properties": {
                 "fields": {
@@ -2468,6 +3266,7 @@
             }
           },
           "normalizer": {
+            "title": "Normalizer",
             "type": "object",
             "discriminator": {
               "propertyName": "type"
@@ -2501,6 +3300,7 @@
         ]
       },
       "GraphVisualizationTopList": {
+        "title": "TopList",
         "type": "object",
         "properties": {
           "type": {
@@ -2524,41 +3324,75 @@
             "description": "Aggregations that may be combined together in the same query",
             "type": "array",
             "items": {
+              "title": "AggregationQuery",
               "type": "object",
               "properties": {
                 "aggregate": {
-                  "type": "object",
-                  "discriminator": {
-                    "propertyName": "type"
-                  },
-                  "required": [
-                    "type"
-                  ],
-                  "oneOf": [
+                  "anyOf": [
                     {
-                      "$ref": "#/components/schemas/AggregateCount"
+                      "title": "LogAggregate",
+                      "type": "object",
+                      "discriminator": {
+                        "propertyName": "type"
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "oneOf": [
+                        {
+                          "$ref": "#/components/schemas/AggregateUniqueCount"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateCount"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateAverage"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateMax"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateMin"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateSum"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregatePercentile"
+                        }
+                      ]
                     },
                     {
-                      "$ref": "#/components/schemas/AggregateSum"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregateAverage"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregateMin"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregateMax"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregateUniqueCount"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregatePercentile"
+                      "title": "MetricAggregate",
+                      "type": "object",
+                      "discriminator": {
+                        "propertyName": "type"
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "oneOf": [
+                        {
+                          "$ref": "#/components/schemas/AggregateAverage"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateMax"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateMin"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateSum"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregatePercentile"
+                        }
+                      ]
                     }
                   ]
                 },
                 "filter": {
+                  "format": "tsuga-query",
                   "minLength": 0,
                   "maxLength": 10000,
                   "type": "string"
@@ -2568,6 +3402,7 @@
                   "description": "Post-processing functions applied to aggregation results",
                   "type": "array",
                   "items": {
+                    "title": "Function",
                     "type": "object",
                     "discriminator": {
                       "propertyName": "type"
@@ -2618,6 +3453,7 @@
             "description": "Fields used to group the results",
             "type": "array",
             "items": {
+              "title": "AggregationGroupBy",
               "type": "object",
               "properties": {
                 "fields": {
@@ -2639,6 +3475,7 @@
             }
           },
           "normalizer": {
+            "title": "Normalizer",
             "type": "object",
             "discriminator": {
               "propertyName": "type"
@@ -2672,6 +3509,7 @@
         ]
       },
       "GraphVisualizationPie": {
+        "title": "Pie",
         "type": "object",
         "properties": {
           "type": {
@@ -2695,41 +3533,75 @@
             "description": "Aggregations that may be combined together in the same query",
             "type": "array",
             "items": {
+              "title": "AggregationQuery",
               "type": "object",
               "properties": {
                 "aggregate": {
-                  "type": "object",
-                  "discriminator": {
-                    "propertyName": "type"
-                  },
-                  "required": [
-                    "type"
-                  ],
-                  "oneOf": [
+                  "anyOf": [
                     {
-                      "$ref": "#/components/schemas/AggregateCount"
+                      "title": "LogAggregate",
+                      "type": "object",
+                      "discriminator": {
+                        "propertyName": "type"
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "oneOf": [
+                        {
+                          "$ref": "#/components/schemas/AggregateUniqueCount"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateCount"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateAverage"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateMax"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateMin"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateSum"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregatePercentile"
+                        }
+                      ]
                     },
                     {
-                      "$ref": "#/components/schemas/AggregateSum"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregateAverage"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregateMin"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregateMax"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregateUniqueCount"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregatePercentile"
+                      "title": "MetricAggregate",
+                      "type": "object",
+                      "discriminator": {
+                        "propertyName": "type"
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "oneOf": [
+                        {
+                          "$ref": "#/components/schemas/AggregateAverage"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateMax"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateMin"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateSum"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregatePercentile"
+                        }
+                      ]
                     }
                   ]
                 },
                 "filter": {
+                  "format": "tsuga-query",
                   "minLength": 0,
                   "maxLength": 10000,
                   "type": "string"
@@ -2739,6 +3611,7 @@
                   "description": "Post-processing functions applied to aggregation results",
                   "type": "array",
                   "items": {
+                    "title": "Function",
                     "type": "object",
                     "discriminator": {
                       "propertyName": "type"
@@ -2789,6 +3662,7 @@
             "description": "Fields used to group the results",
             "type": "array",
             "items": {
+              "title": "AggregationGroupBy",
               "type": "object",
               "properties": {
                 "fields": {
@@ -2810,6 +3684,7 @@
             }
           },
           "normalizer": {
+            "title": "Normalizer",
             "type": "object",
             "discriminator": {
               "propertyName": "type"
@@ -2843,6 +3718,7 @@
         ]
       },
       "GraphVisualizationQueryValue": {
+        "title": "QueryValue",
         "type": "object",
         "properties": {
           "type": {
@@ -2866,41 +3742,75 @@
             "description": "Aggregations that may be combined together in the same query",
             "type": "array",
             "items": {
+              "title": "AggregationQuery",
               "type": "object",
               "properties": {
                 "aggregate": {
-                  "type": "object",
-                  "discriminator": {
-                    "propertyName": "type"
-                  },
-                  "required": [
-                    "type"
-                  ],
-                  "oneOf": [
+                  "anyOf": [
                     {
-                      "$ref": "#/components/schemas/AggregateCount"
+                      "title": "LogAggregate",
+                      "type": "object",
+                      "discriminator": {
+                        "propertyName": "type"
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "oneOf": [
+                        {
+                          "$ref": "#/components/schemas/AggregateUniqueCount"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateCount"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateAverage"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateMax"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateMin"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateSum"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregatePercentile"
+                        }
+                      ]
                     },
                     {
-                      "$ref": "#/components/schemas/AggregateSum"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregateAverage"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregateMin"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregateMax"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregateUniqueCount"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregatePercentile"
+                      "title": "MetricAggregate",
+                      "type": "object",
+                      "discriminator": {
+                        "propertyName": "type"
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "oneOf": [
+                        {
+                          "$ref": "#/components/schemas/AggregateAverage"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateMax"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateMin"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateSum"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregatePercentile"
+                        }
+                      ]
                     }
                   ]
                 },
                 "filter": {
+                  "format": "tsuga-query",
                   "minLength": 0,
                   "maxLength": 10000,
                   "type": "string"
@@ -2910,6 +3820,7 @@
                   "description": "Post-processing functions applied to aggregation results",
                   "type": "array",
                   "items": {
+                    "title": "Function",
                     "type": "object",
                     "discriminator": {
                       "propertyName": "type"
@@ -2967,6 +3878,7 @@
             "description": "Conditional formatting rules applied to the displayed value",
             "type": "array",
             "items": {
+              "title": "ConditionalFormatting",
               "type": "object",
               "properties": {
                 "operator": {
@@ -3003,6 +3915,7 @@
             }
           },
           "normalizer": {
+            "title": "Normalizer",
             "type": "object",
             "discriminator": {
               "propertyName": "type"
@@ -3036,6 +3949,7 @@
         ]
       },
       "GraphVisualizationBar": {
+        "title": "Bar",
         "type": "object",
         "properties": {
           "type": {
@@ -3059,41 +3973,75 @@
             "description": "Aggregations that may be combined together in the same query",
             "type": "array",
             "items": {
+              "title": "AggregationQuery",
               "type": "object",
               "properties": {
                 "aggregate": {
-                  "type": "object",
-                  "discriminator": {
-                    "propertyName": "type"
-                  },
-                  "required": [
-                    "type"
-                  ],
-                  "oneOf": [
+                  "anyOf": [
                     {
-                      "$ref": "#/components/schemas/AggregateCount"
+                      "title": "LogAggregate",
+                      "type": "object",
+                      "discriminator": {
+                        "propertyName": "type"
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "oneOf": [
+                        {
+                          "$ref": "#/components/schemas/AggregateUniqueCount"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateCount"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateAverage"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateMax"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateMin"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateSum"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregatePercentile"
+                        }
+                      ]
                     },
                     {
-                      "$ref": "#/components/schemas/AggregateSum"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregateAverage"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregateMin"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregateMax"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregateUniqueCount"
-                    },
-                    {
-                      "$ref": "#/components/schemas/AggregatePercentile"
+                      "title": "MetricAggregate",
+                      "type": "object",
+                      "discriminator": {
+                        "propertyName": "type"
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "oneOf": [
+                        {
+                          "$ref": "#/components/schemas/AggregateAverage"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateMax"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateMin"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregateSum"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AggregatePercentile"
+                        }
+                      ]
                     }
                   ]
                 },
                 "filter": {
+                  "format": "tsuga-query",
                   "minLength": 0,
                   "maxLength": 10000,
                   "type": "string"
@@ -3103,6 +4051,7 @@
                   "description": "Post-processing functions applied to aggregation results",
                   "type": "array",
                   "items": {
+                    "title": "Function",
                     "type": "object",
                     "discriminator": {
                       "propertyName": "type"
@@ -3153,6 +4102,7 @@
             "description": "Fields used to group the results",
             "type": "array",
             "items": {
+              "title": "AggregationGroupBy",
               "type": "object",
               "properties": {
                 "fields": {
@@ -3197,6 +4147,7 @@
             ]
           },
           "normalizer": {
+            "title": "Normalizer",
             "type": "object",
             "discriminator": {
               "propertyName": "type"
@@ -3230,6 +4181,7 @@
         ]
       },
       "GraphVisualizationList": {
+        "title": "List",
         "type": "object",
         "properties": {
           "type": {
@@ -3247,6 +4199,7 @@
             ]
           },
           "query": {
+            "format": "tsuga-query",
             "minLength": 0,
             "maxLength": 10000,
             "description": "Log query that selects records for the list",
@@ -3256,6 +4209,7 @@
             "description": "Custom columns to display for each log entry",
             "type": "array",
             "items": {
+              "title": "WidgetListColumn",
               "type": "object",
               "properties": {
                 "attribute": {
@@ -3263,6 +4217,7 @@
                   "type": "string"
                 },
                 "normalizer": {
+                  "title": "Normalizer",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type"
@@ -3302,6 +4257,7 @@
         ]
       },
       "GraphVisualizationNote": {
+        "title": "Note",
         "type": "object",
         "properties": {
           "type": {
@@ -3468,6 +4424,7 @@
                     "description": "Ordered widgets that compose the dashboard",
                     "type": "array",
                     "items": {
+                      "title": "Graph",
                       "type": "object",
                       "properties": {
                         "id": {
@@ -3554,14 +4511,18 @@
                     "description": "Filters applied to every widget on the dashboard",
                     "type": "array",
                     "items": {
+                      "minLength": 0,
+                      "maxLength": 250,
                       "type": "string"
                     }
                   },
                   "tags": {
+                    "title": "Tags",
                     "maxItems": 50,
                     "description": "List of key/value tags applied to the resource",
                     "type": "array",
                     "items": {
+                      "title": "Tag",
                       "type": "object",
                       "properties": {
                         "key": {
@@ -3578,6 +4539,33 @@
                         "value"
                       ]
                     }
+                  },
+                  "timePreset": {
+                    "type": "string",
+                    "enum": [
+                      "past-15-minutes",
+                      "past-30-minutes",
+                      "past-1-hour",
+                      "past-2-hours",
+                      "past-4-hours",
+                      "past-6-hours",
+                      "past-12-hours",
+                      "past-24-hours",
+                      "past-2-days",
+                      "past-3-days",
+                      "past-7-days",
+                      "past-30-days",
+                      "past-3-months",
+                      "current-day",
+                      "current-week",
+                      "current-month",
+                      "current-year",
+                      "previous-day",
+                      "previous-week",
+                      "previous-month",
+                      "previous-3-months",
+                      "previous-year"
+                    ]
                   }
                 },
                 "required": [
@@ -3778,6 +4766,7 @@
                     "description": "Ordered widgets that compose the dashboard",
                     "type": "array",
                     "items": {
+                      "title": "Graph",
                       "type": "object",
                       "properties": {
                         "id": {
@@ -3864,14 +4853,18 @@
                     "description": "Filters applied to every widget on the dashboard",
                     "type": "array",
                     "items": {
+                      "minLength": 0,
+                      "maxLength": 250,
                       "type": "string"
                     }
                   },
                   "tags": {
+                    "title": "Tags",
                     "maxItems": 50,
                     "description": "List of key/value tags applied to the resource",
                     "type": "array",
                     "items": {
+                      "title": "Tag",
                       "type": "object",
                       "properties": {
                         "key": {
@@ -3888,6 +4881,33 @@
                         "value"
                       ]
                     }
+                  },
+                  "timePreset": {
+                    "type": "string",
+                    "enum": [
+                      "past-15-minutes",
+                      "past-30-minutes",
+                      "past-1-hour",
+                      "past-2-hours",
+                      "past-4-hours",
+                      "past-6-hours",
+                      "past-12-hours",
+                      "past-24-hours",
+                      "past-2-days",
+                      "past-3-days",
+                      "past-7-days",
+                      "past-30-days",
+                      "past-3-months",
+                      "current-day",
+                      "current-week",
+                      "current-month",
+                      "current-year",
+                      "previous-day",
+                      "previous-week",
+                      "previous-month",
+                      "previous-3-months",
+                      "previous-year"
+                    ]
                   }
                 }
               }
@@ -3982,6 +5002,626 @@
           "dashboards"
         ],
         "description": "Delete a dashboard by its id",
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 1,
+              "maxLength": 250,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "description": "Identifier used to trace the lifecycle of this API request",
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "success": {
+                          "description": "Indicates the resource was deleted successfully",
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        }
+                      },
+                      "required": [
+                        "success"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/monitors": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "description": "Identifier used to trace the lifecycle of this API request",
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Monitor"
+                      }
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "type": "string"
+                  },
+                  "message": {
+                    "minLength": 0,
+                    "maxLength": 50000,
+                    "type": "string"
+                  },
+                  "tags": {
+                    "title": "Tags",
+                    "maxItems": 50,
+                    "description": "List of key/value tags applied to the resource",
+                    "type": "array",
+                    "items": {
+                      "title": "Tag",
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "maxLength": 128,
+                          "type": "string"
+                        },
+                        "value": {
+                          "maxLength": 256,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "value"
+                      ]
+                    }
+                  },
+                  "configuration": {
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type"
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/MonitorConfigurationMetric"
+                      },
+                      {
+                        "$ref": "#/components/schemas/MonitorConfigurationLog"
+                      },
+                      {
+                        "$ref": "#/components/schemas/MonitorConfigurationAnomalyLog"
+                      },
+                      {
+                        "$ref": "#/components/schemas/MonitorConfigurationAnomalyMetric"
+                      }
+                    ]
+                  },
+                  "priority": {
+                    "type": "number",
+                    "enum": [
+                      1,
+                      2,
+                      3,
+                      4,
+                      5
+                    ]
+                  },
+                  "owner": {
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "type": "string"
+                  },
+                  "dashboardId": {
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "type": "string"
+                  },
+                  "permissions": {
+                    "description": "This controls which data the monitor can see.",
+                    "type": "string",
+                    "enum": [
+                      "all",
+                      "owning-team-only",
+                      "owning-team-and-public"
+                    ]
+                  }
+                },
+                "required": [
+                  "name",
+                  "configuration",
+                  "priority",
+                  "owner",
+                  "permissions"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "description": "Identifier used to trace the lifecycle of this API request",
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Monitor"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/monitors/{id}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 1,
+              "maxLength": 250,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "description": "Identifier used to trace the lifecycle of this API request",
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Monitor"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "type": "string"
+                  },
+                  "message": {
+                    "minLength": 0,
+                    "maxLength": 50000,
+                    "type": "string"
+                  },
+                  "tags": {
+                    "title": "Tags",
+                    "maxItems": 50,
+                    "description": "List of key/value tags applied to the resource",
+                    "type": "array",
+                    "items": {
+                      "title": "Tag",
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "maxLength": 128,
+                          "type": "string"
+                        },
+                        "value": {
+                          "maxLength": 256,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "value"
+                      ]
+                    }
+                  },
+                  "configuration": {
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type"
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/MonitorConfigurationMetric"
+                      },
+                      {
+                        "$ref": "#/components/schemas/MonitorConfigurationLog"
+                      },
+                      {
+                        "$ref": "#/components/schemas/MonitorConfigurationAnomalyLog"
+                      },
+                      {
+                        "$ref": "#/components/schemas/MonitorConfigurationAnomalyMetric"
+                      }
+                    ]
+                  },
+                  "priority": {
+                    "type": "number",
+                    "enum": [
+                      1,
+                      2,
+                      3,
+                      4,
+                      5
+                    ]
+                  },
+                  "owner": {
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "type": "string"
+                  },
+                  "dashboardId": {
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "type": "string"
+                  },
+                  "permissions": {
+                    "description": "This controls which data the monitor can see.",
+                    "type": "string",
+                    "enum": [
+                      "all",
+                      "owning-team-only",
+                      "owning-team-and-public"
+                    ]
+                  }
+                },
+                "required": [
+                  "name",
+                  "configuration",
+                  "priority",
+                  "owner",
+                  "permissions"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 1,
+              "maxLength": 250,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "description": "Identifier used to trace the lifecycle of this API request",
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Monitor"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
         "parameters": [
           {
             "schema": {
@@ -4176,6 +5816,7 @@
                     "type": "string"
                   },
                   "teamsFilter": {
+                    "maxItems": 100,
                     "description": "Team IDs that narrow down the teams that can receive notifications from this rule",
                     "type": "array",
                     "items": {
@@ -4212,10 +5853,12 @@
                     "type": "string"
                   },
                   "tags": {
+                    "title": "Tags",
                     "maxItems": 50,
                     "description": "List of key/value tags applied to the resource",
                     "type": "array",
                     "items": {
+                      "title": "Tag",
                       "type": "object",
                       "properties": {
                         "key": {
@@ -4536,6 +6179,7 @@
                     "type": "string"
                   },
                   "teamsFilter": {
+                    "maxItems": 100,
                     "description": "Team IDs that narrow down the teams that can receive notifications from this rule",
                     "type": "array",
                     "items": {
@@ -4572,10 +6216,12 @@
                     "type": "string"
                   },
                   "tags": {
+                    "title": "Tags",
                     "maxItems": 50,
                     "description": "List of key/value tags applied to the resource",
                     "type": "array",
                     "items": {
+                      "title": "Tag",
                       "type": "object",
                       "properties": {
                         "key": {
@@ -5007,16 +6653,19 @@
                     "type": "boolean"
                   },
                   "query": {
+                    "format": "tsuga-query",
                     "minLength": 0,
-                    "maxLength": 250,
+                    "maxLength": 10000,
                     "description": "Query that selects which logs should enter the route",
                     "type": "string"
                   },
                   "tags": {
+                    "title": "Tags",
                     "maxItems": 50,
                     "description": "List of key/value tags applied to the resource",
                     "type": "array",
                     "items": {
+                      "title": "Tag",
                       "type": "object",
                       "properties": {
                         "key": {
@@ -5079,10 +6728,12 @@
                               ]
                             },
                             "tags": {
+                              "title": "Tags",
                               "maxItems": 50,
                               "description": "List of key/value tags applied to the resource",
                               "type": "array",
                               "items": {
+                                "title": "Tag",
                                 "type": "object",
                                 "properties": {
                                   "key": {
@@ -5170,10 +6821,12 @@
                               ]
                             },
                             "tags": {
+                              "title": "Tags",
                               "maxItems": 50,
                               "description": "List of key/value tags applied to the resource",
                               "type": "array",
                               "items": {
+                                "title": "Tag",
                                 "type": "object",
                                 "properties": {
                                   "key": {
@@ -5383,10 +7036,12 @@
                               ]
                             },
                             "tags": {
+                              "title": "Tags",
                               "maxItems": 50,
                               "description": "List of key/value tags applied to the resource",
                               "type": "array",
                               "items": {
+                                "title": "Tag",
                                 "type": "object",
                                 "properties": {
                                   "key": {
@@ -5471,10 +7126,12 @@
                               ]
                             },
                             "tags": {
+                              "title": "Tags",
                               "maxItems": 50,
                               "description": "List of key/value tags applied to the resource",
                               "type": "array",
                               "items": {
+                                "title": "Tag",
                                 "type": "object",
                                 "properties": {
                                   "key": {
@@ -5507,8 +7164,9 @@
                                     "type": "object",
                                     "properties": {
                                       "query": {
+                                        "format": "tsuga-query",
                                         "minLength": 0,
-                                        "maxLength": 50000,
+                                        "maxLength": 10000,
                                         "description": "Query that determines whether logs enter this branch",
                                         "type": "string"
                                       },
@@ -5749,16 +7407,19 @@
                     "type": "boolean"
                   },
                   "query": {
+                    "format": "tsuga-query",
                     "minLength": 0,
-                    "maxLength": 250,
+                    "maxLength": 10000,
                     "description": "Query that selects which logs should enter the route",
                     "type": "string"
                   },
                   "tags": {
+                    "title": "Tags",
                     "maxItems": 50,
                     "description": "List of key/value tags applied to the resource",
                     "type": "array",
                     "items": {
+                      "title": "Tag",
                       "type": "object",
                       "properties": {
                         "key": {
@@ -5821,10 +7482,12 @@
                               ]
                             },
                             "tags": {
+                              "title": "Tags",
                               "maxItems": 50,
                               "description": "List of key/value tags applied to the resource",
                               "type": "array",
                               "items": {
+                                "title": "Tag",
                                 "type": "object",
                                 "properties": {
                                   "key": {
@@ -5912,10 +7575,12 @@
                               ]
                             },
                             "tags": {
+                              "title": "Tags",
                               "maxItems": 50,
                               "description": "List of key/value tags applied to the resource",
                               "type": "array",
                               "items": {
+                                "title": "Tag",
                                 "type": "object",
                                 "properties": {
                                   "key": {
@@ -6125,10 +7790,12 @@
                               ]
                             },
                             "tags": {
+                              "title": "Tags",
                               "maxItems": 50,
                               "description": "List of key/value tags applied to the resource",
                               "type": "array",
                               "items": {
+                                "title": "Tag",
                                 "type": "object",
                                 "properties": {
                                   "key": {
@@ -6213,10 +7880,12 @@
                               ]
                             },
                             "tags": {
+                              "title": "Tags",
                               "maxItems": 50,
                               "description": "List of key/value tags applied to the resource",
                               "type": "array",
                               "items": {
+                                "title": "Tag",
                                 "type": "object",
                                 "properties": {
                                   "key": {
@@ -6249,8 +7918,9 @@
                                     "type": "object",
                                     "properties": {
                                       "query": {
+                                        "format": "tsuga-query",
                                         "minLength": 0,
-                                        "maxLength": 50000,
+                                        "maxLength": 10000,
                                         "description": "Query that determines whether logs enter this branch",
                                         "type": "string"
                                       },
@@ -6598,10 +8268,12 @@
                     ]
                   },
                   "tags": {
+                    "title": "Tags",
                     "maxItems": 50,
                     "description": "List of key/value tags applied to the resource",
                     "type": "array",
                     "items": {
+                      "title": "Tag",
                       "type": "object",
                       "properties": {
                         "key": {
@@ -6820,10 +8492,12 @@
                     ]
                   },
                   "tags": {
+                    "title": "Tags",
                     "maxItems": 50,
                     "description": "List of key/value tags applied to the resource",
                     "type": "array",
                     "items": {
+                      "title": "Tag",
                       "type": "object",
                       "properties": {
                         "key": {
