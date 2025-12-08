@@ -70,13 +70,13 @@ func (r *notificationRuleResource) ValidateConfig(ctx context.Context, req resou
 		}
 
 		for i, target := range targets {
-			diags := r.validateTargetConfig(ctx, target.Config, fmt.Sprintf("targets[%d].config", i))
+			diags := r.validateTargetConfig(target.Config, fmt.Sprintf("targets[%d].config", i))
 			resp.Diagnostics.Append(diags...)
 		}
 	}
 }
 
-func (r *notificationRuleResource) validateTargetConfig(ctx context.Context, cfg resource_notification_rule.TargetConfigModel, pathPrefix string) diag.Diagnostics {
+func (r *notificationRuleResource) validateTargetConfig(cfg resource_notification_rule.TargetConfigModel, pathPrefix string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	setCount := 0

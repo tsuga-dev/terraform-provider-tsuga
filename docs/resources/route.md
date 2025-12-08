@@ -3,12 +3,12 @@
 page_title: "tsuga_route Resource - tsuga"
 subcategory: ""
 description: |-
-  
+  Log route allowing to standardize logs and enrich them with additional data
 ---
 
 # tsuga_route (Resource)
 
-
+Log route allowing to standardize logs and enrich them with additional data
 
 ## Example Usage
 

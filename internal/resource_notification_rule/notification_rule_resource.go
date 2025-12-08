@@ -9,12 +9,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"terraform-provider-tsuga/internal/resource_team"
+
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
 
 func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
+		Description: "Rules to trigger notifications to targets based on alert events",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,
