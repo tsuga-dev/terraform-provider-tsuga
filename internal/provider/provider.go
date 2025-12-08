@@ -122,5 +122,6 @@ func (p *tsugaProvider) Resources(ctx context.Context) []func() resource.Resourc
 		NewNotificationRuleResource,
 		NewDashboardResource,
 		NewRouteResource,
+		NewMonitorResource,
 	}
 }

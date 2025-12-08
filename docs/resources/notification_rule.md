@@ -3,12 +3,12 @@
 page_title: "tsuga_notification_rule Resource - tsuga"
 subcategory: ""
 description: |-
-  
+  Rules to trigger notifications to targets based on alert events
 ---
 
 # tsuga_notification_rule (Resource)
 
-
+Rules to trigger notifications to targets based on alert events
 
 ## Example Usage
 

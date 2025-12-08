@@ -141,7 +141,7 @@ func (r *dashboardResource) validateSeriesVisualization(ctx context.Context, sv 
 		}
 
 		for i, query := range queries {
-			aggDiags := r.validateAggregate(ctx, query.Aggregate, fmt.Sprintf("%s.queries[%d].aggregate", pathPrefix, i))
+			aggDiags := r.validateAggregate(query.Aggregate, fmt.Sprintf("%s.queries[%d].aggregate", pathPrefix, i))
 			diags.Append(aggDiags...)
 		}
 	}
@@ -149,7 +149,7 @@ func (r *dashboardResource) validateSeriesVisualization(ctx context.Context, sv 
 	return diags
 }
 
-func (r *dashboardResource) validateAggregate(ctx context.Context, agg resource_dashboard.AggregateModel, pathPrefix string) diag.Diagnostics {
+func (r *dashboardResource) validateAggregate(agg resource_dashboard.AggregateModel, pathPrefix string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	setCount := 0
@@ -962,7 +962,7 @@ func expandQueries(ctx context.Context, queries types.List) ([]dashboardQuery, d
 
 	result := make([]dashboardQuery, 0, len(qModels))
 	for _, q := range qModels {
-		agg, aggDiags := expandAggregate(ctx, q.Aggregate)
+		agg, aggDiags := expandAggregate(q.Aggregate)
 		diags.Append(aggDiags...)
 		if diags.HasError() {
 			return nil, diags
@@ -981,7 +981,7 @@ func expandQueries(ctx context.Context, queries types.List) ([]dashboardQuery, d
 	return result, diags
 }
 
-func expandAggregate(ctx context.Context, agg resource_dashboard.AggregateModel) (dashboardAggregate, diag.Diagnostics) {
+func expandAggregate(agg resource_dashboard.AggregateModel) (dashboardAggregate, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	setCount := 0
 	var res dashboardAggregate

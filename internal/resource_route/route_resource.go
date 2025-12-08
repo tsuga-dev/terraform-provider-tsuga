@@ -20,6 +20,7 @@ const MaxSplitDepth = 8
 
 func RouteResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
+		Description: "Log route allowing to standardize logs and enrich them with additional data",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,
