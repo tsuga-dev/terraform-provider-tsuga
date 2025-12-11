@@ -475,9 +475,9 @@ func processorAttrTypesWithDepth(ctx context.Context, depth int) map[string]attr
 		"name":            types.StringType,
 		"description":     types.StringType,
 		"tags":            types.ListType{ElemType: types.ObjectType{AttrTypes: resource_team.TagsValue{}.AttributeTypes(ctx)}},
-		"mapper":          types.ObjectType{AttrTypes: MapperAttrTypes(ctx)},
-		"parse_attribute": types.ObjectType{AttrTypes: ParseAttributeAttrTypes(ctx)},
-		"creator":         types.ObjectType{AttrTypes: CreatorAttrTypes(ctx)},
+		"mapper":          types.ObjectType{AttrTypes: MapperAttrTypes()},
+		"parse_attribute": types.ObjectType{AttrTypes: ParseAttributeAttrTypes()},
+		"creator":         types.ObjectType{AttrTypes: CreatorAttrTypes()},
 	}
 
 	if depth > 0 {
@@ -489,15 +489,15 @@ func processorAttrTypesWithDepth(ctx context.Context, depth int) map[string]attr
 	return attrTypes
 }
 
-func MapperAttrTypes(ctx context.Context) map[string]attr.Type {
+func MapperAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"map_attributes": types.ListType{ElemType: types.ObjectType{AttrTypes: MapAttributeAttrTypes(ctx)}},
-		"map_level":      types.ObjectType{AttrTypes: MapperLevelAttrTypes(ctx)},
-		"map_timestamp":  types.ObjectType{AttrTypes: MapperTimestampAttrTypes(ctx)},
+		"map_attributes": types.ListType{ElemType: types.ObjectType{AttrTypes: MapAttributeAttrTypes()}},
+		"map_level":      types.ObjectType{AttrTypes: MapperLevelAttrTypes()},
+		"map_timestamp":  types.ObjectType{AttrTypes: MapperTimestampAttrTypes()},
 	}
 }
 
-func MapAttributeAttrTypes(ctx context.Context) map[string]attr.Type {
+func MapAttributeAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"origin_attribute": types.StringType,
 		"target_attribute": types.StringType,
@@ -506,28 +506,28 @@ func MapAttributeAttrTypes(ctx context.Context) map[string]attr.Type {
 	}
 }
 
-func MapperLevelAttrTypes(ctx context.Context) map[string]attr.Type {
+func MapperLevelAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"attribute_name": types.StringType,
 	}
 }
 
-func MapperTimestampAttrTypes(ctx context.Context) map[string]attr.Type {
+func MapperTimestampAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"attribute_name": types.StringType,
 	}
 }
 
-func ParseAttributeAttrTypes(ctx context.Context) map[string]attr.Type {
+func ParseAttributeAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"grok":       types.ObjectType{AttrTypes: ParseGrokAttrTypes(ctx)},
-		"url":        types.ObjectType{AttrTypes: ParseURLAttrTypes(ctx)},
-		"user_agent": types.ObjectType{AttrTypes: ParseUserAgentAttrTypes(ctx)},
-		"key_value":  types.ObjectType{AttrTypes: ParseKeyValueAttrTypes(ctx)},
+		"grok":       types.ObjectType{AttrTypes: ParseGrokAttrTypes()},
+		"url":        types.ObjectType{AttrTypes: ParseURLAttrTypes()},
+		"user_agent": types.ObjectType{AttrTypes: ParseUserAgentAttrTypes()},
+		"key_value":  types.ObjectType{AttrTypes: ParseKeyValueAttrTypes()},
 	}
 }
 
-func ParseGrokAttrTypes(ctx context.Context) map[string]attr.Type {
+func ParseGrokAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"attribute_name": types.StringType,
 		"rules":          types.ListType{ElemType: types.StringType},
@@ -535,19 +535,19 @@ func ParseGrokAttrTypes(ctx context.Context) map[string]attr.Type {
 	}
 }
 
-func ParseURLAttrTypes(ctx context.Context) map[string]attr.Type {
+func ParseURLAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"source_attribute": types.StringType,
 	}
 }
 
-func ParseUserAgentAttrTypes(ctx context.Context) map[string]attr.Type {
+func ParseUserAgentAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"source_attribute": types.StringType,
 	}
 }
 
-func ParseKeyValueAttrTypes(ctx context.Context) map[string]attr.Type {
+func ParseKeyValueAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"source_attribute":      types.StringType,
 		"target_attribute":      types.StringType,
@@ -557,14 +557,14 @@ func ParseKeyValueAttrTypes(ctx context.Context) map[string]attr.Type {
 	}
 }
 
-func CreatorAttrTypes(ctx context.Context) map[string]attr.Type {
+func CreatorAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"format_string": types.ObjectType{AttrTypes: CreatorFormatStringAttrTypes(ctx)},
-		"math_formula":  types.ObjectType{AttrTypes: CreatorMathFormulaAttrTypes(ctx)},
+		"format_string": types.ObjectType{AttrTypes: CreatorFormatStringAttrTypes()},
+		"math_formula":  types.ObjectType{AttrTypes: CreatorMathFormulaAttrTypes()},
 	}
 }
 
-func CreatorFormatStringAttrTypes(ctx context.Context) map[string]attr.Type {
+func CreatorFormatStringAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"target_attribute":         types.StringType,
 		"format_string":            types.StringType,
@@ -573,7 +573,7 @@ func CreatorFormatStringAttrTypes(ctx context.Context) map[string]attr.Type {
 	}
 }
 
-func CreatorMathFormulaAttrTypes(ctx context.Context) map[string]attr.Type {
+func CreatorMathFormulaAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"target_attribute":     types.StringType,
 		"formula":              types.StringType,

@@ -29,7 +29,7 @@ type dashboardResource struct {
 	client *TsugaClient
 }
 
-func (r *dashboardResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *dashboardResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -46,11 +46,11 @@ func (r *dashboardResource) Configure(ctx context.Context, req resource.Configur
 	r.client = client
 }
 
-func (r *dashboardResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *dashboardResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_dashboard"
 }
 
-func (r *dashboardResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *dashboardResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = resource_dashboard.DashboardResourceSchema(ctx)
 }
 
@@ -817,7 +817,7 @@ func flattenQueries(ctx context.Context, queries []dashboardQuery) (types.List, 
 			return types.ListNull(elemType), diags
 		}
 
-		funcVal, fDiags := flattenFunctions(ctx, q.Functions)
+		funcVal, fDiags := flattenFunctions(q.Functions)
 		if fDiags.HasError() {
 			return types.ListNull(elemType), fDiags
 		}
@@ -834,8 +834,8 @@ func flattenQueries(ctx context.Context, queries []dashboardQuery) (types.List, 
 
 func flattenAggregate(ctx context.Context, agg dashboardAggregate) (attr.Value, diag.Diagnostics) {
 	countNull := types.ObjectNull(resource_dashboard.AggregateCountAttrTypes(ctx))
-	fieldNull := types.ObjectNull(resource_dashboard.AggregateFieldAttrTypes(ctx))
-	percNull := types.ObjectNull(resource_dashboard.AggregatePercentileAttrTypes(ctx))
+	fieldNull := types.ObjectNull(resource_dashboard.AggregateFieldAttrTypes())
+	percNull := types.ObjectNull(resource_dashboard.AggregatePercentileAttrTypes())
 
 	vals := map[string]attr.Value{
 		"count":        countNull,
@@ -860,12 +860,12 @@ func flattenAggregate(ctx context.Context, agg dashboardAggregate) (attr.Value, 
 			"max":          "max",
 			"unique-count": "unique_count",
 		}[agg.Type]
-		vals[key] = types.ObjectValueMust(resource_dashboard.AggregateFieldAttrTypes(ctx), map[string]attr.Value{
+		vals[key] = types.ObjectValueMust(resource_dashboard.AggregateFieldAttrTypes(), map[string]attr.Value{
 			"type":  types.StringValue(agg.Type),
 			"field": types.StringValue(agg.Field),
 		})
 	case "percentile":
-		vals["percentile"] = types.ObjectValueMust(resource_dashboard.AggregatePercentileAttrTypes(ctx), map[string]attr.Value{
+		vals["percentile"] = types.ObjectValueMust(resource_dashboard.AggregatePercentileAttrTypes(), map[string]attr.Value{
 			"type":       types.StringValue("percentile"),
 			"field":      types.StringValue(agg.Field),
 			"percentile": types.Float64Value(agg.Percentile),
@@ -875,15 +875,15 @@ func flattenAggregate(ctx context.Context, agg dashboardAggregate) (attr.Value, 
 	return types.ObjectValueMust(resource_dashboard.AggregateAttrTypes(ctx), vals), nil
 }
 
-func flattenFunctions(ctx context.Context, funcs []dashboardFunction) (types.List, diag.Diagnostics) {
-	elemType := types.ObjectType{AttrTypes: resource_dashboard.FunctionAttrTypes(ctx)}
+func flattenFunctions(funcs []dashboardFunction) (types.List, diag.Diagnostics) {
+	elemType := types.ObjectType{AttrTypes: resource_dashboard.FunctionAttrTypes()}
 	if len(funcs) == 0 {
 		return types.ListNull(elemType), nil
 	}
 
 	values := make([]attr.Value, 0, len(funcs))
 	for _, f := range funcs {
-		values = append(values, types.ObjectValueMust(resource_dashboard.FunctionAttrTypes(ctx), map[string]attr.Value{
+		values = append(values, types.ObjectValueMust(resource_dashboard.FunctionAttrTypes(), map[string]attr.Value{
 			"type":   types.StringValue(f.Type),
 			"window": stringValueOrNull(f.Window),
 		}))
@@ -892,7 +892,7 @@ func flattenFunctions(ctx context.Context, funcs []dashboardFunction) (types.Lis
 }
 
 func flattenGroupBy(ctx context.Context, groupBy []dashboardGroupBy) (types.List, diag.Diagnostics) {
-	elemType := types.ObjectType{AttrTypes: resource_dashboard.GroupByAttrTypes(ctx)}
+	elemType := types.ObjectType{AttrTypes: resource_dashboard.GroupByAttrTypes()}
 	if len(groupBy) == 0 {
 		return types.ListNull(elemType), nil
 	}
@@ -903,7 +903,7 @@ func flattenGroupBy(ctx context.Context, groupBy []dashboardGroupBy) (types.List
 		if diags.HasError() {
 			return types.ListNull(elemType), diags
 		}
-		values = append(values, types.ObjectValueMust(resource_dashboard.GroupByAttrTypes(ctx), map[string]attr.Value{
+		values = append(values, types.ObjectValueMust(resource_dashboard.GroupByAttrTypes(), map[string]attr.Value{
 			"fields": fields,
 			"limit":  types.Float64Value(gb.Limit),
 		}))

@@ -633,7 +633,7 @@ func SeriesVisualizationAttrTypes(ctx context.Context) map[string]attr.Type {
 		"queries":        types.ListType{ElemType: types.ObjectType{AttrTypes: QueryAttrTypes(ctx)}},
 		"formula":        types.StringType,
 		"visible_series": types.ListType{ElemType: types.BoolType},
-		"group_by":       types.ListType{ElemType: types.ObjectType{AttrTypes: GroupByAttrTypes(ctx)}},
+		"group_by":       types.ListType{ElemType: types.ObjectType{AttrTypes: GroupByAttrTypes()}},
 		"normalizer":     types.ObjectType{AttrTypes: NormalizerAttrTypes(ctx)},
 	}
 }
@@ -674,19 +674,19 @@ func QueryAttrTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
 		"aggregate": types.ObjectType{AttrTypes: AggregateAttrTypes(ctx)},
 		"filter":    types.StringType,
-		"functions": types.ListType{ElemType: types.ObjectType{AttrTypes: FunctionAttrTypes(ctx)}},
+		"functions": types.ListType{ElemType: types.ObjectType{AttrTypes: FunctionAttrTypes()}},
 	}
 }
 
 func AggregateAttrTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
 		"count":        types.ObjectType{AttrTypes: AggregateCountAttrTypes(ctx)},
-		"sum":          types.ObjectType{AttrTypes: AggregateFieldAttrTypes(ctx)},
-		"average":      types.ObjectType{AttrTypes: AggregateFieldAttrTypes(ctx)},
-		"min":          types.ObjectType{AttrTypes: AggregateFieldAttrTypes(ctx)},
-		"max":          types.ObjectType{AttrTypes: AggregateFieldAttrTypes(ctx)},
-		"unique_count": types.ObjectType{AttrTypes: AggregateFieldAttrTypes(ctx)},
-		"percentile":   types.ObjectType{AttrTypes: AggregatePercentileAttrTypes(ctx)},
+		"sum":          types.ObjectType{AttrTypes: AggregateFieldAttrTypes()},
+		"average":      types.ObjectType{AttrTypes: AggregateFieldAttrTypes()},
+		"min":          types.ObjectType{AttrTypes: AggregateFieldAttrTypes()},
+		"max":          types.ObjectType{AttrTypes: AggregateFieldAttrTypes()},
+		"unique_count": types.ObjectType{AttrTypes: AggregateFieldAttrTypes()},
+		"percentile":   types.ObjectType{AttrTypes: AggregatePercentileAttrTypes()},
 	}
 }
 
@@ -696,14 +696,14 @@ func AggregateCountAttrTypes(_ context.Context) map[string]attr.Type {
 	}
 }
 
-func AggregateFieldAttrTypes(ctx context.Context) map[string]attr.Type {
+func AggregateFieldAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"type":  types.StringType,
 		"field": types.StringType,
 	}
 }
 
-func AggregatePercentileAttrTypes(ctx context.Context) map[string]attr.Type {
+func AggregatePercentileAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"type":       types.StringType,
 		"field":      types.StringType,
@@ -711,14 +711,14 @@ func AggregatePercentileAttrTypes(ctx context.Context) map[string]attr.Type {
 	}
 }
 
-func FunctionAttrTypes(_ context.Context) map[string]attr.Type {
+func FunctionAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"type":   types.StringType,
 		"window": types.StringType,
 	}
 }
 
-func GroupByAttrTypes(ctx context.Context) map[string]attr.Type {
+func GroupByAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"fields": types.ListType{ElemType: types.StringType},
 		"limit":  types.Float64Type,

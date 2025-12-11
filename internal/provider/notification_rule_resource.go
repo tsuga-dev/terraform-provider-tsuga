@@ -29,7 +29,7 @@ type notificationRuleResource struct {
 	client *TsugaClient
 }
 
-func (r *notificationRuleResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *notificationRuleResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -46,11 +46,11 @@ func (r *notificationRuleResource) Configure(ctx context.Context, req resource.C
 	r.client = client
 }
 
-func (r *notificationRuleResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *notificationRuleResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_notification_rule"
 }
 
-func (r *notificationRuleResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *notificationRuleResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = resource_notification_rule.NotificationRuleResourceSchema(ctx)
 }
 
