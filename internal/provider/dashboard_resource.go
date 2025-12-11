@@ -438,7 +438,7 @@ type dashboardFunction struct {
 
 type dashboardGroupBy struct {
 	Fields []string `json:"fields"`
-	Limit  float64  `json:"limit"`
+	Limit  int64    `json:"limit"`
 }
 
 type dashboardNormalizer struct {
@@ -905,7 +905,7 @@ func flattenGroupBy(ctx context.Context, groupBy []dashboardGroupBy) (types.List
 		}
 		values = append(values, types.ObjectValueMust(resource_dashboard.GroupByAttrTypes(), map[string]attr.Value{
 			"fields": fields,
-			"limit":  types.Float64Value(gb.Limit),
+			"limit":  types.Int64Value(gb.Limit),
 		}))
 	}
 	return types.ListValue(elemType, values)
@@ -1063,7 +1063,7 @@ func expandGroupBy(ctx context.Context, groupBy types.List) ([]dashboardGroupBy,
 		}
 		result = append(result, dashboardGroupBy{
 			Fields: fields,
-			Limit:  g.Limit.ValueFloat64(),
+			Limit:  g.Limit.ValueInt64(),
 		})
 	}
 	return result, diags

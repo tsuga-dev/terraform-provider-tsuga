@@ -571,8 +571,8 @@ type FunctionModel struct {
 }
 
 type GroupByModel struct {
-	Fields types.List    `tfsdk:"fields"`
-	Limit  types.Float64 `tfsdk:"limit"`
+	Fields types.List  `tfsdk:"fields"`
+	Limit  types.Int64 `tfsdk:"limit"`
 }
 
 type NormalizerModel struct {
@@ -721,7 +721,7 @@ func FunctionAttrTypes() map[string]attr.Type {
 func GroupByAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"fields": types.ListType{ElemType: types.StringType},
-		"limit":  types.Float64Type,
+		"limit":  types.Int64Type,
 	}
 }
 

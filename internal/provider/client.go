@@ -69,7 +69,7 @@ func (c *TsugaClient) checkResponse(resp *http.Response) error {
 	defer func() { _ = resp.Body.Close() }()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("API request failed with status %d (unable to read error body)", resp.StatusCode)
+		return fmt.Errorf("tsuga API request failed with status %d (unable to read error body)", resp.StatusCode)
 	}
 
 	var errorResp struct {
@@ -82,8 +82,8 @@ func (c *TsugaClient) checkResponse(resp *http.Response) error {
 	}
 
 	if err := json.Unmarshal(body, &errorResp); err != nil {
-		return fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+		return fmt.Errorf("tsuga API request failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
-	return fmt.Errorf("API error [%s]: %s (request ID: %s)", errorResp.Error.Code, errorResp.Error.Message, errorResp.RequestID)
+	return fmt.Errorf("tsuga API error [%s]: %s (request ID: %s)", errorResp.Error.Code, errorResp.Error.Message, errorResp.RequestID)
 }
