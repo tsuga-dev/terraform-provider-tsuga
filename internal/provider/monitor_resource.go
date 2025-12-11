@@ -444,14 +444,14 @@ type monitorAPIData struct {
 }
 
 type monitorAPIConfiguration struct {
-	Type                     string              `json:"type"`
-	Condition                monitorAPICondition `json:"condition"`
-	NoDataBehavior           string              `json:"noDataBehavior"`
-	Timeframe                float64             `json:"timeframe"`
-	GroupByFields            []string            `json:"groupByFields"`
-	AggregationAlertLogic    string              `json:"aggregationAlertLogic"`
-	ProportionAlertThreshold *float64            `json:"proportionAlertThreshold,omitempty"`
-	Queries                  []monitorAPIQuery   `json:"queries"`
+	Type                     string                         `json:"type"`
+	Condition                monitorAPICondition            `json:"condition"`
+	NoDataBehavior           string                         `json:"noDataBehavior"`
+	Timeframe                float64                        `json:"timeframe"`
+	GroupByFields            []monitorAPIAggregationGroupBy `json:"groupByFields"`
+	AggregationAlertLogic    string                         `json:"aggregationAlertLogic"`
+	ProportionAlertThreshold *float64                       `json:"proportionAlertThreshold,omitempty"`
+	Queries                  []monitorAPIQuery              `json:"queries"`
 }
 
 type monitorAPICondition struct {
@@ -459,6 +459,11 @@ type monitorAPICondition struct {
 	Operator      string   `json:"operator,omitempty"`
 	Threshold     *float64 `json:"threshold,omitempty"`
 	ConditionType string   `json:"conditionType,omitempty"`
+}
+
+type monitorAPIAggregationGroupBy struct {
+	Fields []string `json:"fields"`
+	Limit  float64  `json:"limit"`
 }
 
 type monitorAPIQuery struct {
@@ -498,7 +503,7 @@ func expandMonitorConfiguration(ctx context.Context, config resource_monitor.Mon
 func expandMonitorConfigurationMetric(ctx context.Context, config *resource_monitor.MonitorConfigurationMetricModel) (map[string]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	groupByFields, gDiags := expandStringList(ctx, config.GroupByFields)
+	groupByFields, gDiags := expandAggregationGroupBy(ctx, config.GroupByFields)
 	diags.Append(gDiags...)
 	queries, qDiags := expandMetricQueries(ctx, config.Queries)
 	diags.Append(qDiags...)
@@ -531,7 +536,7 @@ func expandMonitorConfigurationMetric(ctx context.Context, config *resource_moni
 func expandMonitorConfigurationLog(ctx context.Context, config *resource_monitor.MonitorConfigurationLogModel) (map[string]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	groupByFields, gDiags := expandStringList(ctx, config.GroupByFields)
+	groupByFields, gDiags := expandAggregationGroupBy(ctx, config.GroupByFields)
 	diags.Append(gDiags...)
 	queries, qDiags := expandLogQueries(ctx, config.Queries)
 	diags.Append(qDiags...)
@@ -564,7 +569,7 @@ func expandMonitorConfigurationLog(ctx context.Context, config *resource_monitor
 func expandMonitorConfigurationAnomalyLog(ctx context.Context, config *resource_monitor.MonitorConfigurationAnomalyLogModel) (map[string]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	groupByFields, gDiags := expandStringList(ctx, config.GroupByFields)
+	groupByFields, gDiags := expandAggregationGroupBy(ctx, config.GroupByFields)
 	diags.Append(gDiags...)
 	queries, qDiags := expandLogQueries(ctx, config.Queries)
 	diags.Append(qDiags...)
@@ -596,7 +601,7 @@ func expandMonitorConfigurationAnomalyLog(ctx context.Context, config *resource_
 func expandMonitorConfigurationAnomalyMetric(ctx context.Context, config *resource_monitor.MonitorConfigurationAnomalyMetricModel) (map[string]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	groupByFields, gDiags := expandStringList(ctx, config.GroupByFields)
+	groupByFields, gDiags := expandAggregationGroupBy(ctx, config.GroupByFields)
 	diags.Append(gDiags...)
 	queries, qDiags := expandMetricQueries(ctx, config.Queries)
 	diags.Append(qDiags...)
@@ -620,6 +625,46 @@ func expandMonitorConfigurationAnomalyMetric(ctx context.Context, config *resour
 
 	if !config.ProportionAlertThreshold.IsNull() && !config.ProportionAlertThreshold.IsUnknown() {
 		result["proportionAlertThreshold"] = float64(config.ProportionAlertThreshold.ValueInt64())
+	}
+
+	return result, diags
+}
+
+func expandAggregationGroupBy(ctx context.Context, groupByList types.List) ([]monitorAPIAggregationGroupBy, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if groupByList.IsNull() || groupByList.IsUnknown() {
+		return nil, diags
+	}
+
+	var groupByModels []resource_monitor.AggregationGroupByModel
+	diags.Append(groupByList.ElementsAs(ctx, &groupByModels, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	result := make([]monitorAPIAggregationGroupBy, 0, len(groupByModels))
+	for i, groupBy := range groupByModels {
+		if groupBy.Limit.IsNull() || groupBy.Limit.IsUnknown() {
+			diags.AddError("Invalid group_by_fields", fmt.Sprintf("group_by_fields[%d].limit is required", i))
+			continue
+		}
+
+		fields, fDiags := expandStringList(ctx, groupBy.Fields)
+		diags.Append(fDiags...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if fields == nil {
+			diags.AddError("Invalid group_by_fields", fmt.Sprintf("group_by_fields[%d].fields is required", i))
+			return nil, diags
+		}
+
+		result = append(result, monitorAPIAggregationGroupBy{
+			Fields: fields,
+			Limit:  float64(groupBy.Limit.ValueInt64()),
+		})
 	}
 
 	return result, diags
@@ -845,7 +890,7 @@ func flattenMonitorConfiguration(ctx context.Context, config monitorAPIConfigura
 func flattenMonitorConfigurationMetric(ctx context.Context, config monitorAPIConfiguration) (resource_monitor.MonitorConfigurationMetricModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	groupByFields, gDiags := types.ListValueFrom(ctx, types.StringType, config.GroupByFields)
+	groupByFields, gDiags := flattenAggregationGroupBy(ctx, config.GroupByFields)
 	diags.Append(gDiags...)
 	queries, qDiags := flattenMetricQueries(config.Queries)
 	diags.Append(qDiags...)
@@ -878,7 +923,7 @@ func flattenMonitorConfigurationMetric(ctx context.Context, config monitorAPICon
 func flattenMonitorConfigurationLog(ctx context.Context, config monitorAPIConfiguration) (resource_monitor.MonitorConfigurationLogModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	groupByFields, gDiags := types.ListValueFrom(ctx, types.StringType, config.GroupByFields)
+	groupByFields, gDiags := flattenAggregationGroupBy(ctx, config.GroupByFields)
 	diags.Append(gDiags...)
 	queries, qDiags := flattenLogQueries(config.Queries)
 	diags.Append(qDiags...)
@@ -911,7 +956,7 @@ func flattenMonitorConfigurationLog(ctx context.Context, config monitorAPIConfig
 func flattenMonitorConfigurationAnomalyLog(ctx context.Context, config monitorAPIConfiguration) (resource_monitor.MonitorConfigurationAnomalyLogModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	groupByFields, gDiags := types.ListValueFrom(ctx, types.StringType, config.GroupByFields)
+	groupByFields, gDiags := flattenAggregationGroupBy(ctx, config.GroupByFields)
 	diags.Append(gDiags...)
 	queries, qDiags := flattenLogQueries(config.Queries)
 	diags.Append(qDiags...)
@@ -940,7 +985,7 @@ func flattenMonitorConfigurationAnomalyLog(ctx context.Context, config monitorAP
 func flattenMonitorConfigurationAnomalyMetric(ctx context.Context, config monitorAPIConfiguration) (resource_monitor.MonitorConfigurationAnomalyMetricModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	groupByFields, gDiags := types.ListValueFrom(ctx, types.StringType, config.GroupByFields)
+	groupByFields, gDiags := flattenAggregationGroupBy(ctx, config.GroupByFields)
 	diags.Append(gDiags...)
 	queries, qDiags := flattenMetricQueries(config.Queries)
 	diags.Append(qDiags...)
@@ -964,6 +1009,37 @@ func flattenMonitorConfigurationAnomalyMetric(ctx context.Context, config monito
 	}
 
 	return result, diags
+}
+
+func flattenAggregationGroupBy(ctx context.Context, groupBy []monitorAPIAggregationGroupBy) (types.List, diag.Diagnostics) {
+	elemType := types.ObjectType{AttrTypes: resource_monitor.AggregationGroupByAttrTypes()}
+	var diags diag.Diagnostics
+
+	if len(groupBy) == 0 {
+		list, listDiags := types.ListValue(elemType, []attr.Value{})
+		diags.Append(listDiags...)
+		return list, diags
+	}
+
+	values := make([]attr.Value, 0, len(groupBy))
+	for _, gb := range groupBy {
+		fields, fDiags := types.ListValueFrom(ctx, types.StringType, gb.Fields)
+		diags.Append(fDiags...)
+		if diags.HasError() {
+			return types.ListNull(elemType), diags
+		}
+
+		obj := map[string]attr.Value{
+			"fields": fields,
+			"limit":  types.Int64Value(int64(gb.Limit)),
+		}
+
+		values = append(values, types.ObjectValueMust(resource_monitor.AggregationGroupByAttrTypes(), obj))
+	}
+
+	list, listDiags := types.ListValue(elemType, values)
+	diags.Append(listDiags...)
+	return list, diags
 }
 
 func flattenMetricQueries(queries []monitorAPIQuery) (types.List, diag.Diagnostics) {
