@@ -67,10 +67,8 @@ func MonitorResourceSchema(ctx context.Context) schema.Schema {
 				Required:    true,
 				Description: "Monitor configuration",
 				Attributes: map[string]schema.Attribute{
-					"metric":         monitorConfigurationMetricSchema(),
-					"log":            monitorConfigurationLogSchema(),
-					"anomaly_log":    monitorConfigurationAnomalyLogSchema(),
-					"anomaly_metric": monitorConfigurationAnomalyMetricSchema(),
+					"metric": monitorConfigurationMetricSchema(),
+					"log":    monitorConfigurationLogSchema(),
 				},
 			},
 			"priority": schema.Int64Attribute{
@@ -163,26 +161,6 @@ func monitorConditionSchema() schema.Attribute {
 			},
 			"threshold": schema.Float64Attribute{
 				Required: true,
-			},
-		},
-	}
-}
-
-func monitorAnomalyConditionSchema() schema.Attribute {
-	return schema.SingleNestedAttribute{
-		Required: true,
-		Attributes: map[string]schema.Attribute{
-			"formula": schema.StringAttribute{
-				Required: true,
-				Validators: []validator.String{
-					stringvalidator.LengthAtMost(250),
-				},
-			},
-			"condition_type": schema.StringAttribute{
-				Required: true,
-				Validators: []validator.String{
-					stringvalidator.OneOf("rate", "error", "cpu", "general", "to_be_set"),
-				},
 			},
 		},
 	}
@@ -291,28 +269,6 @@ func monitorConfigurationLogSchema() schema.Attribute {
 	}
 }
 
-func monitorConfigurationAnomalyLogSchema() schema.Attribute {
-	attrs := baseMonitorConfigurationAttributes()
-	attrs["condition"] = monitorAnomalyConditionSchema()
-	attrs["no_data_behavior"] = monitorNoDataBehaviorSchema(false)
-	attrs["queries"] = logQueriesSchema()
-	return schema.SingleNestedAttribute{
-		Optional:   true,
-		Attributes: attrs,
-	}
-}
-
-func monitorConfigurationAnomalyMetricSchema() schema.Attribute {
-	attrs := baseMonitorConfigurationAttributes()
-	attrs["condition"] = monitorAnomalyConditionSchema()
-	attrs["no_data_behavior"] = monitorNoDataBehaviorSchema(false)
-	attrs["queries"] = metricQueriesSchema()
-	return schema.SingleNestedAttribute{
-		Optional:   true,
-		Attributes: attrs,
-	}
-}
-
 func metricAggregateSchema() schema.Attribute {
 	return schema.SingleNestedAttribute{
 		Required:    true,
@@ -398,10 +354,8 @@ type MonitorModel struct {
 }
 
 type MonitorConfigurationModel struct {
-	Metric        *MonitorConfigurationMetricModel        `tfsdk:"metric"`
-	Log           *MonitorConfigurationLogModel           `tfsdk:"log"`
-	AnomalyLog    *MonitorConfigurationAnomalyLogModel    `tfsdk:"anomaly_log"`
-	AnomalyMetric *MonitorConfigurationAnomalyMetricModel `tfsdk:"anomaly_metric"`
+	Metric *MonitorConfigurationMetricModel `tfsdk:"metric"`
+	Log    *MonitorConfigurationLogModel    `tfsdk:"log"`
 }
 
 type MonitorConfigurationMetricModel struct {
@@ -424,35 +378,10 @@ type MonitorConfigurationLogModel struct {
 	Queries                  types.List            `tfsdk:"queries"`
 }
 
-type MonitorConfigurationAnomalyLogModel struct {
-	Condition                MonitorAnomalyConditionModel `tfsdk:"condition"`
-	NoDataBehavior           types.String                 `tfsdk:"no_data_behavior"`
-	Timeframe                types.Int64                  `tfsdk:"timeframe"`
-	GroupByFields            types.List                   `tfsdk:"group_by_fields"`
-	AggregationAlertLogic    types.String                 `tfsdk:"aggregation_alert_logic"`
-	ProportionAlertThreshold types.Int64                  `tfsdk:"proportion_alert_threshold"`
-	Queries                  types.List                   `tfsdk:"queries"`
-}
-
-type MonitorConfigurationAnomalyMetricModel struct {
-	Condition                MonitorAnomalyConditionModel `tfsdk:"condition"`
-	NoDataBehavior           types.String                 `tfsdk:"no_data_behavior"`
-	Timeframe                types.Int64                  `tfsdk:"timeframe"`
-	GroupByFields            types.List                   `tfsdk:"group_by_fields"`
-	AggregationAlertLogic    types.String                 `tfsdk:"aggregation_alert_logic"`
-	ProportionAlertThreshold types.Int64                  `tfsdk:"proportion_alert_threshold"`
-	Queries                  types.List                   `tfsdk:"queries"`
-}
-
 type MonitorConditionModel struct {
 	Formula   types.String  `tfsdk:"formula"`
 	Operator  types.String  `tfsdk:"operator"`
 	Threshold types.Float64 `tfsdk:"threshold"`
-}
-
-type MonitorAnomalyConditionModel struct {
-	Formula       types.String `tfsdk:"formula"`
-	ConditionType types.String `tfsdk:"condition_type"`
 }
 
 type AggregationGroupByModel struct {
