@@ -85,5 +85,5 @@ func (c *TsugaClient) checkResponse(resp *http.Response) error {
 		return fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
-	return fmt.Errorf("Tsuga API error [%s]: %s (request ID: %s)", errorResp.Error.Code, errorResp.Error.Message, errorResp.RequestID)
+	return fmt.Errorf("tsuga API error [%s]: %s (request ID: %s)", errorResp.Error.Code, errorResp.Error.Message, errorResp.RequestID)
 }
