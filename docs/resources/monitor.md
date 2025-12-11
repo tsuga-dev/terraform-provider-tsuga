@@ -50,7 +50,7 @@ Required:
 
 - `aggregation_alert_logic` (String)
 - `condition` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--condition))
-- `group_by_fields` (List of String)
+- `group_by_fields` (Attributes List) (see [below for nested schema](#nestedatt--configuration--anomaly_log--group_by_fields))
 - `no_data_behavior` (String)
 - `queries` (Attributes List) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries))
 - `timeframe` (Number) Timeframe of the monitor in minutes
@@ -66,6 +66,15 @@ Required:
 
 - `condition_type` (String)
 - `formula` (String)
+
+
+<a id="nestedatt--configuration--anomaly_log--group_by_fields"></a>
+### Nested Schema for `configuration.anomaly_log.group_by_fields`
+
+Required:
+
+- `fields` (List of String)
+- `limit` (Number)
 
 
 <a id="nestedatt--configuration--anomaly_log--queries"></a>
@@ -157,7 +166,7 @@ Required:
 
 - `aggregation_alert_logic` (String)
 - `condition` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--condition))
-- `group_by_fields` (List of String)
+- `group_by_fields` (Attributes List) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--group_by_fields))
 - `no_data_behavior` (String)
 - `queries` (Attributes List) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries))
 - `timeframe` (Number) Timeframe of the monitor in minutes
@@ -173,6 +182,15 @@ Required:
 
 - `condition_type` (String)
 - `formula` (String)
+
+
+<a id="nestedatt--configuration--anomaly_metric--group_by_fields"></a>
+### Nested Schema for `configuration.anomaly_metric.group_by_fields`
+
+Required:
+
+- `fields` (List of String)
+- `limit` (Number)
 
 
 <a id="nestedatt--configuration--anomaly_metric--queries"></a>
@@ -259,7 +277,7 @@ Required:
 
 - `aggregation_alert_logic` (String)
 - `condition` (Attributes) (see [below for nested schema](#nestedatt--configuration--log--condition))
-- `group_by_fields` (List of String)
+- `group_by_fields` (Attributes List) (see [below for nested schema](#nestedatt--configuration--log--group_by_fields))
 - `no_data_behavior` (String)
 - `queries` (Attributes List) (see [below for nested schema](#nestedatt--configuration--log--queries))
 - `timeframe` (Number) Timeframe of the monitor in minutes
@@ -276,6 +294,15 @@ Required:
 - `formula` (String)
 - `operator` (String)
 - `threshold` (Number)
+
+
+<a id="nestedatt--configuration--log--group_by_fields"></a>
+### Nested Schema for `configuration.log.group_by_fields`
+
+Required:
+
+- `fields` (List of String)
+- `limit` (Number)
 
 
 <a id="nestedatt--configuration--log--queries"></a>
@@ -367,7 +394,7 @@ Required:
 
 - `aggregation_alert_logic` (String)
 - `condition` (Attributes) (see [below for nested schema](#nestedatt--configuration--metric--condition))
-- `group_by_fields` (List of String)
+- `group_by_fields` (Attributes List) (see [below for nested schema](#nestedatt--configuration--metric--group_by_fields))
 - `no_data_behavior` (String)
 - `queries` (Attributes List) (see [below for nested schema](#nestedatt--configuration--metric--queries))
 - `timeframe` (Number) Timeframe of the monitor in minutes
@@ -384,6 +411,15 @@ Required:
 - `formula` (String)
 - `operator` (String)
 - `threshold` (Number)
+
+
+<a id="nestedatt--configuration--metric--group_by_fields"></a>
+### Nested Schema for `configuration.metric.group_by_fields`
+
+Required:
+
+- `fields` (List of String)
+- `limit` (Number)
 
 
 <a id="nestedatt--configuration--metric--queries"></a>

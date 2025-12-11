@@ -110,11 +110,24 @@ func baseMonitorConfigurationAttributes() map[string]schema.Attribute {
 			Required:    true,
 			Description: "Timeframe of the monitor in minutes",
 		},
-		"group_by_fields": schema.ListAttribute{
-			Required:    true,
-			ElementType: types.StringType,
+		"group_by_fields": schema.ListNestedAttribute{
+			Required: true,
 			Validators: []validator.List{
-				listvalidator.SizeAtMost(3),
+				listvalidator.SizeAtMost(1),
+			},
+			NestedObject: schema.NestedAttributeObject{
+				Attributes: map[string]schema.Attribute{
+					"fields": schema.ListAttribute{
+						Required:    true,
+						ElementType: types.StringType,
+						Validators: []validator.List{
+							listvalidator.SizeAtLeast(1),
+						},
+					},
+					"limit": schema.Int64Attribute{
+						Required: true,
+					},
+				},
 			},
 		},
 		"aggregation_alert_logic": schema.StringAttribute{
@@ -442,6 +455,11 @@ type MonitorAnomalyConditionModel struct {
 	ConditionType types.String `tfsdk:"condition_type"`
 }
 
+type AggregationGroupByModel struct {
+	Fields types.List  `tfsdk:"fields"`
+	Limit  types.Int64 `tfsdk:"limit"`
+}
+
 // Separate query models for metric and log
 type MetricQueryModel struct {
 	Name          types.String         `tfsdk:"name"`
@@ -503,7 +521,7 @@ func MonitorConfigurationMetricAttrTypes() map[string]attr.Type {
 		"condition":                  types.ObjectType{AttrTypes: MonitorConditionAttrTypes()},
 		"no_data_behavior":           types.StringType,
 		"timeframe":                  types.Int64Type,
-		"group_by_fields":            types.ListType{ElemType: types.StringType},
+		"group_by_fields":            types.ListType{ElemType: types.ObjectType{AttrTypes: AggregationGroupByAttrTypes()}},
 		"aggregation_alert_logic":    types.StringType,
 		"proportion_alert_threshold": types.Int64Type,
 		"queries":                    types.ListType{ElemType: types.ObjectType{AttrTypes: MetricQueryAttrTypes()}},
@@ -515,7 +533,7 @@ func MonitorConfigurationLogAttrTypes() map[string]attr.Type {
 		"condition":                  types.ObjectType{AttrTypes: MonitorConditionAttrTypes()},
 		"no_data_behavior":           types.StringType,
 		"timeframe":                  types.Int64Type,
-		"group_by_fields":            types.ListType{ElemType: types.StringType},
+		"group_by_fields":            types.ListType{ElemType: types.ObjectType{AttrTypes: AggregationGroupByAttrTypes()}},
 		"aggregation_alert_logic":    types.StringType,
 		"proportion_alert_threshold": types.Int64Type,
 		"queries":                    types.ListType{ElemType: types.ObjectType{AttrTypes: LogQueryAttrTypes()}},
@@ -527,7 +545,7 @@ func MonitorConfigurationAnomalyLogAttrTypes() map[string]attr.Type {
 		"condition":                  types.ObjectType{AttrTypes: MonitorAnomalyConditionAttrTypes()},
 		"no_data_behavior":           types.StringType,
 		"timeframe":                  types.Int64Type,
-		"group_by_fields":            types.ListType{ElemType: types.StringType},
+		"group_by_fields":            types.ListType{ElemType: types.ObjectType{AttrTypes: AggregationGroupByAttrTypes()}},
 		"aggregation_alert_logic":    types.StringType,
 		"proportion_alert_threshold": types.Int64Type,
 		"queries":                    types.ListType{ElemType: types.ObjectType{AttrTypes: LogQueryAttrTypes()}},
@@ -539,7 +557,7 @@ func MonitorConfigurationAnomalyMetricAttrTypes() map[string]attr.Type {
 		"condition":                  types.ObjectType{AttrTypes: MonitorAnomalyConditionAttrTypes()},
 		"no_data_behavior":           types.StringType,
 		"timeframe":                  types.Int64Type,
-		"group_by_fields":            types.ListType{ElemType: types.StringType},
+		"group_by_fields":            types.ListType{ElemType: types.ObjectType{AttrTypes: AggregationGroupByAttrTypes()}},
 		"aggregation_alert_logic":    types.StringType,
 		"proportion_alert_threshold": types.Int64Type,
 		"queries":                    types.ListType{ElemType: types.ObjectType{AttrTypes: MetricQueryAttrTypes()}},
@@ -617,4 +635,11 @@ func AggregatePercentileAttrTypes() map[string]attr.Type {
 
 func AggregateCountAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{}
+}
+
+func AggregationGroupByAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"fields": types.ListType{ElemType: types.StringType},
+		"limit":  types.Int64Type,
+	}
 }

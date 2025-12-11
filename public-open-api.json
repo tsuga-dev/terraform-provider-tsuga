@@ -200,7 +200,8 @@
               "INTERNAL_ERROR",
               "INVALID_QUERY_TO_CLUSTER",
               "NETWORK_ERROR",
-              "NOT_AUTHORIZED",
+              "MISSING_PERMISSION",
+              "PRIVILEGE_ESCALATION",
               "ORG_NOT_FOUND_AUTHENTICATION_ERROR",
               "RATE_LIMITED",
               "RESERVED_TAG_POLICY_ERROR",
@@ -308,12 +309,12 @@
             "type": "string"
           },
           "permissions": {
-            "description": "This controls which data the monitor can see.",
+            "description": "This controls which data the monitor can see",
             "type": "string",
             "enum": [
               "all",
-              "owning-team-only",
-              "owning-team-and-public"
+              "owning-team-and-public",
+              "owning-team-only"
             ]
           }
         },
@@ -1656,6 +1657,29 @@
         ],
         "description": "Collection of users used to manage ownership and access to resources"
       },
+      "AggregateUniqueCount": {
+        "title": "UniqueCount",
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "Counts the distinct values of the field",
+            "type": "string",
+            "enum": [
+              "unique-count"
+            ]
+          },
+          "field": {
+            "minLength": 0,
+            "maxLength": 250,
+            "description": "Attribute containing the values to aggregate",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "field"
+        ]
+      },
       "AggregateAverage": {
         "title": "Average",
         "type": "object",
@@ -1775,29 +1799,6 @@
           "percentile"
         ]
       },
-      "AggregateUniqueCount": {
-        "title": "UniqueCount",
-        "type": "object",
-        "properties": {
-          "type": {
-            "description": "Counts the distinct values of the field",
-            "type": "string",
-            "enum": [
-              "unique-count"
-            ]
-          },
-          "field": {
-            "minLength": 0,
-            "maxLength": 250,
-            "description": "Attribute containing the values to aggregate",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "field"
-        ]
-      },
       "AggregateCount": {
         "title": "Count",
         "type": "object",
@@ -1871,6 +1872,22 @@
             "type": "string",
             "enum": [
               "rate"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "FunctionIncrease": {
+        "title": "Increase",
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "Calculates the increase between values",
+            "type": "string",
+            "enum": [
+              "increase"
             ]
           }
         },
@@ -2285,12 +2302,28 @@
             "type": "number"
           },
           "groupByFields": {
-            "maxItems": 3,
+            "maxItems": 1,
             "type": "array",
             "items": {
-              "minLength": 1,
-              "maxLength": 250,
-              "type": "string"
+              "title": "AggregationGroupBy",
+              "type": "object",
+              "properties": {
+                "fields": {
+                  "type": "array",
+                  "items": {
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "type": "string"
+                  }
+                },
+                "limit": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "fields",
+                "limit"
+              ]
             }
           },
           "aggregationAlertLogic": {
@@ -2337,6 +2370,9 @@
                     "type"
                   ],
                   "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/AggregateUniqueCount"
+                    },
                     {
                       "$ref": "#/components/schemas/AggregateAverage"
                     },
@@ -2431,12 +2467,28 @@
             "type": "number"
           },
           "groupByFields": {
-            "maxItems": 3,
+            "maxItems": 1,
             "type": "array",
             "items": {
-              "minLength": 1,
-              "maxLength": 250,
-              "type": "string"
+              "title": "AggregationGroupBy",
+              "type": "object",
+              "properties": {
+                "fields": {
+                  "type": "array",
+                  "items": {
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "type": "string"
+                  }
+                },
+                "limit": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "fields",
+                "limit"
+              ]
             }
           },
           "aggregationAlertLogic": {
@@ -2484,10 +2536,10 @@
                   ],
                   "oneOf": [
                     {
-                      "$ref": "#/components/schemas/AggregateUniqueCount"
+                      "$ref": "#/components/schemas/AggregateCount"
                     },
                     {
-                      "$ref": "#/components/schemas/AggregateCount"
+                      "$ref": "#/components/schemas/AggregateUniqueCount"
                     },
                     {
                       "$ref": "#/components/schemas/AggregateAverage"
@@ -2577,12 +2629,28 @@
             "type": "number"
           },
           "groupByFields": {
-            "maxItems": 3,
+            "maxItems": 1,
             "type": "array",
             "items": {
-              "minLength": 1,
-              "maxLength": 250,
-              "type": "string"
+              "title": "AggregationGroupBy",
+              "type": "object",
+              "properties": {
+                "fields": {
+                  "type": "array",
+                  "items": {
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "type": "string"
+                  }
+                },
+                "limit": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "fields",
+                "limit"
+              ]
             }
           },
           "aggregationAlertLogic": {
@@ -2630,10 +2698,10 @@
                   ],
                   "oneOf": [
                     {
-                      "$ref": "#/components/schemas/AggregateUniqueCount"
+                      "$ref": "#/components/schemas/AggregateCount"
                     },
                     {
-                      "$ref": "#/components/schemas/AggregateCount"
+                      "$ref": "#/components/schemas/AggregateUniqueCount"
                     },
                     {
                       "$ref": "#/components/schemas/AggregateAverage"
@@ -2723,12 +2791,28 @@
             "type": "number"
           },
           "groupByFields": {
-            "maxItems": 3,
+            "maxItems": 1,
             "type": "array",
             "items": {
-              "minLength": 1,
-              "maxLength": 250,
-              "type": "string"
+              "title": "AggregationGroupBy",
+              "type": "object",
+              "properties": {
+                "fields": {
+                  "type": "array",
+                  "items": {
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "type": "string"
+                  }
+                },
+                "limit": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "fields",
+                "limit"
+              ]
             }
           },
           "aggregationAlertLogic": {
@@ -2775,6 +2859,9 @@
                     "type"
                   ],
                   "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/AggregateUniqueCount"
+                    },
                     {
                       "$ref": "#/components/schemas/AggregateAverage"
                     },
@@ -3119,66 +3206,35 @@
               "type": "object",
               "properties": {
                 "aggregate": {
-                  "anyOf": [
+                  "title": "Aggregate",
+                  "type": "object",
+                  "discriminator": {
+                    "propertyName": "type"
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "oneOf": [
                     {
-                      "title": "LogAggregate",
-                      "type": "object",
-                      "discriminator": {
-                        "propertyName": "type"
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "oneOf": [
-                        {
-                          "$ref": "#/components/schemas/AggregateUniqueCount"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateCount"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateAverage"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateMax"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateMin"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateSum"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregatePercentile"
-                        }
-                      ]
+                      "$ref": "#/components/schemas/AggregateCount"
                     },
                     {
-                      "title": "MetricAggregate",
-                      "type": "object",
-                      "discriminator": {
-                        "propertyName": "type"
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "oneOf": [
-                        {
-                          "$ref": "#/components/schemas/AggregateAverage"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateMax"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateMin"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateSum"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregatePercentile"
-                        }
-                      ]
+                      "$ref": "#/components/schemas/AggregateUniqueCount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateAverage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMax"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMin"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateSum"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregatePercentile"
                     }
                   ]
                 },
@@ -3213,6 +3269,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionRate"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionIncrease"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionRolling"
@@ -3265,6 +3324,29 @@
               ]
             }
           },
+          "timeBucket": {
+            "type": "object",
+            "properties": {
+              "time": {
+                "description": "Number of units that make up each bar bucket",
+                "type": "number"
+              },
+              "metric": {
+                "description": "Unit used to measure the bucket width",
+                "type": "string",
+                "enum": [
+                  "sec",
+                  "min",
+                  "hour",
+                  "day"
+                ]
+              }
+            },
+            "required": [
+              "time",
+              "metric"
+            ]
+          },
           "normalizer": {
             "title": "Normalizer",
             "type": "object",
@@ -3290,6 +3372,15 @@
               {
                 "$ref": "#/components/schemas/DataNormalizerLevel"
               }
+            ]
+          },
+          "legendMode": {
+            "description": "Controls whether and how the widget displays legend or series details (e.g. table, legend-only, or no legend)",
+            "type": "string",
+            "enum": [
+              "table",
+              "legend-only",
+              "no-legend"
             ]
           }
         },
@@ -3328,66 +3419,35 @@
               "type": "object",
               "properties": {
                 "aggregate": {
-                  "anyOf": [
+                  "title": "Aggregate",
+                  "type": "object",
+                  "discriminator": {
+                    "propertyName": "type"
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "oneOf": [
                     {
-                      "title": "LogAggregate",
-                      "type": "object",
-                      "discriminator": {
-                        "propertyName": "type"
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "oneOf": [
-                        {
-                          "$ref": "#/components/schemas/AggregateUniqueCount"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateCount"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateAverage"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateMax"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateMin"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateSum"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregatePercentile"
-                        }
-                      ]
+                      "$ref": "#/components/schemas/AggregateCount"
                     },
                     {
-                      "title": "MetricAggregate",
-                      "type": "object",
-                      "discriminator": {
-                        "propertyName": "type"
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "oneOf": [
-                        {
-                          "$ref": "#/components/schemas/AggregateAverage"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateMax"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateMin"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateSum"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregatePercentile"
-                        }
-                      ]
+                      "$ref": "#/components/schemas/AggregateUniqueCount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateAverage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMax"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMin"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateSum"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregatePercentile"
                     }
                   ]
                 },
@@ -3422,6 +3482,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionRate"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionIncrease"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionRolling"
@@ -3537,66 +3600,35 @@
               "type": "object",
               "properties": {
                 "aggregate": {
-                  "anyOf": [
+                  "title": "Aggregate",
+                  "type": "object",
+                  "discriminator": {
+                    "propertyName": "type"
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "oneOf": [
                     {
-                      "title": "LogAggregate",
-                      "type": "object",
-                      "discriminator": {
-                        "propertyName": "type"
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "oneOf": [
-                        {
-                          "$ref": "#/components/schemas/AggregateUniqueCount"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateCount"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateAverage"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateMax"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateMin"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateSum"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregatePercentile"
-                        }
-                      ]
+                      "$ref": "#/components/schemas/AggregateCount"
                     },
                     {
-                      "title": "MetricAggregate",
-                      "type": "object",
-                      "discriminator": {
-                        "propertyName": "type"
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "oneOf": [
-                        {
-                          "$ref": "#/components/schemas/AggregateAverage"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateMax"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateMin"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateSum"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregatePercentile"
-                        }
-                      ]
+                      "$ref": "#/components/schemas/AggregateUniqueCount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateAverage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMax"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMin"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateSum"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregatePercentile"
                     }
                   ]
                 },
@@ -3631,6 +3663,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionRate"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionIncrease"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionRolling"
@@ -3709,6 +3744,15 @@
                 "$ref": "#/components/schemas/DataNormalizerLevel"
               }
             ]
+          },
+          "legendMode": {
+            "description": "Controls whether and how the widget displays legend or series details (e.g. table, legend-only, or no legend)",
+            "type": "string",
+            "enum": [
+              "table",
+              "legend-only",
+              "no-legend"
+            ]
           }
         },
         "required": [
@@ -3746,66 +3790,35 @@
               "type": "object",
               "properties": {
                 "aggregate": {
-                  "anyOf": [
+                  "title": "Aggregate",
+                  "type": "object",
+                  "discriminator": {
+                    "propertyName": "type"
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "oneOf": [
                     {
-                      "title": "LogAggregate",
-                      "type": "object",
-                      "discriminator": {
-                        "propertyName": "type"
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "oneOf": [
-                        {
-                          "$ref": "#/components/schemas/AggregateUniqueCount"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateCount"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateAverage"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateMax"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateMin"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateSum"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregatePercentile"
-                        }
-                      ]
+                      "$ref": "#/components/schemas/AggregateCount"
                     },
                     {
-                      "title": "MetricAggregate",
-                      "type": "object",
-                      "discriminator": {
-                        "propertyName": "type"
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "oneOf": [
-                        {
-                          "$ref": "#/components/schemas/AggregateAverage"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateMax"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateMin"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateSum"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregatePercentile"
-                        }
-                      ]
+                      "$ref": "#/components/schemas/AggregateUniqueCount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateAverage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMax"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMin"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateSum"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregatePercentile"
                     }
                   ]
                 },
@@ -3840,6 +3853,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionRate"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionIncrease"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionRolling"
@@ -3940,6 +3956,15 @@
                 "$ref": "#/components/schemas/DataNormalizerLevel"
               }
             ]
+          },
+          "legendMode": {
+            "description": "Controls whether and how the widget displays legend or series details (e.g. table, legend-only, or no legend)",
+            "type": "string",
+            "enum": [
+              "table",
+              "legend-only",
+              "no-legend"
+            ]
           }
         },
         "required": [
@@ -3977,66 +4002,35 @@
               "type": "object",
               "properties": {
                 "aggregate": {
-                  "anyOf": [
+                  "title": "Aggregate",
+                  "type": "object",
+                  "discriminator": {
+                    "propertyName": "type"
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "oneOf": [
                     {
-                      "title": "LogAggregate",
-                      "type": "object",
-                      "discriminator": {
-                        "propertyName": "type"
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "oneOf": [
-                        {
-                          "$ref": "#/components/schemas/AggregateUniqueCount"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateCount"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateAverage"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateMax"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateMin"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateSum"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregatePercentile"
-                        }
-                      ]
+                      "$ref": "#/components/schemas/AggregateCount"
                     },
                     {
-                      "title": "MetricAggregate",
-                      "type": "object",
-                      "discriminator": {
-                        "propertyName": "type"
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "oneOf": [
-                        {
-                          "$ref": "#/components/schemas/AggregateAverage"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateMax"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateMin"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregateSum"
-                        },
-                        {
-                          "$ref": "#/components/schemas/AggregatePercentile"
-                        }
-                      ]
+                      "$ref": "#/components/schemas/AggregateUniqueCount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateAverage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMax"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMin"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateSum"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregatePercentile"
                     }
                   ]
                 },
@@ -4071,6 +4065,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionRate"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionIncrease"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionRolling"
@@ -4171,6 +4168,15 @@
               {
                 "$ref": "#/components/schemas/DataNormalizerLevel"
               }
+            ]
+          },
+          "legendMode": {
+            "description": "Controls whether and how the widget displays legend or series details (e.g. table, legend-only, or no legend)",
+            "type": "string",
+            "enum": [
+              "table",
+              "legend-only",
+              "no-legend"
             ]
           }
         },
@@ -5099,6 +5105,11 @@
     },
     "/v1/monitors": {
       "get": {
+        "operationId": "listMonitors",
+        "tags": [
+          "monitors"
+        ],
+        "description": "Retrieve all monitors",
         "responses": {
           "200": {
             "description": "Default Response",
@@ -5173,6 +5184,11 @@
         }
       },
       "post": {
+        "operationId": "createMonitor",
+        "tags": [
+          "monitors"
+        ],
+        "description": "Create a new monitor",
         "requestBody": {
           "content": {
             "application/json": {
@@ -5257,12 +5273,12 @@
                     "type": "string"
                   },
                   "permissions": {
-                    "description": "This controls which data the monitor can see.",
+                    "description": "This controls which data the monitor can see",
                     "type": "string",
                     "enum": [
                       "all",
-                      "owning-team-only",
-                      "owning-team-and-public"
+                      "owning-team-and-public",
+                      "owning-team-only"
                     ]
                   }
                 },
@@ -5351,6 +5367,11 @@
     },
     "/v1/monitors/{id}": {
       "get": {
+        "operationId": "getMonitor",
+        "tags": [
+          "monitors"
+        ],
+        "description": "Retrieve a monitor by its id",
         "parameters": [
           {
             "schema": {
@@ -5434,6 +5455,11 @@
         }
       },
       "put": {
+        "operationId": "updateMonitor",
+        "tags": [
+          "monitors"
+        ],
+        "description": "Update a monitor by its id",
         "requestBody": {
           "content": {
             "application/json": {
@@ -5518,12 +5544,12 @@
                     "type": "string"
                   },
                   "permissions": {
-                    "description": "This controls which data the monitor can see.",
+                    "description": "This controls which data the monitor can see",
                     "type": "string",
                     "enum": [
                       "all",
-                      "owning-team-only",
-                      "owning-team-and-public"
+                      "owning-team-and-public",
+                      "owning-team-only"
                     ]
                   }
                 },
@@ -5622,6 +5648,11 @@
         }
       },
       "delete": {
+        "operationId": "deleteMonitor",
+        "tags": [
+          "monitors"
+        ],
+        "description": "Delete a monitor by its id",
         "parameters": [
           {
             "schema": {
@@ -8723,6 +8754,10 @@
     {
       "name": "dashboards",
       "description": "Visualization of telemetry data with customizable graphs and filters"
+    },
+    {
+      "name": "monitors",
+      "description": "Monitors for sending alerts based on telemetry data"
     },
     {
       "name": "notification-rules",
