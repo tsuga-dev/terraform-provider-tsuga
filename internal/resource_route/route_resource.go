@@ -456,10 +456,6 @@ type SplitItemModel struct {
 	Processors types.List   `tfsdk:"processors"`
 }
 
-func ProcessorAttrTypes(ctx context.Context) map[string]attr.Type {
-	return ProcessorAttrTypesAtDepth(ctx, MaxSplitDepth)
-}
-
 // ProcessorAttrTypesAtDepth returns attribute types for processors while
 // honoring the split depth budget so recursive schemas terminate after
 // MaxSplitDepth levels.
@@ -584,14 +580,6 @@ func CreatorMathFormulaAttrTypes(ctx context.Context) map[string]attr.Type {
 		"override_target":      types.BoolType,
 		"replace_missing_by_0": types.BoolType,
 	}
-}
-
-func SplitAttrTypes(ctx context.Context) map[string]attr.Type {
-	return SplitAttrTypesAtDepth(ctx, MaxSplitDepth-1)
-}
-
-func SplitItemAttrTypes(ctx context.Context) map[string]attr.Type {
-	return SplitItemAttrTypesAtDepth(ctx, MaxSplitDepth-1)
 }
 
 // SplitAttrTypesAtDepth mirrors ProcessorAttrTypesAtDepth but for the split
