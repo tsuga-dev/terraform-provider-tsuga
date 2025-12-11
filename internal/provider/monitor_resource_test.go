@@ -36,7 +36,10 @@ resource "tsuga_monitor" "test" {
       }
       no_data_behavior        = "alert"
       timeframe               = 5
-      group_by_fields         = ["service"]
+      group_by_fields = [{
+        fields = ["service"]
+        limit  = 10
+      }]
       aggregation_alert_logic = "no_aggregation"
       queries = [{
         name   = "q1"
@@ -87,7 +90,10 @@ resource "tsuga_monitor" "test" {
       }
       no_data_behavior        = "resolve"
       timeframe               = 10
-      group_by_fields         = ["service", "env"]
+      group_by_fields = [{
+        fields = ["service", "env"]
+        limit  = 10
+      }]
       aggregation_alert_logic = "no_aggregation"
       queries = [
         {
@@ -156,7 +162,10 @@ resource "tsuga_monitor" "test" {
       }
       no_data_behavior        = "alert"
       timeframe               = 20
-      group_by_fields         = ["service"]
+      group_by_fields = [{
+        fields = ["service"]
+        limit  = 10
+      }]
       aggregation_alert_logic = "no_aggregation"
       queries = [{
         name   = "q1"
@@ -207,7 +216,10 @@ resource "tsuga_monitor" "test" {
       }
       no_data_behavior           = "keep_last_status"
       timeframe                  = 30
-      group_by_fields            = ["service", "env"]
+      group_by_fields = [{
+        fields = ["service", "env"]
+        limit  = 10
+      }]
       aggregation_alert_logic    = "no_aggregation"
       proportion_alert_threshold = 50
       queries = [{
