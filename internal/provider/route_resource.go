@@ -31,7 +31,7 @@ type routeResource struct {
 	client *TsugaClient
 }
 
-func (r *routeResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *routeResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -48,11 +48,11 @@ func (r *routeResource) Configure(ctx context.Context, req resource.ConfigureReq
 	r.client = client
 }
 
-func (r *routeResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *routeResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_route"
 }
 
-func (r *routeResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *routeResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = resource_route.RouteResourceSchema(ctx)
 }
 
@@ -580,9 +580,9 @@ func flattenRouteProcessors(ctx context.Context, procs []routeAPIProcessor, dept
 			"name":            stringValueOrNull(p.Name),
 			"description":     stringValueOrNull(p.Description),
 			"tags":            types.ListNull(types.ObjectType{AttrTypes: resource_team.TagsValue{}.AttributeTypes(ctx)}),
-			"mapper":          types.ObjectNull(resource_route.MapperAttrTypes(ctx)),
-			"parse_attribute": types.ObjectNull(resource_route.ParseAttributeAttrTypes(ctx)),
-			"creator":         types.ObjectNull(resource_route.CreatorAttrTypes(ctx)),
+			"mapper":          types.ObjectNull(resource_route.MapperAttrTypes()),
+			"parse_attribute": types.ObjectNull(resource_route.ParseAttributeAttrTypes()),
+			"creator":         types.ObjectNull(resource_route.CreatorAttrTypes()),
 			"split": func() attr.Value {
 				if st, ok := attrTypes["split"].(types.ObjectType); ok {
 					return types.ObjectNull(st.AttrTypes)
@@ -600,11 +600,11 @@ func flattenRouteProcessors(ctx context.Context, procs []routeAPIProcessor, dept
 
 		switch p.Type {
 		case "mapper":
-			obj["mapper"] = flattenMapper(ctx, p.Params)
+			obj["mapper"] = flattenMapper(p.Params)
 		case "parse-attribute":
 			obj["parse_attribute"] = flattenParseAttribute(ctx, p.Params)
 		case "creator":
-			obj["creator"] = flattenCreator(ctx, p.Params)
+			obj["creator"] = flattenCreator(p.Params)
 		case "split":
 			if depth <= 0 {
 				return types.ListNull(elemType), diag.Diagnostics{diag.NewErrorDiagnostic("split depth exceeded", "API returned nested split processors beyond the supported depth limit")}
@@ -622,16 +622,16 @@ func flattenRouteProcessors(ctx context.Context, procs []routeAPIProcessor, dept
 	return types.ListValue(elemType, values)
 }
 
-func flattenMapper(ctx context.Context, params map[string]interface{}) attr.Value {
-	mapperAttrs := resource_route.MapperAttrTypes(ctx)
-	mapAttrs := types.ListNull(types.ObjectType{AttrTypes: resource_route.MapAttributeAttrTypes(ctx)})
+func flattenMapper(params map[string]interface{}) attr.Value {
+	mapperAttrs := resource_route.MapperAttrTypes()
+	mapAttrs := types.ListNull(types.ObjectType{AttrTypes: resource_route.MapAttributeAttrTypes()})
 	if attrsRaw, ok := params["attributes"].([]interface{}); ok && len(attrsRaw) > 0 {
 		vals := make([]attr.Value, 0, len(attrsRaw))
 		for _, a := range attrsRaw {
 			m, _ := a.(map[string]interface{})
 			keepVal, keepOK := boolFromMap(m, "keepOrigin")
 			overrideVal, overrideOK := boolFromMap(m, "overrideTarget")
-			vals = append(vals, types.ObjectValueMust(resource_route.MapAttributeAttrTypes(ctx), map[string]attr.Value{
+			vals = append(vals, types.ObjectValueMust(resource_route.MapAttributeAttrTypes(), map[string]attr.Value{
 				"origin_attribute": types.StringValue(fmt.Sprintf("%v", m["originAttribute"])),
 				"target_attribute": types.StringValue(fmt.Sprintf("%v", m["targetAttribute"])),
 				"keep_origin": func() types.Bool {
@@ -648,17 +648,17 @@ func flattenMapper(ctx context.Context, params map[string]interface{}) attr.Valu
 				}(),
 			}))
 		}
-		mapAttrs, _ = types.ListValue(types.ObjectType{AttrTypes: resource_route.MapAttributeAttrTypes(ctx)}, vals)
+		mapAttrs, _ = types.ListValue(types.ObjectType{AttrTypes: resource_route.MapAttributeAttrTypes()}, vals)
 	}
 
-	mapLevel := types.ObjectNull(resource_route.MapperLevelAttrTypes(ctx))
-	mapTimestamp := types.ObjectNull(resource_route.MapperTimestampAttrTypes(ctx))
+	mapLevel := types.ObjectNull(resource_route.MapperLevelAttrTypes())
+	mapTimestamp := types.ObjectNull(resource_route.MapperTimestampAttrTypes())
 	if subtype, _ := params["subtype"].(string); subtype == "map-level" {
-		mapLevel = types.ObjectValueMust(resource_route.MapperLevelAttrTypes(ctx), map[string]attr.Value{
+		mapLevel = types.ObjectValueMust(resource_route.MapperLevelAttrTypes(), map[string]attr.Value{
 			"attribute_name": types.StringValue(fmt.Sprintf("%v", params["attributeName"])),
 		})
 	} else if subtype == "map-timestamp" {
-		mapTimestamp = types.ObjectValueMust(resource_route.MapperTimestampAttrTypes(ctx), map[string]attr.Value{
+		mapTimestamp = types.ObjectValueMust(resource_route.MapperTimestampAttrTypes(), map[string]attr.Value{
 			"attribute_name": types.StringValue(fmt.Sprintf("%v", params["attributeName"])),
 		})
 	}
@@ -671,7 +671,7 @@ func flattenMapper(ctx context.Context, params map[string]interface{}) attr.Valu
 }
 
 func flattenParseAttribute(ctx context.Context, params map[string]interface{}) attr.Value {
-	attrTypes := resource_route.ParseAttributeAttrTypes(ctx)
+	attrTypes := resource_route.ParseAttributeAttrTypes()
 	nullVal := types.ObjectNull(attrTypes)
 
 	subtype, _ := params["subtype"].(string)
@@ -691,64 +691,64 @@ func flattenParseAttribute(ctx context.Context, params map[string]interface{}) a
 			samplesVal = types.ListNull(types.StringType)
 		}
 		return types.ObjectValueMust(attrTypes, map[string]attr.Value{
-			"grok": types.ObjectValueMust(resource_route.ParseGrokAttrTypes(ctx), map[string]attr.Value{
+			"grok": types.ObjectValueMust(resource_route.ParseGrokAttrTypes(), map[string]attr.Value{
 				"attribute_name": types.StringValue(fmt.Sprintf("%v", params["attributeName"])),
 				"rules":          rulesVal,
 				"samples":        samplesVal,
 			}),
-			"url":        types.ObjectNull(resource_route.ParseURLAttrTypes(ctx)),
-			"user_agent": types.ObjectNull(resource_route.ParseUserAgentAttrTypes(ctx)),
-			"key_value":  types.ObjectNull(resource_route.ParseKeyValueAttrTypes(ctx)),
+			"url":        types.ObjectNull(resource_route.ParseURLAttrTypes()),
+			"user_agent": types.ObjectNull(resource_route.ParseUserAgentAttrTypes()),
+			"key_value":  types.ObjectNull(resource_route.ParseKeyValueAttrTypes()),
 		})
 	case "url":
 		return types.ObjectValueMust(attrTypes, map[string]attr.Value{
-			"url": types.ObjectValueMust(resource_route.ParseURLAttrTypes(ctx), map[string]attr.Value{
+			"url": types.ObjectValueMust(resource_route.ParseURLAttrTypes(), map[string]attr.Value{
 				"source_attribute": types.StringValue(fmt.Sprintf("%v", params["sourceAttribute"])),
 			}),
-			"grok":       types.ObjectNull(resource_route.ParseGrokAttrTypes(ctx)),
-			"user_agent": types.ObjectNull(resource_route.ParseUserAgentAttrTypes(ctx)),
-			"key_value":  types.ObjectNull(resource_route.ParseKeyValueAttrTypes(ctx)),
+			"grok":       types.ObjectNull(resource_route.ParseGrokAttrTypes()),
+			"user_agent": types.ObjectNull(resource_route.ParseUserAgentAttrTypes()),
+			"key_value":  types.ObjectNull(resource_route.ParseKeyValueAttrTypes()),
 		})
 	case "user-agent":
 		return types.ObjectValueMust(attrTypes, map[string]attr.Value{
-			"user_agent": types.ObjectValueMust(resource_route.ParseUserAgentAttrTypes(ctx), map[string]attr.Value{
+			"user_agent": types.ObjectValueMust(resource_route.ParseUserAgentAttrTypes(), map[string]attr.Value{
 				"source_attribute": types.StringValue(fmt.Sprintf("%v", params["sourceAttribute"])),
 			}),
-			"grok":      types.ObjectNull(resource_route.ParseGrokAttrTypes(ctx)),
-			"url":       types.ObjectNull(resource_route.ParseURLAttrTypes(ctx)),
-			"key_value": types.ObjectNull(resource_route.ParseKeyValueAttrTypes(ctx)),
+			"grok":      types.ObjectNull(resource_route.ParseGrokAttrTypes()),
+			"url":       types.ObjectNull(resource_route.ParseURLAttrTypes()),
+			"key_value": types.ObjectNull(resource_route.ParseKeyValueAttrTypes()),
 		})
 	case "key-value":
 		val, ok := boolFromMap(params, "acceptStandaloneKey")
 		acceptVal := optionalBoolValue(ok, val)
 		return types.ObjectValueMust(attrTypes, map[string]attr.Value{
-			"key_value": types.ObjectValueMust(resource_route.ParseKeyValueAttrTypes(ctx), map[string]attr.Value{
+			"key_value": types.ObjectValueMust(resource_route.ParseKeyValueAttrTypes(), map[string]attr.Value{
 				"source_attribute":      types.StringValue(fmt.Sprintf("%v", params["sourceAttribute"])),
 				"target_attribute":      types.StringValue(fmt.Sprintf("%v", params["targetAttribute"])),
 				"key_value_splitter":    types.StringValue(fmt.Sprintf("%v", params["keyValueSplitter"])),
 				"pairs_splitter":        types.StringValue(fmt.Sprintf("%v", params["pairsSplitter"])),
 				"accept_standalone_key": acceptVal,
 			}),
-			"grok":       types.ObjectNull(resource_route.ParseGrokAttrTypes(ctx)),
-			"url":        types.ObjectNull(resource_route.ParseURLAttrTypes(ctx)),
-			"user_agent": types.ObjectNull(resource_route.ParseUserAgentAttrTypes(ctx)),
+			"grok":       types.ObjectNull(resource_route.ParseGrokAttrTypes()),
+			"url":        types.ObjectNull(resource_route.ParseURLAttrTypes()),
+			"user_agent": types.ObjectNull(resource_route.ParseUserAgentAttrTypes()),
 		})
 	default:
 		return nullVal
 	}
 }
 
-func flattenCreator(ctx context.Context, params map[string]interface{}) attr.Value {
-	attrTypes := resource_route.CreatorAttrTypes(ctx)
+func flattenCreator(params map[string]interface{}) attr.Value {
+	attrTypes := resource_route.CreatorAttrTypes()
 	subtype, _ := params["subtype"].(string)
-	formatNull := types.ObjectNull(resource_route.CreatorFormatStringAttrTypes(ctx))
-	mathNull := types.ObjectNull(resource_route.CreatorMathFormulaAttrTypes(ctx))
+	formatNull := types.ObjectNull(resource_route.CreatorFormatStringAttrTypes())
+	mathNull := types.ObjectNull(resource_route.CreatorMathFormulaAttrTypes())
 
 	if subtype == "format-string" {
 		overrideVal, okO := boolFromMap(params, "overrideTarget")
 		replaceVal, okR := boolFromMap(params, "replaceMissingByEmpty")
 		return types.ObjectValueMust(attrTypes, map[string]attr.Value{
-			"format_string": types.ObjectValueMust(resource_route.CreatorFormatStringAttrTypes(ctx), map[string]attr.Value{
+			"format_string": types.ObjectValueMust(resource_route.CreatorFormatStringAttrTypes(), map[string]attr.Value{
 				"target_attribute": types.StringValue(fmt.Sprintf("%v", params["targetAttribute"])),
 				"format_string":    types.StringValue(fmt.Sprintf("%v", params["formatString"])),
 				"override_target": func() types.Bool {
@@ -771,7 +771,7 @@ func flattenCreator(ctx context.Context, params map[string]interface{}) attr.Val
 		overrideVal, okO := boolFromMap(params, "overrideTarget")
 		replaceVal, okR := boolFromMap(params, "replaceMissingBy0")
 		return types.ObjectValueMust(attrTypes, map[string]attr.Value{
-			"math_formula": types.ObjectValueMust(resource_route.CreatorMathFormulaAttrTypes(ctx), map[string]attr.Value{
+			"math_formula": types.ObjectValueMust(resource_route.CreatorMathFormulaAttrTypes(), map[string]attr.Value{
 				"target_attribute": types.StringValue(fmt.Sprintf("%v", params["targetAttribute"])),
 				"formula":          types.StringValue(fmt.Sprintf("%v", params["formula"])),
 				"override_target": func() types.Bool {
