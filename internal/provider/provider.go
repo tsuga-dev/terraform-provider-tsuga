@@ -34,7 +34,7 @@ type tsugaProviderModel struct {
 	Token   types.String `tfsdk:"token"`
 }
 
-func (p *tsugaProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
+func (p *tsugaProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"base_url": schema.StringAttribute{
@@ -108,15 +108,15 @@ func (p *tsugaProvider) Configure(ctx context.Context, req provider.ConfigureReq
 	resp.ResourceData = client
 }
 
-func (p *tsugaProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+func (p *tsugaProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
 	resp.TypeName = "tsuga"
 }
 
-func (p *tsugaProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
+func (p *tsugaProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{}
 }
 
-func (p *tsugaProvider) Resources(ctx context.Context) []func() resource.Resource {
+func (p *tsugaProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewTeamResource,
 		NewNotificationRuleResource,
