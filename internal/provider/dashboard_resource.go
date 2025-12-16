@@ -7,6 +7,9 @@ import (
 	"io"
 	"net/http"
 
+	"terraform-provider-tsuga/internal/aggregate"
+	"terraform-provider-tsuga/internal/groupby"
+	"terraform-provider-tsuga/internal/normalizer"
 	"terraform-provider-tsuga/internal/resource_dashboard"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -643,12 +646,12 @@ func flattenDashboard(ctx context.Context, data dashboardAPIData) (resource_dash
 }
 
 func flattenDashboardGraphs(ctx context.Context, graphs []dashboardAPIGraph) (types.List, diag.Diagnostics) {
-	elemType := types.ObjectType{AttrTypes: resource_dashboard.GraphAttrTypes(ctx)}
+	elemType := types.ObjectType{AttrTypes: resource_dashboard.GraphAttrTypes()}
 	if len(graphs) == 0 {
 		return types.ListNull(elemType), nil
 	}
 
-	layoutType := types.ObjectType{AttrTypes: resource_dashboard.GraphLayoutAttrTypes(ctx)}
+	layoutType := types.ObjectType{AttrTypes: resource_dashboard.GraphLayoutAttrTypes()}
 
 	values := make([]attr.Value, 0, len(graphs))
 	for _, g := range graphs {
@@ -667,7 +670,7 @@ func flattenDashboardGraphs(ctx context.Context, graphs []dashboardAPIGraph) (ty
 			return types.ListNull(elemType), visDiags
 		}
 
-		values = append(values, types.ObjectValueMust(resource_dashboard.GraphAttrTypes(ctx), map[string]attr.Value{
+		values = append(values, types.ObjectValueMust(resource_dashboard.GraphAttrTypes(), map[string]attr.Value{
 			"id":            types.StringValue(g.ID),
 			"name":          stringValueOrNull(g.Name),
 			"layout":        layoutVal,
@@ -681,53 +684,53 @@ func flattenDashboardGraphs(ctx context.Context, graphs []dashboardAPIGraph) (ty
 func flattenVisualization(ctx context.Context, vis dashboardVisualization) (attr.Value, diag.Diagnostics) {
 	switch vis.Type {
 	case "note":
-		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(ctx), map[string]attr.Value{
-			"note": types.ObjectValueMust(resource_dashboard.NoteVisualizationAttrTypes(ctx), map[string]attr.Value{
+		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(), map[string]attr.Value{
+			"note": types.ObjectValueMust(resource_dashboard.NoteVisualizationAttrTypes(), map[string]attr.Value{
 				"type":                 types.StringValue("note"),
 				"note":                 types.StringValue(vis.Note),
 				"note_align":           stringValueOrNull(vis.NoteAlign),
 				"note_justify_content": stringValueOrNull(vis.NoteJustify),
 				"note_color":           stringValueOrNull(vis.NoteColor),
 			}),
-			"timeseries":  types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes(ctx)),
-			"top_list":    types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes(ctx)),
-			"pie":         types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes(ctx)),
-			"query_value": types.ObjectNull(resource_dashboard.QueryValueVisualizationAttrTypes(ctx)),
-			"bar":         types.ObjectNull(resource_dashboard.BarVisualizationAttrTypes(ctx)),
-			"list":        types.ObjectNull(resource_dashboard.ListVisualizationAttrTypes(ctx)),
+			"timeseries":  types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes()),
+			"top_list":    types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes()),
+			"pie":         types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes()),
+			"query_value": types.ObjectNull(resource_dashboard.QueryValueVisualizationAttrTypes()),
+			"bar":         types.ObjectNull(resource_dashboard.BarVisualizationAttrTypes()),
+			"list":        types.ObjectNull(resource_dashboard.ListVisualizationAttrTypes()),
 		}), nil
 	case "list":
-		listCols, diags := flattenListColumns(ctx, vis.ListColumns)
+		listCols, diags := flattenListColumns(vis.ListColumns)
 		if diags.HasError() {
-			return types.ObjectNull(resource_dashboard.VisualizationAttrTypes(ctx)), diags
+			return types.ObjectNull(resource_dashboard.VisualizationAttrTypes()), diags
 		}
-		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(ctx), map[string]attr.Value{
-			"list": types.ObjectValueMust(resource_dashboard.ListVisualizationAttrTypes(ctx), map[string]attr.Value{
+		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(), map[string]attr.Value{
+			"list": types.ObjectValueMust(resource_dashboard.ListVisualizationAttrTypes(), map[string]attr.Value{
 				"type":         types.StringValue("list"),
 				"source":       types.StringValue(vis.Source),
 				"query":        types.StringValue(vis.Query),
 				"list_columns": listCols,
 			}),
-			"timeseries":  types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes(ctx)),
-			"top_list":    types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes(ctx)),
-			"pie":         types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes(ctx)),
-			"query_value": types.ObjectNull(resource_dashboard.QueryValueVisualizationAttrTypes(ctx)),
-			"bar":         types.ObjectNull(resource_dashboard.BarVisualizationAttrTypes(ctx)),
-			"note":        types.ObjectNull(resource_dashboard.NoteVisualizationAttrTypes(ctx)),
+			"timeseries":  types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes()),
+			"top_list":    types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes()),
+			"pie":         types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes()),
+			"query_value": types.ObjectNull(resource_dashboard.QueryValueVisualizationAttrTypes()),
+			"bar":         types.ObjectNull(resource_dashboard.BarVisualizationAttrTypes()),
+			"note":        types.ObjectNull(resource_dashboard.NoteVisualizationAttrTypes()),
 		}), nil
 	case "bar", "query-value", "timeseries", "top-list", "pie":
 		seriesVal, diags := flattenSeriesVisualization(ctx, vis)
 		if diags.HasError() {
-			return types.ObjectNull(resource_dashboard.VisualizationAttrTypes(ctx)), diags
+			return types.ObjectNull(resource_dashboard.VisualizationAttrTypes()), diags
 		}
 		obj := map[string]attr.Value{
-			"timeseries":  types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes(ctx)),
-			"top_list":    types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes(ctx)),
-			"pie":         types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes(ctx)),
-			"query_value": types.ObjectNull(resource_dashboard.QueryValueVisualizationAttrTypes(ctx)),
-			"bar":         types.ObjectNull(resource_dashboard.BarVisualizationAttrTypes(ctx)),
-			"list":        types.ObjectNull(resource_dashboard.ListVisualizationAttrTypes(ctx)),
-			"note":        types.ObjectNull(resource_dashboard.NoteVisualizationAttrTypes(ctx)),
+			"timeseries":  types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes()),
+			"top_list":    types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes()),
+			"pie":         types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes()),
+			"query_value": types.ObjectNull(resource_dashboard.QueryValueVisualizationAttrTypes()),
+			"bar":         types.ObjectNull(resource_dashboard.BarVisualizationAttrTypes()),
+			"list":        types.ObjectNull(resource_dashboard.ListVisualizationAttrTypes()),
+			"note":        types.ObjectNull(resource_dashboard.NoteVisualizationAttrTypes()),
 		}
 		switch vis.Type {
 		case "timeseries":
@@ -741,24 +744,24 @@ func flattenVisualization(ctx context.Context, vis dashboardVisualization) (attr
 		case "bar":
 			obj["bar"] = seriesVal
 		}
-		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(ctx), obj), nil
+		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(), obj), nil
 	default:
 		var diags diag.Diagnostics
 		diags.AddError("Unsupported visualization type", vis.Type)
-		return types.ObjectNull(resource_dashboard.VisualizationAttrTypes(ctx)), diags
+		return types.ObjectNull(resource_dashboard.VisualizationAttrTypes()), diags
 	}
 }
 
 func flattenSeriesVisualization(ctx context.Context, vis dashboardVisualization) (attr.Value, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	queries, qDiags := flattenQueries(ctx, vis.Queries)
+	queries, qDiags := flattenQueries(vis.Queries)
 	diags.Append(qDiags...)
 	groupBy, gDiags := flattenGroupBy(ctx, vis.GroupBy)
 	diags.Append(gDiags...)
 
-	normalizerVal := types.ObjectNull(resource_dashboard.NormalizerAttrTypes(ctx))
+	normalizerVal := types.ObjectNull(normalizer.AttrTypes())
 	if vis.Normalizer != nil {
-		normalizerVal = types.ObjectValueMust(resource_dashboard.NormalizerAttrTypes(ctx), map[string]attr.Value{
+		normalizerVal = types.ObjectValueMust(normalizer.AttrTypes(), map[string]attr.Value{
 			"type": types.StringValue(vis.Normalizer.Type),
 			"unit": stringValueOrNull(vis.Normalizer.Unit),
 		})
@@ -782,37 +785,37 @@ func flattenSeriesVisualization(ctx context.Context, vis dashboardVisualization)
 	}
 
 	if vis.Type == "query-value" {
-		condVal, cDiags := flattenConditions(ctx, vis.Conditions)
+		condVal, cDiags := flattenConditions(vis.Conditions)
 		diags.Append(cDiags...)
 		obj["background_mode"] = stringValueOrNull(vis.BackgroundMode)
 		obj["conditions"] = condVal
-		return types.ObjectValueMust(resource_dashboard.QueryValueVisualizationAttrTypes(ctx), obj), diags
+		return types.ObjectValueMust(resource_dashboard.QueryValueVisualizationAttrTypes(), obj), diags
 	}
 
 	if vis.Type == "bar" {
-		tbVal := types.ObjectNull(resource_dashboard.TimeBucketAttrTypes(ctx))
+		tbVal := types.ObjectNull(resource_dashboard.TimeBucketAttrTypes())
 		if vis.TimeBucket != nil {
-			tbVal = types.ObjectValueMust(resource_dashboard.TimeBucketAttrTypes(ctx), map[string]attr.Value{
+			tbVal = types.ObjectValueMust(resource_dashboard.TimeBucketAttrTypes(), map[string]attr.Value{
 				"time":   types.Float64Value(vis.TimeBucket.Time),
 				"metric": types.StringValue(vis.TimeBucket.Metric),
 			})
 		}
 		obj["time_bucket"] = tbVal
-		return types.ObjectValueMust(resource_dashboard.BarVisualizationAttrTypes(ctx), obj), diags
+		return types.ObjectValueMust(resource_dashboard.BarVisualizationAttrTypes(), obj), diags
 	}
 
-	return types.ObjectValueMust(resource_dashboard.SeriesVisualizationAttrTypes(ctx), obj), diags
+	return types.ObjectValueMust(resource_dashboard.SeriesVisualizationAttrTypes(), obj), diags
 }
 
-func flattenQueries(ctx context.Context, queries []dashboardQuery) (types.List, diag.Diagnostics) {
-	elemType := types.ObjectType{AttrTypes: resource_dashboard.QueryAttrTypes(ctx)}
+func flattenQueries(queries []dashboardQuery) (types.List, diag.Diagnostics) {
+	elemType := types.ObjectType{AttrTypes: resource_dashboard.QueryAttrTypes()}
 	if len(queries) == 0 {
 		return types.ListNull(elemType), nil
 	}
 
 	values := make([]attr.Value, 0, len(queries))
 	for _, q := range queries {
-		aggVal, diags := flattenAggregate(ctx, q.Aggregate)
+		aggVal, diags := flattenAggregate(q.Aggregate)
 		if diags.HasError() {
 			return types.ListNull(elemType), diags
 		}
@@ -822,7 +825,7 @@ func flattenQueries(ctx context.Context, queries []dashboardQuery) (types.List, 
 			return types.ListNull(elemType), fDiags
 		}
 
-		values = append(values, types.ObjectValueMust(resource_dashboard.QueryAttrTypes(ctx), map[string]attr.Value{
+		values = append(values, types.ObjectValueMust(resource_dashboard.QueryAttrTypes(), map[string]attr.Value{
 			"aggregate": aggVal,
 			"filter":    stringValueOrNull(q.Filter),
 			"functions": funcVal,
@@ -832,10 +835,10 @@ func flattenQueries(ctx context.Context, queries []dashboardQuery) (types.List, 
 	return types.ListValue(elemType, values)
 }
 
-func flattenAggregate(ctx context.Context, agg dashboardAggregate) (attr.Value, diag.Diagnostics) {
-	countNull := types.ObjectNull(resource_dashboard.AggregateCountAttrTypes(ctx))
-	fieldNull := types.ObjectNull(resource_dashboard.AggregateFieldAttrTypes())
-	percNull := types.ObjectNull(resource_dashboard.AggregatePercentileAttrTypes())
+func flattenAggregate(agg dashboardAggregate) (attr.Value, diag.Diagnostics) {
+	countNull := types.ObjectNull(aggregate.CountAttrTypes())
+	fieldNull := types.ObjectNull(aggregate.FieldAttrTypes())
+	percNull := types.ObjectNull(aggregate.PercentileAttrTypes())
 
 	vals := map[string]attr.Value{
 		"count":        countNull,
@@ -849,9 +852,7 @@ func flattenAggregate(ctx context.Context, agg dashboardAggregate) (attr.Value, 
 
 	switch agg.Type {
 	case "count":
-		vals["count"] = types.ObjectValueMust(resource_dashboard.AggregateCountAttrTypes(ctx), map[string]attr.Value{
-			"type": types.StringValue("count"),
-		})
+		vals["count"] = types.ObjectValueMust(aggregate.CountAttrTypes(), map[string]attr.Value{})
 	case "sum", "average", "min", "max", "unique-count":
 		key := map[string]string{
 			"sum":          "sum",
@@ -860,19 +861,17 @@ func flattenAggregate(ctx context.Context, agg dashboardAggregate) (attr.Value, 
 			"max":          "max",
 			"unique-count": "unique_count",
 		}[agg.Type]
-		vals[key] = types.ObjectValueMust(resource_dashboard.AggregateFieldAttrTypes(), map[string]attr.Value{
-			"type":  types.StringValue(agg.Type),
+		vals[key] = types.ObjectValueMust(aggregate.FieldAttrTypes(), map[string]attr.Value{
 			"field": types.StringValue(agg.Field),
 		})
 	case "percentile":
-		vals["percentile"] = types.ObjectValueMust(resource_dashboard.AggregatePercentileAttrTypes(), map[string]attr.Value{
-			"type":       types.StringValue("percentile"),
+		vals["percentile"] = types.ObjectValueMust(aggregate.PercentileAttrTypes(), map[string]attr.Value{
 			"field":      types.StringValue(agg.Field),
 			"percentile": types.Float64Value(agg.Percentile),
 		})
 	}
 
-	return types.ObjectValueMust(resource_dashboard.AggregateAttrTypes(ctx), vals), nil
+	return types.ObjectValueMust(aggregate.AttrTypes(), vals), nil
 }
 
 func flattenFunctions(funcs []dashboardFunction) (types.List, diag.Diagnostics) {
@@ -892,7 +891,7 @@ func flattenFunctions(funcs []dashboardFunction) (types.List, diag.Diagnostics) 
 }
 
 func flattenGroupBy(ctx context.Context, groupBy []dashboardGroupBy) (types.List, diag.Diagnostics) {
-	elemType := types.ObjectType{AttrTypes: resource_dashboard.GroupByAttrTypes()}
+	elemType := types.ObjectType{AttrTypes: groupby.AttrTypes()}
 	if len(groupBy) == 0 {
 		return types.ListNull(elemType), nil
 	}
@@ -903,7 +902,7 @@ func flattenGroupBy(ctx context.Context, groupBy []dashboardGroupBy) (types.List
 		if diags.HasError() {
 			return types.ListNull(elemType), diags
 		}
-		values = append(values, types.ObjectValueMust(resource_dashboard.GroupByAttrTypes(), map[string]attr.Value{
+		values = append(values, types.ObjectValueMust(groupby.AttrTypes(), map[string]attr.Value{
 			"fields": fields,
 			"limit":  types.Int64Value(gb.Limit),
 		}))
@@ -911,14 +910,14 @@ func flattenGroupBy(ctx context.Context, groupBy []dashboardGroupBy) (types.List
 	return types.ListValue(elemType, values)
 }
 
-func flattenConditions(ctx context.Context, conds []dashboardCondition) (types.List, diag.Diagnostics) {
-	elemType := types.ObjectType{AttrTypes: resource_dashboard.ConditionAttrTypes(ctx)}
+func flattenConditions(conds []dashboardCondition) (types.List, diag.Diagnostics) {
+	elemType := types.ObjectType{AttrTypes: resource_dashboard.ConditionAttrTypes()}
 	if len(conds) == 0 {
 		return types.ListNull(elemType), nil
 	}
 	values := make([]attr.Value, 0, len(conds))
 	for _, c := range conds {
-		values = append(values, types.ObjectValueMust(resource_dashboard.ConditionAttrTypes(ctx), map[string]attr.Value{
+		values = append(values, types.ObjectValueMust(resource_dashboard.ConditionAttrTypes(), map[string]attr.Value{
 			"operator": types.StringValue(c.Operator),
 			"value":    types.Float64Value(c.Value),
 			"color":    types.StringValue(c.Color),
@@ -927,21 +926,21 @@ func flattenConditions(ctx context.Context, conds []dashboardCondition) (types.L
 	return types.ListValue(elemType, values)
 }
 
-func flattenListColumns(ctx context.Context, cols []dashboardListColumn) (types.List, diag.Diagnostics) {
-	elemType := types.ObjectType{AttrTypes: resource_dashboard.ListColumnAttrTypes(ctx)}
+func flattenListColumns(cols []dashboardListColumn) (types.List, diag.Diagnostics) {
+	elemType := types.ObjectType{AttrTypes: resource_dashboard.ListColumnAttrTypes()}
 	if len(cols) == 0 {
 		return types.ListNull(elemType), nil
 	}
 	values := make([]attr.Value, 0, len(cols))
 	for _, c := range cols {
-		normVal := types.ObjectNull(resource_dashboard.NormalizerAttrTypes(ctx))
+		normVal := types.ObjectNull(normalizer.AttrTypes())
 		if c.Normalizer != nil {
-			normVal = types.ObjectValueMust(resource_dashboard.NormalizerAttrTypes(ctx), map[string]attr.Value{
+			normVal = types.ObjectValueMust(normalizer.AttrTypes(), map[string]attr.Value{
 				"type": types.StringValue(c.Normalizer.Type),
 				"unit": stringValueOrNull(c.Normalizer.Unit),
 			})
 		}
-		values = append(values, types.ObjectValueMust(resource_dashboard.ListColumnAttrTypes(ctx), map[string]attr.Value{
+		values = append(values, types.ObjectValueMust(resource_dashboard.ListColumnAttrTypes(), map[string]attr.Value{
 			"attribute":  types.StringValue(c.Attribute),
 			"normalizer": normVal,
 		}))
@@ -986,7 +985,7 @@ func expandAggregate(agg resource_dashboard.AggregateModel) (dashboardAggregate,
 	setCount := 0
 	var res dashboardAggregate
 
-	checkField := func(m *resource_dashboard.AggregateFieldModel, typ string) {
+	checkField := func(m *aggregate.FieldModel, typ string) {
 		if m != nil && !m.Field.IsNull() && !m.Field.IsUnknown() {
 			setCount++
 			res = dashboardAggregate{
@@ -1049,7 +1048,7 @@ func expandGroupBy(ctx context.Context, groupBy types.List) ([]dashboardGroupBy,
 	if groupBy.IsNull() || groupBy.IsUnknown() {
 		return nil, diags
 	}
-	var groupModels []resource_dashboard.GroupByModel
+	var groupModels []groupby.Model
 	diags.Append(groupBy.ElementsAs(ctx, &groupModels, false)...)
 	if diags.HasError() {
 		return nil, diags

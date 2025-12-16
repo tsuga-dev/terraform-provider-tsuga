@@ -489,6 +489,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/RuleTargetConfigWebhook"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RuleTargetConfigServiceNow"
                     }
                   ]
                 }
@@ -1657,6 +1660,22 @@
         ],
         "description": "Collection of users used to manage ownership and access to resources"
       },
+      "AggregateCount": {
+        "title": "Count",
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "Counts the total number of records",
+            "type": "string",
+            "enum": [
+              "count"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
       "AggregateUniqueCount": {
         "title": "UniqueCount",
         "type": "object",
@@ -1797,22 +1816,6 @@
           "type",
           "field",
           "percentile"
-        ]
-      },
-      "AggregateCount": {
-        "title": "Count",
-        "type": "object",
-        "properties": {
-          "type": {
-            "description": "Counts the total number of records",
-            "type": "string",
-            "enum": [
-              "count"
-            ]
-          }
-        },
-        "required": [
-          "type"
         ]
       },
       "FunctionPerSecond": {
@@ -2078,6 +2081,27 @@
           "integrationId"
         ]
       },
+      "RuleTargetInputServiceNow": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "servicenow"
+            ]
+          },
+          "integrationId": {
+            "minLength": 0,
+            "maxLength": 250,
+            "description": "Identifier of the ServiceNow integration to use",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "integrationId"
+        ]
+      },
       "RuleTargetConfigSlack": {
         "type": "object",
         "properties": {
@@ -2250,6 +2274,30 @@
           "integrationName"
         ]
       },
+      "RuleTargetConfigServiceNow": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "servicenow"
+            ]
+          },
+          "integrationId": {
+            "description": "Identifier of the ServiceNow integration to use",
+            "type": "string"
+          },
+          "integrationName": {
+            "description": "Human readable name of the ServiceNow integration",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "integrationId",
+          "integrationName"
+        ]
+      },
       "MonitorConfigurationMetric": {
         "type": "object",
         "properties": {
@@ -2343,25 +2391,15 @@
             "type": "number"
           },
           "queries": {
-            "minItems": 1,
-            "maxItems": 5,
+            "maxItems": 10,
+            "description": "Aggregations that may be combined together in the same query",
             "type": "array",
             "items": {
+              "title": "MonitorAggregationQuery",
               "type": "object",
               "properties": {
-                "name": {
-                  "minLength": 0,
-                  "maxLength": 250,
-                  "type": "string"
-                },
-                "filter": {
-                  "format": "tsuga-query",
-                  "minLength": 0,
-                  "maxLength": 10000,
-                  "type": "string"
-                },
                 "aggregate": {
-                  "title": "MetricAggregate",
+                  "title": "Aggregate",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type"
@@ -2370,6 +2408,9 @@
                     "type"
                   ],
                   "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/AggregateCount"
+                    },
                     {
                       "$ref": "#/components/schemas/AggregateUniqueCount"
                     },
@@ -2390,18 +2431,74 @@
                     }
                   ]
                 },
-                "value_if_no_data": {
-                  "type": "string",
-                  "enum": [
-                    "Zero",
-                    "NaN"
+                "functions": {
+                  "maxItems": 10,
+                  "description": "Post-processing functions applied to aggregation results",
+                  "type": "array",
+                  "items": {
+                    "title": "Function",
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type"
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/FunctionPerSecond"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPerMinute"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPerHour"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionRate"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionIncrease"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionRolling"
+                      }
+                    ]
+                  }
+                },
+                "fill": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "zero",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "mode"
                   ]
+                },
+                "filter": {
+                  "format": "tsuga-query",
+                  "minLength": 0,
+                  "maxLength": 10000,
+                  "type": "string"
                 }
               },
               "required": [
-                "name",
-                "filter",
-                "aggregate"
+                "aggregate",
+                "filter"
               ]
             }
           }
@@ -2508,25 +2605,15 @@
             "type": "number"
           },
           "queries": {
-            "minItems": 1,
-            "maxItems": 5,
+            "maxItems": 10,
+            "description": "Aggregations that may be combined together in the same query",
             "type": "array",
             "items": {
+              "title": "MonitorAggregationQuery",
               "type": "object",
               "properties": {
-                "name": {
-                  "minLength": 0,
-                  "maxLength": 250,
-                  "type": "string"
-                },
-                "filter": {
-                  "format": "tsuga-query",
-                  "minLength": 0,
-                  "maxLength": 10000,
-                  "type": "string"
-                },
                 "aggregate": {
-                  "title": "LogAggregate",
+                  "title": "Aggregate",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type"
@@ -2558,18 +2645,74 @@
                     }
                   ]
                 },
-                "value_if_no_data": {
-                  "type": "string",
-                  "enum": [
-                    "Zero",
-                    "NaN"
+                "functions": {
+                  "maxItems": 10,
+                  "description": "Post-processing functions applied to aggregation results",
+                  "type": "array",
+                  "items": {
+                    "title": "Function",
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type"
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/FunctionPerSecond"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPerMinute"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPerHour"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionRate"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionIncrease"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionRolling"
+                      }
+                    ]
+                  }
+                },
+                "fill": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "zero",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "mode"
                   ]
+                },
+                "filter": {
+                  "format": "tsuga-query",
+                  "minLength": 0,
+                  "maxLength": 10000,
+                  "type": "string"
                 }
               },
               "required": [
-                "name",
-                "filter",
-                "aggregate"
+                "aggregate",
+                "filter"
               ]
             }
           }
@@ -2670,25 +2813,15 @@
             "type": "number"
           },
           "queries": {
-            "minItems": 1,
-            "maxItems": 5,
+            "maxItems": 10,
+            "description": "Aggregations that may be combined together in the same query",
             "type": "array",
             "items": {
+              "title": "MonitorAggregationQuery",
               "type": "object",
               "properties": {
-                "name": {
-                  "minLength": 0,
-                  "maxLength": 250,
-                  "type": "string"
-                },
-                "filter": {
-                  "format": "tsuga-query",
-                  "minLength": 0,
-                  "maxLength": 10000,
-                  "type": "string"
-                },
                 "aggregate": {
-                  "title": "LogAggregate",
+                  "title": "Aggregate",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type"
@@ -2720,18 +2853,74 @@
                     }
                   ]
                 },
-                "value_if_no_data": {
-                  "type": "string",
-                  "enum": [
-                    "Zero",
-                    "NaN"
+                "functions": {
+                  "maxItems": 10,
+                  "description": "Post-processing functions applied to aggregation results",
+                  "type": "array",
+                  "items": {
+                    "title": "Function",
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type"
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/FunctionPerSecond"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPerMinute"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPerHour"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionRate"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionIncrease"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionRolling"
+                      }
+                    ]
+                  }
+                },
+                "fill": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "zero",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "mode"
                   ]
+                },
+                "filter": {
+                  "format": "tsuga-query",
+                  "minLength": 0,
+                  "maxLength": 10000,
+                  "type": "string"
                 }
               },
               "required": [
-                "name",
-                "filter",
-                "aggregate"
+                "aggregate",
+                "filter"
               ]
             }
           }
@@ -2832,25 +3021,15 @@
             "type": "number"
           },
           "queries": {
-            "minItems": 1,
-            "maxItems": 5,
+            "maxItems": 10,
+            "description": "Aggregations that may be combined together in the same query",
             "type": "array",
             "items": {
+              "title": "MonitorAggregationQuery",
               "type": "object",
               "properties": {
-                "name": {
-                  "minLength": 0,
-                  "maxLength": 250,
-                  "type": "string"
-                },
-                "filter": {
-                  "format": "tsuga-query",
-                  "minLength": 0,
-                  "maxLength": 10000,
-                  "type": "string"
-                },
                 "aggregate": {
-                  "title": "MetricAggregate",
+                  "title": "Aggregate",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type"
@@ -2859,6 +3038,9 @@
                     "type"
                   ],
                   "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/AggregateCount"
+                    },
                     {
                       "$ref": "#/components/schemas/AggregateUniqueCount"
                     },
@@ -2879,18 +3061,74 @@
                     }
                   ]
                 },
-                "value_if_no_data": {
-                  "type": "string",
-                  "enum": [
-                    "Zero",
-                    "NaN"
+                "functions": {
+                  "maxItems": 10,
+                  "description": "Post-processing functions applied to aggregation results",
+                  "type": "array",
+                  "items": {
+                    "title": "Function",
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type"
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/FunctionPerSecond"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPerMinute"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPerHour"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionRate"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionIncrease"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionRolling"
+                      }
+                    ]
+                  }
+                },
+                "fill": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "zero",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "mode"
                   ]
+                },
+                "filter": {
+                  "format": "tsuga-query",
+                  "minLength": 0,
+                  "maxLength": 10000,
+                  "type": "string"
                 }
               },
               "required": [
-                "name",
-                "filter",
-                "aggregate"
+                "aggregate",
+                "filter"
               ]
             }
           }
@@ -3238,12 +3476,6 @@
                     }
                   ]
                 },
-                "filter": {
-                  "format": "tsuga-query",
-                  "minLength": 0,
-                  "maxLength": 10000,
-                  "type": "string"
-                },
                 "functions": {
                   "maxItems": 10,
                   "description": "Post-processing functions applied to aggregation results",
@@ -3278,6 +3510,35 @@
                       }
                     ]
                   }
+                },
+                "fill": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "zero",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "mode"
+                  ]
+                },
+                "filter": {
+                  "format": "tsuga-query",
+                  "minLength": 0,
+                  "maxLength": 10000,
+                  "type": "string"
                 }
               },
               "required": [
@@ -3451,12 +3712,6 @@
                     }
                   ]
                 },
-                "filter": {
-                  "format": "tsuga-query",
-                  "minLength": 0,
-                  "maxLength": 10000,
-                  "type": "string"
-                },
                 "functions": {
                   "maxItems": 10,
                   "description": "Post-processing functions applied to aggregation results",
@@ -3491,6 +3746,35 @@
                       }
                     ]
                   }
+                },
+                "fill": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "zero",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "mode"
+                  ]
+                },
+                "filter": {
+                  "format": "tsuga-query",
+                  "minLength": 0,
+                  "maxLength": 10000,
+                  "type": "string"
                 }
               },
               "required": [
@@ -3632,12 +3916,6 @@
                     }
                   ]
                 },
-                "filter": {
-                  "format": "tsuga-query",
-                  "minLength": 0,
-                  "maxLength": 10000,
-                  "type": "string"
-                },
                 "functions": {
                   "maxItems": 10,
                   "description": "Post-processing functions applied to aggregation results",
@@ -3672,6 +3950,35 @@
                       }
                     ]
                   }
+                },
+                "fill": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "zero",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "mode"
+                  ]
+                },
+                "filter": {
+                  "format": "tsuga-query",
+                  "minLength": 0,
+                  "maxLength": 10000,
+                  "type": "string"
                 }
               },
               "required": [
@@ -3822,12 +4129,6 @@
                     }
                   ]
                 },
-                "filter": {
-                  "format": "tsuga-query",
-                  "minLength": 0,
-                  "maxLength": 10000,
-                  "type": "string"
-                },
                 "functions": {
                   "maxItems": 10,
                   "description": "Post-processing functions applied to aggregation results",
@@ -3862,6 +4163,35 @@
                       }
                     ]
                   }
+                },
+                "fill": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "zero",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "mode"
+                  ]
+                },
+                "filter": {
+                  "format": "tsuga-query",
+                  "minLength": 0,
+                  "maxLength": 10000,
+                  "type": "string"
                 }
               },
               "required": [
@@ -4034,12 +4364,6 @@
                     }
                   ]
                 },
-                "filter": {
-                  "format": "tsuga-query",
-                  "minLength": 0,
-                  "maxLength": 10000,
-                  "type": "string"
-                },
                 "functions": {
                   "maxItems": 10,
                   "description": "Post-processing functions applied to aggregation results",
@@ -4074,6 +4398,35 @@
                       }
                     ]
                   }
+                },
+                "fill": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "zero",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "mode"
+                  ]
+                },
+                "filter": {
+                  "format": "tsuga-query",
+                  "minLength": 0,
+                  "maxLength": 10000,
+                  "type": "string"
                 }
               },
               "required": [
@@ -5973,6 +6326,9 @@
                             },
                             {
                               "$ref": "#/components/schemas/RuleTargetInputWebhook"
+                            },
+                            {
+                              "$ref": "#/components/schemas/RuleTargetInputServiceNow"
                             }
                           ]
                         },
@@ -6336,6 +6692,9 @@
                             },
                             {
                               "$ref": "#/components/schemas/RuleTargetInputWebhook"
+                            },
+                            {
+                              "$ref": "#/components/schemas/RuleTargetInputServiceNow"
                             }
                           ]
                         },
