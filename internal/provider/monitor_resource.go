@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 
+	"terraform-provider-tsuga/internal/aggregate"
+	"terraform-provider-tsuga/internal/groupby"
 	"terraform-provider-tsuga/internal/resource_monitor"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -115,7 +117,7 @@ func (r *monitorResource) validateMetricQueries(ctx context.Context, queries typ
 		return diags
 	}
 
-	var queryModels []resource_monitor.MetricQueryModel
+	var queryModels []resource_monitor.MonitorQueryModel
 	diags.Append(queries.ElementsAs(ctx, &queryModels, false)...)
 	if diags.HasError() {
 		return diags
@@ -136,7 +138,7 @@ func (r *monitorResource) validateLogQueries(ctx context.Context, queries types.
 		return diags
 	}
 
-	var queryModels []resource_monitor.LogQueryModel
+	var queryModels []resource_monitor.MonitorQueryModel
 	diags.Append(queries.ElementsAs(ctx, &queryModels, false)...)
 	if diags.HasError() {
 		return diags
@@ -150,10 +152,13 @@ func (r *monitorResource) validateLogQueries(ctx context.Context, queries types.
 	return diags
 }
 
-func (r *monitorResource) validateMetricAggregate(agg resource_monitor.MetricAggregateModel, pathPrefix string) diag.Diagnostics {
+func (r *monitorResource) validateMetricAggregate(agg resource_monitor.MonitorAggregateModel, pathPrefix string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	setCount := 0
+	if agg.Count != nil {
+		setCount++
+	}
 	if agg.UniqueCount != nil && !agg.UniqueCount.Field.IsNull() && !agg.UniqueCount.Field.IsUnknown() {
 		setCount++
 	}
@@ -176,14 +181,14 @@ func (r *monitorResource) validateMetricAggregate(agg resource_monitor.MetricAgg
 	if setCount != 1 {
 		diags.AddError(
 			"Invalid aggregate configuration",
-			fmt.Sprintf("%s: exactly one of unique_count, sum, average, min, max, or percentile must be set for metric monitors.", pathPrefix),
+			fmt.Sprintf("%s: exactly one of count, unique_count, sum, average, min, max, or percentile must be set for metric monitors.", pathPrefix),
 		)
 	}
 
 	return diags
 }
 
-func (r *monitorResource) validateLogAggregate(agg resource_monitor.LogAggregateModel, pathPrefix string) diag.Diagnostics {
+func (r *monitorResource) validateLogAggregate(agg resource_monitor.MonitorAggregateModel, pathPrefix string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	setCount := 0
@@ -453,16 +458,29 @@ type monitorAPIAggregationGroupBy struct {
 }
 
 type monitorAPIQuery struct {
-	Name          string              `json:"name"`
-	Filter        string              `json:"filter"`
-	Aggregate     monitorAPIAggregate `json:"aggregate"`
-	ValueIfNoData string              `json:"value_if_no_data,omitempty"`
+	Filter    string               `json:"filter"`
+	Aggregate monitorAPIAggregate  `json:"aggregate"`
+	Functions []monitorAPIFunction `json:"functions,omitempty"`
+	Fill      *monitorAPIFill      `json:"fill,omitempty"`
 }
 
 type monitorAPIAggregate struct {
 	Type       string   `json:"type"`
 	Field      string   `json:"field,omitempty"`
 	Percentile *float64 `json:"percentile,omitempty"`
+}
+
+type monitorAPIFunction struct {
+	Type   string  `json:"type"`
+	Window *string `json:"window,omitempty"`
+}
+
+type monitorAPIFill struct {
+	Mode monitorAPIFillMode `json:"mode"`
+}
+
+type monitorAPIFillMode struct {
+	Type string `json:"type"`
 }
 
 // Expand functions
@@ -480,7 +498,7 @@ func expandMonitorConfiguration(ctx context.Context, config resource_monitor.Mon
 	return nil, diags
 }
 
-func expandMonitorConfigurationMetric(ctx context.Context, config *resource_monitor.MonitorConfigurationMetricModel) (map[string]interface{}, diag.Diagnostics) {
+func expandMonitorConfigurationMetric(ctx context.Context, config *resource_monitor.MonitorConfigurationDetailsModel) (map[string]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	groupByFields, gDiags := expandAggregationGroupBy(ctx, config.GroupByFields)
@@ -513,7 +531,7 @@ func expandMonitorConfigurationMetric(ctx context.Context, config *resource_moni
 	return result, diags
 }
 
-func expandMonitorConfigurationLog(ctx context.Context, config *resource_monitor.MonitorConfigurationLogModel) (map[string]interface{}, diag.Diagnostics) {
+func expandMonitorConfigurationLog(ctx context.Context, config *resource_monitor.MonitorConfigurationDetailsModel) (map[string]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	groupByFields, gDiags := expandAggregationGroupBy(ctx, config.GroupByFields)
@@ -553,7 +571,7 @@ func expandAggregationGroupBy(ctx context.Context, groupByList types.List) ([]mo
 		return nil, diags
 	}
 
-	var groupByModels []resource_monitor.AggregationGroupByModel
+	var groupByModels []groupby.Model
 	diags.Append(groupByList.ElementsAs(ctx, &groupByModels, false)...)
 	if diags.HasError() {
 		return nil, diags
@@ -586,6 +604,85 @@ func expandAggregationGroupBy(ctx context.Context, groupByList types.List) ([]mo
 	return result, diags
 }
 
+func expandAggregationFunctions(ctx context.Context, functions types.List) ([]monitorAPIFunction, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if functions.IsNull() || functions.IsUnknown() {
+		return nil, diags
+	}
+
+	var functionModels []resource_monitor.AggregationFunctionModel
+	diags.Append(functions.ElementsAs(ctx, &functionModels, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	result := make([]monitorAPIFunction, 0, len(functionModels))
+	for i, fn := range functionModels {
+		setCount := 0
+		var apiFn monitorAPIFunction
+
+		if fn.PerSecond != nil {
+			setCount++
+			apiFn.Type = "per-second"
+		}
+		if fn.PerMinute != nil {
+			setCount++
+			apiFn.Type = "per-minute"
+		}
+		if fn.PerHour != nil {
+			setCount++
+			apiFn.Type = "per-hour"
+		}
+		if fn.Rate != nil {
+			setCount++
+			apiFn.Type = "rate"
+		}
+		if fn.Increase != nil {
+			setCount++
+			apiFn.Type = "increase"
+		}
+		if fn.Rolling != nil {
+			setCount++
+			if fn.Rolling.Window.IsNull() || fn.Rolling.Window.IsUnknown() {
+				diags.AddError("Invalid functions", fmt.Sprintf("functions[%d].rolling.window is required", i))
+				continue
+			}
+			window := fn.Rolling.Window.ValueString()
+			apiFn.Type = "rolling"
+			apiFn.Window = &window
+		}
+
+		if setCount != 1 {
+			diags.AddError("Invalid functions", fmt.Sprintf("functions[%d]: exactly one of per_second, per_minute, per_hour, rate, increase, or rolling must be set", i))
+			continue
+		}
+
+		result = append(result, apiFn)
+	}
+
+	return result, diags
+}
+
+func expandAggregationFill(fill *resource_monitor.AggregationFillModel) (*monitorAPIFill, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if fill == nil {
+		return nil, diags
+	}
+
+	if fill.Mode.Type.IsNull() || fill.Mode.Type.IsUnknown() {
+		diags.AddError("Invalid fill", "fill.mode.type is required")
+		return nil, diags
+	}
+
+	return &monitorAPIFill{
+		Mode: monitorAPIFillMode{
+			Type: fill.Mode.Type.ValueString(),
+		},
+	}, diags
+}
+
 func expandMetricQueries(ctx context.Context, queries types.List) ([]map[string]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -593,7 +690,7 @@ func expandMetricQueries(ctx context.Context, queries types.List) ([]map[string]
 		return nil, diags
 	}
 
-	var queryModels []resource_monitor.MetricQueryModel
+	var queryModels []resource_monitor.MonitorQueryModel
 	diags.Append(queries.ElementsAs(ctx, &queryModels, false)...)
 	if diags.HasError() {
 		return nil, diags
@@ -607,14 +704,22 @@ func expandMetricQueries(ctx context.Context, queries types.List) ([]map[string]
 			return nil, diags
 		}
 
+		functions, fDiags := expandAggregationFunctions(ctx, q.Functions)
+		diags.Append(fDiags...)
+		fill, fillDiags := expandAggregationFill(q.Fill)
+		diags.Append(fillDiags...)
+
 		query := map[string]interface{}{
-			"name":      q.Name.ValueString(),
 			"filter":    q.Filter.ValueString(),
 			"aggregate": agg,
 		}
 
-		if !q.ValueIfNoData.IsNull() && !q.ValueIfNoData.IsUnknown() {
-			query["value_if_no_data"] = q.ValueIfNoData.ValueString()
+		if len(functions) > 0 {
+			query["functions"] = functions
+		}
+
+		if fill != nil {
+			query["fill"] = fill
 		}
 
 		result = append(result, query)
@@ -630,7 +735,7 @@ func expandLogQueries(ctx context.Context, queries types.List) ([]map[string]int
 		return nil, diags
 	}
 
-	var queryModels []resource_monitor.LogQueryModel
+	var queryModels []resource_monitor.MonitorQueryModel
 	diags.Append(queries.ElementsAs(ctx, &queryModels, false)...)
 	if diags.HasError() {
 		return nil, diags
@@ -644,14 +749,22 @@ func expandLogQueries(ctx context.Context, queries types.List) ([]map[string]int
 			return nil, diags
 		}
 
+		functions, fDiags := expandAggregationFunctions(ctx, q.Functions)
+		diags.Append(fDiags...)
+		fill, fillDiags := expandAggregationFill(q.Fill)
+		diags.Append(fillDiags...)
+
 		query := map[string]interface{}{
-			"name":      q.Name.ValueString(),
 			"filter":    q.Filter.ValueString(),
 			"aggregate": agg,
 		}
 
-		if !q.ValueIfNoData.IsNull() && !q.ValueIfNoData.IsUnknown() {
-			query["value_if_no_data"] = q.ValueIfNoData.ValueString()
+		if len(functions) > 0 {
+			query["functions"] = functions
+		}
+
+		if fill != nil {
+			query["fill"] = fill
 		}
 
 		result = append(result, query)
@@ -660,9 +773,12 @@ func expandLogQueries(ctx context.Context, queries types.List) ([]map[string]int
 	return result, diags
 }
 
-func expandMetricAggregate(agg resource_monitor.MetricAggregateModel) (map[string]interface{}, diag.Diagnostics) {
+func expandMetricAggregate(agg resource_monitor.MonitorAggregateModel) (map[string]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	if agg.Count != nil {
+		return map[string]interface{}{"type": "count"}, diags
+	}
 	if agg.UniqueCount != nil && !agg.UniqueCount.Field.IsNull() && !agg.UniqueCount.Field.IsUnknown() {
 		return map[string]interface{}{
 			"type":  "unique-count",
@@ -705,7 +821,7 @@ func expandMetricAggregate(agg resource_monitor.MetricAggregateModel) (map[strin
 	return nil, diags
 }
 
-func expandLogAggregate(agg resource_monitor.LogAggregateModel) (map[string]interface{}, diag.Diagnostics) {
+func expandLogAggregate(agg resource_monitor.MonitorAggregateModel) (map[string]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if agg.Count != nil {
@@ -795,7 +911,7 @@ func flattenMonitorConfiguration(ctx context.Context, config monitorAPIConfigura
 	}
 }
 
-func flattenMonitorConfigurationMetric(ctx context.Context, config monitorAPIConfiguration) (resource_monitor.MonitorConfigurationMetricModel, diag.Diagnostics) {
+func flattenMonitorConfigurationMetric(ctx context.Context, config monitorAPIConfiguration) (resource_monitor.MonitorConfigurationDetailsModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	groupByFields, gDiags := flattenAggregationGroupBy(ctx, config.GroupByFields)
@@ -812,7 +928,7 @@ func flattenMonitorConfigurationMetric(ctx context.Context, config monitorAPICon
 		condition.Threshold = types.Float64Value(*config.Condition.Threshold)
 	}
 
-	result := resource_monitor.MonitorConfigurationMetricModel{
+	result := resource_monitor.MonitorConfigurationDetailsModel{
 		Condition:             condition,
 		NoDataBehavior:        types.StringValue(config.NoDataBehavior),
 		Timeframe:             types.Int64Value(int64(config.Timeframe)),
@@ -828,7 +944,7 @@ func flattenMonitorConfigurationMetric(ctx context.Context, config monitorAPICon
 	return result, diags
 }
 
-func flattenMonitorConfigurationLog(ctx context.Context, config monitorAPIConfiguration) (resource_monitor.MonitorConfigurationLogModel, diag.Diagnostics) {
+func flattenMonitorConfigurationLog(ctx context.Context, config monitorAPIConfiguration) (resource_monitor.MonitorConfigurationDetailsModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	groupByFields, gDiags := flattenAggregationGroupBy(ctx, config.GroupByFields)
@@ -845,7 +961,7 @@ func flattenMonitorConfigurationLog(ctx context.Context, config monitorAPIConfig
 		condition.Threshold = types.Float64Value(*config.Condition.Threshold)
 	}
 
-	result := resource_monitor.MonitorConfigurationLogModel{
+	result := resource_monitor.MonitorConfigurationDetailsModel{
 		Condition:             condition,
 		NoDataBehavior:        types.StringValue(config.NoDataBehavior),
 		Timeframe:             types.Int64Value(int64(config.Timeframe)),
@@ -862,7 +978,7 @@ func flattenMonitorConfigurationLog(ctx context.Context, config monitorAPIConfig
 }
 
 func flattenAggregationGroupBy(ctx context.Context, groupBy []monitorAPIAggregationGroupBy) (types.List, diag.Diagnostics) {
-	elemType := types.ObjectType{AttrTypes: resource_monitor.AggregationGroupByAttrTypes()}
+	elemType := types.ObjectType{AttrTypes: groupby.AttrTypes()}
 	var diags diag.Diagnostics
 
 	if len(groupBy) == 0 {
@@ -884,7 +1000,7 @@ func flattenAggregationGroupBy(ctx context.Context, groupBy []monitorAPIAggregat
 			"limit":  types.Int64Value(int64(gb.Limit)),
 		}
 
-		values = append(values, types.ObjectValueMust(resource_monitor.AggregationGroupByAttrTypes(), obj))
+		values = append(values, types.ObjectValueMust(groupby.AttrTypes(), obj))
 	}
 
 	list, listDiags := types.ListValue(elemType, values)
@@ -892,8 +1008,70 @@ func flattenAggregationGroupBy(ctx context.Context, groupBy []monitorAPIAggregat
 	return list, diags
 }
 
+func flattenAggregationFunctions(functions []monitorAPIFunction) (types.List, diag.Diagnostics) {
+	elemType := types.ObjectType{AttrTypes: resource_monitor.AggregationFunctionAttrTypes()}
+
+	if len(functions) == 0 {
+		return types.ListNull(elemType), nil
+	}
+
+	values := make([]attr.Value, 0, len(functions))
+	for _, fn := range functions {
+		perSecond := types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes())
+		perMinute := types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes())
+		perHour := types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes())
+		rate := types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes())
+		increase := types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes())
+		rolling := types.ObjectNull(resource_monitor.AggregationFunctionRollingAttrTypes())
+
+		switch fn.Type {
+		case "per-second":
+			perSecond = types.ObjectValueMust(resource_monitor.AggregationFunctionEmptyAttrTypes(), map[string]attr.Value{})
+		case "per-minute":
+			perMinute = types.ObjectValueMust(resource_monitor.AggregationFunctionEmptyAttrTypes(), map[string]attr.Value{})
+		case "per-hour":
+			perHour = types.ObjectValueMust(resource_monitor.AggregationFunctionEmptyAttrTypes(), map[string]attr.Value{})
+		case "rate":
+			rate = types.ObjectValueMust(resource_monitor.AggregationFunctionEmptyAttrTypes(), map[string]attr.Value{})
+		case "increase":
+			increase = types.ObjectValueMust(resource_monitor.AggregationFunctionEmptyAttrTypes(), map[string]attr.Value{})
+		case "rolling":
+			window := types.StringNull()
+			if fn.Window != nil {
+				window = types.StringValue(*fn.Window)
+			}
+			rolling = types.ObjectValueMust(resource_monitor.AggregationFunctionRollingAttrTypes(), map[string]attr.Value{
+				"window": window,
+			})
+		}
+
+		values = append(values, types.ObjectValueMust(resource_monitor.AggregationFunctionAttrTypes(), map[string]attr.Value{
+			"per_second": perSecond,
+			"per_minute": perMinute,
+			"per_hour":   perHour,
+			"rate":       rate,
+			"increase":   increase,
+			"rolling":    rolling,
+		}))
+	}
+
+	return types.ListValue(elemType, values)
+}
+
+func flattenAggregationFill(fill *monitorAPIFill) (attr.Value, diag.Diagnostics) {
+	if fill == nil {
+		return types.ObjectNull(resource_monitor.AggregationFillAttrTypes()), nil
+	}
+
+	return types.ObjectValue(resource_monitor.AggregationFillAttrTypes(), map[string]attr.Value{
+		"mode": types.ObjectValueMust(resource_monitor.AggregationFillModeAttrTypes(), map[string]attr.Value{
+			"type": types.StringValue(fill.Mode.Type),
+		}),
+	})
+}
+
 func flattenMetricQueries(queries []monitorAPIQuery) (types.List, diag.Diagnostics) {
-	elemType := types.ObjectType{AttrTypes: resource_monitor.MetricQueryAttrTypes()}
+	elemType := types.ObjectType{AttrTypes: resource_monitor.QueryAttrTypes()}
 	if len(queries) == 0 {
 		return types.ListNull(elemType), nil
 	}
@@ -905,21 +1083,31 @@ func flattenMetricQueries(queries []monitorAPIQuery) (types.List, diag.Diagnosti
 			return types.ListNull(elemType), diags
 		}
 
-		obj := map[string]attr.Value{
-			"name":             types.StringValue(q.Name),
-			"filter":           types.StringValue(q.Filter),
-			"aggregate":        aggVal,
-			"value_if_no_data": stringValueOrNull(q.ValueIfNoData),
+		functionsVal, funcDiags := flattenAggregationFunctions(q.Functions)
+		if funcDiags.HasError() {
+			return types.ListNull(elemType), funcDiags
 		}
 
-		values = append(values, types.ObjectValueMust(resource_monitor.MetricQueryAttrTypes(), obj))
+		fillVal, fillDiags := flattenAggregationFill(q.Fill)
+		if fillDiags.HasError() {
+			return types.ListNull(elemType), fillDiags
+		}
+
+		obj := map[string]attr.Value{
+			"filter":    types.StringValue(q.Filter),
+			"aggregate": aggVal,
+			"functions": functionsVal,
+			"fill":      fillVal,
+		}
+
+		values = append(values, types.ObjectValueMust(resource_monitor.QueryAttrTypes(), obj))
 	}
 
 	return types.ListValue(elemType, values)
 }
 
 func flattenLogQueries(queries []monitorAPIQuery) (types.List, diag.Diagnostics) {
-	elemType := types.ObjectType{AttrTypes: resource_monitor.LogQueryAttrTypes()}
+	elemType := types.ObjectType{AttrTypes: resource_monitor.QueryAttrTypes()}
 	if len(queries) == 0 {
 		return types.ListNull(elemType), nil
 	}
@@ -931,14 +1119,24 @@ func flattenLogQueries(queries []monitorAPIQuery) (types.List, diag.Diagnostics)
 			return types.ListNull(elemType), diags
 		}
 
-		obj := map[string]attr.Value{
-			"name":             types.StringValue(q.Name),
-			"filter":           types.StringValue(q.Filter),
-			"aggregate":        aggVal,
-			"value_if_no_data": stringValueOrNull(q.ValueIfNoData),
+		functionsVal, funcDiags := flattenAggregationFunctions(q.Functions)
+		if funcDiags.HasError() {
+			return types.ListNull(elemType), funcDiags
 		}
 
-		values = append(values, types.ObjectValueMust(resource_monitor.LogQueryAttrTypes(), obj))
+		fillVal, fillDiags := flattenAggregationFill(q.Fill)
+		if fillDiags.HasError() {
+			return types.ListNull(elemType), fillDiags
+		}
+
+		obj := map[string]attr.Value{
+			"filter":    types.StringValue(q.Filter),
+			"aggregate": aggVal,
+			"functions": functionsVal,
+			"fill":      fillVal,
+		}
+
+		values = append(values, types.ObjectValueMust(resource_monitor.QueryAttrTypes(), obj))
 	}
 
 	return types.ListValue(elemType, values)
@@ -947,10 +1145,12 @@ func flattenLogQueries(queries []monitorAPIQuery) (types.List, diag.Diagnostics)
 func flattenMetricAggregate(agg monitorAPIAggregate) (attr.Value, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	nullField := types.ObjectNull(resource_monitor.AggregateFieldAttrTypes())
-	nullPercentile := types.ObjectNull(resource_monitor.AggregatePercentileAttrTypes())
+	nullField := types.ObjectNull(aggregate.FieldAttrTypes())
+	nullPercentile := types.ObjectNull(aggregate.PercentileAttrTypes())
+	nullCount := types.ObjectNull(aggregate.CountAttrTypes())
 
 	vals := map[string]attr.Value{
+		"count":        nullCount,
 		"average":      nullField,
 		"max":          nullField,
 		"min":          nullField,
@@ -960,13 +1160,15 @@ func flattenMetricAggregate(agg monitorAPIAggregate) (attr.Value, diag.Diagnosti
 	}
 
 	switch agg.Type {
+	case "count":
+		vals["count"] = types.ObjectValueMust(aggregate.CountAttrTypes(), map[string]attr.Value{})
 	case "unique-count":
-		vals["unique_count"] = types.ObjectValueMust(resource_monitor.AggregateFieldAttrTypes(), map[string]attr.Value{
+		vals["unique_count"] = types.ObjectValueMust(aggregate.FieldAttrTypes(), map[string]attr.Value{
 			"field": types.StringValue(agg.Field),
 		})
 	case "sum", "average", "min", "max":
 		key := agg.Type
-		vals[key] = types.ObjectValueMust(resource_monitor.AggregateFieldAttrTypes(), map[string]attr.Value{
+		vals[key] = types.ObjectValueMust(aggregate.FieldAttrTypes(), map[string]attr.Value{
 			"field": types.StringValue(agg.Field),
 		})
 	case "percentile":
@@ -974,7 +1176,7 @@ func flattenMetricAggregate(agg monitorAPIAggregate) (attr.Value, diag.Diagnosti
 		if agg.Percentile != nil {
 			percentile = types.Float64Value(*agg.Percentile)
 		}
-		vals["percentile"] = types.ObjectValueMust(resource_monitor.AggregatePercentileAttrTypes(), map[string]attr.Value{
+		vals["percentile"] = types.ObjectValueMust(aggregate.PercentileAttrTypes(), map[string]attr.Value{
 			"field":      types.StringValue(agg.Field),
 			"percentile": percentile,
 		})
@@ -982,15 +1184,15 @@ func flattenMetricAggregate(agg monitorAPIAggregate) (attr.Value, diag.Diagnosti
 		diags.AddWarning("Unknown aggregate type", fmt.Sprintf("Unrecognized aggregate type: %s", agg.Type))
 	}
 
-	return types.ObjectValueMust(resource_monitor.MetricAggregateAttrTypes(), vals), diags
+	return types.ObjectValueMust(aggregate.AttrTypes(), vals), diags
 }
 
 func flattenLogAggregate(agg monitorAPIAggregate) (attr.Value, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	nullField := types.ObjectNull(resource_monitor.AggregateFieldAttrTypes())
-	nullPercentile := types.ObjectNull(resource_monitor.AggregatePercentileAttrTypes())
-	nullCount := types.ObjectNull(resource_monitor.AggregateCountAttrTypes())
+	nullField := types.ObjectNull(aggregate.FieldAttrTypes())
+	nullPercentile := types.ObjectNull(aggregate.PercentileAttrTypes())
+	nullCount := types.ObjectNull(aggregate.CountAttrTypes())
 
 	vals := map[string]attr.Value{
 		"average":      nullField,
@@ -1004,14 +1206,14 @@ func flattenLogAggregate(agg monitorAPIAggregate) (attr.Value, diag.Diagnostics)
 
 	switch agg.Type {
 	case "count":
-		vals["count"] = types.ObjectValueMust(resource_monitor.AggregateCountAttrTypes(), map[string]attr.Value{})
+		vals["count"] = types.ObjectValueMust(aggregate.CountAttrTypes(), map[string]attr.Value{})
 	case "unique-count":
-		vals["unique_count"] = types.ObjectValueMust(resource_monitor.AggregateFieldAttrTypes(), map[string]attr.Value{
+		vals["unique_count"] = types.ObjectValueMust(aggregate.FieldAttrTypes(), map[string]attr.Value{
 			"field": types.StringValue(agg.Field),
 		})
 	case "sum", "average", "min", "max":
 		key := agg.Type
-		vals[key] = types.ObjectValueMust(resource_monitor.AggregateFieldAttrTypes(), map[string]attr.Value{
+		vals[key] = types.ObjectValueMust(aggregate.FieldAttrTypes(), map[string]attr.Value{
 			"field": types.StringValue(agg.Field),
 		})
 	case "percentile":
@@ -1019,7 +1221,7 @@ func flattenLogAggregate(agg monitorAPIAggregate) (attr.Value, diag.Diagnostics)
 		if agg.Percentile != nil {
 			percentile = types.Float64Value(*agg.Percentile)
 		}
-		vals["percentile"] = types.ObjectValueMust(resource_monitor.AggregatePercentileAttrTypes(), map[string]attr.Value{
+		vals["percentile"] = types.ObjectValueMust(aggregate.PercentileAttrTypes(), map[string]attr.Value{
 			"field":      types.StringValue(agg.Field),
 			"percentile": percentile,
 		})
@@ -1027,5 +1229,5 @@ func flattenLogAggregate(agg monitorAPIAggregate) (attr.Value, diag.Diagnostics)
 		diags.AddWarning("Unknown aggregate type", fmt.Sprintf("Unrecognized aggregate type: %s", agg.Type))
 	}
 
-	return types.ObjectValueMust(resource_monitor.LogAggregateAttrTypes(), vals), diags
+	return types.ObjectValueMust(aggregate.AttrTypes(), vals), diags
 }

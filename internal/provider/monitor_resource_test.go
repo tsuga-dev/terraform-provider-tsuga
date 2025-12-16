@@ -42,7 +42,6 @@ resource "tsuga_monitor" "test" {
       }]
       aggregation_alert_logic = "no_aggregation"
       queries = [{
-        name   = "q1"
         filter = "service:api"
         aggregate = {
           sum = {
@@ -64,7 +63,6 @@ resource "tsuga_monitor" "test" {
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.condition.threshold", "10"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.timeframe", "5"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.queries.#", "1"),
-					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.queries.0.name", "q1"),
 				),
 			},
 			{
@@ -84,7 +82,7 @@ resource "tsuga_monitor" "test" {
   configuration = {
     log = {
       condition = {
-        formula   = "a + b"
+        formula   = "q1 + q2"
         operator  = "less_than"
         threshold = 5.0
       }
@@ -97,14 +95,12 @@ resource "tsuga_monitor" "test" {
       aggregation_alert_logic = "no_aggregation"
       queries = [
         {
-          name   = "a"
           filter = "service:web"
           aggregate = {
             count = {}
           }
         },
         {
-          name   = "b"
           filter = "env:prod"
           aggregate = {
             unique_count = {
@@ -122,13 +118,11 @@ resource "tsuga_monitor" "test" {
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "priority", "4"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "permissions", "owning-team-only"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "message", "Updated monitor message"),
-					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log.condition.formula", "a + b"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log.condition.formula", "q1 + q2"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log.condition.operator", "less_than"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log.condition.threshold", "5"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log.timeframe", "10"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log.queries.#", "2"),
-					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log.queries.0.name", "a"),
-					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log.queries.1.name", "b"),
 				),
 			},
 		},
