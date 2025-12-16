@@ -6,12 +6,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
+	"terraform-provider-tsuga/internal/aggregate"
+	"terraform-provider-tsuga/internal/groupby"
+	"terraform-provider-tsuga/internal/normalizer"
 	"terraform-provider-tsuga/internal/resource_team"
-
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
 
 func DashboardResourceSchema(ctx context.Context) schema.Schema {
@@ -153,7 +155,7 @@ func visualizationSeriesSchema() schema.Attribute {
 				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"aggregate": aggregateSchema(),
+						"aggregate": aggregate.Schema(),
 						"filter": schema.StringAttribute{
 							Optional: true,
 							Validators: []validator.String{
@@ -209,7 +211,7 @@ func visualizationSeriesSchema() schema.Attribute {
 					},
 				},
 			},
-			"normalizer": normalizerSchema(),
+			"normalizer": normalizer.Schema(),
 		},
 	}
 }
@@ -290,7 +292,7 @@ func visualizationListSchema() schema.Attribute {
 						"attribute": schema.StringAttribute{
 							Required: true,
 						},
-						"normalizer": normalizerSchema(),
+						"normalizer": normalizer.Schema(),
 					},
 				},
 			},
@@ -345,126 +347,6 @@ func visualizationNoteSchema() schema.Attribute {
 	}
 }
 
-func aggregateSchema() schema.Attribute {
-	return schema.SingleNestedAttribute{
-		Required: true,
-		Attributes: map[string]schema.Attribute{
-			"count": schema.SingleNestedAttribute{
-				Optional: true,
-				Attributes: map[string]schema.Attribute{
-					"type": schema.StringAttribute{
-						Computed: true,
-					},
-				},
-			},
-			"sum": schema.SingleNestedAttribute{
-				Optional: true,
-				Attributes: map[string]schema.Attribute{
-					"type": schema.StringAttribute{
-						Computed: true,
-					},
-					"field": schema.StringAttribute{
-						Required: true,
-						Validators: []validator.String{
-							stringvalidator.LengthAtMost(250),
-						},
-					},
-				},
-			},
-			"average": schema.SingleNestedAttribute{
-				Optional: true,
-				Attributes: map[string]schema.Attribute{
-					"type": schema.StringAttribute{
-						Computed: true,
-					},
-					"field": schema.StringAttribute{
-						Required: true,
-						Validators: []validator.String{
-							stringvalidator.LengthAtMost(250),
-						},
-					},
-				},
-			},
-			"min": schema.SingleNestedAttribute{
-				Optional: true,
-				Attributes: map[string]schema.Attribute{
-					"type": schema.StringAttribute{
-						Computed: true,
-					},
-					"field": schema.StringAttribute{
-						Required: true,
-						Validators: []validator.String{
-							stringvalidator.LengthAtMost(250),
-						},
-					},
-				},
-			},
-			"max": schema.SingleNestedAttribute{
-				Optional: true,
-				Attributes: map[string]schema.Attribute{
-					"type": schema.StringAttribute{
-						Computed: true,
-					},
-					"field": schema.StringAttribute{
-						Required: true,
-						Validators: []validator.String{
-							stringvalidator.LengthAtMost(250),
-						},
-					},
-				},
-			},
-			"unique_count": schema.SingleNestedAttribute{
-				Optional: true,
-				Attributes: map[string]schema.Attribute{
-					"type": schema.StringAttribute{
-						Computed: true,
-					},
-					"field": schema.StringAttribute{
-						Required: true,
-						Validators: []validator.String{
-							stringvalidator.LengthAtMost(250),
-						},
-					},
-				},
-			},
-			"percentile": schema.SingleNestedAttribute{
-				Optional: true,
-				Attributes: map[string]schema.Attribute{
-					"type": schema.StringAttribute{
-						Computed: true,
-					},
-					"field": schema.StringAttribute{
-						Required: true,
-						Validators: []validator.String{
-							stringvalidator.LengthAtMost(250),
-						},
-					},
-					"percentile": schema.Float64Attribute{
-						Required: true,
-					},
-				},
-			},
-		},
-	}
-}
-
-func normalizerSchema() schema.Attribute {
-	return schema.SingleNestedAttribute{
-		Optional: true,
-		Attributes: map[string]schema.Attribute{
-			"type": schema.StringAttribute{
-				Required: true,
-				Validators: []validator.String{
-					stringvalidator.OneOf("duration", "data", "custom", "date", "level"),
-				},
-			},
-			"unit": schema.StringAttribute{
-				Optional: true,
-			},
-		},
-	}
-}
-
 type DashboardModel struct {
 	Id      types.String `tfsdk:"id"`
 	Name    types.String `tfsdk:"name"`
@@ -499,13 +381,13 @@ type VisualizationModel struct {
 }
 
 type SeriesVisualizationModel struct {
-	Type          types.String     `tfsdk:"type"`
-	Source        types.String     `tfsdk:"source"`
-	Queries       types.List       `tfsdk:"queries"`
-	Formula       types.String     `tfsdk:"formula"`
-	VisibleSeries types.List       `tfsdk:"visible_series"`
-	GroupBy       types.List       `tfsdk:"group_by"`
-	Normalizer    *NormalizerModel `tfsdk:"normalizer"`
+	Type          types.String      `tfsdk:"type"`
+	Source        types.String      `tfsdk:"source"`
+	Queries       types.List        `tfsdk:"queries"`
+	Formula       types.String      `tfsdk:"formula"`
+	VisibleSeries types.List        `tfsdk:"visible_series"`
+	GroupBy       types.List        `tfsdk:"group_by"`
+	Normalizer    *normalizer.Model `tfsdk:"normalizer"`
 }
 
 type QueryValueVisualization struct {
@@ -541,43 +423,18 @@ type QueryModel struct {
 }
 
 type AggregateModel struct {
-	Count      *AggregateCountModel      `tfsdk:"count"`
-	Sum        *AggregateFieldModel      `tfsdk:"sum"`
-	Average    *AggregateFieldModel      `tfsdk:"average"`
-	Min        *AggregateFieldModel      `tfsdk:"min"`
-	Max        *AggregateFieldModel      `tfsdk:"max"`
-	Uniq       *AggregateFieldModel      `tfsdk:"unique_count"`
-	Percentile *AggregatePercentileModel `tfsdk:"percentile"`
-}
-
-type AggregateCountModel struct {
-	Type types.String `tfsdk:"type"`
-}
-
-type AggregateFieldModel struct {
-	Type  types.String `tfsdk:"type"`
-	Field types.String `tfsdk:"field"`
-}
-
-type AggregatePercentileModel struct {
-	Type       types.String  `tfsdk:"type"`
-	Field      types.String  `tfsdk:"field"`
-	Percentile types.Float64 `tfsdk:"percentile"`
+	Count      *aggregate.CountModel      `tfsdk:"count"`
+	Sum        *aggregate.FieldModel      `tfsdk:"sum"`
+	Average    *aggregate.FieldModel      `tfsdk:"average"`
+	Min        *aggregate.FieldModel      `tfsdk:"min"`
+	Max        *aggregate.FieldModel      `tfsdk:"max"`
+	Uniq       *aggregate.FieldModel      `tfsdk:"unique_count"`
+	Percentile *aggregate.PercentileModel `tfsdk:"percentile"`
 }
 
 type FunctionModel struct {
 	Type   types.String `tfsdk:"type"`
 	Window types.String `tfsdk:"window"`
-}
-
-type GroupByModel struct {
-	Fields types.List  `tfsdk:"fields"`
-	Limit  types.Int64 `tfsdk:"limit"`
-}
-
-type NormalizerModel struct {
-	Type types.String `tfsdk:"type"`
-	Unit types.String `tfsdk:"unit"`
 }
 
 type ConditionModel struct {
@@ -592,20 +449,20 @@ type TimeBucketModel struct {
 }
 
 type ListColumnModel struct {
-	Attribute  types.String     `tfsdk:"attribute"`
-	Normalizer *NormalizerModel `tfsdk:"normalizer"`
+	Attribute  types.String      `tfsdk:"attribute"`
+	Normalizer *normalizer.Model `tfsdk:"normalizer"`
 }
 
-func GraphAttrTypes(ctx context.Context) map[string]attr.Type {
+func GraphAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"id":            types.StringType,
 		"name":          types.StringType,
-		"layout":        types.ObjectType{AttrTypes: GraphLayoutAttrTypes(ctx)},
-		"visualization": types.ObjectType{AttrTypes: VisualizationAttrTypes(ctx)},
+		"layout":        types.ObjectType{AttrTypes: GraphLayoutAttrTypes()},
+		"visualization": types.ObjectType{AttrTypes: VisualizationAttrTypes()},
 	}
 }
 
-func GraphLayoutAttrTypes(_ context.Context) map[string]attr.Type {
+func GraphLayoutAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"x": types.Float64Type,
 		"y": types.Float64Type,
@@ -614,53 +471,53 @@ func GraphLayoutAttrTypes(_ context.Context) map[string]attr.Type {
 	}
 }
 
-func VisualizationAttrTypes(ctx context.Context) map[string]attr.Type {
+func VisualizationAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"timeseries":  types.ObjectType{AttrTypes: SeriesVisualizationAttrTypes(ctx)},
-		"top_list":    types.ObjectType{AttrTypes: SeriesVisualizationAttrTypes(ctx)},
-		"pie":         types.ObjectType{AttrTypes: SeriesVisualizationAttrTypes(ctx)},
-		"query_value": types.ObjectType{AttrTypes: QueryValueVisualizationAttrTypes(ctx)},
-		"bar":         types.ObjectType{AttrTypes: BarVisualizationAttrTypes(ctx)},
-		"list":        types.ObjectType{AttrTypes: ListVisualizationAttrTypes(ctx)},
-		"note":        types.ObjectType{AttrTypes: NoteVisualizationAttrTypes(ctx)},
+		"timeseries":  types.ObjectType{AttrTypes: SeriesVisualizationAttrTypes()},
+		"top_list":    types.ObjectType{AttrTypes: SeriesVisualizationAttrTypes()},
+		"pie":         types.ObjectType{AttrTypes: SeriesVisualizationAttrTypes()},
+		"query_value": types.ObjectType{AttrTypes: QueryValueVisualizationAttrTypes()},
+		"bar":         types.ObjectType{AttrTypes: BarVisualizationAttrTypes()},
+		"list":        types.ObjectType{AttrTypes: ListVisualizationAttrTypes()},
+		"note":        types.ObjectType{AttrTypes: NoteVisualizationAttrTypes()},
 	}
 }
 
-func SeriesVisualizationAttrTypes(ctx context.Context) map[string]attr.Type {
+func SeriesVisualizationAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"type":           types.StringType,
 		"source":         types.StringType,
-		"queries":        types.ListType{ElemType: types.ObjectType{AttrTypes: QueryAttrTypes(ctx)}},
+		"queries":        types.ListType{ElemType: types.ObjectType{AttrTypes: QueryAttrTypes()}},
 		"formula":        types.StringType,
 		"visible_series": types.ListType{ElemType: types.BoolType},
-		"group_by":       types.ListType{ElemType: types.ObjectType{AttrTypes: GroupByAttrTypes()}},
-		"normalizer":     types.ObjectType{AttrTypes: NormalizerAttrTypes(ctx)},
+		"group_by":       types.ListType{ElemType: types.ObjectType{AttrTypes: groupby.AttrTypes()}},
+		"normalizer":     types.ObjectType{AttrTypes: normalizer.AttrTypes()},
 	}
 }
 
-func QueryValueVisualizationAttrTypes(ctx context.Context) map[string]attr.Type {
-	attrs := SeriesVisualizationAttrTypes(ctx)
+func QueryValueVisualizationAttrTypes() map[string]attr.Type {
+	attrs := SeriesVisualizationAttrTypes()
 	attrs["background_mode"] = types.StringType
-	attrs["conditions"] = types.ListType{ElemType: types.ObjectType{AttrTypes: ConditionAttrTypes(ctx)}}
+	attrs["conditions"] = types.ListType{ElemType: types.ObjectType{AttrTypes: ConditionAttrTypes()}}
 	return attrs
 }
 
-func BarVisualizationAttrTypes(ctx context.Context) map[string]attr.Type {
-	attrs := SeriesVisualizationAttrTypes(ctx)
-	attrs["time_bucket"] = types.ObjectType{AttrTypes: TimeBucketAttrTypes(ctx)}
+func BarVisualizationAttrTypes() map[string]attr.Type {
+	attrs := SeriesVisualizationAttrTypes()
+	attrs["time_bucket"] = types.ObjectType{AttrTypes: TimeBucketAttrTypes()}
 	return attrs
 }
 
-func ListVisualizationAttrTypes(ctx context.Context) map[string]attr.Type {
+func ListVisualizationAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"type":         types.StringType,
 		"source":       types.StringType,
 		"query":        types.StringType,
-		"list_columns": types.ListType{ElemType: types.ObjectType{AttrTypes: ListColumnAttrTypes(ctx)}},
+		"list_columns": types.ListType{ElemType: types.ObjectType{AttrTypes: ListColumnAttrTypes()}},
 	}
 }
 
-func NoteVisualizationAttrTypes(_ context.Context) map[string]attr.Type {
+func NoteVisualizationAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"type":                 types.StringType,
 		"note":                 types.StringType,
@@ -670,44 +527,11 @@ func NoteVisualizationAttrTypes(_ context.Context) map[string]attr.Type {
 	}
 }
 
-func QueryAttrTypes(ctx context.Context) map[string]attr.Type {
+func QueryAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"aggregate": types.ObjectType{AttrTypes: AggregateAttrTypes(ctx)},
+		"aggregate": types.ObjectType{AttrTypes: aggregate.AttrTypes()},
 		"filter":    types.StringType,
 		"functions": types.ListType{ElemType: types.ObjectType{AttrTypes: FunctionAttrTypes()}},
-	}
-}
-
-func AggregateAttrTypes(ctx context.Context) map[string]attr.Type {
-	return map[string]attr.Type{
-		"count":        types.ObjectType{AttrTypes: AggregateCountAttrTypes(ctx)},
-		"sum":          types.ObjectType{AttrTypes: AggregateFieldAttrTypes()},
-		"average":      types.ObjectType{AttrTypes: AggregateFieldAttrTypes()},
-		"min":          types.ObjectType{AttrTypes: AggregateFieldAttrTypes()},
-		"max":          types.ObjectType{AttrTypes: AggregateFieldAttrTypes()},
-		"unique_count": types.ObjectType{AttrTypes: AggregateFieldAttrTypes()},
-		"percentile":   types.ObjectType{AttrTypes: AggregatePercentileAttrTypes()},
-	}
-}
-
-func AggregateCountAttrTypes(_ context.Context) map[string]attr.Type {
-	return map[string]attr.Type{
-		"type": types.StringType,
-	}
-}
-
-func AggregateFieldAttrTypes() map[string]attr.Type {
-	return map[string]attr.Type{
-		"type":  types.StringType,
-		"field": types.StringType,
-	}
-}
-
-func AggregatePercentileAttrTypes() map[string]attr.Type {
-	return map[string]attr.Type{
-		"type":       types.StringType,
-		"field":      types.StringType,
-		"percentile": types.Float64Type,
 	}
 }
 
@@ -718,21 +542,8 @@ func FunctionAttrTypes() map[string]attr.Type {
 	}
 }
 
-func GroupByAttrTypes() map[string]attr.Type {
-	return map[string]attr.Type{
-		"fields": types.ListType{ElemType: types.StringType},
-		"limit":  types.Int64Type,
-	}
-}
-
-func NormalizerAttrTypes(_ context.Context) map[string]attr.Type {
-	return map[string]attr.Type{
-		"type": types.StringType,
-		"unit": types.StringType,
-	}
-}
-
-func ConditionAttrTypes(_ context.Context) map[string]attr.Type {
+// ConditionAttrTypes returns attr types for group by configuration.
+func ConditionAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"operator": types.StringType,
 		"value":    types.Float64Type,
@@ -740,16 +551,16 @@ func ConditionAttrTypes(_ context.Context) map[string]attr.Type {
 	}
 }
 
-func TimeBucketAttrTypes(_ context.Context) map[string]attr.Type {
+func TimeBucketAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"time":   types.Float64Type,
 		"metric": types.StringType,
 	}
 }
 
-func ListColumnAttrTypes(ctx context.Context) map[string]attr.Type {
+func ListColumnAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"attribute":  types.StringType,
-		"normalizer": types.ObjectType{AttrTypes: NormalizerAttrTypes(ctx)},
+		"normalizer": types.ObjectType{AttrTypes: normalizer.AttrTypes()},
 	}
 }

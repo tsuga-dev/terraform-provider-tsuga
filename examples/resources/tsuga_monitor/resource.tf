@@ -7,12 +7,10 @@ resource "tsuga_monitor" "monitor" {
     log = {
       queries = [
         {
-          name   = "q1"
           filter = "context.env:prod"
           aggregate = {
             count = {}
           }
-          value_if_no_data = "Zero"
         }
       ]
       condition = {
@@ -20,8 +18,11 @@ resource "tsuga_monitor" "monitor" {
         operator  = "equal"
         threshold = 0
       },
-      timeframe               = 10,
-      group_by_fields         = []
+      timeframe = 10,
+      group_by_fields = [{
+        fields = ["context.env"]
+        limit  = 10
+      }]
       no_data_behavior        = "alert"
       aggregation_alert_logic = "no_aggregation"
     }

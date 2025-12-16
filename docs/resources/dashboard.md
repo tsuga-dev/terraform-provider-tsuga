@@ -613,7 +613,7 @@ Read-Only:
 
 Required:
 
-- `aggregate` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar--queries--aggregate))
+- `aggregate` (Attributes) Aggregate (count, unique_count, average, max, min, sum, or percentile) (see [below for nested schema](#nestedatt--graphs--visualization--bar--queries--aggregate))
 
 Optional:
 
@@ -640,17 +640,9 @@ Required:
 
 - `field` (String)
 
-Read-Only:
-
-- `type` (String)
-
 
 <a id="nestedatt--graphs--visualization--bar--queries--aggregate--count"></a>
 ### Nested Schema for `graphs.visualization.bar.queries.aggregate.count`
-
-Read-Only:
-
-- `type` (String)
 
 
 <a id="nestedatt--graphs--visualization--bar--queries--aggregate--max"></a>
@@ -660,10 +652,6 @@ Required:
 
 - `field` (String)
 
-Read-Only:
-
-- `type` (String)
-
 
 <a id="nestedatt--graphs--visualization--bar--queries--aggregate--min"></a>
 ### Nested Schema for `graphs.visualization.bar.queries.aggregate.min`
@@ -671,10 +659,6 @@ Read-Only:
 Required:
 
 - `field` (String)
-
-Read-Only:
-
-- `type` (String)
 
 
 <a id="nestedatt--graphs--visualization--bar--queries--aggregate--percentile"></a>
@@ -685,10 +669,6 @@ Required:
 - `field` (String)
 - `percentile` (Number)
 
-Read-Only:
-
-- `type` (String)
-
 
 <a id="nestedatt--graphs--visualization--bar--queries--aggregate--sum"></a>
 ### Nested Schema for `graphs.visualization.bar.queries.aggregate.sum`
@@ -697,10 +677,6 @@ Required:
 
 - `field` (String)
 
-Read-Only:
-
-- `type` (String)
-
 
 <a id="nestedatt--graphs--visualization--bar--queries--aggregate--unique_count"></a>
 ### Nested Schema for `graphs.visualization.bar.queries.aggregate.unique_count`
@@ -708,10 +684,6 @@ Read-Only:
 Required:
 
 - `field` (String)
-
-Read-Only:
-
-- `type` (String)
 
 
 
@@ -842,7 +814,7 @@ Read-Only:
 
 Required:
 
-- `aggregate` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie--queries--aggregate))
+- `aggregate` (Attributes) Aggregate (count, unique_count, average, max, min, sum, or percentile) (see [below for nested schema](#nestedatt--graphs--visualization--pie--queries--aggregate))
 
 Optional:
 
@@ -869,17 +841,9 @@ Required:
 
 - `field` (String)
 
-Read-Only:
-
-- `type` (String)
-
 
 <a id="nestedatt--graphs--visualization--pie--queries--aggregate--count"></a>
 ### Nested Schema for `graphs.visualization.pie.queries.aggregate.count`
-
-Read-Only:
-
-- `type` (String)
 
 
 <a id="nestedatt--graphs--visualization--pie--queries--aggregate--max"></a>
@@ -889,10 +853,6 @@ Required:
 
 - `field` (String)
 
-Read-Only:
-
-- `type` (String)
-
 
 <a id="nestedatt--graphs--visualization--pie--queries--aggregate--min"></a>
 ### Nested Schema for `graphs.visualization.pie.queries.aggregate.min`
@@ -900,10 +860,6 @@ Read-Only:
 Required:
 
 - `field` (String)
-
-Read-Only:
-
-- `type` (String)
 
 
 <a id="nestedatt--graphs--visualization--pie--queries--aggregate--percentile"></a>
@@ -914,10 +870,6 @@ Required:
 - `field` (String)
 - `percentile` (Number)
 
-Read-Only:
-
-- `type` (String)
-
 
 <a id="nestedatt--graphs--visualization--pie--queries--aggregate--sum"></a>
 ### Nested Schema for `graphs.visualization.pie.queries.aggregate.sum`
@@ -926,10 +878,6 @@ Required:
 
 - `field` (String)
 
-Read-Only:
-
-- `type` (String)
-
 
 <a id="nestedatt--graphs--visualization--pie--queries--aggregate--unique_count"></a>
 ### Nested Schema for `graphs.visualization.pie.queries.aggregate.unique_count`
@@ -937,10 +885,6 @@ Read-Only:
 Required:
 
 - `field` (String)
-
-Read-Only:
-
-- `type` (String)
 
 
 
@@ -1005,7 +949,7 @@ Read-Only:
 
 Required:
 
-- `aggregate` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--queries--aggregate))
+- `aggregate` (Attributes) Aggregate (count, unique_count, average, max, min, sum, or percentile) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--queries--aggregate))
 
 Optional:
 
@@ -1032,17 +976,9 @@ Required:
 
 - `field` (String)
 
-Read-Only:
-
-- `type` (String)
-
 
 <a id="nestedatt--graphs--visualization--query_value--queries--aggregate--count"></a>
 ### Nested Schema for `graphs.visualization.query_value.queries.aggregate.count`
-
-Read-Only:
-
-- `type` (String)
 
 
 <a id="nestedatt--graphs--visualization--query_value--queries--aggregate--max"></a>
@@ -1052,10 +988,6 @@ Required:
 
 - `field` (String)
 
-Read-Only:
-
-- `type` (String)
-
 
 <a id="nestedatt--graphs--visualization--query_value--queries--aggregate--min"></a>
 ### Nested Schema for `graphs.visualization.query_value.queries.aggregate.min`
@@ -1063,10 +995,6 @@ Read-Only:
 Required:
 
 - `field` (String)
-
-Read-Only:
-
-- `type` (String)
 
 
 <a id="nestedatt--graphs--visualization--query_value--queries--aggregate--percentile"></a>
@@ -1077,10 +1005,6 @@ Required:
 - `field` (String)
 - `percentile` (Number)
 
-Read-Only:
-
-- `type` (String)
-
 
 <a id="nestedatt--graphs--visualization--query_value--queries--aggregate--sum"></a>
 ### Nested Schema for `graphs.visualization.query_value.queries.aggregate.sum`
@@ -1089,10 +1013,6 @@ Required:
 
 - `field` (String)
 
-Read-Only:
-
-- `type` (String)
-
 
 <a id="nestedatt--graphs--visualization--query_value--queries--aggregate--unique_count"></a>
 ### Nested Schema for `graphs.visualization.query_value.queries.aggregate.unique_count`
@@ -1100,10 +1020,6 @@ Read-Only:
 Required:
 
 - `field` (String)
-
-Read-Only:
-
-- `type` (String)
 
 
 
@@ -1176,7 +1092,7 @@ Read-Only:
 
 Required:
 
-- `aggregate` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--queries--aggregate))
+- `aggregate` (Attributes) Aggregate (count, unique_count, average, max, min, sum, or percentile) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--queries--aggregate))
 
 Optional:
 
@@ -1203,17 +1119,9 @@ Required:
 
 - `field` (String)
 
-Read-Only:
-
-- `type` (String)
-
 
 <a id="nestedatt--graphs--visualization--timeseries--queries--aggregate--count"></a>
 ### Nested Schema for `graphs.visualization.timeseries.queries.aggregate.count`
-
-Read-Only:
-
-- `type` (String)
 
 
 <a id="nestedatt--graphs--visualization--timeseries--queries--aggregate--max"></a>
@@ -1223,10 +1131,6 @@ Required:
 
 - `field` (String)
 
-Read-Only:
-
-- `type` (String)
-
 
 <a id="nestedatt--graphs--visualization--timeseries--queries--aggregate--min"></a>
 ### Nested Schema for `graphs.visualization.timeseries.queries.aggregate.min`
@@ -1234,10 +1138,6 @@ Read-Only:
 Required:
 
 - `field` (String)
-
-Read-Only:
-
-- `type` (String)
 
 
 <a id="nestedatt--graphs--visualization--timeseries--queries--aggregate--percentile"></a>
@@ -1248,10 +1148,6 @@ Required:
 - `field` (String)
 - `percentile` (Number)
 
-Read-Only:
-
-- `type` (String)
-
 
 <a id="nestedatt--graphs--visualization--timeseries--queries--aggregate--sum"></a>
 ### Nested Schema for `graphs.visualization.timeseries.queries.aggregate.sum`
@@ -1260,10 +1156,6 @@ Required:
 
 - `field` (String)
 
-Read-Only:
-
-- `type` (String)
-
 
 <a id="nestedatt--graphs--visualization--timeseries--queries--aggregate--unique_count"></a>
 ### Nested Schema for `graphs.visualization.timeseries.queries.aggregate.unique_count`
@@ -1271,10 +1163,6 @@ Read-Only:
 Required:
 
 - `field` (String)
-
-Read-Only:
-
-- `type` (String)
 
 
 
@@ -1337,7 +1225,7 @@ Read-Only:
 
 Required:
 
-- `aggregate` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--queries--aggregate))
+- `aggregate` (Attributes) Aggregate (count, unique_count, average, max, min, sum, or percentile) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--queries--aggregate))
 
 Optional:
 
@@ -1364,17 +1252,9 @@ Required:
 
 - `field` (String)
 
-Read-Only:
-
-- `type` (String)
-
 
 <a id="nestedatt--graphs--visualization--top_list--queries--aggregate--count"></a>
 ### Nested Schema for `graphs.visualization.top_list.queries.aggregate.count`
-
-Read-Only:
-
-- `type` (String)
 
 
 <a id="nestedatt--graphs--visualization--top_list--queries--aggregate--max"></a>
@@ -1384,10 +1264,6 @@ Required:
 
 - `field` (String)
 
-Read-Only:
-
-- `type` (String)
-
 
 <a id="nestedatt--graphs--visualization--top_list--queries--aggregate--min"></a>
 ### Nested Schema for `graphs.visualization.top_list.queries.aggregate.min`
@@ -1395,10 +1271,6 @@ Read-Only:
 Required:
 
 - `field` (String)
-
-Read-Only:
-
-- `type` (String)
 
 
 <a id="nestedatt--graphs--visualization--top_list--queries--aggregate--percentile"></a>
@@ -1409,10 +1281,6 @@ Required:
 - `field` (String)
 - `percentile` (Number)
 
-Read-Only:
-
-- `type` (String)
-
 
 <a id="nestedatt--graphs--visualization--top_list--queries--aggregate--sum"></a>
 ### Nested Schema for `graphs.visualization.top_list.queries.aggregate.sum`
@@ -1421,10 +1289,6 @@ Required:
 
 - `field` (String)
 
-Read-Only:
-
-- `type` (String)
-
 
 <a id="nestedatt--graphs--visualization--top_list--queries--aggregate--unique_count"></a>
 ### Nested Schema for `graphs.visualization.top_list.queries.aggregate.unique_count`
@@ -1432,10 +1296,6 @@ Read-Only:
 Required:
 
 - `field` (String)
-
-Read-Only:
-
-- `type` (String)
 
 
 

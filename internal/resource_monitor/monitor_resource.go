@@ -7,12 +7,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
+	"terraform-provider-tsuga/internal/aggregate"
 	"terraform-provider-tsuga/internal/resource_team"
-
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
 
 func MonitorResourceSchema(ctx context.Context) schema.Schema {
@@ -67,8 +67,8 @@ func MonitorResourceSchema(ctx context.Context) schema.Schema {
 				Required:    true,
 				Description: "Monitor configuration",
 				Attributes: map[string]schema.Attribute{
-					"metric": monitorConfigurationMetricSchema(),
-					"log":    monitorConfigurationLogSchema(),
+					"metric": monitorConfigurationSchema(),
+					"log":    monitorConfigurationSchema(),
 				},
 			},
 			"priority": schema.Int64Attribute{
@@ -181,162 +181,95 @@ func monitorNoDataBehaviorSchema(includeConsiderZero bool) schema.Attribute {
 	}
 }
 
-func metricQueriesSchema() schema.Attribute {
+func queriesSchema() schema.Attribute {
 	return schema.ListNestedAttribute{
 		Required: true,
 		Validators: []validator.List{
-			listvalidator.SizeBetween(1, 5),
+			listvalidator.SizeAtMost(10),
 		},
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
-				"name": schema.StringAttribute{
-					Required: true,
-					Validators: []validator.String{
-						stringvalidator.LengthAtMost(250),
-					},
-				},
 				"filter": schema.StringAttribute{
 					Required: true,
 					Validators: []validator.String{
 						stringvalidator.LengthAtMost(10000),
 					},
 				},
-				"aggregate": metricAggregateSchema(),
-				"value_if_no_data": schema.StringAttribute{
-					Optional: true,
-					Computed: true,
-					Validators: []validator.String{
-						stringvalidator.OneOf("Zero", "NaN"),
-					},
-				},
+				"aggregate": aggregate.Schema(),
+				"functions": aggregationFunctionsSchema(),
+				"fill":      aggregationFillSchema(),
 			},
 		},
 	}
 }
 
-func logQueriesSchema() schema.Attribute {
+func aggregationFunctionsSchema() schema.Attribute {
 	return schema.ListNestedAttribute{
-		Required: true,
+		Optional: true,
 		Validators: []validator.List{
-			listvalidator.SizeBetween(1, 5),
+			listvalidator.SizeAtMost(10),
 		},
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
-				"name": schema.StringAttribute{
-					Required: true,
-					Validators: []validator.String{
-						stringvalidator.LengthAtMost(250),
-					},
-				},
-				"filter": schema.StringAttribute{
-					Required: true,
-					Validators: []validator.String{
-						stringvalidator.LengthAtMost(10000),
-					},
-				},
-				"aggregate": logAggregateSchema(),
-				"value_if_no_data": schema.StringAttribute{
-					Optional: true,
-					Computed: true,
-					Validators: []validator.String{
-						stringvalidator.OneOf("Zero", "NaN"),
-					},
-				},
+				"per_second": aggregationFunctionEmptySchema(),
+				"per_minute": aggregationFunctionEmptySchema(),
+				"per_hour":   aggregationFunctionEmptySchema(),
+				"rate":       aggregationFunctionEmptySchema(),
+				"increase":   aggregationFunctionEmptySchema(),
+				"rolling":    aggregationFunctionRollingSchema(),
 			},
 		},
 	}
 }
 
-func monitorConfigurationMetricSchema() schema.Attribute {
-	attrs := baseMonitorConfigurationAttributes()
-	attrs["condition"] = monitorConditionSchema()
-	attrs["no_data_behavior"] = monitorNoDataBehaviorSchema(true)
-	attrs["queries"] = metricQueriesSchema()
-	return schema.SingleNestedAttribute{
-		Optional:   true,
-		Attributes: attrs,
-	}
-}
-
-func monitorConfigurationLogSchema() schema.Attribute {
-	attrs := baseMonitorConfigurationAttributes()
-	attrs["condition"] = monitorConditionSchema()
-	attrs["no_data_behavior"] = monitorNoDataBehaviorSchema(true)
-	attrs["queries"] = logQueriesSchema()
-	return schema.SingleNestedAttribute{
-		Optional:   true,
-		Attributes: attrs,
-	}
-}
-
-func metricAggregateSchema() schema.Attribute {
-	return schema.SingleNestedAttribute{
-		Required:    true,
-		Description: "Metric aggregate (unique_count, average, max, min, sum, or percentile)",
-		Attributes: map[string]schema.Attribute{
-			"average":      aggregateFieldSchema(),
-			"max":          aggregateFieldSchema(),
-			"min":          aggregateFieldSchema(),
-			"sum":          aggregateFieldSchema(),
-			"percentile":   aggregatePercentileSchema(),
-			"unique_count": aggregateFieldSchema(),
-		},
-	}
-}
-
-func logAggregateSchema() schema.Attribute {
-	return schema.SingleNestedAttribute{
-		Required:    true,
-		Description: "Log aggregate (count, unique_count, average, max, min, sum, or percentile)",
-		Attributes: map[string]schema.Attribute{
-			"average":      aggregateFieldSchema(),
-			"count":        aggregateCountSchema(),
-			"max":          aggregateFieldSchema(),
-			"min":          aggregateFieldSchema(),
-			"sum":          aggregateFieldSchema(),
-			"percentile":   aggregatePercentileSchema(),
-			"unique_count": aggregateFieldSchema(),
-		},
-	}
-}
-
-// Aggregate helper schemas
-
-func aggregateFieldSchema() schema.Attribute {
-	return schema.SingleNestedAttribute{
-		Optional: true,
-		Attributes: map[string]schema.Attribute{
-			"field": schema.StringAttribute{
-				Required: true,
-				Validators: []validator.String{
-					stringvalidator.LengthAtMost(250),
-				},
-			},
-		},
-	}
-}
-
-func aggregatePercentileSchema() schema.Attribute {
-	return schema.SingleNestedAttribute{
-		Optional: true,
-		Attributes: map[string]schema.Attribute{
-			"field": schema.StringAttribute{
-				Required: true,
-				Validators: []validator.String{
-					stringvalidator.LengthAtMost(250),
-				},
-			},
-			"percentile": schema.Float64Attribute{
-				Required: true,
-			},
-		},
-	}
-}
-
-func aggregateCountSchema() schema.Attribute {
+func aggregationFunctionEmptySchema() schema.Attribute {
 	return schema.SingleNestedAttribute{
 		Optional:   true,
 		Attributes: map[string]schema.Attribute{},
+	}
+}
+
+func aggregationFunctionRollingSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Optional: true,
+		Attributes: map[string]schema.Attribute{
+			"window": schema.StringAttribute{
+				Required: true,
+				Validators: []validator.String{
+					stringvalidator.LengthBetween(1, 250),
+				},
+			},
+		},
+	}
+}
+
+func aggregationFillSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Optional: true,
+		Attributes: map[string]schema.Attribute{
+			"mode": schema.SingleNestedAttribute{
+				Required: true,
+				Attributes: map[string]schema.Attribute{
+					"type": schema.StringAttribute{
+						Required: true,
+						Validators: []validator.String{
+							stringvalidator.OneOf("zero", "null"),
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func monitorConfigurationSchema() schema.Attribute {
+	attrs := baseMonitorConfigurationAttributes()
+	attrs["condition"] = monitorConditionSchema()
+	attrs["no_data_behavior"] = monitorNoDataBehaviorSchema(true)
+	attrs["queries"] = queriesSchema()
+	return schema.SingleNestedAttribute{
+		Optional:   true,
+		Attributes: attrs,
 	}
 }
 
@@ -354,21 +287,11 @@ type MonitorModel struct {
 }
 
 type MonitorConfigurationModel struct {
-	Metric *MonitorConfigurationMetricModel `tfsdk:"metric"`
-	Log    *MonitorConfigurationLogModel    `tfsdk:"log"`
+	Metric *MonitorConfigurationDetailsModel `tfsdk:"metric"`
+	Log    *MonitorConfigurationDetailsModel `tfsdk:"log"`
 }
 
-type MonitorConfigurationMetricModel struct {
-	Condition                MonitorConditionModel `tfsdk:"condition"`
-	NoDataBehavior           types.String          `tfsdk:"no_data_behavior"`
-	Timeframe                types.Int64           `tfsdk:"timeframe"`
-	GroupByFields            types.List            `tfsdk:"group_by_fields"`
-	AggregationAlertLogic    types.String          `tfsdk:"aggregation_alert_logic"`
-	ProportionAlertThreshold types.Int64           `tfsdk:"proportion_alert_threshold"`
-	Queries                  types.List            `tfsdk:"queries"`
-}
-
-type MonitorConfigurationLogModel struct {
+type MonitorConfigurationDetailsModel struct {
 	Condition                MonitorConditionModel `tfsdk:"condition"`
 	NoDataBehavior           types.String          `tfsdk:"no_data_behavior"`
 	Timeframe                types.Int64           `tfsdk:"timeframe"`
@@ -384,118 +307,84 @@ type MonitorConditionModel struct {
 	Threshold types.Float64 `tfsdk:"threshold"`
 }
 
-type AggregationGroupByModel struct {
-	Fields types.List  `tfsdk:"fields"`
-	Limit  types.Int64 `tfsdk:"limit"`
+type MonitorQueryModel struct {
+	Filter    types.String          `tfsdk:"filter"`
+	Aggregate MonitorAggregateModel `tfsdk:"aggregate"`
+	Functions types.List            `tfsdk:"functions"`
+	Fill      *AggregationFillModel `tfsdk:"fill"`
 }
 
-// Separate query models for metric and log
-type MetricQueryModel struct {
-	Name          types.String         `tfsdk:"name"`
-	Filter        types.String         `tfsdk:"filter"`
-	Aggregate     MetricAggregateModel `tfsdk:"aggregate"`
-	ValueIfNoData types.String         `tfsdk:"value_if_no_data"`
+type MonitorAggregateModel struct {
+	Count       *aggregate.CountModel      `tfsdk:"count"`
+	Average     *aggregate.FieldModel      `tfsdk:"average"`
+	Max         *aggregate.FieldModel      `tfsdk:"max"`
+	Min         *aggregate.FieldModel      `tfsdk:"min"`
+	Sum         *aggregate.FieldModel      `tfsdk:"sum"`
+	Percentile  *aggregate.PercentileModel `tfsdk:"percentile"`
+	UniqueCount *aggregate.FieldModel      `tfsdk:"unique_count"`
 }
 
-type LogQueryModel struct {
-	Name          types.String      `tfsdk:"name"`
-	Filter        types.String      `tfsdk:"filter"`
-	Aggregate     LogAggregateModel `tfsdk:"aggregate"`
-	ValueIfNoData types.String      `tfsdk:"value_if_no_data"`
+type AggregationFunctionModel struct {
+	PerSecond *AggregationFunctionEmptyModel   `tfsdk:"per_second"`
+	PerMinute *AggregationFunctionEmptyModel   `tfsdk:"per_minute"`
+	PerHour   *AggregationFunctionEmptyModel   `tfsdk:"per_hour"`
+	Rate      *AggregationFunctionEmptyModel   `tfsdk:"rate"`
+	Increase  *AggregationFunctionEmptyModel   `tfsdk:"increase"`
+	Rolling   *AggregationFunctionRollingModel `tfsdk:"rolling"`
 }
 
-// Separate aggregate models for metric and log
-type MetricAggregateModel struct {
-	Average     *AggregateFieldModel      `tfsdk:"average"`
-	Max         *AggregateFieldModel      `tfsdk:"max"`
-	Min         *AggregateFieldModel      `tfsdk:"min"`
-	Sum         *AggregateFieldModel      `tfsdk:"sum"`
-	Percentile  *AggregatePercentileModel `tfsdk:"percentile"`
-	UniqueCount *AggregateFieldModel      `tfsdk:"unique_count"`
+type AggregationFunctionEmptyModel struct{}
+
+type AggregationFunctionRollingModel struct {
+	Window types.String `tfsdk:"window"`
 }
 
-type LogAggregateModel struct {
-	Average     *AggregateFieldModel      `tfsdk:"average"`
-	Count       *AggregateCountModel      `tfsdk:"count"`
-	Max         *AggregateFieldModel      `tfsdk:"max"`
-	Min         *AggregateFieldModel      `tfsdk:"min"`
-	Sum         *AggregateFieldModel      `tfsdk:"sum"`
-	Percentile  *AggregatePercentileModel `tfsdk:"percentile"`
-	UniqueCount *AggregateFieldModel      `tfsdk:"unique_count"`
+type AggregationFillModel struct {
+	Mode AggregationFillModeModel `tfsdk:"mode"`
 }
 
-type AggregateFieldModel struct {
-	Field types.String `tfsdk:"field"`
+type AggregationFillModeModel struct {
+	Type types.String `tfsdk:"type"`
 }
 
-type AggregatePercentileModel struct {
-	Field      types.String  `tfsdk:"field"`
-	Percentile types.Float64 `tfsdk:"percentile"`
-}
-
-type AggregateCountModel struct{}
-
-func MetricQueryAttrTypes() map[string]attr.Type {
+func QueryAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"name":             types.StringType,
-		"filter":           types.StringType,
-		"aggregate":        types.ObjectType{AttrTypes: MetricAggregateAttrTypes()},
-		"value_if_no_data": types.StringType,
+		"filter":    types.StringType,
+		"aggregate": types.ObjectType{AttrTypes: aggregate.AttrTypes()},
+		"functions": types.ListType{ElemType: types.ObjectType{AttrTypes: AggregationFunctionAttrTypes()}},
+		"fill":      types.ObjectType{AttrTypes: AggregationFillAttrTypes()},
 	}
 }
 
-func LogQueryAttrTypes() map[string]attr.Type {
+func AggregationFunctionAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"name":             types.StringType,
-		"filter":           types.StringType,
-		"aggregate":        types.ObjectType{AttrTypes: LogAggregateAttrTypes()},
-		"value_if_no_data": types.StringType,
+		"per_second": types.ObjectType{AttrTypes: AggregationFunctionEmptyAttrTypes()},
+		"per_minute": types.ObjectType{AttrTypes: AggregationFunctionEmptyAttrTypes()},
+		"per_hour":   types.ObjectType{AttrTypes: AggregationFunctionEmptyAttrTypes()},
+		"rate":       types.ObjectType{AttrTypes: AggregationFunctionEmptyAttrTypes()},
+		"increase":   types.ObjectType{AttrTypes: AggregationFunctionEmptyAttrTypes()},
+		"rolling":    types.ObjectType{AttrTypes: AggregationFunctionRollingAttrTypes()},
 	}
 }
 
-func MetricAggregateAttrTypes() map[string]attr.Type {
-	return map[string]attr.Type{
-		"average":      types.ObjectType{AttrTypes: AggregateFieldAttrTypes()},
-		"max":          types.ObjectType{AttrTypes: AggregateFieldAttrTypes()},
-		"min":          types.ObjectType{AttrTypes: AggregateFieldAttrTypes()},
-		"sum":          types.ObjectType{AttrTypes: AggregateFieldAttrTypes()},
-		"percentile":   types.ObjectType{AttrTypes: AggregatePercentileAttrTypes()},
-		"unique_count": types.ObjectType{AttrTypes: AggregateFieldAttrTypes()},
-	}
-}
-
-func LogAggregateAttrTypes() map[string]attr.Type {
-	return map[string]attr.Type{
-		"average":      types.ObjectType{AttrTypes: AggregateFieldAttrTypes()},
-		"count":        types.ObjectType{AttrTypes: AggregateCountAttrTypes()},
-		"max":          types.ObjectType{AttrTypes: AggregateFieldAttrTypes()},
-		"min":          types.ObjectType{AttrTypes: AggregateFieldAttrTypes()},
-		"sum":          types.ObjectType{AttrTypes: AggregateFieldAttrTypes()},
-		"percentile":   types.ObjectType{AttrTypes: AggregatePercentileAttrTypes()},
-		"unique_count": types.ObjectType{AttrTypes: AggregateFieldAttrTypes()},
-	}
-}
-
-func AggregateFieldAttrTypes() map[string]attr.Type {
-	return map[string]attr.Type{
-		"field": types.StringType,
-	}
-}
-
-func AggregatePercentileAttrTypes() map[string]attr.Type {
-	return map[string]attr.Type{
-		"field":      types.StringType,
-		"percentile": types.Float64Type,
-	}
-}
-
-func AggregateCountAttrTypes() map[string]attr.Type {
+func AggregationFunctionEmptyAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{}
 }
 
-func AggregationGroupByAttrTypes() map[string]attr.Type {
+func AggregationFunctionRollingAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"fields": types.ListType{ElemType: types.StringType},
-		"limit":  types.Int64Type,
+		"window": types.StringType,
+	}
+}
+
+func AggregationFillAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"mode": types.ObjectType{AttrTypes: AggregationFillModeAttrTypes()},
+	}
+}
+
+func AggregationFillModeAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"type": types.StringType,
 	}
 }
