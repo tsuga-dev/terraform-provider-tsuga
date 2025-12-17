@@ -14,6 +14,10 @@ sh codegen.sh
 
 **Important:** Always run this script and commit the generated files when you update the OpenAPI spec.
 
+## Example Validation
+
+This repository includes automated validation of all Terraform examples to ensure they remain valid.
+
 ## Continuous Integration
 
 The GitHub Actions CI pipeline includes:
@@ -21,6 +25,7 @@ The GitHub Actions CI pipeline includes:
 - **Codegen Check**: Verifies that the codegen script has been run and all generated code is up-to-date
 - **Terraform Validation**: Builds the provider and validates the Terraform configuration
 - **Go Tests**: Runs Go tests and static analysis
+- **Example Validation**: Validates that all examples are syntactically correct
 
 All checks must pass before merging pull requests.
 
