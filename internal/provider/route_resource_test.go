@@ -29,7 +29,6 @@ resource "tsuga_route" "test" {
   processors = [
     {
       id   = "mapper-1"
-      name = "mapper"
       mapper = {
         map_attributes = [
           {
@@ -42,7 +41,6 @@ resource "tsuga_route" "test" {
     },
     {
       id   = "parser-1"
-      name = "parser"
       parse_attribute = {
         grok = {
           attribute_name = "message"
@@ -52,7 +50,6 @@ resource "tsuga_route" "test" {
     },
     {
       id   = "creator-1"
-      name = "creator"
       creator = {
         format_string = {
           target_attribute = "formatted"
@@ -62,7 +59,6 @@ resource "tsuga_route" "test" {
     },
     {
       id   = "splitter-1"
-      name = "splitter"
       split = {
         items = [
           {
@@ -70,7 +66,6 @@ resource "tsuga_route" "test" {
             processors = [
               {
                 id   = "mapper-2"
-                name = "nested-mapper"
                 mapper = {
                   map_level = {
                     attribute_name = "level"
@@ -79,7 +74,6 @@ resource "tsuga_route" "test" {
               },
               {
                 id   = "splitter-2"
-                name = "nested-split"
                 split = {
                   items = [
                     {
@@ -87,7 +81,6 @@ resource "tsuga_route" "test" {
                       processors = [
                         {
                           id   = "mapper-3"
-                          name = "deep-mapper"
                           mapper = {
                             map_timestamp = {
                               attribute_name = "ts_nested"
@@ -96,7 +89,6 @@ resource "tsuga_route" "test" {
                         },
                         {
                           id   = "splitter-3"
-                          name = "deep-split"
                           split = {
                             items = [
                               {
@@ -104,7 +96,6 @@ resource "tsuga_route" "test" {
                                 processors = [
                                   {
                                     id   = "mapper-4"
-                                    name = "deeper-mapper"
                                     mapper = {
                                       map_attributes = [
                                         {
@@ -160,7 +151,6 @@ resource "tsuga_route" "test" {
   processors = [
     {
       id   = "mapper-1"
-      name = "mapper2"
       mapper = {
         map_timestamp = {
           attribute_name = "ts"
@@ -169,7 +159,6 @@ resource "tsuga_route" "test" {
     },
     {
       id   = "parser-1"
-      name = "parser2"
       parse_attribute = {
         key_value = {
           source_attribute      = "msg"
@@ -182,7 +171,6 @@ resource "tsuga_route" "test" {
     },
     {
       id   = "creator-1"
-      name = "creator2"
       creator = {
         math_formula = {
           target_attribute = "val"
@@ -192,7 +180,6 @@ resource "tsuga_route" "test" {
     },
     {
       id   = "splitter-1"
-      name = "splitter2"
       split = {
         items = [
           {
@@ -200,7 +187,6 @@ resource "tsuga_route" "test" {
             processors = [
               {
                 id   = "parser-2"
-                name = "nested-parser"
                 parse_attribute = {
                   url = {
                     source_attribute = "url"
@@ -209,7 +195,6 @@ resource "tsuga_route" "test" {
               },
               {
                 id   = "splitter-3"
-                name = "nested-split-updated"
                 split = {
                   items = [
                     {
@@ -217,7 +202,6 @@ resource "tsuga_route" "test" {
                       processors = [
                         {
                           id   = "parser-3"
-                          name = "deep-parser"
                           parse_attribute = {
                             key_value = {
                               source_attribute      = "msg"
@@ -230,7 +214,6 @@ resource "tsuga_route" "test" {
                         },
                         {
                           id   = "splitter-4"
-                          name = "deeper-split-updated"
                           split = {
                             items = [
                               {
@@ -238,7 +221,6 @@ resource "tsuga_route" "test" {
                                 processors = [
                                   {
                                     id   = "parser-4"
-                                    name = "deeper-parser"
                                     parse_attribute = {
                                       grok = {
                                         attribute_name = "deep_message"
@@ -320,7 +302,6 @@ resource "tsuga_route" "test" {
   processors = [
     {
       id   = "mapper-1"
-      name = "mapper"
       mapper = {
         map_level = {
           attribute_name = "level"
