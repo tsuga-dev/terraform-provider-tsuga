@@ -1,0 +1,95 @@
+name: Validate Examples
+
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "examples/**"
+      - ".github/workflows/validate-examples.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-examples:
+    name: Validate Examples
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        example:
+          - tsuga_dashboard
+          - tsuga_monitor
+          - tsuga_notification_rule
+          - tsuga_route
+          - tsuga_team
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # pin@v6.1
+        with:
+          go-version: "1.25.3"
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # pin@v3
+        with:
+          terraform_version: latest
+          terraform_wrapper: false
+
+      - name: Build provider
+        run: go build -o terraform-provider-tsuga
+
+      - name: Setup provider for local testing
+        # Dummy version number here -- we don't need to validate against the API in this workflow
+        run: |
+          mkdir -p ~/.terraform.d/plugins/registry.terraform.io/tsuga-dev/tsuga/0.1.0/linux_amd64
+          cp terraform-provider-tsuga ~/.terraform.d/plugins/registry.terraform.io/tsuga-dev/tsuga/0.1.0/linux_amd64/
+
+      - name: Create test directory
+        run: mkdir -p test-${{ matrix.example }}
+
+      - name: Create terraform configuration
+        run: |
+          cat > test-${{ matrix.example }}/terraform.tf <<EOF
+          terraform {
+            required_providers {
+              tsuga = {
+                source = "registry.terraform.io/tsuga-dev/tsuga"
+              }
+            }
+          }
+          EOF
+
+      - name: Create provider config
+        run: |
+          cat > test-${{ matrix.example }}/provider.tf <<EOF
+          # We don't validate against the API in this workflow, so we don't need to configure the provider
+          provider "tsuga" {
+            base_url = "https://api.tsuga-staging.com"
+            token = ${{ secrets.TSUGA_TOKEN }}
+          }
+          EOF
+
+      - name: Copy example
+        run: cp examples/resources/${{ matrix.example }}/resource.tf test-${{ matrix.example }}/
+
+      - name: Terraform init
+        working-directory: test-${{ matrix.example }}
+        run: terraform init
+
+      - name: Terraform format check
+        working-directory: test-${{ matrix.example }}
+        run: terraform fmt -check
+
+      - name: Terraform validate
+        working-directory: test-${{ matrix.example }}
+        run: terraform validate
+
+      - name: Terraform plan
+        working-directory: test-${{ matrix.example }}
+        run: terraform plan
