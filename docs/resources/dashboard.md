@@ -14,8 +14,9 @@ Visualization of telemetry data with customizable graphs and filters
 
 ```terraform
 resource "tsuga_dashboard" "dashboard" {
-  name  = "Kubernetes Dashboard"
-  owner = "abc-123-def"
+  name        = "Kubernetes Dashboard"
+  owner       = "abc-123-def"
+  time_preset = "past-15-minutes"
   filters = [
     "context.k8s.namespace.name",
     "context.k8s.pod.name",
@@ -557,6 +558,7 @@ resource "tsuga_dashboard" "dashboard" {
 
 - `filters` (List of String) Filters applied to every widget on the dashboard
 - `tags` (Attributes List) List of key/value tags applied to the resource (see [below for nested schema](#nestedatt--tags))
+- `time_preset` (String) Preset time range for dashboard queries
 
 ### Read-Only
 
@@ -938,6 +940,7 @@ Optional:
 - `formula` (String)
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--group_by))
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--normalizer))
+- `precision` (Number) Number of decimal places to display in the value
 - `visible_series` (List of Boolean)
 
 Read-Only:

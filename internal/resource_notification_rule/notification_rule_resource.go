@@ -3,6 +3,7 @@ package resource_notification_rule
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -38,12 +39,17 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 				Required:    true,
 				Description: "Priorities that narrow down the alerts that can trigger a notification",
 				ElementType: types.Int64Type,
+				Validators: []validator.List{
+					listvalidator.SizeAtMost(5),
+					listvalidator.ValueInt64sAre(int64validator.Between(1, 5)),
+				},
 			},
 			"transition_types_filter": schema.ListAttribute{
 				Required:    true,
 				Description: "Alert state transitions that can trigger a notification",
 				ElementType: types.StringType,
 				Validators: []validator.List{
+					listvalidator.SizeAtMost(3),
 					listvalidator.ValueStringsAre(
 						stringvalidator.OneOf("triggered", "resolved", "no-data"),
 					),
@@ -123,6 +129,14 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 										},
 										"integration_name": schema.StringAttribute{
 											Computed: true,
+										},
+										"hide_time": schema.BoolAttribute{
+											Optional:    true,
+											Description: "When true, the timestamp is hidden from the Slack message",
+										},
+										"hide_transition": schema.BoolAttribute{
+											Optional:    true,
+											Description: "When true, the transition info is hidden from the Slack message",
 										},
 									},
 								},
@@ -311,6 +325,8 @@ type SlackConfigModel struct {
 	Channel         types.String `tfsdk:"channel"`
 	IntegrationID   types.String `tfsdk:"integration_id"`
 	IntegrationName types.String `tfsdk:"integration_name"`
+	HideTime        types.Bool   `tfsdk:"hide_time"`
+	HideTransition  types.Bool   `tfsdk:"hide_transition"`
 }
 
 type IntegrationOnlyConfigModel struct {
@@ -342,6 +358,8 @@ func SlackAttrTypes(_ context.Context) map[string]attr.Type {
 		"channel":          types.StringType,
 		"integration_id":   types.StringType,
 		"integration_name": types.StringType,
+		"hide_time":        types.BoolType,
+		"hide_transition":  types.BoolType,
 	}
 }
 

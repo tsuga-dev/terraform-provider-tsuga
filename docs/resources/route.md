@@ -21,8 +21,7 @@ resource "tsuga_route" "route" {
 
   processors = [
     {
-      id   = "message-standardizer"
-      name = "Standardize message"
+      id = "message-standardizer"
       mapper = {
         map_attributes = [
           {
@@ -33,8 +32,7 @@ resource "tsuga_route" "route" {
       }
     },
     {
-      id   = "nginx-parser"
-      name = "Nginx"
+      id = "nginx-parser"
       parse_attribute = {
         grok = {
           attribute_name = "message"
@@ -46,8 +44,7 @@ resource "tsuga_route" "route" {
       }
     },
     {
-      id   = "audit-log-message-creator"
-      name = "Audit log message creator"
+      id = "audit-log-message-creator"
       creator = {
         format_string = {
           target_attribute = "message"
@@ -56,8 +53,7 @@ resource "tsuga_route" "route" {
       }
     },
     {
-      id   = "latency-creator"
-      name = "Latency creator"
+      id = "latency-creator"
       creator = {
         math_formula = {
           target_attribute = "latency"
@@ -66,16 +62,14 @@ resource "tsuga_route" "route" {
       }
     },
     {
-      id   = "otel-splitter"
-      name = "OpenTelemetry splitter"
+      id = "otel-splitter"
       split = {
         items = [
           {
             query = "scope.name:*"
             processors = [
               {
-                id   = "otel-severity-mapper"
-                name = "OpenTelemetry severity mapper"
+                id = "otel-severity-mapper"
                 mapper = {
                   map_level = {
                     attribute_name = "severity"
@@ -123,7 +117,6 @@ Optional:
 - `creator` (Attributes) (see [below for nested schema](#nestedatt--processors--creator))
 - `description` (String)
 - `mapper` (Attributes) (see [below for nested schema](#nestedatt--processors--mapper))
-- `name` (String) Display name of the processor
 - `parse_attribute` (Attributes) (see [below for nested schema](#nestedatt--processors--parse_attribute))
 - `split` (Attributes) (see [below for nested schema](#nestedatt--processors--split))
 - `tags` (Attributes List) List of key/value tags applied to the resource (see [below for nested schema](#nestedatt--processors--tags))
@@ -287,7 +280,6 @@ Optional:
 - `creator` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--creator))
 - `description` (String)
 - `mapper` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--mapper))
-- `name` (String) Display name of the processor
 - `parse_attribute` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--parse_attribute))
 - `split` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split))
 - `tags` (Attributes List) List of key/value tags applied to the resource (see [below for nested schema](#nestedatt--processors--split--items--processors--tags))
@@ -451,7 +443,6 @@ Optional:
 - `creator` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--creator))
 - `description` (String)
 - `mapper` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--mapper))
-- `name` (String) Display name of the processor
 - `parse_attribute` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--parse_attribute))
 - `split` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split))
 - `tags` (Attributes List) List of key/value tags applied to the resource (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--tags))
@@ -615,7 +606,6 @@ Optional:
 - `creator` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--creator))
 - `description` (String)
 - `mapper` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--mapper))
-- `name` (String) Display name of the processor
 - `parse_attribute` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--parse_attribute))
 - `split` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split))
 - `tags` (Attributes List) List of key/value tags applied to the resource (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--tags))
@@ -779,7 +769,6 @@ Optional:
 - `creator` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator))
 - `description` (String)
 - `mapper` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--mapper))
-- `name` (String) Display name of the processor
 - `parse_attribute` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--parse_attribute))
 - `split` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split))
 - `tags` (Attributes List) List of key/value tags applied to the resource (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--tags))
@@ -943,7 +932,6 @@ Optional:
 - `creator` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator))
 - `description` (String)
 - `mapper` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--mapper))
-- `name` (String) Display name of the processor
 - `parse_attribute` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--parse_attribute))
 - `split` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split))
 - `tags` (Attributes List) List of key/value tags applied to the resource (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--tags))
@@ -1107,7 +1095,6 @@ Optional:
 - `creator` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator))
 - `description` (String)
 - `mapper` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--mapper))
-- `name` (String) Display name of the processor
 - `parse_attribute` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--parse_attribute))
 - `split` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split))
 - `tags` (Attributes List) List of key/value tags applied to the resource (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--tags))
@@ -1271,7 +1258,6 @@ Optional:
 - `creator` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator))
 - `description` (String)
 - `mapper` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--mapper))
-- `name` (String) Display name of the processor
 - `parse_attribute` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--parse_attribute))
 - `split` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split))
 - `tags` (Attributes List) List of key/value tags applied to the resource (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--tags))
@@ -1435,7 +1421,6 @@ Optional:
 - `creator` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator))
 - `description` (String)
 - `mapper` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--mapper))
-- `name` (String) Display name of the processor
 - `parse_attribute` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--parse_attribute))
 - `tags` (Attributes List) List of key/value tags applied to the resource (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--tags))
 

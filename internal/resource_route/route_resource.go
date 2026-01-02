@@ -111,13 +111,6 @@ func processorsListAttribute(ctx context.Context, depth int) schema.ListNestedAt
 					Required:    true,
 					Description: "Identifier of the processor",
 				},
-				"name": schema.StringAttribute{
-					Optional:    true,
-					Description: "Display name of the processor",
-					Validators: []validator.String{
-						stringvalidator.LengthAtMost(250),
-					},
-				},
 				"description": schema.StringAttribute{
 					Optional: true,
 					Validators: []validator.String{
@@ -369,7 +362,6 @@ type RouteModel struct {
 
 type ProcessorModel struct {
 	Id             types.String         `tfsdk:"id"`
-	Name           types.String         `tfsdk:"name"`
 	Description    types.String         `tfsdk:"description"`
 	Tags           types.List           `tfsdk:"tags"`
 	Mapper         *MapperModel         `tfsdk:"mapper"`
@@ -472,7 +464,6 @@ func ProcessorAttrTypesAtDepth(ctx context.Context, depth int) map[string]attr.T
 func processorAttrTypesWithDepth(ctx context.Context, depth int) map[string]attr.Type {
 	attrTypes := map[string]attr.Type{
 		"id":              types.StringType,
-		"name":            types.StringType,
 		"description":     types.StringType,
 		"tags":            types.ListType{ElemType: types.ObjectType{AttrTypes: resource_team.TagsValue{}.AttributeTypes(ctx)}},
 		"mapper":          types.ObjectType{AttrTypes: MapperAttrTypes()},

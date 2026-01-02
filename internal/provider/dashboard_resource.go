@@ -306,6 +306,9 @@ func (r *dashboardResource) buildDashboardRequestBody(ctx context.Context, plan 
 	if filters != nil {
 		body["filters"] = filters
 	}
+	if !plan.TimePreset.IsNull() && !plan.TimePreset.IsUnknown() {
+		body["timePreset"] = plan.TimePreset.ValueString()
+	}
 
 	if tags, tagDiags := expandTags(ctx, plan.Tags); tagDiags.HasError() {
 		diags.Append(tagDiags...)
@@ -381,12 +384,13 @@ type dashboardAPIResponse struct {
 }
 
 type dashboardAPIData struct {
-	ID      string              `json:"id"`
-	Name    string              `json:"name"`
-	Owner   string              `json:"owner"`
-	Filters []string            `json:"filters"`
-	Tags    []apiTag            `json:"tags"`
-	Graphs  []dashboardAPIGraph `json:"graphs"`
+	ID         string              `json:"id"`
+	Name       string              `json:"name"`
+	Owner      string              `json:"owner"`
+	Filters    []string            `json:"filters"`
+	Tags       []apiTag            `json:"tags"`
+	TimePreset string              `json:"timePreset,omitempty"`
+	Graphs     []dashboardAPIGraph `json:"graphs"`
 }
 
 type dashboardAPIGraph struct {
@@ -413,6 +417,7 @@ type dashboardVisualization struct {
 	Normalizer     *dashboardNormalizer  `json:"normalizer,omitempty"`
 	BackgroundMode string                `json:"backgroundMode,omitempty"`
 	Conditions     []dashboardCondition  `json:"conditions,omitempty"`
+	Precision      *float64              `json:"precision,omitempty"`
 	TimeBucket     *dashboardTimeBucket  `json:"timeBucket,omitempty"`
 	Query          string                `json:"query,omitempty"`
 	ListColumns    []dashboardListColumn `json:"listColumns,omitempty"`
@@ -575,6 +580,10 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 			diags.Append(cDiags...)
 			vz.Conditions = conds
 		}
+		if !v.QueryValue.Precision.IsNull() && !v.QueryValue.Precision.IsUnknown() {
+			precision := v.QueryValue.Precision.ValueFloat64()
+			vz.Precision = &precision
+		}
 		vis = vz
 	}
 	if v.Bar != nil {
@@ -634,12 +643,13 @@ func flattenDashboard(ctx context.Context, data dashboardAPIData) (resource_dash
 	diags.Append(graphDiags...)
 
 	state := resource_dashboard.DashboardModel{
-		Id:      types.StringValue(data.ID),
-		Name:    types.StringValue(data.Name),
-		Owner:   types.StringValue(data.Owner),
-		Filters: filters,
-		Tags:    tags,
-		Graphs:  graphs,
+		Id:         types.StringValue(data.ID),
+		Name:       types.StringValue(data.Name),
+		Owner:      types.StringValue(data.Owner),
+		Filters:    filters,
+		Tags:       tags,
+		TimePreset: stringValueOrNull(data.TimePreset),
+		Graphs:     graphs,
 	}
 
 	return state, diags
@@ -789,6 +799,11 @@ func flattenSeriesVisualization(ctx context.Context, vis dashboardVisualization)
 		diags.Append(cDiags...)
 		obj["background_mode"] = stringValueOrNull(vis.BackgroundMode)
 		obj["conditions"] = condVal
+		if vis.Precision != nil {
+			obj["precision"] = types.Float64Value(*vis.Precision)
+		} else {
+			obj["precision"] = types.Float64Null()
+		}
 		return types.ObjectValueMust(resource_dashboard.QueryValueVisualizationAttrTypes(), obj), diags
 	}
 
