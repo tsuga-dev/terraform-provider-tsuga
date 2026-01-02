@@ -178,6 +178,11 @@ Required:
 - `channel` (String)
 - `integration_id` (String)
 
+Optional:
+
+- `hide_time` (Boolean) When true, the timestamp is hidden from the Slack message
+- `hide_transition` (Boolean) When true, the transition info is hidden from the Slack message
+
 Read-Only:
 
 - `integration_name` (String)

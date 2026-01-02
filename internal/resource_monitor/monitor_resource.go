@@ -185,7 +185,7 @@ func queriesSchema() schema.Attribute {
 	return schema.ListNestedAttribute{
 		Required: true,
 		Validators: []validator.List{
-			listvalidator.SizeAtMost(10),
+			listvalidator.SizeAtMost(15),
 		},
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
