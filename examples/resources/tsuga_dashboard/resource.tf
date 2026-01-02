@@ -1,6 +1,7 @@
 resource "tsuga_dashboard" "dashboard" {
   name  = "Kubernetes Dashboard"
   owner = "abc-123-def"
+  time_preset = "past-15-minutes"
   filters = [
     "context.k8s.namespace.name",
     "context.k8s.pod.name",

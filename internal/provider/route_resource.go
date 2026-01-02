@@ -327,7 +327,6 @@ type routeAPIData struct {
 
 type routeAPIProcessor struct {
 	ID          string                 `json:"id,omitempty"`
-	Name        string                 `json:"name,omitempty"`
 	Description string                 `json:"description,omitempty"`
 	Tags        []apiTag               `json:"tags,omitempty"`
 	Type        string                 `json:"type"`
@@ -351,7 +350,6 @@ func expandRouteProcessors(ctx context.Context, processors types.List, depth int
 		setCount := 0
 		apiProc := routeAPIProcessor{
 			ID:          p.Id.ValueString(),
-			Name:        p.Name.ValueString(),
 			Description: p.Description.ValueString(),
 		}
 		if tags, td := expandTags(ctx, p.Tags); td.HasError() {
@@ -577,7 +575,6 @@ func flattenRouteProcessors(ctx context.Context, procs []routeAPIProcessor, dept
 	for _, p := range procs {
 		obj := map[string]attr.Value{
 			"id":              stringValueOrNull(p.ID),
-			"name":            stringValueOrNull(p.Name),
 			"description":     stringValueOrNull(p.Description),
 			"tags":            types.ListNull(types.ObjectType{AttrTypes: resource_team.TagsValue{}.AttributeTypes(ctx)}),
 			"mapper":          types.ObjectNull(resource_route.MapperAttrTypes()),
@@ -845,7 +842,6 @@ func mapToProcessor(m map[string]interface{}) routeAPIProcessor {
 	}
 	return routeAPIProcessor{
 		ID:          stringFromMap(m, "id"),
-		Name:        stringFromMap(m, "name"),
 		Description: stringFromMap(m, "description"),
 		Type:        stringFromMap(m, "type"),
 		Params:      params,
