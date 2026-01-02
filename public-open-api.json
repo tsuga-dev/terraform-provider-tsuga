@@ -17,6 +17,101 @@
       }
     },
     "schemas": {
+      "ErrorResponse": {
+        "description": "Standard envelope for API errors",
+        "type": "object",
+        "properties": {
+          "code": {
+            "description": "Machine readable error code describing what went wrong",
+            "type": "string",
+            "enum": [
+              "ABORT_ERROR",
+              "BAD_REQUEST",
+              "FST_ERR_VALIDATION",
+              "INVALID_INPUT",
+              "INTERNAL_ERROR",
+              "INVALID_QUERY_TO_CLUSTER",
+              "NETWORK_ERROR",
+              "MISSING_PERMISSION",
+              "PRIVILEGE_ESCALATION",
+              "ORG_NOT_FOUND_AUTHENTICATION_ERROR",
+              "RATE_LIMITED",
+              "RESERVED_TAG_POLICY_ERROR",
+              "RESOURCE_NOT_FOUND",
+              "RESPONSE_PARSE_ERROR",
+              "TAG_POLICY_ALREADY_EXISTS_ERROR",
+              "TAG_POLICY_VALIDATION_ERROR",
+              "URL_NOT_FOUND"
+            ]
+          },
+          "message": {
+            "description": "Human readable explanation of the error",
+            "type": "string"
+          },
+          "statusCode": {
+            "description": "HTTP status code that was returned",
+            "type": "number"
+          }
+        },
+        "required": [
+          "message",
+          "statusCode"
+        ]
+      },
+      "IngestionApiKey": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "tags": {
+            "title": "Tags",
+            "maxItems": 50,
+            "description": "List of key/value tags applied to the resource",
+            "type": "array",
+            "items": {
+              "title": "Tag",
+              "type": "object",
+              "properties": {
+                "key": {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                "value": {
+                  "maxLength": 256,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key",
+                "value"
+              ]
+            }
+          },
+          "teamOverrideFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "keyLastCharacters": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "owner",
+          "keyLastCharacters"
+        ],
+        "description": "API key used to send telemetry data to Tsuga"
+      },
       "Dashboard": {
         "type": "object",
         "properties": {
@@ -152,6 +247,7 @@
           "timePreset": {
             "type": "string",
             "enum": [
+              "past-5-minutes",
               "past-15-minutes",
               "past-30-minutes",
               "past-1-hour",
@@ -184,47 +280,6 @@
           "graphs"
         ],
         "description": "Visualization of telemetry data with customizable graphs and filters"
-      },
-      "ErrorResponse": {
-        "description": "Standard envelope for API errors",
-        "type": "object",
-        "properties": {
-          "code": {
-            "description": "Machine readable error code describing what went wrong",
-            "type": "string",
-            "enum": [
-              "ABORT_ERROR",
-              "BAD_REQUEST",
-              "FST_ERR_VALIDATION",
-              "INVALID_INPUT",
-              "INTERNAL_ERROR",
-              "INVALID_QUERY_TO_CLUSTER",
-              "NETWORK_ERROR",
-              "MISSING_PERMISSION",
-              "PRIVILEGE_ESCALATION",
-              "ORG_NOT_FOUND_AUTHENTICATION_ERROR",
-              "RATE_LIMITED",
-              "RESERVED_TAG_POLICY_ERROR",
-              "RESOURCE_NOT_FOUND",
-              "RESPONSE_PARSE_ERROR",
-              "TAG_POLICY_ALREADY_EXISTS_ERROR",
-              "TAG_POLICY_VALIDATION_ERROR",
-              "URL_NOT_FOUND"
-            ]
-          },
-          "message": {
-            "description": "Human readable explanation of the error",
-            "type": "string"
-          },
-          "statusCode": {
-            "description": "HTTP status code that was returned",
-            "type": "number"
-          }
-        },
-        "required": [
-          "message",
-          "statusCode"
-        ]
       },
       "Monitor": {
         "title": "Monitor",
@@ -350,7 +405,14 @@
             "description": "Priorities that narrow down the alerts that can trigger a notification",
             "type": "array",
             "items": {
-              "type": "integer"
+              "type": "number",
+              "enum": [
+                1,
+                2,
+                3,
+                4,
+                5
+              ]
             }
           },
           "transitionTypesFilter": {
@@ -515,6 +577,53 @@
         ],
         "description": "Rules to trigger notifications to targets based on alert events"
       },
+      "RetentionPolicy": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "env": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string"
+          },
+          "dataSource": {
+            "type": "string",
+            "enum": [
+              "logs",
+              "metrics",
+              "traces"
+            ]
+          },
+          "durationDays": {
+            "type": "string",
+            "enum": [
+              "1-day",
+              "3-days",
+              "15-days",
+              "30-days",
+              "60-days",
+              "90-days",
+              "120-days",
+              "180-days",
+              "360-days",
+              "10-years"
+            ]
+          },
+          "isEnabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "dataSource",
+          "durationDays",
+          "isEnabled"
+        ],
+        "description": "Data retention rule for a data source within an environment"
+      },
       "Route": {
         "title": "Route",
         "type": "object",
@@ -578,12 +687,6 @@
                       "minLength": 0,
                       "maxLength": 250,
                       "description": "Identifier of the processor",
-                      "type": "string"
-                    },
-                    "name": {
-                      "minLength": 0,
-                      "maxLength": 250,
-                      "description": "Display name of the processor",
                       "type": "string"
                     },
                     "description": {
@@ -659,7 +762,6 @@
                   },
                   "required": [
                     "id",
-                    "name",
                     "type",
                     "params"
                   ]
@@ -671,12 +773,6 @@
                       "minLength": 0,
                       "maxLength": 250,
                       "description": "Identifier of the processor",
-                      "type": "string"
-                    },
-                    "name": {
-                      "minLength": 0,
-                      "maxLength": 250,
-                      "description": "Display name of the processor",
                       "type": "string"
                     },
                     "description": {
@@ -874,7 +970,6 @@
                   },
                   "required": [
                     "id",
-                    "name",
                     "type",
                     "params"
                   ]
@@ -886,12 +981,6 @@
                       "minLength": 0,
                       "maxLength": 250,
                       "description": "Identifier of the processor",
-                      "type": "string"
-                    },
-                    "name": {
-                      "minLength": 0,
-                      "maxLength": 250,
-                      "description": "Display name of the processor",
                       "type": "string"
                     },
                     "description": {
@@ -964,7 +1053,6 @@
                   },
                   "required": [
                     "id",
-                    "name",
                     "type",
                     "params"
                   ]
@@ -976,12 +1064,6 @@
                       "minLength": 0,
                       "maxLength": 250,
                       "description": "Identifier of the processor",
-                      "type": "string"
-                    },
-                    "name": {
-                      "minLength": 0,
-                      "maxLength": 250,
-                      "description": "Display name of the processor",
                       "type": "string"
                     },
                     "description": {
@@ -1074,7 +1156,6 @@
                   },
                   "required": [
                     "id",
-                    "name",
                     "params",
                     "type"
                   ]
@@ -1103,12 +1184,6 @@
                 "minLength": 0,
                 "maxLength": 250,
                 "description": "Identifier of the processor",
-                "type": "string"
-              },
-              "name": {
-                "minLength": 0,
-                "maxLength": 250,
-                "description": "Display name of the processor",
                 "type": "string"
               },
               "description": {
@@ -1184,7 +1259,6 @@
             },
             "required": [
               "id",
-              "name",
               "type",
               "params"
             ]
@@ -1196,12 +1270,6 @@
                 "minLength": 0,
                 "maxLength": 250,
                 "description": "Identifier of the processor",
-                "type": "string"
-              },
-              "name": {
-                "minLength": 0,
-                "maxLength": 250,
-                "description": "Display name of the processor",
                 "type": "string"
               },
               "description": {
@@ -1399,7 +1467,6 @@
             },
             "required": [
               "id",
-              "name",
               "type",
               "params"
             ]
@@ -1411,12 +1478,6 @@
                 "minLength": 0,
                 "maxLength": 250,
                 "description": "Identifier of the processor",
-                "type": "string"
-              },
-              "name": {
-                "minLength": 0,
-                "maxLength": 250,
-                "description": "Display name of the processor",
                 "type": "string"
               },
               "description": {
@@ -1489,7 +1550,6 @@
             },
             "required": [
               "id",
-              "name",
               "type",
               "params"
             ]
@@ -1501,12 +1561,6 @@
                 "minLength": 0,
                 "maxLength": 250,
                 "description": "Identifier of the processor",
-                "type": "string"
-              },
-              "name": {
-                "minLength": 0,
-                "maxLength": 250,
-                "description": "Display name of the processor",
                 "type": "string"
               },
               "description": {
@@ -1599,7 +1653,6 @@
             },
             "required": [
               "id",
-              "name",
               "params",
               "type"
             ]
@@ -1887,7 +1940,7 @@
         "type": "object",
         "properties": {
           "type": {
-            "description": "Calculates the increase between values",
+            "description": "`Increase` is designed for cumulative metrics. It computes the increase of cumulative metrics automatically handling counter resets. When used with an aggregation like `sum` it combines all series without requiring an explicit group-by.",
             "type": "string",
             "enum": [
               "increase"
@@ -1919,383 +1972,6 @@
         "required": [
           "type",
           "window"
-        ]
-      },
-      "RuleTargetInputSlack": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "slack"
-            ]
-          },
-          "channel": {
-            "minLength": 0,
-            "maxLength": 250,
-            "description": "Slack channel ID that receives the notification",
-            "type": "string"
-          },
-          "integrationId": {
-            "minLength": 0,
-            "maxLength": 250,
-            "description": "Slack workspace ID that receives the notification",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "channel",
-          "integrationId"
-        ]
-      },
-      "RuleTargetInputIncidentIo": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "incident-io"
-            ]
-          },
-          "integrationId": {
-            "minLength": 0,
-            "maxLength": 250,
-            "description": "Identifier of the incident.io integration to use",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "integrationId"
-        ]
-      },
-      "RuleTargetInputPagerDuty": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "pagerduty"
-            ]
-          },
-          "integrationId": {
-            "minLength": 0,
-            "maxLength": 250,
-            "description": "Identifier of the PagerDuty integration to use",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "integrationId"
-        ]
-      },
-      "RuleTargetInputEmail": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "email"
-            ]
-          },
-          "addresses": {
-            "minItems": 1,
-            "maxItems": 20,
-            "description": "Email addresses that will receive the alert",
-            "type": "array",
-            "items": {
-              "format": "email",
-              "minLength": 0,
-              "maxLength": 254,
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "type",
-          "addresses"
-        ]
-      },
-      "RuleTargetInputGrafanaIrm": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "grafana-irm"
-            ]
-          },
-          "integrationId": {
-            "minLength": 0,
-            "maxLength": 250,
-            "description": "Identifier of the Grafana IRM integration to use",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "integrationId"
-        ]
-      },
-      "RuleTargetInputMicrosoftTeams": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "microsoft-teams"
-            ]
-          },
-          "integrationId": {
-            "minLength": 0,
-            "maxLength": 250,
-            "description": "Identifier of the Microsoft Teams integration to use",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "integrationId"
-        ]
-      },
-      "RuleTargetInputWebhook": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "webhook"
-            ]
-          },
-          "integrationId": {
-            "minLength": 0,
-            "maxLength": 250,
-            "description": "Identifier of the webhook integration to use",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "integrationId"
-        ]
-      },
-      "RuleTargetInputServiceNow": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "servicenow"
-            ]
-          },
-          "integrationId": {
-            "minLength": 0,
-            "maxLength": 250,
-            "description": "Identifier of the ServiceNow integration to use",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "integrationId"
-        ]
-      },
-      "RuleTargetConfigSlack": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "slack"
-            ]
-          },
-          "channel": {
-            "description": "Slack channel ID that receives the notification",
-            "type": "string"
-          },
-          "integrationId": {
-            "description": "Slack workspace ID that receives the notification",
-            "type": "string"
-          },
-          "integrationName": {
-            "description": "Human readable name of the Slack integration",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "channel",
-          "integrationId",
-          "integrationName"
-        ]
-      },
-      "RuleTargetConfigIncidentIo": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "incident-io"
-            ]
-          },
-          "integrationId": {
-            "description": "Identifier of the incident.io integration to use",
-            "type": "string"
-          },
-          "integrationName": {
-            "description": "Human readable name of the incident.io integration",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "integrationId",
-          "integrationName"
-        ]
-      },
-      "RuleTargetConfigEmail": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "email"
-            ]
-          },
-          "addresses": {
-            "description": "Email addresses that will receive the alert",
-            "type": "array",
-            "items": {
-              "format": "email",
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "type",
-          "addresses"
-        ]
-      },
-      "RuleTargetConfigGrafanaIrm": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "grafana-irm"
-            ]
-          },
-          "integrationId": {
-            "description": "Identifier of the Grafana IRM integration to use",
-            "type": "string"
-          },
-          "integrationName": {
-            "description": "Human readable name of the Grafana IRM integration",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "integrationId",
-          "integrationName"
-        ]
-      },
-      "RuleTargetConfigPagerDuty": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "pagerduty"
-            ]
-          },
-          "integrationId": {
-            "description": "Identifier of the PagerDuty integration to use",
-            "type": "string"
-          },
-          "integrationName": {
-            "description": "Human readable name of the PagerDuty integration",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "integrationId",
-          "integrationName"
-        ]
-      },
-      "RuleTargetConfigMicrosoftTeams": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "microsoft-teams"
-            ]
-          },
-          "integrationId": {
-            "description": "Identifier of the Microsoft Teams integration to use",
-            "type": "string"
-          },
-          "integrationName": {
-            "description": "Human readable name of the Microsoft Teams integration",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "integrationId",
-          "integrationName"
-        ]
-      },
-      "RuleTargetConfigWebhook": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "webhook"
-            ]
-          },
-          "integrationId": {
-            "description": "Identifier of the webhook integration to use",
-            "type": "string"
-          },
-          "integrationName": {
-            "description": "Human readable name of the webhook integration",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "integrationId",
-          "integrationName"
-        ]
-      },
-      "RuleTargetConfigServiceNow": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "servicenow"
-            ]
-          },
-          "integrationId": {
-            "description": "Identifier of the ServiceNow integration to use",
-            "type": "string"
-          },
-          "integrationName": {
-            "description": "Human readable name of the ServiceNow integration",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "integrationId",
-          "integrationName"
         ]
       },
       "MonitorConfigurationMetric": {
@@ -2391,7 +2067,7 @@
             "type": "number"
           },
           "queries": {
-            "maxItems": 10,
+            "maxItems": 15,
             "description": "Aggregations that may be combined together in the same query",
             "type": "array",
             "items": {
@@ -2605,7 +2281,7 @@
             "type": "number"
           },
           "queries": {
-            "maxItems": 10,
+            "maxItems": 15,
             "description": "Aggregations that may be combined together in the same query",
             "type": "array",
             "items": {
@@ -2813,7 +2489,7 @@
             "type": "number"
           },
           "queries": {
-            "maxItems": 10,
+            "maxItems": 15,
             "description": "Aggregations that may be combined together in the same query",
             "type": "array",
             "items": {
@@ -3021,7 +2697,7 @@
             "type": "number"
           },
           "queries": {
-            "maxItems": 10,
+            "maxItems": 15,
             "description": "Aggregations that may be combined together in the same query",
             "type": "array",
             "items": {
@@ -3140,6 +2816,399 @@
           "timeframe",
           "groupByFields",
           "queries"
+        ]
+      },
+      "RuleTargetInputSlack": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "slack"
+            ]
+          },
+          "channel": {
+            "minLength": 0,
+            "maxLength": 250,
+            "description": "Slack channel ID that receives the notification",
+            "type": "string"
+          },
+          "integrationId": {
+            "minLength": 0,
+            "maxLength": 250,
+            "description": "Slack workspace ID that receives the notification",
+            "type": "string"
+          },
+          "hideTransition": {
+            "description": "When true, the transition info (e.g., \"from ok to alert\") is hidden from the Slack message",
+            "type": "boolean"
+          },
+          "hideTime": {
+            "description": "When true, the timestamp is hidden from the Slack message",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "type",
+          "channel",
+          "integrationId"
+        ]
+      },
+      "RuleTargetInputIncidentIo": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "incident-io"
+            ]
+          },
+          "integrationId": {
+            "minLength": 0,
+            "maxLength": 250,
+            "description": "Identifier of the incident.io integration to use",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "integrationId"
+        ]
+      },
+      "RuleTargetInputPagerDuty": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "pagerduty"
+            ]
+          },
+          "integrationId": {
+            "minLength": 0,
+            "maxLength": 250,
+            "description": "Identifier of the PagerDuty integration to use",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "integrationId"
+        ]
+      },
+      "RuleTargetInputEmail": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "email"
+            ]
+          },
+          "addresses": {
+            "minItems": 1,
+            "maxItems": 20,
+            "description": "Email addresses that will receive the alert",
+            "type": "array",
+            "items": {
+              "format": "email",
+              "minLength": 0,
+              "maxLength": 254,
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "addresses"
+        ]
+      },
+      "RuleTargetInputGrafanaIrm": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "grafana-irm"
+            ]
+          },
+          "integrationId": {
+            "minLength": 0,
+            "maxLength": 250,
+            "description": "Identifier of the Grafana IRM integration to use",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "integrationId"
+        ]
+      },
+      "RuleTargetInputMicrosoftTeams": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "microsoft-teams"
+            ]
+          },
+          "integrationId": {
+            "minLength": 0,
+            "maxLength": 250,
+            "description": "Identifier of the Microsoft Teams integration to use",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "integrationId"
+        ]
+      },
+      "RuleTargetInputWebhook": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "webhook"
+            ]
+          },
+          "integrationId": {
+            "minLength": 0,
+            "maxLength": 250,
+            "description": "Identifier of the webhook integration to use",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "integrationId"
+        ]
+      },
+      "RuleTargetInputServiceNow": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "servicenow"
+            ]
+          },
+          "integrationId": {
+            "minLength": 0,
+            "maxLength": 250,
+            "description": "Identifier of the ServiceNow integration to use",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "integrationId"
+        ]
+      },
+      "RuleTargetConfigSlack": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "slack"
+            ]
+          },
+          "channel": {
+            "description": "Slack channel ID that receives the notification",
+            "type": "string"
+          },
+          "integrationId": {
+            "description": "Slack workspace ID that receives the notification",
+            "type": "string"
+          },
+          "integrationName": {
+            "description": "Human readable name of the Slack integration",
+            "type": "string"
+          },
+          "hideTransition": {
+            "description": "When true, the transition info (e.g., \"from ok to alert\") is hidden from the Slack message",
+            "type": "boolean"
+          },
+          "hideTime": {
+            "description": "When true, the timestamp is hidden from the Slack message",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "type",
+          "channel",
+          "integrationId",
+          "integrationName"
+        ]
+      },
+      "RuleTargetConfigIncidentIo": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "incident-io"
+            ]
+          },
+          "integrationId": {
+            "description": "Identifier of the incident.io integration to use",
+            "type": "string"
+          },
+          "integrationName": {
+            "description": "Human readable name of the incident.io integration",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "integrationId",
+          "integrationName"
+        ]
+      },
+      "RuleTargetConfigEmail": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "email"
+            ]
+          },
+          "addresses": {
+            "description": "Email addresses that will receive the alert",
+            "type": "array",
+            "items": {
+              "format": "email",
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "addresses"
+        ]
+      },
+      "RuleTargetConfigGrafanaIrm": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "grafana-irm"
+            ]
+          },
+          "integrationId": {
+            "description": "Identifier of the Grafana IRM integration to use",
+            "type": "string"
+          },
+          "integrationName": {
+            "description": "Human readable name of the Grafana IRM integration",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "integrationId",
+          "integrationName"
+        ]
+      },
+      "RuleTargetConfigPagerDuty": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "pagerduty"
+            ]
+          },
+          "integrationId": {
+            "description": "Identifier of the PagerDuty integration to use",
+            "type": "string"
+          },
+          "integrationName": {
+            "description": "Human readable name of the PagerDuty integration",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "integrationId",
+          "integrationName"
+        ]
+      },
+      "RuleTargetConfigMicrosoftTeams": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "microsoft-teams"
+            ]
+          },
+          "integrationId": {
+            "description": "Identifier of the Microsoft Teams integration to use",
+            "type": "string"
+          },
+          "integrationName": {
+            "description": "Human readable name of the Microsoft Teams integration",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "integrationId",
+          "integrationName"
+        ]
+      },
+      "RuleTargetConfigWebhook": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "webhook"
+            ]
+          },
+          "integrationId": {
+            "description": "Identifier of the webhook integration to use",
+            "type": "string"
+          },
+          "integrationName": {
+            "description": "Human readable name of the webhook integration",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "integrationId",
+          "integrationName"
+        ]
+      },
+      "RuleTargetConfigServiceNow": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "servicenow"
+            ]
+          },
+          "integrationId": {
+            "description": "Identifier of the ServiceNow integration to use",
+            "type": "string"
+          },
+          "integrationName": {
+            "description": "Human readable name of the ServiceNow integration",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "integrationId",
+          "integrationName"
         ]
       },
       "ProcessorParamsCreatorFormatString": {
@@ -3303,6 +3372,227 @@
           "subtype"
         ]
       },
+      "BigQueryWifImpersonationAuthInput": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "workload-identity-impersonation"
+            ]
+          },
+          "workloadIdentityProvider": {
+            "minLength": 0,
+            "maxLength": 250,
+            "type": "string"
+          },
+          "serviceAccount": {
+            "minLength": 0,
+            "maxLength": 250,
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "workloadIdentityProvider",
+          "serviceAccount"
+        ]
+      },
+      "BigQueryWifDirectAccessAuthInput": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "workload-identity-direct-access"
+            ]
+          },
+          "workloadIdentityProvider": {
+            "minLength": 0,
+            "maxLength": 250,
+            "type": "string"
+          },
+          "projectId": {
+            "minLength": 0,
+            "maxLength": 250,
+            "type": "string"
+          },
+          "workloadIdentityCredentialFile": {
+            "minLength": 0,
+            "maxLength": 50000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "workloadIdentityProvider",
+          "projectId",
+          "workloadIdentityCredentialFile"
+        ]
+      },
+      "BigQuerySaAuthInput": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "service-account-key"
+            ]
+          },
+          "serviceAccountKey": {
+            "minLength": 0,
+            "maxLength": 50000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "serviceAccountKey"
+        ]
+      },
+      "BigQueryConnectionInput": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "big-query"
+            ]
+          },
+          "auth": {
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type"
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BigQueryWifImpersonationAuthInput"
+              },
+              {
+                "$ref": "#/components/schemas/BigQueryWifDirectAccessAuthInput"
+              },
+              {
+                "$ref": "#/components/schemas/BigQuerySaAuthInput"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "auth"
+        ]
+      },
+      "PostgresConnectionInput": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "postgres"
+            ]
+          },
+          "user": {
+            "minLength": 0,
+            "maxLength": 250,
+            "type": "string"
+          },
+          "password": {
+            "minLength": 0,
+            "maxLength": 250,
+            "type": "string"
+          },
+          "host": {
+            "minLength": 0,
+            "maxLength": 250,
+            "type": "string"
+          },
+          "port": {
+            "minimum": 1,
+            "maximum": 65535,
+            "type": "number"
+          },
+          "dbName": {
+            "minLength": 0,
+            "maxLength": 250,
+            "type": "string"
+          },
+          "sslRequire": {
+            "default": true,
+            "type": "boolean"
+          },
+          "extraParams": {
+            "minLength": 0,
+            "maxLength": 250,
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "user",
+          "password",
+          "host",
+          "port",
+          "dbName",
+          "sslRequire"
+        ]
+      },
+      "MySqlConnectionInput": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "my-sql"
+            ]
+          },
+          "user": {
+            "minLength": 0,
+            "maxLength": 250,
+            "type": "string"
+          },
+          "password": {
+            "minLength": 0,
+            "maxLength": 250,
+            "type": "string"
+          },
+          "host": {
+            "minLength": 0,
+            "maxLength": 250,
+            "type": "string"
+          },
+          "port": {
+            "minimum": 1,
+            "maximum": 65535,
+            "type": "number"
+          },
+          "dbName": {
+            "minLength": 0,
+            "maxLength": 250,
+            "type": "string"
+          },
+          "sslRequire": {
+            "default": true,
+            "type": "boolean"
+          },
+          "extraParams": {
+            "minLength": 0,
+            "maxLength": 250,
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "user",
+          "password",
+          "host",
+          "port",
+          "dbName",
+          "sslRequire"
+        ]
+      },
       "DataNormalizerDuration": {
         "title": "Duration",
         "type": "object",
@@ -3436,7 +3726,7 @@
             ]
           },
           "queries": {
-            "maxItems": 10,
+            "maxItems": 15,
             "description": "Aggregations that may be combined together in the same query",
             "type": "array",
             "items": {
@@ -3672,7 +3962,7 @@
             ]
           },
           "queries": {
-            "maxItems": 10,
+            "maxItems": 15,
             "description": "Aggregations that may be combined together in the same query",
             "type": "array",
             "items": {
@@ -3876,7 +4166,7 @@
             ]
           },
           "queries": {
-            "maxItems": 10,
+            "maxItems": 15,
             "description": "Aggregations that may be combined together in the same query",
             "type": "array",
             "items": {
@@ -4089,7 +4379,7 @@
             ]
           },
           "queries": {
-            "maxItems": 10,
+            "maxItems": 15,
             "description": "Aggregations that may be combined together in the same query",
             "type": "array",
             "items": {
@@ -4260,6 +4550,10 @@
               ]
             }
           },
+          "precision": {
+            "description": "Number of decimal places to display in the value",
+            "type": "number"
+          },
           "normalizer": {
             "title": "Normalizer",
             "type": "object",
@@ -4324,7 +4618,7 @@
             ]
           },
           "queries": {
-            "maxItems": 10,
+            "maxItems": 15,
             "description": "Aggregations that may be combined together in the same query",
             "type": "array",
             "items": {
@@ -4675,6 +4969,540 @@
     }
   },
   "paths": {
+    "/v1/ingestion-api-keys": {
+      "post": {
+        "operationId": "createIngestionApiKey",
+        "tags": [
+          "ingestion-api-keys"
+        ],
+        "description": "Create a new ingestion API key",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "type": "string"
+                  },
+                  "owner": {
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "type": "string"
+                  },
+                  "tags": {
+                    "title": "Tags",
+                    "maxItems": 50,
+                    "description": "List of key/value tags applied to the resource",
+                    "type": "array",
+                    "items": {
+                      "title": "Tag",
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "maxLength": 128,
+                          "type": "string"
+                        },
+                        "value": {
+                          "maxLength": 256,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "value"
+                      ]
+                    }
+                  },
+                  "teamOverrideFields": {
+                    "minItems": 1,
+                    "maxItems": 3,
+                    "type": "array",
+                    "items": {
+                      "minLength": 1,
+                      "maxLength": 250,
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "name",
+                  "owner"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "description": "Identifier used to trace the lifecycle of this API request",
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "owner": {
+                              "type": "string"
+                            },
+                            "tags": {
+                              "title": "Tags",
+                              "maxItems": 50,
+                              "description": "List of key/value tags applied to the resource",
+                              "type": "array",
+                              "items": {
+                                "title": "Tag",
+                                "type": "object",
+                                "properties": {
+                                  "key": {
+                                    "maxLength": 128,
+                                    "type": "string"
+                                  },
+                                  "value": {
+                                    "maxLength": 256,
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "key",
+                                  "value"
+                                ]
+                              }
+                            },
+                            "teamOverrideFields": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "keyLastCharacters": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "owner",
+                            "keyLastCharacters"
+                          ],
+                          "description": "API key used to send telemetry data to Tsuga"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "key"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listIngestionApiKeys",
+        "tags": [
+          "ingestion-api-keys"
+        ],
+        "description": "Retrieve all ingestion API keys",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "description": "Identifier used to trace the lifecycle of this API request",
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/IngestionApiKey"
+                      }
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ingestion-api-keys/{id}": {
+      "put": {
+        "operationId": "updateIngestionApiKey",
+        "tags": [
+          "ingestion-api-keys"
+        ],
+        "description": "Update an ingestion API key by its id",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "type": "string"
+                  },
+                  "owner": {
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "type": "string"
+                  },
+                  "tags": {
+                    "title": "Tags",
+                    "maxItems": 50,
+                    "description": "List of key/value tags applied to the resource",
+                    "type": "array",
+                    "items": {
+                      "title": "Tag",
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "maxLength": 128,
+                          "type": "string"
+                        },
+                        "value": {
+                          "maxLength": 256,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "value"
+                      ]
+                    }
+                  },
+                  "teamOverrideFields": {
+                    "minItems": 1,
+                    "maxItems": 3,
+                    "type": "array",
+                    "items": {
+                      "minLength": 1,
+                      "maxLength": 250,
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "name",
+                  "owner"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 1,
+              "maxLength": 250,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "description": "Identifier used to trace the lifecycle of this API request",
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/IngestionApiKey"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteIngestionApiKey",
+        "tags": [
+          "ingestion-api-keys"
+        ],
+        "description": "Delete an ingestion API key by its id",
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 1,
+              "maxLength": 250,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "description": "Identifier used to trace the lifecycle of this API request",
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "success": {
+                          "description": "Indicates the resource was deleted successfully",
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        }
+                      },
+                      "required": [
+                        "success"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/dashboards": {
       "get": {
         "operationId": "listDashboards",
@@ -4902,6 +5730,7 @@
                   "timePreset": {
                     "type": "string",
                     "enum": [
+                      "past-5-minutes",
                       "past-15-minutes",
                       "past-30-minutes",
                       "past-1-hour",
@@ -5244,6 +6073,7 @@
                   "timePreset": {
                     "type": "string",
                     "enum": [
+                      "past-5-minutes",
                       "past-15-minutes",
                       "past-30-minutes",
                       "past-1-hour",
@@ -6210,15 +7040,22 @@
                     }
                   },
                   "prioritiesFilter": {
+                    "maxItems": 5,
                     "description": "Priorities that narrow down the alerts that can trigger a notification",
                     "type": "array",
                     "items": {
-                      "minimum": 1,
-                      "maximum": 5,
-                      "type": "integer"
+                      "type": "number",
+                      "enum": [
+                        1,
+                        2,
+                        3,
+                        4,
+                        5
+                      ]
                     }
                   },
                   "transitionTypesFilter": {
+                    "maxItems": 3,
                     "description": "Alert state transitions that can trigger a notification",
                     "type": "array",
                     "items": {
@@ -6576,15 +7413,22 @@
                     }
                   },
                   "prioritiesFilter": {
+                    "maxItems": 5,
                     "description": "Priorities that narrow down the alerts that can trigger a notification",
                     "type": "array",
                     "items": {
-                      "minimum": 1,
-                      "maximum": 5,
-                      "type": "integer"
+                      "type": "number",
+                      "enum": [
+                        1,
+                        2,
+                        3,
+                        4,
+                        5
+                      ]
                     }
                   },
                   "transitionTypesFilter": {
+                    "maxItems": 3,
                     "description": "Alert state transitions that can trigger a notification",
                     "type": "array",
                     "items": {
@@ -6936,6 +7780,547 @@
         }
       }
     },
+    "/v1/retention-policies": {
+      "get": {
+        "operationId": "listRetentionPolicies",
+        "tags": [
+          "retention-policies"
+        ],
+        "description": "Retrieve all retention policies",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "description": "Identifier used to trace the lifecycle of this API request",
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RetentionPolicy"
+                      }
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createRetentionPolicy",
+        "tags": [
+          "retention-policies"
+        ],
+        "description": "Create a new retention policy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "env": {
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "type": "string"
+                  },
+                  "teamId": {
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "type": "string"
+                  },
+                  "dataSource": {
+                    "type": "string",
+                    "enum": [
+                      "logs",
+                      "metrics",
+                      "traces"
+                    ]
+                  },
+                  "durationDays": {
+                    "type": "string",
+                    "enum": [
+                      "1-day",
+                      "3-days",
+                      "15-days",
+                      "30-days",
+                      "60-days",
+                      "90-days",
+                      "120-days",
+                      "180-days",
+                      "360-days",
+                      "10-years"
+                    ]
+                  },
+                  "isEnabled": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "dataSource",
+                  "durationDays",
+                  "isEnabled"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "description": "Identifier used to trace the lifecycle of this API request",
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RetentionPolicy"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/retention-policies/{id}": {
+      "get": {
+        "operationId": "getRetentionPolicy",
+        "tags": [
+          "retention-policies"
+        ],
+        "description": "Retrieve a retention policy by its id",
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 1,
+              "maxLength": 250,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "description": "Identifier used to trace the lifecycle of this API request",
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RetentionPolicy"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateRetentionPolicy",
+        "tags": [
+          "retention-policies"
+        ],
+        "description": "Update a retention policy by its id",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "env": {
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "type": "string"
+                  },
+                  "teamId": {
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "type": "string"
+                  },
+                  "dataSource": {
+                    "type": "string",
+                    "enum": [
+                      "logs",
+                      "metrics",
+                      "traces"
+                    ]
+                  },
+                  "durationDays": {
+                    "type": "string",
+                    "enum": [
+                      "1-day",
+                      "3-days",
+                      "15-days",
+                      "30-days",
+                      "60-days",
+                      "90-days",
+                      "120-days",
+                      "180-days",
+                      "360-days",
+                      "10-years"
+                    ]
+                  },
+                  "isEnabled": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "dataSource",
+                  "durationDays",
+                  "isEnabled"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 1,
+              "maxLength": 250,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "description": "Identifier used to trace the lifecycle of this API request",
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RetentionPolicy"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteRetentionPolicy",
+        "tags": [
+          "retention-policies"
+        ],
+        "description": "Delete a retention policy by its id",
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 1,
+              "maxLength": 250,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "description": "Identifier used to trace the lifecycle of this API request",
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "success": {
+                          "description": "Indicates the resource was deleted successfully",
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        }
+                      },
+                      "required": [
+                        "success"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  },
+                  "required": [
+                    "requestId",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/routes": {
       "get": {
         "operationId": "listRoutes",
@@ -7095,12 +8480,6 @@
                               "description": "Identifier of the processor",
                               "type": "string"
                             },
-                            "name": {
-                              "minLength": 0,
-                              "maxLength": 250,
-                              "description": "Display name of the processor",
-                              "type": "string"
-                            },
                             "description": {
                               "minLength": 0,
                               "maxLength": 50000,
@@ -7174,7 +8553,6 @@
                           },
                           "required": [
                             "id",
-                            "name",
                             "type",
                             "params"
                           ]
@@ -7186,12 +8564,6 @@
                               "minLength": 0,
                               "maxLength": 250,
                               "description": "Identifier of the processor",
-                              "type": "string"
-                            },
-                            "name": {
-                              "minLength": 0,
-                              "maxLength": 250,
-                              "description": "Display name of the processor",
                               "type": "string"
                             },
                             "description": {
@@ -7389,7 +8761,6 @@
                           },
                           "required": [
                             "id",
-                            "name",
                             "type",
                             "params"
                           ]
@@ -7401,12 +8772,6 @@
                               "minLength": 0,
                               "maxLength": 250,
                               "description": "Identifier of the processor",
-                              "type": "string"
-                            },
-                            "name": {
-                              "minLength": 0,
-                              "maxLength": 250,
-                              "description": "Display name of the processor",
                               "type": "string"
                             },
                             "description": {
@@ -7479,7 +8844,6 @@
                           },
                           "required": [
                             "id",
-                            "name",
                             "type",
                             "params"
                           ]
@@ -7491,12 +8855,6 @@
                               "minLength": 0,
                               "maxLength": 250,
                               "description": "Identifier of the processor",
-                              "type": "string"
-                            },
-                            "name": {
-                              "minLength": 0,
-                              "maxLength": 250,
-                              "description": "Display name of the processor",
                               "type": "string"
                             },
                             "description": {
@@ -7589,7 +8947,6 @@
                           },
                           "required": [
                             "id",
-                            "name",
                             "params",
                             "type"
                           ]
@@ -7849,12 +9206,6 @@
                               "description": "Identifier of the processor",
                               "type": "string"
                             },
-                            "name": {
-                              "minLength": 0,
-                              "maxLength": 250,
-                              "description": "Display name of the processor",
-                              "type": "string"
-                            },
                             "description": {
                               "minLength": 0,
                               "maxLength": 50000,
@@ -7928,7 +9279,6 @@
                           },
                           "required": [
                             "id",
-                            "name",
                             "type",
                             "params"
                           ]
@@ -7940,12 +9290,6 @@
                               "minLength": 0,
                               "maxLength": 250,
                               "description": "Identifier of the processor",
-                              "type": "string"
-                            },
-                            "name": {
-                              "minLength": 0,
-                              "maxLength": 250,
-                              "description": "Display name of the processor",
                               "type": "string"
                             },
                             "description": {
@@ -8143,7 +9487,6 @@
                           },
                           "required": [
                             "id",
-                            "name",
                             "type",
                             "params"
                           ]
@@ -8155,12 +9498,6 @@
                               "minLength": 0,
                               "maxLength": 250,
                               "description": "Identifier of the processor",
-                              "type": "string"
-                            },
-                            "name": {
-                              "minLength": 0,
-                              "maxLength": 250,
-                              "description": "Display name of the processor",
                               "type": "string"
                             },
                             "description": {
@@ -8233,7 +9570,6 @@
                           },
                           "required": [
                             "id",
-                            "name",
                             "type",
                             "params"
                           ]
@@ -8245,12 +9581,6 @@
                               "minLength": 0,
                               "maxLength": 250,
                               "description": "Identifier of the processor",
-                              "type": "string"
-                            },
-                            "name": {
-                              "minLength": 0,
-                              "maxLength": 250,
-                              "description": "Display name of the processor",
                               "type": "string"
                             },
                             "description": {
@@ -8343,7 +9673,6 @@
                           },
                           "required": [
                             "id",
-                            "name",
                             "params",
                             "type"
                           ]
@@ -9115,6 +10444,10 @@
       "description": "Visualization of telemetry data with customizable graphs and filters"
     },
     {
+      "name": "ingestion-api-keys",
+      "description": "API keys for ingesting telemetry data"
+    },
+    {
       "name": "monitors",
       "description": "Monitors for sending alerts based on telemetry data"
     },
@@ -9129,6 +10462,10 @@
     {
       "name": "teams",
       "description": "Collection of users for managing ownership and access to resources"
+    },
+    {
+      "name": "retention-policies",
+      "description": "Data retention rules for telemetry sources"
     }
   ]
 }

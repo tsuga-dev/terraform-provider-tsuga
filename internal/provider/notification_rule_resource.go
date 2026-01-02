@@ -335,6 +335,8 @@ type notificationRuleAPITargetConfig struct {
 	Addresses       []string `json:"addresses,omitempty"`
 	IntegrationID   string   `json:"integrationId,omitempty"`
 	IntegrationName string   `json:"integrationName,omitempty"`
+	HideTime        *bool    `json:"hideTime,omitempty"`
+	HideTransition  *bool    `json:"hideTransition,omitempty"`
 }
 
 type notificationRuleAPITargetRateLimit struct {
@@ -456,11 +458,21 @@ func flattenNotificationRuleTargets(ctx context.Context, targets []notificationR
 
 		switch t.Config.Type {
 		case "slack":
+			hideTime := types.BoolNull()
+			if t.Config.HideTime != nil {
+				hideTime = types.BoolValue(*t.Config.HideTime)
+			}
+			hideTransition := types.BoolNull()
+			if t.Config.HideTransition != nil {
+				hideTransition = types.BoolValue(*t.Config.HideTransition)
+			}
 			configValues["slack"] = types.ObjectValueMust(resource_notification_rule.SlackAttrTypes(ctx), map[string]attr.Value{
 				"type":             types.StringValue("slack"),
 				"channel":          types.StringValue(t.Config.Channel),
 				"integration_id":   types.StringValue(t.Config.IntegrationID),
 				"integration_name": stringValueOrNull(t.Config.IntegrationName),
+				"hide_time":        hideTime,
+				"hide_transition":  hideTransition,
 			})
 		case "incident-io":
 			configValues["incident_io"] = types.ObjectValueMust(resource_notification_rule.IntegrationConfigAttrTypes(ctx), map[string]attr.Value{
@@ -575,6 +587,14 @@ func expandTargetConfig(ctx context.Context, cfg resource_notification_rule.Targ
 		}
 		if !cfg.Slack.IntegrationName.IsNull() && !cfg.Slack.IntegrationName.IsUnknown() {
 			conf.IntegrationName = cfg.Slack.IntegrationName.ValueString()
+		}
+		if !cfg.Slack.HideTime.IsNull() && !cfg.Slack.HideTime.IsUnknown() {
+			hideTime := cfg.Slack.HideTime.ValueBool()
+			conf.HideTime = &hideTime
+		}
+		if !cfg.Slack.HideTransition.IsNull() && !cfg.Slack.HideTransition.IsUnknown() {
+			hideTransition := cfg.Slack.HideTransition.ValueBool()
+			conf.HideTransition = &hideTransition
 		}
 		return conf, diags
 	case cfg.IncidentIO != nil:

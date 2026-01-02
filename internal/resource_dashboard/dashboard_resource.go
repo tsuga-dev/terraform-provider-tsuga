@@ -75,6 +75,37 @@ func DashboardResourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 			},
+			"time_preset": schema.StringAttribute{
+				Optional:    true,
+				Description: "Preset time range for dashboard queries",
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						"past-5-minutes",
+						"past-15-minutes",
+						"past-30-minutes",
+						"past-1-hour",
+						"past-2-hours",
+						"past-4-hours",
+						"past-6-hours",
+						"past-12-hours",
+						"past-24-hours",
+						"past-2-days",
+						"past-3-days",
+						"past-7-days",
+						"past-30-days",
+						"past-3-months",
+						"current-day",
+						"current-week",
+						"current-month",
+						"current-year",
+						"previous-day",
+						"previous-week",
+						"previous-month",
+						"previous-3-months",
+						"previous-year",
+					),
+				},
+			},
 			"graphs": schema.ListNestedAttribute{
 				Required:    true,
 				Description: "Ordered widgets that compose the dashboard",
@@ -151,7 +182,7 @@ func visualizationSeriesSchema() schema.Attribute {
 			"queries": schema.ListNestedAttribute{
 				Required: true,
 				Validators: []validator.List{
-					listvalidator.SizeAtMost(10),
+					listvalidator.SizeAtMost(15),
 				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -245,6 +276,10 @@ func visualizationQueryValueSchema() schema.Attribute {
 				},
 			},
 		},
+	}
+	attr.Attributes["precision"] = schema.Float64Attribute{
+		Optional:    true,
+		Description: "Number of decimal places to display in the value",
 	}
 	return attr
 }
@@ -348,12 +383,13 @@ func visualizationNoteSchema() schema.Attribute {
 }
 
 type DashboardModel struct {
-	Id      types.String `tfsdk:"id"`
-	Name    types.String `tfsdk:"name"`
-	Owner   types.String `tfsdk:"owner"`
-	Filters types.List   `tfsdk:"filters"`
-	Tags    types.List   `tfsdk:"tags"`
-	Graphs  types.List   `tfsdk:"graphs"`
+	Id         types.String `tfsdk:"id"`
+	Name       types.String `tfsdk:"name"`
+	Owner      types.String `tfsdk:"owner"`
+	Filters    types.List   `tfsdk:"filters"`
+	Tags       types.List   `tfsdk:"tags"`
+	TimePreset types.String `tfsdk:"time_preset"`
+	Graphs     types.List   `tfsdk:"graphs"`
 }
 
 type GraphModel struct {
@@ -392,8 +428,9 @@ type SeriesVisualizationModel struct {
 
 type QueryValueVisualization struct {
 	SeriesVisualizationModel
-	BackgroundMode types.String `tfsdk:"background_mode"`
-	Conditions     types.List   `tfsdk:"conditions"`
+	BackgroundMode types.String  `tfsdk:"background_mode"`
+	Conditions     types.List    `tfsdk:"conditions"`
+	Precision      types.Float64 `tfsdk:"precision"`
 }
 
 type BarVisualization struct {
@@ -499,6 +536,7 @@ func QueryValueVisualizationAttrTypes() map[string]attr.Type {
 	attrs := SeriesVisualizationAttrTypes()
 	attrs["background_mode"] = types.StringType
 	attrs["conditions"] = types.ListType{ElemType: types.ObjectType{AttrTypes: ConditionAttrTypes()}}
+	attrs["precision"] = types.Float64Type
 	return attrs
 }
 
