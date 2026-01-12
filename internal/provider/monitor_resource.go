@@ -23,6 +23,10 @@ var _ resource.ResourceWithConfigure = (*monitorResource)(nil)
 var _ resource.ResourceWithImportState = (*monitorResource)(nil)
 var _ resource.ResourceWithValidateConfig = (*monitorResource)(nil)
 
+// anomalyConditionTypePlaceholder is sent to the API when creating/updating anomaly monitors.
+// The API computes and returns the actual condition type (rate, error, cpu, general).
+const anomalyConditionTypePlaceholder = "to_be_set"
+
 func NewMonitorResource() resource.Resource {
 	return &monitorResource{}
 }
@@ -71,11 +75,17 @@ func (r *monitorResource) ValidateConfig(ctx context.Context, req resource.Valid
 	if config.Configuration.Log != nil {
 		setCount++
 	}
+	if config.Configuration.AnomalyMetric != nil {
+		setCount++
+	}
+	if config.Configuration.AnomalyLog != nil {
+		setCount++
+	}
 
 	if setCount != 1 {
 		resp.Diagnostics.AddError(
 			"Invalid configuration",
-			"Exactly one of metric or log must be set in configuration",
+			"Exactly one of metric, log, anomaly_metric, or anomaly_log must be set in configuration",
 		)
 		return
 	}
@@ -89,6 +99,14 @@ func (r *monitorResource) ValidateConfig(ctx context.Context, req resource.Valid
 	if config.Configuration.Log != nil {
 		diags.Append(r.validateProportionAlertConfig(config.Configuration.Log.AggregationAlertLogic, config.Configuration.Log.ProportionAlertThreshold, "configuration.log")...)
 		diags.Append(r.validateLogQueries(ctx, config.Configuration.Log.Queries, "configuration.log.queries")...)
+	}
+	if config.Configuration.AnomalyMetric != nil {
+		diags.Append(r.validateProportionAlertConfig(config.Configuration.AnomalyMetric.AggregationAlertLogic, config.Configuration.AnomalyMetric.ProportionAlertThreshold, "configuration.anomaly_metric")...)
+		diags.Append(r.validateMetricQueries(ctx, config.Configuration.AnomalyMetric.Queries, "configuration.anomaly_metric.queries")...)
+	}
+	if config.Configuration.AnomalyLog != nil {
+		diags.Append(r.validateProportionAlertConfig(config.Configuration.AnomalyLog.AggregationAlertLogic, config.Configuration.AnomalyLog.ProportionAlertThreshold, "configuration.anomaly_log")...)
+		diags.Append(r.validateLogQueries(ctx, config.Configuration.AnomalyLog.Queries, "configuration.anomaly_log.queries")...)
 	}
 	resp.Diagnostics.Append(diags...)
 }
@@ -493,6 +511,12 @@ func expandMonitorConfiguration(ctx context.Context, config resource_monitor.Mon
 	if config.Log != nil {
 		return expandMonitorConfigurationLog(ctx, config.Log)
 	}
+	if config.AnomalyMetric != nil {
+		return expandMonitorConfigurationAnomalyMetric(ctx, config.AnomalyMetric)
+	}
+	if config.AnomalyLog != nil {
+		return expandMonitorConfigurationAnomalyLog(ctx, config.AnomalyLog)
+	}
 
 	diags.AddError("Invalid configuration", "No configuration type set")
 	return nil, diags
@@ -549,6 +573,74 @@ func expandMonitorConfigurationLog(ctx context.Context, config *resource_monitor
 			"formula":   config.Condition.Formula.ValueString(),
 			"operator":  config.Condition.Operator.ValueString(),
 			"threshold": config.Condition.Threshold.ValueFloat64(),
+		},
+		"noDataBehavior":        config.NoDataBehavior.ValueString(),
+		"timeframe":             float64(config.Timeframe.ValueInt64()),
+		"groupByFields":         groupByFields,
+		"aggregationAlertLogic": config.AggregationAlertLogic.ValueString(),
+		"queries":               queries,
+	}
+
+	if !config.ProportionAlertThreshold.IsNull() && !config.ProportionAlertThreshold.IsUnknown() {
+		result["proportionAlertThreshold"] = float64(config.ProportionAlertThreshold.ValueInt64())
+	}
+
+	return result, diags
+}
+
+func expandMonitorConfigurationAnomalyMetric(ctx context.Context, config *resource_monitor.AnomalyMonitorConfigurationDetailsModel) (map[string]interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	groupByFields, gDiags := expandAggregationGroupBy(ctx, config.GroupByFields)
+	diags.Append(gDiags...)
+	queries, qDiags := expandMetricQueries(ctx, config.Queries)
+	diags.Append(qDiags...)
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	// For anomaly monitors, the condition only includes formula.
+	// The API computes conditionType; we send the placeholder value.
+	result := map[string]interface{}{
+		"type": "anomaly-metric",
+		"condition": map[string]interface{}{
+			"formula":       config.Condition.Formula.ValueString(),
+			"conditionType": anomalyConditionTypePlaceholder,
+		},
+		"noDataBehavior":        config.NoDataBehavior.ValueString(),
+		"timeframe":             float64(config.Timeframe.ValueInt64()),
+		"groupByFields":         groupByFields,
+		"aggregationAlertLogic": config.AggregationAlertLogic.ValueString(),
+		"queries":               queries,
+	}
+
+	if !config.ProportionAlertThreshold.IsNull() && !config.ProportionAlertThreshold.IsUnknown() {
+		result["proportionAlertThreshold"] = float64(config.ProportionAlertThreshold.ValueInt64())
+	}
+
+	return result, diags
+}
+
+func expandMonitorConfigurationAnomalyLog(ctx context.Context, config *resource_monitor.AnomalyMonitorConfigurationDetailsModel) (map[string]interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	groupByFields, gDiags := expandAggregationGroupBy(ctx, config.GroupByFields)
+	diags.Append(gDiags...)
+	queries, qDiags := expandLogQueries(ctx, config.Queries)
+	diags.Append(qDiags...)
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	// For anomaly monitors, the condition only includes formula.
+	// The API computes conditionType; we send the placeholder value.
+	result := map[string]interface{}{
+		"type": "anomaly-log",
+		"condition": map[string]interface{}{
+			"formula":       config.Condition.Formula.ValueString(),
+			"conditionType": anomalyConditionTypePlaceholder,
 		},
 		"noDataBehavior":        config.NoDataBehavior.ValueString(),
 		"timeframe":             float64(config.Timeframe.ValueInt64()),
@@ -905,6 +997,14 @@ func flattenMonitorConfiguration(ctx context.Context, config monitorAPIConfigura
 		log, d := flattenMonitorConfigurationLog(ctx, config)
 		diags.Append(d...)
 		return resource_monitor.MonitorConfigurationModel{Log: &log}, diags
+	case "anomaly-metric":
+		anomalyMetric, d := flattenMonitorConfigurationAnomalyMetric(ctx, config)
+		diags.Append(d...)
+		return resource_monitor.MonitorConfigurationModel{AnomalyMetric: &anomalyMetric}, diags
+	case "anomaly-log":
+		anomalyLog, d := flattenMonitorConfigurationAnomalyLog(ctx, config)
+		diags.Append(d...)
+		return resource_monitor.MonitorConfigurationModel{AnomalyLog: &anomalyLog}, diags
 	default:
 		diags.AddError("Unknown configuration type", config.Type)
 		return resource_monitor.MonitorConfigurationModel{}, diags
@@ -962,6 +1062,62 @@ func flattenMonitorConfigurationLog(ctx context.Context, config monitorAPIConfig
 	}
 
 	result := resource_monitor.MonitorConfigurationDetailsModel{
+		Condition:             condition,
+		NoDataBehavior:        types.StringValue(config.NoDataBehavior),
+		Timeframe:             types.Int64Value(int64(config.Timeframe)),
+		GroupByFields:         groupByFields,
+		AggregationAlertLogic: types.StringValue(config.AggregationAlertLogic),
+		Queries:               queries,
+	}
+
+	if config.ProportionAlertThreshold != nil {
+		result.ProportionAlertThreshold = types.Int64Value(int64(*config.ProportionAlertThreshold))
+	}
+
+	return result, diags
+}
+
+func flattenMonitorConfigurationAnomalyMetric(ctx context.Context, config monitorAPIConfiguration) (resource_monitor.AnomalyMonitorConfigurationDetailsModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	groupByFields, gDiags := flattenAggregationGroupBy(ctx, config.GroupByFields)
+	diags.Append(gDiags...)
+	queries, qDiags := flattenMetricQueries(config.Queries)
+	diags.Append(qDiags...)
+
+	condition := resource_monitor.AnomalyConditionModel{
+		Formula: types.StringValue(config.Condition.Formula),
+	}
+
+	result := resource_monitor.AnomalyMonitorConfigurationDetailsModel{
+		Condition:             condition,
+		NoDataBehavior:        types.StringValue(config.NoDataBehavior),
+		Timeframe:             types.Int64Value(int64(config.Timeframe)),
+		GroupByFields:         groupByFields,
+		AggregationAlertLogic: types.StringValue(config.AggregationAlertLogic),
+		Queries:               queries,
+	}
+
+	if config.ProportionAlertThreshold != nil {
+		result.ProportionAlertThreshold = types.Int64Value(int64(*config.ProportionAlertThreshold))
+	}
+
+	return result, diags
+}
+
+func flattenMonitorConfigurationAnomalyLog(ctx context.Context, config monitorAPIConfiguration) (resource_monitor.AnomalyMonitorConfigurationDetailsModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	groupByFields, gDiags := flattenAggregationGroupBy(ctx, config.GroupByFields)
+	diags.Append(gDiags...)
+	queries, qDiags := flattenLogQueries(config.Queries)
+	diags.Append(qDiags...)
+
+	condition := resource_monitor.AnomalyConditionModel{
+		Formula: types.StringValue(config.Condition.Formula),
+	}
+
+	result := resource_monitor.AnomalyMonitorConfigurationDetailsModel{
 		Condition:             condition,
 		NoDataBehavior:        types.StringValue(config.NoDataBehavior),
 		Timeframe:             types.Int64Value(int64(config.Timeframe)),

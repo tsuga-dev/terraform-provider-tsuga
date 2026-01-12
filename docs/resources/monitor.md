@@ -71,8 +71,354 @@ resource "tsuga_monitor" "monitor" {
 
 Optional:
 
+- `anomaly_log` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log))
+- `anomaly_metric` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric))
 - `log` (Attributes) (see [below for nested schema](#nestedatt--configuration--log))
 - `metric` (Attributes) (see [below for nested schema](#nestedatt--configuration--metric))
+
+<a id="nestedatt--configuration--anomaly_log"></a>
+### Nested Schema for `configuration.anomaly_log`
+
+Required:
+
+- `aggregation_alert_logic` (String)
+- `condition` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--condition))
+- `group_by_fields` (Attributes List) (see [below for nested schema](#nestedatt--configuration--anomaly_log--group_by_fields))
+- `no_data_behavior` (String)
+- `queries` (Attributes List) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries))
+- `timeframe` (Number) Timeframe of the monitor in minutes
+
+Optional:
+
+- `proportion_alert_threshold` (Number)
+
+<a id="nestedatt--configuration--anomaly_log--condition"></a>
+### Nested Schema for `configuration.anomaly_log.condition`
+
+Required:
+
+- `formula` (String)
+
+
+<a id="nestedatt--configuration--anomaly_log--group_by_fields"></a>
+### Nested Schema for `configuration.anomaly_log.group_by_fields`
+
+Required:
+
+- `fields` (List of String)
+- `limit` (Number)
+
+
+<a id="nestedatt--configuration--anomaly_log--queries"></a>
+### Nested Schema for `configuration.anomaly_log.queries`
+
+Required:
+
+- `aggregate` (Attributes) Aggregate (count, unique_count, average, max, min, sum, or percentile) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--aggregate))
+- `filter` (String)
+
+Optional:
+
+- `fill` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--fill))
+- `functions` (Attributes List) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--functions))
+
+<a id="nestedatt--configuration--anomaly_log--queries--aggregate"></a>
+### Nested Schema for `configuration.anomaly_log.queries.aggregate`
+
+Optional:
+
+- `average` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--aggregate--average))
+- `count` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--aggregate--count))
+- `max` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--aggregate--max))
+- `min` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--aggregate--min))
+- `percentile` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--aggregate--percentile))
+- `sum` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--aggregate--sum))
+- `unique_count` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--aggregate--unique_count))
+
+<a id="nestedatt--configuration--anomaly_log--queries--aggregate--average"></a>
+### Nested Schema for `configuration.anomaly_log.queries.aggregate.average`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--anomaly_log--queries--aggregate--count"></a>
+### Nested Schema for `configuration.anomaly_log.queries.aggregate.count`
+
+
+<a id="nestedatt--configuration--anomaly_log--queries--aggregate--max"></a>
+### Nested Schema for `configuration.anomaly_log.queries.aggregate.max`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--anomaly_log--queries--aggregate--min"></a>
+### Nested Schema for `configuration.anomaly_log.queries.aggregate.min`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--anomaly_log--queries--aggregate--percentile"></a>
+### Nested Schema for `configuration.anomaly_log.queries.aggregate.percentile`
+
+Required:
+
+- `field` (String)
+- `percentile` (Number)
+
+
+<a id="nestedatt--configuration--anomaly_log--queries--aggregate--sum"></a>
+### Nested Schema for `configuration.anomaly_log.queries.aggregate.sum`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--anomaly_log--queries--aggregate--unique_count"></a>
+### Nested Schema for `configuration.anomaly_log.queries.aggregate.unique_count`
+
+Required:
+
+- `field` (String)
+
+
+
+<a id="nestedatt--configuration--anomaly_log--queries--fill"></a>
+### Nested Schema for `configuration.anomaly_log.queries.fill`
+
+Required:
+
+- `mode` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--fill--mode))
+
+<a id="nestedatt--configuration--anomaly_log--queries--fill--mode"></a>
+### Nested Schema for `configuration.anomaly_log.queries.fill.mode`
+
+Required:
+
+- `type` (String)
+
+
+
+<a id="nestedatt--configuration--anomaly_log--queries--functions"></a>
+### Nested Schema for `configuration.anomaly_log.queries.functions`
+
+Optional:
+
+- `increase` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--functions--increase))
+- `per_hour` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--functions--per_hour))
+- `per_minute` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--functions--per_minute))
+- `per_second` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--functions--per_second))
+- `rate` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--functions--rate))
+- `rolling` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--functions--rolling))
+
+<a id="nestedatt--configuration--anomaly_log--queries--functions--increase"></a>
+### Nested Schema for `configuration.anomaly_log.queries.functions.increase`
+
+
+<a id="nestedatt--configuration--anomaly_log--queries--functions--per_hour"></a>
+### Nested Schema for `configuration.anomaly_log.queries.functions.per_hour`
+
+
+<a id="nestedatt--configuration--anomaly_log--queries--functions--per_minute"></a>
+### Nested Schema for `configuration.anomaly_log.queries.functions.per_minute`
+
+
+<a id="nestedatt--configuration--anomaly_log--queries--functions--per_second"></a>
+### Nested Schema for `configuration.anomaly_log.queries.functions.per_second`
+
+
+<a id="nestedatt--configuration--anomaly_log--queries--functions--rate"></a>
+### Nested Schema for `configuration.anomaly_log.queries.functions.rate`
+
+
+<a id="nestedatt--configuration--anomaly_log--queries--functions--rolling"></a>
+### Nested Schema for `configuration.anomaly_log.queries.functions.rolling`
+
+Required:
+
+- `window` (String)
+
+
+
+
+
+<a id="nestedatt--configuration--anomaly_metric"></a>
+### Nested Schema for `configuration.anomaly_metric`
+
+Required:
+
+- `aggregation_alert_logic` (String)
+- `condition` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--condition))
+- `group_by_fields` (Attributes List) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--group_by_fields))
+- `no_data_behavior` (String)
+- `queries` (Attributes List) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries))
+- `timeframe` (Number) Timeframe of the monitor in minutes
+
+Optional:
+
+- `proportion_alert_threshold` (Number)
+
+<a id="nestedatt--configuration--anomaly_metric--condition"></a>
+### Nested Schema for `configuration.anomaly_metric.condition`
+
+Required:
+
+- `formula` (String)
+
+
+<a id="nestedatt--configuration--anomaly_metric--group_by_fields"></a>
+### Nested Schema for `configuration.anomaly_metric.group_by_fields`
+
+Required:
+
+- `fields` (List of String)
+- `limit` (Number)
+
+
+<a id="nestedatt--configuration--anomaly_metric--queries"></a>
+### Nested Schema for `configuration.anomaly_metric.queries`
+
+Required:
+
+- `aggregate` (Attributes) Aggregate (count, unique_count, average, max, min, sum, or percentile) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--aggregate))
+- `filter` (String)
+
+Optional:
+
+- `fill` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--fill))
+- `functions` (Attributes List) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--functions))
+
+<a id="nestedatt--configuration--anomaly_metric--queries--aggregate"></a>
+### Nested Schema for `configuration.anomaly_metric.queries.aggregate`
+
+Optional:
+
+- `average` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--aggregate--average))
+- `count` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--aggregate--count))
+- `max` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--aggregate--max))
+- `min` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--aggregate--min))
+- `percentile` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--aggregate--percentile))
+- `sum` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--aggregate--sum))
+- `unique_count` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--aggregate--unique_count))
+
+<a id="nestedatt--configuration--anomaly_metric--queries--aggregate--average"></a>
+### Nested Schema for `configuration.anomaly_metric.queries.aggregate.average`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--anomaly_metric--queries--aggregate--count"></a>
+### Nested Schema for `configuration.anomaly_metric.queries.aggregate.count`
+
+
+<a id="nestedatt--configuration--anomaly_metric--queries--aggregate--max"></a>
+### Nested Schema for `configuration.anomaly_metric.queries.aggregate.max`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--anomaly_metric--queries--aggregate--min"></a>
+### Nested Schema for `configuration.anomaly_metric.queries.aggregate.min`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--anomaly_metric--queries--aggregate--percentile"></a>
+### Nested Schema for `configuration.anomaly_metric.queries.aggregate.percentile`
+
+Required:
+
+- `field` (String)
+- `percentile` (Number)
+
+
+<a id="nestedatt--configuration--anomaly_metric--queries--aggregate--sum"></a>
+### Nested Schema for `configuration.anomaly_metric.queries.aggregate.sum`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--anomaly_metric--queries--aggregate--unique_count"></a>
+### Nested Schema for `configuration.anomaly_metric.queries.aggregate.unique_count`
+
+Required:
+
+- `field` (String)
+
+
+
+<a id="nestedatt--configuration--anomaly_metric--queries--fill"></a>
+### Nested Schema for `configuration.anomaly_metric.queries.fill`
+
+Required:
+
+- `mode` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--fill--mode))
+
+<a id="nestedatt--configuration--anomaly_metric--queries--fill--mode"></a>
+### Nested Schema for `configuration.anomaly_metric.queries.fill.mode`
+
+Required:
+
+- `type` (String)
+
+
+
+<a id="nestedatt--configuration--anomaly_metric--queries--functions"></a>
+### Nested Schema for `configuration.anomaly_metric.queries.functions`
+
+Optional:
+
+- `increase` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--functions--increase))
+- `per_hour` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--functions--per_hour))
+- `per_minute` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--functions--per_minute))
+- `per_second` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--functions--per_second))
+- `rate` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--functions--rate))
+- `rolling` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--functions--rolling))
+
+<a id="nestedatt--configuration--anomaly_metric--queries--functions--increase"></a>
+### Nested Schema for `configuration.anomaly_metric.queries.functions.increase`
+
+
+<a id="nestedatt--configuration--anomaly_metric--queries--functions--per_hour"></a>
+### Nested Schema for `configuration.anomaly_metric.queries.functions.per_hour`
+
+
+<a id="nestedatt--configuration--anomaly_metric--queries--functions--per_minute"></a>
+### Nested Schema for `configuration.anomaly_metric.queries.functions.per_minute`
+
+
+<a id="nestedatt--configuration--anomaly_metric--queries--functions--per_second"></a>
+### Nested Schema for `configuration.anomaly_metric.queries.functions.per_second`
+
+
+<a id="nestedatt--configuration--anomaly_metric--queries--functions--rate"></a>
+### Nested Schema for `configuration.anomaly_metric.queries.functions.rate`
+
+
+<a id="nestedatt--configuration--anomaly_metric--queries--functions--rolling"></a>
+### Nested Schema for `configuration.anomaly_metric.queries.functions.rolling`
+
+Required:
+
+- `window` (String)
+
+
+
+
 
 <a id="nestedatt--configuration--log"></a>
 ### Nested Schema for `configuration.log`
