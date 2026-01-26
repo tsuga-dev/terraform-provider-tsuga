@@ -14,10 +14,13 @@ Rules to trigger notifications to targets based on alert events
 
 ```terraform
 resource "tsuga_notification_rule" "notification-rule" {
-  name                    = "notification-rule"
-  owner                   = "abc-123-def"
-  priorities_filter       = [1, 2, 3]
-  teams_filter            = ["ghi-456-jkl"]
+  name              = "notification-rule"
+  owner             = "abc-123-def"
+  priorities_filter = [1, 2, 3]
+  teams_filter = {
+    type  = "specific-teams"
+    teams = ["ghi-456-jkl"]
+  }
   transition_types_filter = ["triggered", "resolved"]
   is_active               = true
   tags = [
@@ -69,7 +72,7 @@ resource "tsuga_notification_rule" "notification-rule" {
 - `owner` (String) Team ID that owns and manages the rule
 - `priorities_filter` (List of Number) Priorities that narrow down the alerts that can trigger a notification
 - `targets` (Attributes List) Notification targets that can receive notifications when the rule matches (see [below for nested schema](#nestedatt--targets))
-- `teams_filter` (List of String) Team IDs that narrow down the teams that can receive notifications from this rule
+- `teams_filter` (Attributes) Team filter that narrows down the teams that can receive notifications from this rule (see [below for nested schema](#nestedatt--teams_filter))
 - `transition_types_filter` (List of String) Alert state transitions that can trigger a notification
 
 ### Optional
@@ -221,6 +224,18 @@ Required:
 - `renotification_states` (List of String)
 - `renotify_interval_minutes` (Number)
 
+
+
+<a id="nestedatt--teams_filter"></a>
+### Nested Schema for `teams_filter`
+
+Required:
+
+- `type` (String) Filter type: 'specific-teams' to notify only specified teams, 'all-teams' to notify all teams, 'all-public-teams' to notify all public teams
+
+Optional:
+
+- `teams` (List of String) Team IDs to select (required when type is 'specific-teams')
 
 
 <a id="nestedatt--tags"></a>

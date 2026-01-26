@@ -30,10 +30,27 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 					stringvalidator.LengthAtMost(250),
 				},
 			},
-			"teams_filter": schema.ListAttribute{
+			"teams_filter": schema.SingleNestedAttribute{
 				Required:    true,
-				Description: "Team IDs that narrow down the teams that can receive notifications from this rule",
-				ElementType: types.StringType,
+				Description: "Team filter that narrows down the teams that can receive notifications from this rule",
+				Attributes: map[string]schema.Attribute{
+					"type": schema.StringAttribute{
+						Required:    true,
+						Description: "Filter type: 'specific-teams' to notify only specified teams, 'all-teams' to notify all teams, 'all-public-teams' to notify all public teams",
+						Validators: []validator.String{
+							stringvalidator.OneOf("specific-teams", "all-teams", "all-public-teams"),
+						},
+					},
+					"teams": schema.ListAttribute{
+						Optional:    true,
+						Description: "Team IDs to select (required when type is 'specific-teams')",
+						ElementType: types.StringType,
+						Validators: []validator.List{
+							listvalidator.SizeAtLeast(1),
+							listvalidator.SizeAtMost(100),
+						},
+					},
+				},
 			},
 			"priorities_filter": schema.ListAttribute{
 				Required:    true,
@@ -281,15 +298,20 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 }
 
 type NotificationRuleModel struct {
-	Id                    types.String `tfsdk:"id"`
-	Name                  types.String `tfsdk:"name"`
-	TeamsFilter           types.List   `tfsdk:"teams_filter"`
-	PrioritiesFilter      types.List   `tfsdk:"priorities_filter"`
-	TransitionTypesFilter types.List   `tfsdk:"transition_types_filter"`
-	Owner                 types.String `tfsdk:"owner"`
-	Tags                  types.List   `tfsdk:"tags"`
-	IsActive              types.Bool   `tfsdk:"is_active"`
-	Targets               types.List   `tfsdk:"targets"`
+	Id                    types.String      `tfsdk:"id"`
+	Name                  types.String      `tfsdk:"name"`
+	TeamsFilter           *TeamsFilterModel `tfsdk:"teams_filter"`
+	PrioritiesFilter      types.List        `tfsdk:"priorities_filter"`
+	TransitionTypesFilter types.List        `tfsdk:"transition_types_filter"`
+	Owner                 types.String      `tfsdk:"owner"`
+	Tags                  types.List        `tfsdk:"tags"`
+	IsActive              types.Bool        `tfsdk:"is_active"`
+	Targets               types.List        `tfsdk:"targets"`
+}
+
+type TeamsFilterModel struct {
+	Type  types.String `tfsdk:"type"`
+	Teams types.List   `tfsdk:"teams"`
 }
 
 type TargetModel struct {
