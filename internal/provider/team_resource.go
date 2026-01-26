@@ -16,7 +16,7 @@ import (
 
 var _ resource.Resource = (*teamResource)(nil)
 var _ resource.ResourceWithConfigure = (*teamResource)(nil)
-var _ resource.ResourceWithImportState = (*dashboardResource)(nil)
+var _ resource.ResourceWithImportState = (*teamResource)(nil)
 
 func NewTeamResource() resource.Resource {
 	return &teamResource{}
