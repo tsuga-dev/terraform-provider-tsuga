@@ -61,6 +61,26 @@ func (r *notificationRuleResource) ValidateConfig(ctx context.Context, req resou
 		return
 	}
 
+	// Validate teams_filter: teams is required when type is "specific-teams"
+	if config.TeamsFilter != nil && !config.TeamsFilter.Type.IsNull() && !config.TeamsFilter.Type.IsUnknown() {
+		filterType := config.TeamsFilter.Type.ValueString()
+		if filterType == "specific-teams" {
+			if config.TeamsFilter.Teams.IsNull() {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("teams_filter").AtName("teams"),
+					"Missing required attribute",
+					"teams is required when teams_filter.type is 'specific-teams'",
+				)
+			} else if !config.TeamsFilter.Teams.IsUnknown() && len(config.TeamsFilter.Teams.Elements()) == 0 {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("teams_filter").AtName("teams"),
+					"Invalid attribute value",
+					"teams must contain at least one team ID when teams_filter.type is 'specific-teams'",
+				)
+			}
+		}
+	}
+
 	// Validate targets: each target's config must have exactly one config type set
 	if !config.Targets.IsNull() && !config.Targets.IsUnknown() {
 		var targets []resource_notification_rule.TargetModel
@@ -215,7 +235,7 @@ func (r *notificationRuleResource) Update(ctx context.Context, req resource.Upda
 func (r *notificationRuleResource) buildNotificationRuleRequestBody(ctx context.Context, plan resource_notification_rule.NotificationRuleModel) (map[string]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	teamsFilter, expandDiags := expandStringList(ctx, plan.TeamsFilter)
+	teamsFilter, expandDiags := expandTeamsFilter(ctx, plan.TeamsFilter)
 	diags.Append(expandDiags...)
 	prioritiesFilter, expandDiags := expandIntList(ctx, plan.PrioritiesFilter)
 	diags.Append(expandDiags...)
@@ -313,13 +333,18 @@ type notificationRuleAPIResponse struct {
 type notificationRuleAPIData struct {
 	ID                    string                      `json:"id"`
 	Name                  string                      `json:"name"`
-	TeamsFilter           []string                    `json:"teamsFilter"`
+	TeamsFilter           notificationRuleTeamsFilter `json:"teamsFilter"`
 	PrioritiesFilter      []int64                     `json:"prioritiesFilter"`
 	TransitionTypesFilter []string                    `json:"transitionTypesFilter"`
 	Owner                 string                      `json:"owner"`
 	IsActive              bool                        `json:"isActive"`
 	Tags                  []apiTag                    `json:"tags"`
 	Targets               []notificationRuleAPITarget `json:"targets"`
+}
+
+type notificationRuleTeamsFilter struct {
+	Type  string   `json:"type"`
+	Teams []string `json:"teams,omitempty"`
 }
 
 type notificationRuleAPITarget struct {
@@ -412,7 +437,7 @@ func flattenNotificationRule(ctx context.Context, data notificationRuleAPIData) 
 	targets, targetDiags := flattenNotificationRuleTargets(ctx, data.Targets)
 	diags.Append(targetDiags...)
 
-	teamsFilter, teamDiags := types.ListValueFrom(ctx, types.StringType, data.TeamsFilter)
+	teamsFilter, teamDiags := flattenTeamsFilter(ctx, data.TeamsFilter)
 	diags.Append(teamDiags...)
 	prioritiesFilter, priorityDiags := types.ListValueFrom(ctx, types.Int64Type, data.PrioritiesFilter)
 	diags.Append(priorityDiags...)
@@ -653,4 +678,48 @@ func expandTargetConfig(ctx context.Context, cfg resource_notification_rule.Targ
 		diags.AddError("Invalid target config", "Exactly one config block must be set for each target.")
 		return notificationRuleAPITargetConfig{}, diags
 	}
+}
+
+func expandTeamsFilter(ctx context.Context, filter *resource_notification_rule.TeamsFilterModel) (map[string]interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	if filter == nil {
+		return nil, diags
+	}
+
+	result := map[string]interface{}{
+		"type": filter.Type.ValueString(),
+	}
+
+	// Only include teams if the filter type is "specific-teams"
+	if filter.Type.ValueString() == "specific-teams" {
+		teams, expandDiags := expandStringList(ctx, filter.Teams)
+		diags.Append(expandDiags...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		result["teams"] = teams
+	}
+
+	return result, diags
+}
+
+func flattenTeamsFilter(ctx context.Context, filter notificationRuleTeamsFilter) (*resource_notification_rule.TeamsFilterModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var teams types.List
+	if filter.Teams != nil {
+		var teamDiags diag.Diagnostics
+		teams, teamDiags = types.ListValueFrom(ctx, types.StringType, filter.Teams)
+		diags.Append(teamDiags...)
+		if diags.HasError() {
+			return nil, diags
+		}
+	} else {
+		teams = types.ListNull(types.StringType)
+	}
+
+	return &resource_notification_rule.TeamsFilterModel{
+		Type:  types.StringValue(filter.Type),
+		Teams: teams,
+	}, diags
 }

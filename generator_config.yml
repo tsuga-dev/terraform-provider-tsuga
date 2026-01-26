@@ -15,3 +15,16 @@ resources:
     delete:
       path: /v1/teams/{id}
       method: DELETE
+  retention_policy:
+    create:
+      path: /v1/retention-policies
+      method: POST
+    read:
+      path: /v1/retention-policies/{id}
+      method: GET
+    update:
+      path: /v1/retention-policies/{id}
+      method: PUT
+    delete:
+      path: /v1/retention-policies/{id}
+      method: DELETE
