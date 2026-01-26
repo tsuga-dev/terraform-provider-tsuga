@@ -4,6 +4,9 @@
  * Unwraps top-level {"data": {...}} envelopes in OpenAPI response schemas.
  * This is a pragmatic helper to match APIs that wrap responses in { data: ... }
  * while allowing codegen to produce flat Terraform schemas.
+ *
+ * Also adds `type: "string"` to any schema that has an `enum` but no `type`,
+ * which is required by tfplugingen-openapi.
  */
 const fs = require("fs");
 
@@ -14,6 +17,35 @@ if (process.argv.length < 3) {
 
 const inputPath = process.argv[2];
 const spec = JSON.parse(fs.readFileSync(inputPath, "utf8"));
+
+/**
+ * Recursively adds `type: "string"` to any object that has `enum` but no `type`.
+ */
+function addTypeToEnums(obj) {
+  if (obj === null || typeof obj !== "object") {
+    return;
+  }
+
+  if (Array.isArray(obj)) {
+    for (const item of obj) {
+      addTypeToEnums(item);
+    }
+    return;
+  }
+
+  // If this object has an enum but no type, add type: "string"
+  if (obj.enum && !obj.type) {
+    obj.type = "string";
+  }
+
+  // Recurse into all properties
+  for (const value of Object.values(obj)) {
+    addTypeToEnums(value);
+  }
+}
+
+// Fix enums missing type across the entire spec
+addTypeToEnums(spec);
 
 const responses = (spec.paths && Object.values(spec.paths)) || [];
 

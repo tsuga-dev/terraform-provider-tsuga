@@ -25,7 +25,10 @@ resource "tsuga_notification_rule" "test-notification-rule" {
   owner = tsuga_team.test-team.id
   is_active = true
   priorities_filter = [1, 2, 3]
-  teams_filter = []
+  teams_filter = {
+    type  = "specific-teams"
+    teams = [tsuga_team.test-team.id]
+  }
   transition_types_filter = []
   targets = [
     {
@@ -85,7 +88,8 @@ resource "tsuga_notification_rule" "test-notification-rule" {
 					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "priorities_filter.0", "1"),
 					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "priorities_filter.1", "2"),
 					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "priorities_filter.2", "3"),
-					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "teams_filter.#", "0"),
+					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "teams_filter.type", "specific-teams"),
+					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "teams_filter.teams.#", "1"),
 					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "transition_types_filter.#", "0"),
 					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.0.id", "email"),
 					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.0.config.email.type", "email"),
@@ -112,7 +116,10 @@ resource "tsuga_notification_rule" "test-notification-rule" {
   owner = tsuga_team.test-team.id
   is_active = true
   priorities_filter = [1, 2, 3]
-  teams_filter = []
+  teams_filter = {
+    type  = "specific-teams"
+    teams = [tsuga_team.test-team.id]
+  }
   transition_types_filter = []
   targets = [
     {

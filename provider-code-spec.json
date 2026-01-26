@@ -4,6 +4,97 @@
 	},
 	"resources": [
 		{
+			"name": "retention_policy",
+			"schema": {
+				"attributes": [
+					{
+						"name": "data_source",
+						"string": {
+							"computed_optional_required": "required",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"logs\",\n\"metrics\",\n\"traces\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "duration_days",
+						"string": {
+							"computed_optional_required": "required",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"1-day\",\n\"3-days\",\n\"15-days\",\n\"30-days\",\n\"60-days\",\n\"90-days\",\n\"120-days\",\n\"180-days\",\n\"360-days\",\n\"10-years\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "env",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthBetween(0, 250)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "is_enabled",
+						"bool": {
+							"computed_optional_required": "required"
+						}
+					},
+					{
+						"name": "team_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthBetween(0, 250)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					}
+				]
+			}
+		},
+		{
 			"name": "team",
 			"schema": {
 				"attributes": [
