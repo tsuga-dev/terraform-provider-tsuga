@@ -244,6 +244,10 @@ func visualizationSeriesSchema() schema.Attribute {
 				},
 			},
 			"normalizer": normalizer.Schema(),
+			"precision": schema.Float64Attribute{
+				Optional:    true,
+				Description: "Number of decimal places to display in the value",
+			},
 		},
 	}
 }
@@ -277,10 +281,6 @@ func visualizationQueryValueSchema() schema.Attribute {
 				},
 			},
 		},
-	}
-	attr.Attributes["precision"] = schema.Float64Attribute{
-		Optional:    true,
-		Description: "Number of decimal places to display in the value",
 	}
 	return attr
 }
@@ -425,13 +425,13 @@ type SeriesVisualizationModel struct {
 	VisibleSeries types.List        `tfsdk:"visible_series"`
 	GroupBy       types.List        `tfsdk:"group_by"`
 	Normalizer    *normalizer.Model `tfsdk:"normalizer"`
+	Precision     types.Float64     `tfsdk:"precision"`
 }
 
 type QueryValueVisualization struct {
 	SeriesVisualizationModel
-	BackgroundMode types.String  `tfsdk:"background_mode"`
-	Conditions     types.List    `tfsdk:"conditions"`
-	Precision      types.Float64 `tfsdk:"precision"`
+	BackgroundMode types.String `tfsdk:"background_mode"`
+	Conditions     types.List   `tfsdk:"conditions"`
 }
 
 type BarVisualization struct {
@@ -530,6 +530,7 @@ func SeriesVisualizationAttrTypes() map[string]attr.Type {
 		"visible_series": types.ListType{ElemType: types.BoolType},
 		"group_by":       types.ListType{ElemType: types.ObjectType{AttrTypes: groupby.AttrTypes()}},
 		"normalizer":     types.ObjectType{AttrTypes: normalizer.AttrTypes()},
+		"precision":      types.Float64Type,
 	}
 }
 
@@ -537,7 +538,6 @@ func QueryValueVisualizationAttrTypes() map[string]attr.Type {
 	attrs := SeriesVisualizationAttrTypes()
 	attrs["background_mode"] = types.StringType
 	attrs["conditions"] = types.ListType{ElemType: types.ObjectType{AttrTypes: ConditionAttrTypes()}}
-	attrs["precision"] = types.Float64Type
 	return attrs
 }
 

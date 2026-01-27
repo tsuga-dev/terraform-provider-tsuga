@@ -213,7 +213,7 @@ Required:
 
 Required:
 
-- `type` (String) Filter type: 'specific-teams' to notify only specified teams, 'all-teams' to notify all teams, 'all-public-teams' to notify all public teams
+- `type` (String) Filter type: 'specific-teams' to apply to only specified teams, 'all-teams' to apply to all teams, 'all-public-teams' to apply to all public teams
 
 Optional:
 
