@@ -124,5 +124,6 @@ func (p *tsugaProvider) Resources(_ context.Context) []func() resource.Resource 
 		NewRouteResource,
 		NewMonitorResource,
 		NewRetentionPolicyResource,
+		NewTagPolicyResource,
 	}
 }

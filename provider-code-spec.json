@@ -173,6 +173,19 @@
 														],
 														"schema_definition": "stringvalidator.LengthAtMost(256)"
 													}
+												},
+												{
+													"custom": {
+														"imports": [
+															{
+																"path": "regexp"
+															},
+															{
+																"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+															}
+														],
+														"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^\\\\S(.*\\\\S)?$\"), \"\")"
+													}
 												}
 											]
 										}

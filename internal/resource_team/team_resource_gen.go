@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -54,6 +55,7 @@ func TeamResourceSchema(ctx context.Context) schema.Schema {
 							Required: true,
 							Validators: []validator.String{
 								stringvalidator.LengthAtMost(256),
+								stringvalidator.RegexMatches(regexp.MustCompile("^\\S(.*\\S)?$"), ""),
 							},
 						},
 					},

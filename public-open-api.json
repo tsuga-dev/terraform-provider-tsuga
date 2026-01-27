@@ -95,7 +95,8 @@
                 },
                 "value": {
                   "type": "string",
-                  "maxLength": 256
+                  "maxLength": 256,
+                  "pattern": "^\\S(.*\\S)?$"
                 }
               },
               "title": "Tag"
@@ -111,7 +112,22 @@
             }
           }
         },
-        "description": "API key used to send telemetry data to Tsuga"
+        "description": "API key used to send telemetry data to Tsuga",
+        "example": {
+          "id": "123-456-abc",
+          "name": "Production Logs Ingestion",
+          "keyLastCharacters": "x7Qm",
+          "owner": "abc-123-def",
+          "tags": [
+            {
+              "key": "env",
+              "value": "production"
+            }
+          ],
+          "teamOverrideFields": [
+            "service"
+          ]
+        }
       },
       "Dashboard": {
         "type": "object",
@@ -242,7 +258,8 @@
                 },
                 "value": {
                   "type": "string",
-                  "maxLength": 256
+                  "maxLength": 256,
+                  "pattern": "^\\S(.*\\S)?$"
                 }
               },
               "title": "Tag"
@@ -279,7 +296,48 @@
             ]
           }
         },
-        "description": "Visualization of telemetry data with customizable graphs and filters"
+        "description": "Visualization of telemetry data with customizable graphs and filters",
+        "example": {
+          "id": "123-456-abc",
+          "name": "API Performance Overview",
+          "owner": "abc-123-def",
+          "graphs": [
+            {
+              "id": "789-abc-def",
+              "name": "Request Latency P99",
+              "visualization": {
+                "type": "timeseries",
+                "source": "metrics",
+                "queries": [
+                  {
+                    "aggregate": {
+                      "type": "percentile",
+                      "field": "duration",
+                      "percentile": 99
+                    },
+                    "filter": "service:api-gateway"
+                  }
+                ]
+              },
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 4
+              }
+            }
+          ],
+          "filters": [
+            "env:production"
+          ],
+          "tags": [
+            {
+              "key": "team",
+              "value": "platform"
+            }
+          ],
+          "timePreset": "past-1-hour"
+        }
       },
       "Monitor": {
         "type": "object",
@@ -323,7 +381,8 @@
                 },
                 "value": {
                   "type": "string",
-                  "maxLength": 256
+                  "maxLength": 256,
+                  "pattern": "^\\S(.*\\S)?$"
                 }
               },
               "title": "Tag"
@@ -378,7 +437,41 @@
             "description": "Identifier of a dashboard related to the monitor"
           }
         },
-        "description": "Monitor allowing to send alerts based on telemetry data"
+        "description": "Monitor allowing to send alerts based on telemetry data",
+        "example": {
+          "id": "123-456-abc",
+          "name": "High Error Rate Alert",
+          "message": "Error rate exceeded threshold. Check the API gateway logs.",
+          "tags": [
+            {
+              "key": "severity",
+              "value": "critical"
+            }
+          ],
+          "configuration": {
+            "type": "log",
+            "timeframe": 5,
+            "groupByFields": [],
+            "queries": [
+              {
+                "aggregate": {
+                  "type": "count"
+                },
+                "filter": "level:ERROR service:api-gateway"
+              }
+            ],
+            "condition": {
+              "formula": "q1",
+              "operator": "greater_than",
+              "threshold": 100
+            },
+            "noDataBehavior": "resolve"
+          },
+          "priority": 1,
+          "owner": "abc-123-def",
+          "dashboardId": "789-abc-def",
+          "permissions": "all"
+        }
       },
       "Rule": {
         "type": "object",
@@ -508,7 +601,8 @@
                 },
                 "value": {
                   "type": "string",
-                  "maxLength": 256
+                  "maxLength": 256,
+                  "pattern": "^\\S(.*\\S)?$"
                 }
               },
               "title": "Tag"
@@ -626,7 +720,410 @@
             "description": "Notification targets that can receive notifications when the rule matches"
           }
         },
-        "description": "Rules to trigger notifications to targets based on alert events"
+        "description": "Rules to trigger notifications to targets based on alert events",
+        "example": {
+          "id": "123-456-abc",
+          "name": "Critical Alerts",
+          "teamsFilter": {
+            "type": "all-teams"
+          },
+          "prioritiesFilter": [
+            1,
+            2
+          ],
+          "transitionTypesFilter": [
+            "triggered",
+            "resolved"
+          ],
+          "owner": "abc-123-def",
+          "isActive": true,
+          "tags": [
+            {
+              "key": "channel",
+              "value": "alerts"
+            }
+          ],
+          "targets": [
+            {
+              "id": "789-abc-def",
+              "config": {
+                "type": "email",
+                "addresses": [
+                  "oncall@example.com"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "NotificationSilence": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "owner",
+          "isActive",
+          "schedule",
+          "teamsFilter",
+          "prioritiesFilter",
+          "transitionTypesFilter"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the silence"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the silence"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the silence"
+          },
+          "owner": {
+            "type": "string",
+            "description": "Team ID that owns and manages the silence"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "value"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "maxLength": 128
+                },
+                "value": {
+                  "type": "string",
+                  "maxLength": 256,
+                  "pattern": "^\\S(.*\\S)?$"
+                }
+              },
+              "title": "Tag"
+            },
+            "title": "Tags",
+            "maxItems": 50,
+            "description": "List of key/value tags applied to the resource"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the silence is currently enabled"
+          },
+          "schedule": {
+            "description": "Schedule defining when the silence is active",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type"
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "type": "object",
+                "required": [
+                  "type",
+                  "startTime",
+                  "endTime"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "one-time"
+                    ]
+                  },
+                  "startTime": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "endTime": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "description": "One-time silence schedule with specific start and end times"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "type",
+                  "weeklySchedule"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "recurring"
+                    ]
+                  },
+                  "weeklySchedule": {
+                    "type": "object",
+                    "properties": {
+                      "monday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "startTime",
+                            "endTime"
+                          ],
+                          "properties": {
+                            "startTime": {
+                              "type": "string",
+                              "format": "time"
+                            },
+                            "endTime": {
+                              "type": "string",
+                              "format": "time"
+                            }
+                          }
+                        },
+                        "minItems": 1,
+                        "description": "Time ranges for this day"
+                      },
+                      "tuesday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "startTime",
+                            "endTime"
+                          ],
+                          "properties": {
+                            "startTime": {
+                              "type": "string",
+                              "format": "time"
+                            },
+                            "endTime": {
+                              "type": "string",
+                              "format": "time"
+                            }
+                          }
+                        },
+                        "minItems": 1,
+                        "description": "Time ranges for this day"
+                      },
+                      "wednesday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "startTime",
+                            "endTime"
+                          ],
+                          "properties": {
+                            "startTime": {
+                              "type": "string",
+                              "format": "time"
+                            },
+                            "endTime": {
+                              "type": "string",
+                              "format": "time"
+                            }
+                          }
+                        },
+                        "minItems": 1,
+                        "description": "Time ranges for this day"
+                      },
+                      "thursday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "startTime",
+                            "endTime"
+                          ],
+                          "properties": {
+                            "startTime": {
+                              "type": "string",
+                              "format": "time"
+                            },
+                            "endTime": {
+                              "type": "string",
+                              "format": "time"
+                            }
+                          }
+                        },
+                        "minItems": 1,
+                        "description": "Time ranges for this day"
+                      },
+                      "friday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "startTime",
+                            "endTime"
+                          ],
+                          "properties": {
+                            "startTime": {
+                              "type": "string",
+                              "format": "time"
+                            },
+                            "endTime": {
+                              "type": "string",
+                              "format": "time"
+                            }
+                          }
+                        },
+                        "minItems": 1,
+                        "description": "Time ranges for this day"
+                      },
+                      "saturday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "startTime",
+                            "endTime"
+                          ],
+                          "properties": {
+                            "startTime": {
+                              "type": "string",
+                              "format": "time"
+                            },
+                            "endTime": {
+                              "type": "string",
+                              "format": "time"
+                            }
+                          }
+                        },
+                        "minItems": 1,
+                        "description": "Time ranges for this day"
+                      },
+                      "sunday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "startTime",
+                            "endTime"
+                          ],
+                          "properties": {
+                            "startTime": {
+                              "type": "string",
+                              "format": "time"
+                            },
+                            "endTime": {
+                              "type": "string",
+                              "format": "time"
+                            }
+                          }
+                        },
+                        "minItems": 1,
+                        "description": "Time ranges for this day"
+                      }
+                    }
+                  }
+                },
+                "description": "Recurring weekly silence schedule"
+              }
+            ]
+          },
+          "notificationRuleIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Notification rule IDs this silence applies to"
+          },
+          "queryString": {
+            "type": "string",
+            "description": "Query string filtering which alerts this silence applies to"
+          },
+          "teamsFilter": {
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type"
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "type": "object",
+                "required": [
+                  "type",
+                  "teams"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "specific-teams"
+                    ]
+                  },
+                  "teams": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Team IDs to select"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "all-teams"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "all-public-teams"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "prioritiesFilter": {
+            "type": "array",
+            "items": {
+              "enum": [
+                1,
+                2,
+                3,
+                4,
+                5
+              ]
+            },
+            "description": "Monitor priorities filtering which alerts this silence applies to"
+          },
+          "transitionTypesFilter": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "triggered",
+                "resolved",
+                "no-data"
+              ]
+            },
+            "description": "Transition types filtering which alerts this silence applies to"
+          }
+        },
+        "description": "Silences to suppress notifications based on schedules and filters"
       },
       "RetentionPolicy": {
         "type": "object",
@@ -671,7 +1168,15 @@
             "type": "boolean"
           }
         },
-        "description": "Data retention rule for a data source within an environment"
+        "description": "Data retention rule for a data source within an environment",
+        "example": {
+          "id": "123-456-abc",
+          "env": "production",
+          "teamId": "abc-123-def",
+          "dataSource": "logs",
+          "durationDays": "30-days",
+          "isEnabled": true
+        }
       },
       "Route": {
         "type": "object",
@@ -717,7 +1222,8 @@
                 },
                 "value": {
                   "type": "string",
-                  "maxLength": 256
+                  "maxLength": 256,
+                  "pattern": "^\\S(.*\\S)?$"
                 }
               },
               "title": "Tag"
@@ -738,7 +1244,35 @@
             "description": "Ordered processors applied to logs that match the route"
           }
         },
-        "description": "Log route allowing to standardize logs and enrich them with additional data"
+        "description": "Log route allowing to standardize logs and enrich them with additional data",
+        "example": {
+          "id": "123-456-abc",
+          "name": "Enrich API Gateway Logs",
+          "description": "Adds service metadata and normalizes log format",
+          "isEnabled": true,
+          "query": "service:api-gateway",
+          "tags": [
+            {
+              "key": "category",
+              "value": "enrichment"
+            }
+          ],
+          "owner": "abc-123-def",
+          "processors": [
+            {
+              "id": "789-abc-def",
+              "type": "parse-attribute",
+              "tags": [],
+              "params": {
+                "subtype": "grok",
+                "attributeName": "message",
+                "rules": [
+                  "%{TIMESTAMP_ISO8601:timestamp} %{LOGLEVEL:level} %{GREEDYDATA:msg}"
+                ]
+              }
+            }
+          ]
+        }
       },
       "Processor": {
         "anyOf": [
@@ -787,7 +1321,8 @@
                     },
                     "value": {
                       "type": "string",
-                      "maxLength": 256
+                      "maxLength": 256,
+                      "pattern": "^\\S(.*\\S)?$"
                     }
                   },
                   "title": "Tag"
@@ -873,7 +1408,8 @@
                     },
                     "value": {
                       "type": "string",
-                      "maxLength": 256
+                      "maxLength": 256,
+                      "pattern": "^\\S(.*\\S)?$"
                     }
                   },
                   "title": "Tag"
@@ -1081,7 +1617,8 @@
                     },
                     "value": {
                       "type": "string",
-                      "maxLength": 256
+                      "maxLength": 256,
+                      "pattern": "^\\S(.*\\S)?$"
                     }
                   },
                   "title": "Tag"
@@ -1164,7 +1701,8 @@
                     },
                     "value": {
                       "type": "string",
-                      "maxLength": 256
+                      "maxLength": 256,
+                      "pattern": "^\\S(.*\\S)?$"
                     }
                   },
                   "title": "Tag"
@@ -1224,6 +1762,147 @@
           }
         ]
       },
+      "TagPolicy": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "isActive",
+          "tagKey",
+          "allowedTagValues",
+          "isRequired",
+          "configuration"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "tagKey": {
+            "type": "string"
+          },
+          "allowedTagValues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isRequired": {
+            "type": "boolean"
+          },
+          "teamScope": {
+            "type": "object",
+            "required": [
+              "teamIds",
+              "mode"
+            ],
+            "properties": {
+              "teamIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 250
+                },
+                "minItems": 1,
+                "maxItems": 100
+              },
+              "mode": {
+                "enum": [
+                  "include",
+                  "exclude"
+                ]
+              }
+            }
+          },
+          "configuration": {
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type"
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "type": "object",
+                "required": [
+                  "type",
+                  "assetTypes",
+                  "shouldInsertWarning"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "telemetry"
+                    ]
+                  },
+                  "assetTypes": {
+                    "type": "array",
+                    "items": {
+                      "enum": [
+                        "logs",
+                        "metrics",
+                        "traces"
+                      ]
+                    }
+                  },
+                  "shouldInsertWarning": {
+                    "type": "boolean"
+                  },
+                  "dropSample": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "type",
+                  "assetTypes"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "tsuga_asset"
+                    ]
+                  },
+                  "assetTypes": {
+                    "type": "array",
+                    "items": {
+                      "enum": [
+                        "ingestion-api-key",
+                        "operation-api-key",
+                        "dashboard",
+                        "log-route",
+                        "monitor",
+                        "notification-rule",
+                        "notification-silence"
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "owner": {
+            "type": "string"
+          }
+        },
+        "description": "Policy that enforces tag requirements on Tsuga assets or telemetry data"
+      },
       "Team": {
         "type": "object",
         "required": [
@@ -1265,7 +1944,8 @@
                 },
                 "value": {
                   "type": "string",
-                  "maxLength": 256
+                  "maxLength": 256,
+                  "pattern": "^\\S(.*\\S)?$"
                 }
               },
               "title": "Tag"
@@ -1275,7 +1955,19 @@
             "description": "List of key/value tags applied to the resource"
           }
         },
-        "description": "Collection of users used to manage ownership and access to resources"
+        "description": "Collection of users used to manage ownership and access to resources",
+        "example": {
+          "id": "abc-123-def",
+          "name": "Platform Engineering",
+          "description": "Responsible for internal developer tooling and infrastructure",
+          "visibility": "public",
+          "tags": [
+            {
+              "key": "department",
+              "value": "engineering"
+            }
+          ]
+        }
       },
       "AggregateCount": {
         "type": "object",
@@ -3491,6 +4183,10 @@
               }
             ]
           },
+          "precision": {
+            "type": "number",
+            "description": "Number of decimal places to display in the value"
+          },
           "legendMode": {
             "enum": [
               "table",
@@ -3738,6 +4434,10 @@
                 "$ref": "#/components/schemas/DataNormalizerCustom"
               }
             ]
+          },
+          "precision": {
+            "type": "number",
+            "description": "Number of decimal places to display in the value"
           }
         },
         "title": "TopList"
@@ -3952,6 +4652,10 @@
                 "$ref": "#/components/schemas/DataNormalizerCustom"
               }
             ]
+          },
+          "precision": {
+            "type": "number",
+            "description": "Number of decimal places to display in the value"
           },
           "legendMode": {
             "enum": [
@@ -4412,6 +5116,10 @@
               }
             }
           },
+          "precision": {
+            "type": "number",
+            "description": "Number of decimal places to display in the value"
+          },
           "normalizer": {
             "title": "Normalizer",
             "type": "object",
@@ -4862,7 +5570,8 @@
                         },
                         "value": {
                           "type": "string",
-                          "maxLength": 256
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$"
                         }
                       },
                       "title": "Tag"
@@ -4882,6 +5591,19 @@
                     "maxItems": 3
                   }
                 }
+              },
+              "example": {
+                "name": "Production Logs Ingestion",
+                "owner": "abc-123-def",
+                "tags": [
+                  {
+                    "key": "env",
+                    "value": "production"
+                  }
+                ],
+                "teamOverrideFields": [
+                  "service"
+                ]
               }
             }
           },
@@ -4941,7 +5663,8 @@
                                   },
                                   "value": {
                                     "type": "string",
-                                    "maxLength": 256
+                                    "maxLength": 256,
+                                    "pattern": "^\\S(.*\\S)?$"
                                   }
                                 },
                                 "title": "Tag"
@@ -4956,8 +5679,7 @@
                                 "type": "string"
                               }
                             }
-                          },
-                          "description": "API key used to send telemetry data to Tsuga"
+                          }
                         },
                         {
                           "type": "object",
@@ -4970,7 +5692,23 @@
                             }
                           }
                         }
-                      ]
+                      ],
+                      "example": {
+                        "id": "123-456-abc",
+                        "name": "Production Logs Ingestion",
+                        "keyLastCharacters": "x7Qm",
+                        "owner": "abc-123-def",
+                        "tags": [
+                          {
+                            "key": "env",
+                            "value": "production"
+                          }
+                        ],
+                        "teamOverrideFields": [
+                          "service"
+                        ],
+                        "key": "tsuga_in:v1:abc123xyx7Qm"
+                      }
                     }
                   }
                 }
@@ -5145,7 +5883,8 @@
                         },
                         "value": {
                           "type": "string",
-                          "maxLength": 256
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$"
                         }
                       },
                       "title": "Tag"
@@ -5165,6 +5904,19 @@
                     "maxItems": 3
                   }
                 }
+              },
+              "example": {
+                "name": "Production Logs Ingestion",
+                "owner": "abc-123-def",
+                "tags": [
+                  {
+                    "key": "env",
+                    "value": "production"
+                  }
+                ],
+                "teamOverrideFields": [
+                  "service"
+                ]
               }
             }
           },
@@ -5299,6 +6051,9 @@
                             true
                           ]
                         }
+                      },
+                      "example": {
+                        "success": true
                       }
                     }
                   }
@@ -5573,7 +6328,8 @@
                         },
                         "value": {
                           "type": "string",
-                          "maxLength": 256
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$"
                         }
                       },
                       "title": "Tag"
@@ -5610,6 +6366,46 @@
                     ]
                   }
                 }
+              },
+              "example": {
+                "name": "API Performance Overview",
+                "owner": "abc-123-def",
+                "graphs": [
+                  {
+                    "id": "789-abc-def",
+                    "name": "Request Latency P99",
+                    "visualization": {
+                      "type": "timeseries",
+                      "source": "metrics",
+                      "queries": [
+                        {
+                          "aggregate": {
+                            "type": "percentile",
+                            "field": "duration",
+                            "percentile": 99
+                          },
+                          "filter": "service:api-gateway"
+                        }
+                      ]
+                    },
+                    "layout": {
+                      "x": 0,
+                      "y": 0,
+                      "w": 6,
+                      "h": 4
+                    }
+                  }
+                ],
+                "filters": [
+                  "env:production"
+                ],
+                "tags": [
+                  {
+                    "key": "team",
+                    "value": "platform"
+                  }
+                ],
+                "timePreset": "past-1-hour"
               }
             }
           },
@@ -5910,7 +6706,8 @@
                         },
                         "value": {
                           "type": "string",
-                          "maxLength": 256
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$"
                         }
                       },
                       "title": "Tag"
@@ -6080,6 +6877,9 @@
                             true
                           ]
                         }
+                      },
+                      "example": {
+                        "success": true
                       }
                     }
                   }
@@ -6258,7 +7058,8 @@
                         },
                         "value": {
                           "type": "string",
-                          "maxLength": 256
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$"
                         }
                       },
                       "title": "Tag"
@@ -6318,6 +7119,39 @@
                     "description": "This controls which data the monitor can see"
                   }
                 }
+              },
+              "example": {
+                "name": "High Error Rate Alert",
+                "message": "Error rate exceeded threshold. Check the API gateway logs.",
+                "tags": [
+                  {
+                    "key": "severity",
+                    "value": "critical"
+                  }
+                ],
+                "configuration": {
+                  "type": "log",
+                  "timeframe": 5,
+                  "groupByFields": [],
+                  "queries": [
+                    {
+                      "aggregate": {
+                        "type": "count"
+                      },
+                      "filter": "level:ERROR service:api-gateway"
+                    }
+                  ],
+                  "condition": {
+                    "formula": "q1",
+                    "operator": "greater_than",
+                    "threshold": 100
+                  },
+                  "noDataBehavior": "resolve"
+                },
+                "priority": 1,
+                "owner": "abc-123-def",
+                "dashboardId": "789-abc-def",
+                "permissions": "all"
               }
             }
           },
@@ -6527,7 +7361,8 @@
                         },
                         "value": {
                           "type": "string",
-                          "maxLength": 256
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$"
                         }
                       },
                       "title": "Tag"
@@ -6587,6 +7422,39 @@
                     "description": "This controls which data the monitor can see"
                   }
                 }
+              },
+              "example": {
+                "name": "High Error Rate Alert",
+                "message": "Error rate exceeded threshold. Check the API gateway logs.",
+                "tags": [
+                  {
+                    "key": "severity",
+                    "value": "critical"
+                  }
+                ],
+                "configuration": {
+                  "type": "log",
+                  "timeframe": 5,
+                  "groupByFields": [],
+                  "queries": [
+                    {
+                      "aggregate": {
+                        "type": "count"
+                      },
+                      "filter": "level:ERROR service:api-gateway"
+                    }
+                  ],
+                  "condition": {
+                    "formula": "q1",
+                    "operator": "greater_than",
+                    "threshold": 100
+                  },
+                  "noDataBehavior": "resolve"
+                },
+                "priority": 1,
+                "owner": "abc-123-def",
+                "dashboardId": "789-abc-def",
+                "permissions": "all"
               }
             }
           },
@@ -6721,6 +7589,9 @@
                             true
                           ]
                         }
+                      },
+                      "example": {
+                        "success": true
                       }
                     }
                   }
@@ -6994,7 +7865,8 @@
                         },
                         "value": {
                           "type": "string",
-                          "maxLength": 256
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$"
                         }
                       },
                       "title": "Tag"
@@ -7118,6 +7990,39 @@
                     "description": "Notification targets that can receive notifications when the rule matches"
                   }
                 }
+              },
+              "example": {
+                "name": "Critical Alerts",
+                "teamsFilter": {
+                  "type": "all-teams"
+                },
+                "prioritiesFilter": [
+                  1,
+                  2
+                ],
+                "transitionTypesFilter": [
+                  "triggered",
+                  "resolved"
+                ],
+                "owner": "abc-123-def",
+                "isActive": true,
+                "tags": [
+                  {
+                    "key": "channel",
+                    "value": "alerts"
+                  }
+                ],
+                "targets": [
+                  {
+                    "id": "789-abc-def",
+                    "config": {
+                      "type": "email",
+                      "addresses": [
+                        "oncall@example.com"
+                      ]
+                    }
+                  }
+                ]
               }
             }
           },
@@ -7422,7 +8327,8 @@
                         },
                         "value": {
                           "type": "string",
-                          "maxLength": 256
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$"
                         }
                       },
                       "title": "Tag"
@@ -7546,6 +8452,39 @@
                     "description": "Notification targets that can receive notifications when the rule matches"
                   }
                 }
+              },
+              "example": {
+                "name": "Critical Alerts",
+                "teamsFilter": {
+                  "type": "all-teams"
+                },
+                "prioritiesFilter": [
+                  1,
+                  2
+                ],
+                "transitionTypesFilter": [
+                  "triggered",
+                  "resolved"
+                ],
+                "owner": "abc-123-def",
+                "isActive": true,
+                "tags": [
+                  {
+                    "key": "channel",
+                    "value": "alerts"
+                  }
+                ],
+                "targets": [
+                  {
+                    "id": "789-abc-def",
+                    "config": {
+                      "type": "email",
+                      "addresses": [
+                        "oncall@example.com"
+                      ]
+                    }
+                  }
+                ]
               }
             }
           },
@@ -7680,6 +8619,1221 @@
                             true
                           ]
                         }
+                      },
+                      "example": {
+                        "success": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/notification-silences": {
+      "get": {
+        "operationId": "listNotificationSilences",
+        "tags": [
+          "notification-silences"
+        ],
+        "description": "Retrieve all notification silences",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/NotificationSilence"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createNotificationSilence",
+        "tags": [
+          "notification-silences"
+        ],
+        "description": "Create a new notification silence",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "owner",
+                  "isActive",
+                  "schedule",
+                  "teamsFilter",
+                  "prioritiesFilter",
+                  "transitionTypesFilter"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "description": "Display name of the silence"
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "description": "Description of the silence"
+                  },
+                  "owner": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "description": "Team ID that owns and manages the silence"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "key",
+                        "value"
+                      ],
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "maxLength": 128
+                        },
+                        "value": {
+                          "type": "string",
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$"
+                        }
+                      },
+                      "title": "Tag"
+                    },
+                    "title": "Tags",
+                    "maxItems": 50,
+                    "description": "List of key/value tags applied to the resource"
+                  },
+                  "isActive": {
+                    "type": "boolean",
+                    "description": "Whether the silence is currently enabled"
+                  },
+                  "schedule": {
+                    "description": "Schedule defining when the silence is active",
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type"
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "type",
+                          "startTime",
+                          "endTime"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "one-time"
+                            ]
+                          },
+                          "startTime": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "endTime": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "description": "One-time silence schedule with specific start and end times"
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "type",
+                          "weeklySchedule"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "recurring"
+                            ]
+                          },
+                          "weeklySchedule": {
+                            "type": "object",
+                            "properties": {
+                              "monday": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "startTime",
+                                    "endTime"
+                                  ],
+                                  "properties": {
+                                    "startTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    },
+                                    "endTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    }
+                                  }
+                                },
+                                "minItems": 1,
+                                "description": "Time ranges for this day"
+                              },
+                              "tuesday": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "startTime",
+                                    "endTime"
+                                  ],
+                                  "properties": {
+                                    "startTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    },
+                                    "endTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    }
+                                  }
+                                },
+                                "minItems": 1,
+                                "description": "Time ranges for this day"
+                              },
+                              "wednesday": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "startTime",
+                                    "endTime"
+                                  ],
+                                  "properties": {
+                                    "startTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    },
+                                    "endTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    }
+                                  }
+                                },
+                                "minItems": 1,
+                                "description": "Time ranges for this day"
+                              },
+                              "thursday": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "startTime",
+                                    "endTime"
+                                  ],
+                                  "properties": {
+                                    "startTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    },
+                                    "endTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    }
+                                  }
+                                },
+                                "minItems": 1,
+                                "description": "Time ranges for this day"
+                              },
+                              "friday": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "startTime",
+                                    "endTime"
+                                  ],
+                                  "properties": {
+                                    "startTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    },
+                                    "endTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    }
+                                  }
+                                },
+                                "minItems": 1,
+                                "description": "Time ranges for this day"
+                              },
+                              "saturday": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "startTime",
+                                    "endTime"
+                                  ],
+                                  "properties": {
+                                    "startTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    },
+                                    "endTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    }
+                                  }
+                                },
+                                "minItems": 1,
+                                "description": "Time ranges for this day"
+                              },
+                              "sunday": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "startTime",
+                                    "endTime"
+                                  ],
+                                  "properties": {
+                                    "startTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    },
+                                    "endTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    }
+                                  }
+                                },
+                                "minItems": 1,
+                                "description": "Time ranges for this day"
+                              }
+                            }
+                          }
+                        },
+                        "description": "Recurring weekly silence schedule"
+                      }
+                    ]
+                  },
+                  "notificationRuleIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 0,
+                      "maxLength": 250
+                    },
+                    "description": "Notification rule IDs this silence applies to"
+                  },
+                  "queryString": {
+                    "type": "string",
+                    "format": "tags-query",
+                    "minLength": 0,
+                    "maxLength": 10000,
+                    "description": "Query string to filter which alerts this silence applies to"
+                  },
+                  "teamsFilter": {
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type"
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "type",
+                          "teams"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "specific-teams"
+                            ]
+                          },
+                          "teams": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 0,
+                              "maxLength": 250
+                            },
+                            "minItems": 1,
+                            "maxItems": 100,
+                            "description": "Team IDs to select"
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "type"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "all-teams"
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "type"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "all-public-teams"
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "prioritiesFilter": {
+                    "type": "array",
+                    "items": {
+                      "enum": [
+                        1,
+                        2,
+                        3,
+                        4,
+                        5
+                      ]
+                    },
+                    "maxItems": 5,
+                    "description": "Monitor priorities to filter which alerts this silence applies to"
+                  },
+                  "transitionTypesFilter": {
+                    "type": "array",
+                    "items": {
+                      "enum": [
+                        "triggered",
+                        "resolved",
+                        "no-data"
+                      ]
+                    },
+                    "maxItems": 3,
+                    "description": "Transition types to filter which alerts this silence applies to"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/NotificationSilence"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/notification-silences/{id}": {
+      "get": {
+        "operationId": "getNotificationSilence",
+        "tags": [
+          "notification-silences"
+        ],
+        "description": "Retrieve a notification silence by its id",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/NotificationSilence"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateNotificationSilence",
+        "tags": [
+          "notification-silences"
+        ],
+        "description": "Update a notification silence by its id",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "owner",
+                  "isActive",
+                  "schedule",
+                  "teamsFilter",
+                  "prioritiesFilter",
+                  "transitionTypesFilter"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "description": "Display name of the silence"
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "description": "Description of the silence"
+                  },
+                  "owner": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "description": "Team ID that owns and manages the silence"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "key",
+                        "value"
+                      ],
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "maxLength": 128
+                        },
+                        "value": {
+                          "type": "string",
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$"
+                        }
+                      },
+                      "title": "Tag"
+                    },
+                    "title": "Tags",
+                    "maxItems": 50,
+                    "description": "List of key/value tags applied to the resource"
+                  },
+                  "isActive": {
+                    "type": "boolean",
+                    "description": "Whether the silence is currently enabled"
+                  },
+                  "schedule": {
+                    "description": "Schedule defining when the silence is active",
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type"
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "type",
+                          "startTime",
+                          "endTime"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "one-time"
+                            ]
+                          },
+                          "startTime": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "endTime": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "description": "One-time silence schedule with specific start and end times"
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "type",
+                          "weeklySchedule"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "recurring"
+                            ]
+                          },
+                          "weeklySchedule": {
+                            "type": "object",
+                            "properties": {
+                              "monday": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "startTime",
+                                    "endTime"
+                                  ],
+                                  "properties": {
+                                    "startTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    },
+                                    "endTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    }
+                                  }
+                                },
+                                "minItems": 1,
+                                "description": "Time ranges for this day"
+                              },
+                              "tuesday": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "startTime",
+                                    "endTime"
+                                  ],
+                                  "properties": {
+                                    "startTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    },
+                                    "endTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    }
+                                  }
+                                },
+                                "minItems": 1,
+                                "description": "Time ranges for this day"
+                              },
+                              "wednesday": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "startTime",
+                                    "endTime"
+                                  ],
+                                  "properties": {
+                                    "startTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    },
+                                    "endTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    }
+                                  }
+                                },
+                                "minItems": 1,
+                                "description": "Time ranges for this day"
+                              },
+                              "thursday": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "startTime",
+                                    "endTime"
+                                  ],
+                                  "properties": {
+                                    "startTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    },
+                                    "endTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    }
+                                  }
+                                },
+                                "minItems": 1,
+                                "description": "Time ranges for this day"
+                              },
+                              "friday": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "startTime",
+                                    "endTime"
+                                  ],
+                                  "properties": {
+                                    "startTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    },
+                                    "endTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    }
+                                  }
+                                },
+                                "minItems": 1,
+                                "description": "Time ranges for this day"
+                              },
+                              "saturday": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "startTime",
+                                    "endTime"
+                                  ],
+                                  "properties": {
+                                    "startTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    },
+                                    "endTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    }
+                                  }
+                                },
+                                "minItems": 1,
+                                "description": "Time ranges for this day"
+                              },
+                              "sunday": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "startTime",
+                                    "endTime"
+                                  ],
+                                  "properties": {
+                                    "startTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    },
+                                    "endTime": {
+                                      "type": "string",
+                                      "format": "time"
+                                    }
+                                  }
+                                },
+                                "minItems": 1,
+                                "description": "Time ranges for this day"
+                              }
+                            }
+                          }
+                        },
+                        "description": "Recurring weekly silence schedule"
+                      }
+                    ]
+                  },
+                  "notificationRuleIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 0,
+                      "maxLength": 250
+                    },
+                    "description": "Notification rule IDs this silence applies to"
+                  },
+                  "queryString": {
+                    "type": "string",
+                    "format": "tags-query",
+                    "minLength": 0,
+                    "maxLength": 10000,
+                    "description": "Query string to filter which alerts this silence applies to"
+                  },
+                  "teamsFilter": {
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type"
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "type",
+                          "teams"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "specific-teams"
+                            ]
+                          },
+                          "teams": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 0,
+                              "maxLength": 250
+                            },
+                            "minItems": 1,
+                            "maxItems": 100,
+                            "description": "Team IDs to select"
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "type"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "all-teams"
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "type"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "all-public-teams"
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "prioritiesFilter": {
+                    "type": "array",
+                    "items": {
+                      "enum": [
+                        1,
+                        2,
+                        3,
+                        4,
+                        5
+                      ]
+                    },
+                    "maxItems": 5,
+                    "description": "Monitor priorities to filter which alerts this silence applies to"
+                  },
+                  "transitionTypesFilter": {
+                    "type": "array",
+                    "items": {
+                      "enum": [
+                        "triggered",
+                        "resolved",
+                        "no-data"
+                      ]
+                    },
+                    "maxItems": 3,
+                    "description": "Transition types to filter which alerts this silence applies to"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/NotificationSilence"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteNotificationSilence",
+        "tags": [
+          "notification-silences"
+        ],
+        "description": "Delete a notification silence by its id",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "success"
+                      ],
+                      "properties": {
+                        "success": {
+                          "type": "boolean",
+                          "description": "Indicates the resource was deleted successfully",
+                          "enum": [
+                            true
+                          ]
+                        }
+                      },
+                      "example": {
+                        "success": true
                       }
                     }
                   }
@@ -7866,6 +10020,13 @@
                     "type": "boolean"
                   }
                 }
+              },
+              "example": {
+                "env": "production",
+                "teamId": "abc-123-def",
+                "dataSource": "logs",
+                "durationDays": "30-days",
+                "isEnabled": true
               }
             }
           },
@@ -8083,6 +10244,13 @@
                     "type": "boolean"
                   }
                 }
+              },
+              "example": {
+                "env": "production",
+                "teamId": "abc-123-def",
+                "dataSource": "logs",
+                "durationDays": "30-days",
+                "isEnabled": true
               }
             }
           },
@@ -8217,6 +10385,9 @@
                             true
                           ]
                         }
+                      },
+                      "example": {
+                        "success": true
                       }
                     }
                   }
@@ -8406,7 +10577,8 @@
                         },
                         "value": {
                           "type": "string",
-                          "maxLength": 256
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$"
                         }
                       },
                       "title": "Tag"
@@ -8430,6 +10602,33 @@
                     "description": "Ordered processors applied to logs that match the route"
                   }
                 }
+              },
+              "example": {
+                "name": "Enrich API Gateway Logs",
+                "description": "Adds service metadata and normalizes log format",
+                "isEnabled": true,
+                "query": "service:api-gateway",
+                "tags": [
+                  {
+                    "key": "category",
+                    "value": "enrichment"
+                  }
+                ],
+                "owner": "abc-123-def",
+                "processors": [
+                  {
+                    "id": "789-abc-def",
+                    "type": "parse-attribute",
+                    "tags": [],
+                    "params": {
+                      "subtype": "grok",
+                      "attributeName": "message",
+                      "rules": [
+                        "%{TIMESTAMP_ISO8601:timestamp} %{LOGLEVEL:level} %{GREEDYDATA:msg}"
+                      ]
+                    }
+                  }
+                ]
               }
             }
           },
@@ -8650,7 +10849,8 @@
                         },
                         "value": {
                           "type": "string",
-                          "maxLength": 256
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$"
                         }
                       },
                       "title": "Tag"
@@ -8674,6 +10874,33 @@
                     "description": "Ordered processors applied to logs that match the route"
                   }
                 }
+              },
+              "example": {
+                "name": "Enrich API Gateway Logs",
+                "description": "Adds service metadata and normalizes log format",
+                "isEnabled": true,
+                "query": "service:api-gateway",
+                "tags": [
+                  {
+                    "key": "category",
+                    "value": "enrichment"
+                  }
+                ],
+                "owner": "abc-123-def",
+                "processors": [
+                  {
+                    "id": "789-abc-def",
+                    "type": "parse-attribute",
+                    "tags": [],
+                    "params": {
+                      "subtype": "grok",
+                      "attributeName": "message",
+                      "rules": [
+                        "%{TIMESTAMP_ISO8601:timestamp} %{LOGLEVEL:level} %{GREEDYDATA:msg}"
+                      ]
+                    }
+                  }
+                ]
               }
             }
           },
@@ -8808,6 +11035,757 @@
                             true
                           ]
                         }
+                      },
+                      "example": {
+                        "success": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tag-policies": {
+      "get": {
+        "operationId": "listTagPolicies",
+        "tags": [
+          "tag-policies"
+        ],
+        "description": "Retrieve all tag policies",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TagPolicy"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createTagPolicy",
+        "tags": [
+          "tag-policies"
+        ],
+        "description": "Create a new tag policy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "isActive",
+                  "tagKey",
+                  "allowedTagValues",
+                  "isRequired",
+                  "configuration",
+                  "owner"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 250
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 250
+                  },
+                  "isActive": {
+                    "type": "boolean"
+                  },
+                  "tagKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250
+                  },
+                  "allowedTagValues": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 250
+                    },
+                    "maxItems": 100
+                  },
+                  "isRequired": {
+                    "type": "boolean"
+                  },
+                  "teamScope": {
+                    "type": "object",
+                    "required": [
+                      "teamIds",
+                      "mode"
+                    ],
+                    "properties": {
+                      "teamIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 0,
+                          "maxLength": 250
+                        },
+                        "minItems": 1,
+                        "maxItems": 100
+                      },
+                      "mode": {
+                        "enum": [
+                          "include",
+                          "exclude"
+                        ]
+                      }
+                    }
+                  },
+                  "configuration": {
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type"
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "type",
+                          "assetTypes",
+                          "shouldInsertWarning"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "telemetry"
+                            ]
+                          },
+                          "assetTypes": {
+                            "type": "array",
+                            "items": {
+                              "enum": [
+                                "logs",
+                                "metrics",
+                                "traces"
+                              ]
+                            }
+                          },
+                          "shouldInsertWarning": {
+                            "type": "boolean"
+                          },
+                          "dropSample": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 100
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "type",
+                          "assetTypes"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "tsuga_asset"
+                            ]
+                          },
+                          "assetTypes": {
+                            "type": "array",
+                            "items": {
+                              "enum": [
+                                "ingestion-api-key",
+                                "operation-api-key",
+                                "dashboard",
+                                "log-route",
+                                "monitor",
+                                "notification-rule",
+                                "notification-silence"
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "owner": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TagPolicy"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tag-policies/{id}": {
+      "get": {
+        "operationId": "getTagPolicy",
+        "tags": [
+          "tag-policies"
+        ],
+        "description": "Retrieve a tag policy by its id",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TagPolicy"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateTagPolicy",
+        "tags": [
+          "tag-policies"
+        ],
+        "description": "Update a tag policy by its id",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "isActive",
+                  "tagKey",
+                  "allowedTagValues",
+                  "isRequired",
+                  "configuration",
+                  "owner"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 250
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 250
+                  },
+                  "isActive": {
+                    "type": "boolean"
+                  },
+                  "tagKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250
+                  },
+                  "allowedTagValues": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 250
+                    },
+                    "maxItems": 100
+                  },
+                  "isRequired": {
+                    "type": "boolean"
+                  },
+                  "teamScope": {
+                    "type": "object",
+                    "required": [
+                      "teamIds",
+                      "mode"
+                    ],
+                    "properties": {
+                      "teamIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 0,
+                          "maxLength": 250
+                        },
+                        "minItems": 1,
+                        "maxItems": 100
+                      },
+                      "mode": {
+                        "enum": [
+                          "include",
+                          "exclude"
+                        ]
+                      }
+                    }
+                  },
+                  "configuration": {
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type"
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "type",
+                          "assetTypes",
+                          "shouldInsertWarning"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "telemetry"
+                            ]
+                          },
+                          "assetTypes": {
+                            "type": "array",
+                            "items": {
+                              "enum": [
+                                "logs",
+                                "metrics",
+                                "traces"
+                              ]
+                            }
+                          },
+                          "shouldInsertWarning": {
+                            "type": "boolean"
+                          },
+                          "dropSample": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 100
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "type",
+                          "assetTypes"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "tsuga_asset"
+                            ]
+                          },
+                          "assetTypes": {
+                            "type": "array",
+                            "items": {
+                              "enum": [
+                                "ingestion-api-key",
+                                "operation-api-key",
+                                "dashboard",
+                                "log-route",
+                                "monitor",
+                                "notification-rule",
+                                "notification-silence"
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "owner": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TagPolicy"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteTagPolicy",
+        "tags": [
+          "tag-policies"
+        ],
+        "description": "Delete a tag policy by its id",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "success"
+                      ],
+                      "properties": {
+                        "success": {
+                          "type": "boolean",
+                          "description": "Indicates the resource was deleted successfully",
+                          "enum": [
+                            true
+                          ]
+                        }
+                      },
+                      "example": {
+                        "success": true
                       }
                     }
                   }
@@ -8990,7 +11968,8 @@
                         },
                         "value": {
                           "type": "string",
-                          "maxLength": 256
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$"
                         }
                       },
                       "title": "Tag"
@@ -9000,6 +11979,17 @@
                     "description": "List of key/value tags applied to the resource"
                   }
                 }
+              },
+              "example": {
+                "name": "Platform Engineering",
+                "description": "Responsible for internal developer tooling and infrastructure",
+                "visibility": "public",
+                "tags": [
+                  {
+                    "key": "department",
+                    "value": "engineering"
+                  }
+                ]
               }
             }
           },
@@ -9213,7 +12203,8 @@
                         },
                         "value": {
                           "type": "string",
-                          "maxLength": 256
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$"
                         }
                       },
                       "title": "Tag"
@@ -9223,6 +12214,17 @@
                     "description": "List of key/value tags applied to the resource"
                   }
                 }
+              },
+              "example": {
+                "name": "Platform Engineering",
+                "description": "Responsible for internal developer tooling and infrastructure",
+                "visibility": "public",
+                "tags": [
+                  {
+                    "key": "department",
+                    "value": "engineering"
+                  }
+                ]
               }
             }
           },
@@ -9357,6 +12359,9 @@
                             true
                           ]
                         }
+                      },
+                      "example": {
+                        "success": true
                       }
                     }
                   }
@@ -9440,6 +12445,10 @@
       "description": "Notification rules for alerts"
     },
     {
+      "name": "notification-silences",
+      "description": "Notification silences for alerts"
+    },
+    {
       "name": "routes",
       "description": "Routes for processing log data"
     },
@@ -9450,6 +12459,10 @@
     {
       "name": "retention-policies",
       "description": "Data retention rules for telemetry sources"
+    },
+    {
+      "name": "tag-policies",
+      "description": "Tag policies for enforcing tag requirements on Tsuga assets or telemetry data"
     }
   ]
 }
