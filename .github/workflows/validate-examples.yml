@@ -24,6 +24,7 @@ jobs:
           - tsuga_dashboard
           - tsuga_monitor
           - tsuga_notification_rule
+          - tsuga_notification_silence
           - tsuga_retention_policy
           - tsuga_route
           - tsuga_tag_policy

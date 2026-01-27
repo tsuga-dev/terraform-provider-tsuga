@@ -120,6 +120,7 @@ func (p *tsugaProvider) Resources(_ context.Context) []func() resource.Resource 
 	return []func() resource.Resource{
 		NewTeamResource,
 		NewNotificationRuleResource,
+		NewNotificationSilenceResource,
 		NewDashboardResource,
 		NewRouteResource,
 		NewMonitorResource,

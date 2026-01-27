@@ -591,6 +591,7 @@ Optional:
 - `formula` (String)
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--bar--group_by))
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar--normalizer))
+- `precision` (Number) Number of decimal places to display in the value
 - `time_bucket` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar--time_bucket))
 - `visible_series` (List of Boolean)
 
@@ -793,6 +794,7 @@ Optional:
 - `formula` (String)
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--pie--group_by))
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie--normalizer))
+- `precision` (Number) Number of decimal places to display in the value
 - `visible_series` (List of Boolean)
 
 Read-Only:
@@ -1072,6 +1074,7 @@ Optional:
 - `formula` (String)
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--group_by))
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--normalizer))
+- `precision` (Number) Number of decimal places to display in the value
 - `visible_series` (List of Boolean)
 
 Read-Only:
@@ -1205,6 +1208,7 @@ Optional:
 - `formula` (String)
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--group_by))
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--normalizer))
+- `precision` (Number) Number of decimal places to display in the value
 - `visible_series` (List of Boolean)
 
 Read-Only:

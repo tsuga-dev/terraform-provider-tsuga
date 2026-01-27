@@ -547,6 +547,10 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 			GroupBy:       groupBy,
 			Normalizer:    normalizer,
 		}
+		if !sv.Precision.IsNull() && !sv.Precision.IsUnknown() {
+			precision := sv.Precision.ValueFloat64()
+			result.Precision = &precision
+		}
 		return result, d
 	}
 
@@ -579,10 +583,6 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 			conds, cDiags := expandConditions(ctx, v.QueryValue.Conditions)
 			diags.Append(cDiags...)
 			vz.Conditions = conds
-		}
-		if !v.QueryValue.Precision.IsNull() && !v.QueryValue.Precision.IsUnknown() {
-			precision := v.QueryValue.Precision.ValueFloat64()
-			vz.Precision = &precision
 		}
 		vis = vz
 	}
@@ -784,6 +784,11 @@ func flattenSeriesVisualization(ctx context.Context, vis dashboardVisualization)
 		visibleSeries = v
 	}
 
+	precisionVal := types.Float64Null()
+	if vis.Precision != nil {
+		precisionVal = types.Float64Value(*vis.Precision)
+	}
+
 	obj := map[string]attr.Value{
 		"type":           types.StringValue(vis.Type),
 		"source":         types.StringValue(vis.Source),
@@ -792,6 +797,7 @@ func flattenSeriesVisualization(ctx context.Context, vis dashboardVisualization)
 		"visible_series": visibleSeries,
 		"group_by":       groupBy,
 		"normalizer":     normalizerVal,
+		"precision":      precisionVal,
 	}
 
 	if vis.Type == "query-value" {
@@ -799,11 +805,6 @@ func flattenSeriesVisualization(ctx context.Context, vis dashboardVisualization)
 		diags.Append(cDiags...)
 		obj["background_mode"] = stringValueOrNull(vis.BackgroundMode)
 		obj["conditions"] = condVal
-		if vis.Precision != nil {
-			obj["precision"] = types.Float64Value(*vis.Precision)
-		} else {
-			obj["precision"] = types.Float64Null()
-		}
 		return types.ObjectValueMust(resource_dashboard.QueryValueVisualizationAttrTypes(), obj), diags
 	}
 
