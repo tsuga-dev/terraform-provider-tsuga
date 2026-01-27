@@ -31,7 +31,6 @@ resource "tsuga_dashboard" "dashboard" {
 
           queries = [
             {
-              filter = ""
               aggregate = {
                 max = {
                   field = "k8s.node.memory.usage"
@@ -39,7 +38,6 @@ resource "tsuga_dashboard" "dashboard" {
               }
             },
             {
-              filter = ""
               aggregate = {
                 max = {
                   field = "k8s.node.memory.available"
@@ -77,7 +75,6 @@ resource "tsuga_dashboard" "dashboard" {
 
           queries = [
             {
-              filter = ""
               aggregate = {
                 average = {
                   field = "k8s.node.cpu.usage"
@@ -110,7 +107,6 @@ resource "tsuga_dashboard" "dashboard" {
 
           queries = [
             {
-              filter = ""
               aggregate = {
                 average = {
                   field = "k8s.pod.cpu.usage"
@@ -144,7 +140,6 @@ resource "tsuga_dashboard" "dashboard" {
 
           queries = [
             {
-              filter = ""
               aggregate = {
                 max = {
                   field = "k8s.pod.memory.usage"
@@ -152,7 +147,6 @@ resource "tsuga_dashboard" "dashboard" {
               }
             },
             {
-              filter = ""
               aggregate = {
                 max = {
                   field = "k8s.pod.memory.available"
@@ -190,7 +184,6 @@ resource "tsuga_dashboard" "dashboard" {
 
           queries = [
             {
-              filter = ""
               aggregate = {
                 sum = {
                   field = "k8s.pod.memory.usage"
@@ -220,7 +213,6 @@ resource "tsuga_dashboard" "dashboard" {
           source = "metrics"
           queries = [
             {
-              filter = ""
               aggregate = {
                 sum = {
                   field = "k8s.node.cpu.usage"
@@ -293,7 +285,6 @@ resource "tsuga_dashboard" "dashboard" {
 
           queries = [
             {
-              filter = ""
               aggregate = {
                 sum = {
                   field = "k8s.pod.cpu.usage"
@@ -348,7 +339,6 @@ resource "tsuga_dashboard" "dashboard" {
 
           queries = [
             {
-              filter = ""
               aggregate = {
                 max = {
                   field = "k8s.volume.available"
@@ -356,7 +346,6 @@ resource "tsuga_dashboard" "dashboard" {
               }
             },
             {
-              filter = ""
               aggregate = {
                 max = {
                   field = "k8s.volume.capacity"
@@ -416,7 +405,6 @@ resource "tsuga_dashboard" "dashboard" {
 
           queries = [
             {
-              filter = ""
               aggregate = {
                 max = {
                   field = "k8s.node.network.io"
