@@ -26,6 +26,7 @@ jobs:
           - tsuga_notification_rule
           - tsuga_retention_policy
           - tsuga_route
+          - tsuga_tag_policy
           - tsuga_team
     env:
       TSUGA_BASE_URL: "https://api.tsuga-staging.com"
