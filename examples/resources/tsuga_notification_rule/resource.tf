@@ -24,24 +24,6 @@ resource "tsuga_notification_rule" "notification-rule" {
           ]
         }
       }
-    },
-    {
-      id = "456"
-      config = {
-        slack = {
-          channel        = "{{Your Slack Channel ID}}"
-          integration_id = "{{Your Slack Integration ID}}"
-        }
-      }
-      rate_limit = {
-        max_messages = 5
-        minutes      = 10
-      }
-      renotify_config = {
-        mode                      = "each"
-        renotification_states     = ["alert"]
-        renotify_interval_minutes = 120
-      }
-    },
+    }
   ]
 }

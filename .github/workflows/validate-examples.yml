@@ -24,6 +24,7 @@ jobs:
           - tsuga_dashboard
           - tsuga_monitor
           - tsuga_notification_rule
+          - tsuga_retention_policy
           - tsuga_route
           - tsuga_team
     env:
@@ -48,7 +49,6 @@ jobs:
         run: go build -o terraform-provider-tsuga
 
       - name: Setup provider for local testing
-        # Dummy version number here -- we don't need to validate against the API in this workflow
         run: |
           mkdir -p ~/.terraform.d/plugins/registry.terraform.io/tsuga-dev/tsuga/0.1.0/linux_amd64
           cp terraform-provider-tsuga ~/.terraform.d/plugins/registry.terraform.io/tsuga-dev/tsuga/0.1.0/linux_amd64/
@@ -77,6 +77,12 @@ jobs:
       - name: Copy example
         run: cp examples/resources/${{ matrix.example }}/resource.tf test-${{ matrix.example }}/
 
+      - name: Substitute placeholder IDs
+        run: |
+          sed -i 's/abc-123-def/${{ vars.TSUGA_TEAM_ID }}/g' test-${{ matrix.example }}/resource.tf
+          sed -i 's/ghi-456-jkl/${{ vars.TSUGA_TEAM_ID }}/g' test-${{ matrix.example }}/resource.tf
+          sed -i 's/123-abc-456/${{ vars.TSUGA_TEAM_ID }}/g' test-${{ matrix.example }}/resource.tf
+
       - name: Terraform init
         working-directory: test-${{ matrix.example }}
         run: terraform init
@@ -92,3 +98,12 @@ jobs:
       - name: Terraform plan
         working-directory: test-${{ matrix.example }}
         run: terraform plan
+
+      - name: Terraform apply
+        working-directory: test-${{ matrix.example }}
+        run: terraform apply -auto-approve
+
+      - name: Terraform destroy
+        if: always()
+        working-directory: test-${{ matrix.example }}
+        run: terraform destroy -auto-approve
