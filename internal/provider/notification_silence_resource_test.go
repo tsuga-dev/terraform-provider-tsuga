@@ -22,7 +22,7 @@ resource "tsuga_team" "test-team" {
 
 resource "tsuga_notification_silence" "test-silence" {
   name        = "test-notification-silence"
-  description = "A test silence for maintenance"
+  reason = "A test silence for maintenance"
   owner       = tsuga_team.test-team.id
   is_active   = true
 
@@ -61,7 +61,7 @@ resource "tsuga_notification_silence" "test-silence" {
 `, teamName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "name", "test-notification-silence"),
-					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "description", "A test silence for maintenance"),
+					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "reason", "A test silence for maintenance"),
 					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "is_active", "true"),
 					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "priorities_filter.#", "3"),
 					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "priorities_filter.0", "1"),
@@ -89,7 +89,7 @@ resource "tsuga_team" "test-team" {
 
 resource "tsuga_notification_silence" "test-silence" {
   name        = "test-notification-silence-updated"
-  description = "Updated test silence"
+  reason = "Updated test silence"
   owner       = tsuga_team.test-team.id
   is_active   = false
 
@@ -127,7 +127,7 @@ resource "tsuga_notification_silence" "test-silence" {
 `, teamName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "name", "test-notification-silence-updated"),
-					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "description", "Updated test silence"),
+					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "reason", "Updated test silence"),
 					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "is_active", "false"),
 					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "teams_filter.type", "all-teams"),
 					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "priorities_filter.#", "1"),

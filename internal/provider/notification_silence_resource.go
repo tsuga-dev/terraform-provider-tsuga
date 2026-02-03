@@ -211,8 +211,8 @@ func (r *notificationSilenceResource) buildNotificationSilenceRequestBody(ctx co
 		"transitionTypesFilter": transitionTypesFilter,
 	}
 
-	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
-		requestBody["description"] = plan.Description.ValueString()
+	if !plan.Reason.IsNull() && !plan.Reason.IsUnknown() {
+		requestBody["reason"] = plan.Reason.ValueString()
 	}
 
 	if notificationRuleIds != nil {
@@ -299,7 +299,7 @@ type notificationSilenceAPIResponse struct {
 type notificationSilenceAPIData struct {
 	ID                    string                      `json:"id"`
 	Name                  string                      `json:"name"`
-	Description           string                      `json:"description,omitempty"`
+	Reason                string                      `json:"reason,omitempty"`
 	Owner                 string                      `json:"owner"`
 	Tags                  []apiTag                    `json:"tags"`
 	IsActive              bool                        `json:"isActive"`
@@ -409,7 +409,7 @@ func flattenNotificationSilence(ctx context.Context, data notificationSilenceAPI
 	state := resource_notification_silence.NotificationSilenceModel{
 		Id:                    types.StringValue(data.ID),
 		Name:                  types.StringValue(data.Name),
-		Description:           stringValueOrNull(data.Description),
+		Reason:                stringValueOrNull(data.Reason),
 		Owner:                 types.StringValue(data.Owner),
 		Tags:                  tags,
 		IsActive:              types.BoolValue(data.IsActive),
