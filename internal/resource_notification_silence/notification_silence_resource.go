@@ -31,9 +31,9 @@ func NotificationSilenceResourceSchema(ctx context.Context) schema.Schema {
 					stringvalidator.LengthAtMost(250),
 				},
 			},
-			"description": schema.StringAttribute{
+			"reason": schema.StringAttribute{
 				Optional:    true,
-				Description: "Description of the silence",
+				Description: "Reason for the silence",
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(250),
 				},
@@ -198,7 +198,7 @@ func timeRangeAttributes() map[string]schema.Attribute {
 type NotificationSilenceModel struct {
 	Id                    types.String       `tfsdk:"id"`
 	Name                  types.String       `tfsdk:"name"`
-	Description           types.String       `tfsdk:"description"`
+	Reason                types.String       `tfsdk:"reason"`
 	Owner                 types.String       `tfsdk:"owner"`
 	Tags                  types.List         `tfsdk:"tags"`
 	IsActive              types.Bool         `tfsdk:"is_active"`

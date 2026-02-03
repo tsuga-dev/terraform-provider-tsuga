@@ -1,9 +1,9 @@
 # Example: Recurring silence for weekly maintenance windows
 resource "tsuga_notification_silence" "maintenance-window" {
-  name        = "weekly-maintenance"
-  description = "Silence alerts during weekly maintenance window"
-  owner       = "abc-123-def"
-  is_active   = true
+  name      = "weekly-maintenance"
+  reason    = "Silence alerts during weekly maintenance window"
+  owner     = "abc-123-def"
+  is_active = true
 
   schedule = {
     recurring = {
@@ -39,10 +39,10 @@ resource "tsuga_notification_silence" "maintenance-window" {
 
 # Example: Recurring silence for off-hours
 resource "tsuga_notification_silence" "off-hours" {
-  name        = "off-hours-silence"
-  description = "Reduce noise during off-business hours"
-  owner       = "abc-123-def"
-  is_active   = true
+  name      = "off-hours-silence"
+  reason    = "Reduce noise during off-business hours"
+  owner     = "abc-123-def"
+  is_active = true
 
   schedule = {
     recurring = {
@@ -131,10 +131,10 @@ resource "tsuga_notification_silence" "off-hours" {
 
 # Example: Silence specific notification rules with query filter
 resource "tsuga_notification_silence" "deployment-silence" {
-  name        = "deployment-silence"
-  description = "Silence deployment-related alerts during typical deployment windows"
-  owner       = "abc-123-def"
-  is_active   = true
+  name      = "deployment-silence"
+  reason    = "Silence deployment-related alerts during typical deployment windows"
+  owner     = "abc-123-def"
+  is_active = true
 
   schedule = {
     recurring = {
