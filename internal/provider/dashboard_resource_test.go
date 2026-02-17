@@ -23,7 +23,12 @@ resource "tsuga_team" "test-team" {
 resource "tsuga_dashboard" "test" {
   name    = "test-dashboard"
   owner   = tsuga_team.test-team.id
-  filters = ["env:test"]
+  filters = [
+    {
+      key    = "env"
+      values = ["test"]
+    }
+  ]
 
   graphs = [
     {
@@ -159,7 +164,12 @@ resource "tsuga_team" "test-team" {
 resource "tsuga_dashboard" "test" {
   name    = "test-dashboard-updated"
   owner   = tsuga_team.test-team.id
-  filters = ["env:prod"]
+  filters = [
+    {
+      key    = "env"
+      values = ["prod"]
+    }
+  ]
 
   graphs = [
     {

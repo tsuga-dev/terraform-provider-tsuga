@@ -38,12 +38,32 @@ func DashboardResourceSchema(ctx context.Context) schema.Schema {
 					stringvalidator.LengthAtMost(250),
 				},
 			},
-			"filters": schema.ListAttribute{
+			"filters": schema.ListNestedAttribute{
 				Optional:    true,
 				Description: "Filters applied to every widget on the dashboard",
-				ElementType: types.StringType,
 				Validators: []validator.List{
 					listvalidator.SizeAtMost(10),
+				},
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"key": schema.StringAttribute{
+							Required:    true,
+							Description: "Filter key",
+							Validators: []validator.String{
+								stringvalidator.LengthAtMost(250),
+							},
+						},
+						"values": schema.ListAttribute{
+							Required:    true,
+							Description: "Filter values",
+							ElementType: types.StringType,
+							Validators: []validator.List{
+								listvalidator.ValueStringsAre(
+									stringvalidator.LengthAtMost(250),
+								),
+							},
+						},
+					},
 				},
 			},
 			"tags": schema.ListNestedAttribute{
@@ -236,6 +256,9 @@ func visualizationSeriesSchema() schema.Attribute {
 						"fields": schema.ListAttribute{
 							Required:    true,
 							ElementType: types.StringType,
+							Validators: []validator.List{
+								listvalidator.SizeAtMost(1),
+							},
 						},
 						"limit": schema.Int64Attribute{
 							Required: true,
@@ -481,6 +504,11 @@ type ConditionModel struct {
 	Color    types.String  `tfsdk:"color"`
 }
 
+type FilterModel struct {
+	Key    types.String `tfsdk:"key"`
+	Values types.List   `tfsdk:"values"`
+}
+
 type TimeBucketModel struct {
 	Time   types.Float64 `tfsdk:"time"`
 	Metric types.String  `tfsdk:"metric"`
@@ -489,6 +517,13 @@ type TimeBucketModel struct {
 type ListColumnModel struct {
 	Attribute  types.String      `tfsdk:"attribute"`
 	Normalizer *normalizer.Model `tfsdk:"normalizer"`
+}
+
+func FilterAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"key":    types.StringType,
+		"values": types.ListType{ElemType: types.StringType},
+	}
 }
 
 func GraphAttrTypes() map[string]attr.Type {
@@ -581,7 +616,7 @@ func FunctionAttrTypes() map[string]attr.Type {
 	}
 }
 
-// ConditionAttrTypes returns attr types for group by configuration.
+// ConditionAttrTypes returns attr types for condition configuration.
 func ConditionAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"operator": types.StringType,

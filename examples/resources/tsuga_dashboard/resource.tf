@@ -3,9 +3,18 @@ resource "tsuga_dashboard" "dashboard" {
   owner       = "abc-123-def"
   time_preset = "past-15-minutes"
   filters = [
-    "context.k8s.namespace.name",
-    "context.k8s.pod.name",
-    "context.env"
+    {
+      key    = "context.k8s.namespace.name"
+      values = []
+    },
+    {
+      key    = "context.k8s.pod.name"
+      values = []
+    },
+    {
+      key    = "context.env"
+      values = ["production"]
+    }
   ]
   graphs = [
     {
