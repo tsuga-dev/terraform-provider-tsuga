@@ -44,7 +44,7 @@ resource "tsuga_route" "test" {
       parse_attribute = {
         grok = {
           attribute_name = "message"
-          rules          = [""]
+          rules          = ["%%%%{GREEDYDATA:message}"]
         }
       }
     },
@@ -106,16 +106,28 @@ resource "tsuga_route" "test" {
                                     }
                                   }
                                 ]
+                              },
+                              {
+                                query = "status:other-deep"
+                                processors = []
                               }
                             ]
                           }
                         }
                       ]
+                    },
+                    {
+                      query = "status:other"
+                      processors = []
                     }
                   ]
                 }
               }
             ]
+          },
+          {
+            query = "status:other"
+            processors = []
           }
         ]
       }
@@ -130,7 +142,7 @@ resource "tsuga_route" "test" {
 					resource.TestCheckResourceAttr("tsuga_route.test", "processors.0.mapper.map_attributes.#", "1"),
 					resource.TestCheckResourceAttr("tsuga_route.test", "processors.1.parse_attribute.grok.attribute_name", "message"),
 					resource.TestCheckResourceAttr("tsuga_route.test", "processors.2.creator.format_string.target_attribute", "formatted"),
-					resource.TestCheckResourceAttr("tsuga_route.test", "processors.3.split.items.#", "1"),
+					resource.TestCheckResourceAttr("tsuga_route.test", "processors.3.split.items.#", "2"),
 					resource.TestCheckResourceAttr("tsuga_route.test", "processors.3.split.items.0.processors.#", "2"),
 					resource.TestCheckResourceAttr("tsuga_route.test", "processors.3.split.items.0.processors.1.split.items.0.processors.1.split.items.0.processors.0.mapper.map_attributes.#", "1"),
 				),
@@ -229,16 +241,28 @@ resource "tsuga_route" "test" {
                                     }
                                   }
                                 ]
+                              },
+                              {
+                                query = "status:other-deep"
+                                processors = []
                               }
                             ]
                           }
                         }
                       ]
+                    },
+                    {
+                      query = "status:other"
+                      processors = []
                     }
                   ]
                 }
               }
             ]
+          },
+          {
+            query = "status:other"
+            processors = []
           }
         ]
       }
