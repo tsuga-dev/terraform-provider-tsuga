@@ -18,9 +18,18 @@ resource "tsuga_dashboard" "dashboard" {
   owner       = "abc-123-def"
   time_preset = "past-15-minutes"
   filters = [
-    "context.k8s.namespace.name",
-    "context.k8s.pod.name",
-    "context.env"
+    {
+      key    = "context.k8s.namespace.name"
+      values = []
+    },
+    {
+      key    = "context.k8s.pod.name"
+      values = []
+    },
+    {
+      key    = "context.env"
+      values = ["production"]
+    }
   ]
   graphs = [
     {
@@ -544,7 +553,7 @@ resource "tsuga_dashboard" "dashboard" {
 
 ### Optional
 
-- `filters` (List of String) Filters applied to every widget on the dashboard
+- `filters` (Attributes List) Filters applied to every widget on the dashboard (see [below for nested schema](#nestedatt--filters))
 - `tags` (Attributes List) List of key/value tags applied to the resource (see [below for nested schema](#nestedatt--tags))
 - `time_preset` (String) Preset time range for dashboard queries
 
@@ -1340,6 +1349,15 @@ Required:
 - `x` (Number) Horizontal grid position of the widget
 - `y` (Number) Vertical grid position of the widget
 
+
+
+<a id="nestedatt--filters"></a>
+### Nested Schema for `filters`
+
+Required:
+
+- `key` (String) Filter key
+- `values` (List of String) Filter values
 
 
 <a id="nestedatt--tags"></a>

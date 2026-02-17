@@ -62,6 +62,19 @@ resource "tsuga_route" "route" {
                 }
               }
             ]
+          },
+          {
+            query = "*"
+            processors = [
+              {
+                id = "custom-level-mapper"
+                mapper = {
+                  map_level = {
+                    attribute_name = "my-level"
+                  }
+                }
+              }
+            ]
           }
         ]
       }

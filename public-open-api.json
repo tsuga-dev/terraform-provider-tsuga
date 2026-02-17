@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.3",
+  "openapi": "3.1.0",
   "info": {
     "title": "Tsuga Public API",
     "description": "HTTP API used by Tsuga customers",
@@ -17,7 +17,7 @@
       }
     },
     "schemas": {
-      "ErrorResponse": {
+      "ClientErrorResponse": {
         "type": "object",
         "required": [
           "message",
@@ -26,22 +26,17 @@
         "properties": {
           "code": {
             "enum": [
-              "ABORT_ERROR",
               "BAD_REQUEST",
               "DUPLICATE_KEY_VIOLATION",
               "FOREIGN_KEY_VIOLATION",
               "FST_ERR_VALIDATION",
               "INVALID_INPUT",
-              "INTERNAL_ERROR",
-              "INVALID_QUERY_TO_CLUSTER",
-              "NETWORK_ERROR",
               "MISSING_PERMISSION",
               "PRIVILEGE_ESCALATION",
               "ORG_NOT_FOUND_AUTHENTICATION_ERROR",
               "RATE_LIMITED",
               "RESERVED_TAG_POLICY_ERROR",
               "RESOURCE_NOT_FOUND",
-              "RESPONSE_PARSE_ERROR",
               "TAG_POLICY_ALREADY_EXISTS_ERROR",
               "TAG_POLICY_VALIDATION_ERROR",
               "URL_NOT_FOUND"
@@ -57,7 +52,32 @@
             "description": "HTTP status code that was returned"
           }
         },
-        "description": "Standard envelope for API errors"
+        "description": "Standard envelope for client (4XX) API errors"
+      },
+      "ServerErrorResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "statusCode"
+        ],
+        "properties": {
+          "code": {
+            "enum": [
+              "INTERNAL_ERROR",
+              "INVALID_QUERY_TO_CLUSTER"
+            ],
+            "description": "Machine readable error code describing what went wrong"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human readable explanation of the error"
+          },
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code that was returned"
+          }
+        },
+        "description": "Standard envelope for server (5XX) API errors"
       },
       "IngestionApiKey": {
         "type": "object",
@@ -239,8 +259,30 @@
           "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "object",
+              "required": [
+                "key",
+                "values"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 250,
+                  "description": "Filter key"
+                },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "description": "Filter value"
+                  }
+                }
+              }
             },
+            "maxItems": 10,
             "description": "Filters applied to every widget on the dashboard"
           },
           "tags": {
@@ -328,7 +370,12 @@
             }
           ],
           "filters": [
-            "env:production"
+            {
+              "key": "env",
+              "values": [
+                "production"
+              ]
+            }
           ],
           "tags": [
             {
@@ -411,6 +458,9 @@
               },
               {
                 "$ref": "#/components/schemas/MonitorConfigurationAnomalyMetric"
+              },
+              {
+                "$ref": "#/components/schemas/MonitorConfigurationLogErrorPattern"
               }
             ]
           },
@@ -761,6 +811,7 @@
         "required": [
           "id",
           "name",
+          "reason",
           "owner",
           "isActive",
           "schedule",
@@ -777,9 +828,9 @@
             "type": "string",
             "description": "Display name of the silence"
           },
-          "description": {
+          "reason": {
             "type": "string",
-            "description": "Description of the silence"
+            "description": "Reason for the silence"
           },
           "owner": {
             "type": "string",
@@ -2245,10 +2296,9 @@
             ]
           },
           "base": {
-            "type": "number",
+            "type": "integer",
             "description": "The base of the logarithm",
-            "minimum": 2,
-            "multipleOf": 1
+            "minimum": 2
           }
         },
         "title": "Log"
@@ -2268,9 +2318,8 @@
             ]
           },
           "exponent": {
-            "type": "number",
-            "description": "The exponent to raise values to",
-            "multipleOf": 1
+            "type": "integer",
+            "description": "The exponent to raise values to"
           }
         },
         "title": "Power"
@@ -2369,8 +2418,7 @@
                 "limit": {
                   "type": "number"
                 }
-              },
-              "title": "AggregationGroupBy"
+              }
             },
             "maxItems": 1
           },
@@ -2384,10 +2432,9 @@
             ]
           },
           "proportionAlertThreshold": {
-            "type": "number",
+            "type": "integer",
             "minimum": 1,
-            "maximum": 99,
-            "multipleOf": 1
+            "maximum": 99
           },
           "queries": {
             "type": "array",
@@ -2589,8 +2636,7 @@
                 "limit": {
                   "type": "number"
                 }
-              },
-              "title": "AggregationGroupBy"
+              }
             },
             "maxItems": 1
           },
@@ -2604,10 +2650,9 @@
             ]
           },
           "proportionAlertThreshold": {
-            "type": "number",
+            "type": "integer",
             "minimum": 1,
-            "maximum": 99,
-            "multipleOf": 1
+            "maximum": 99
           },
           "queries": {
             "type": "array",
@@ -2803,8 +2848,7 @@
                 "limit": {
                   "type": "number"
                 }
-              },
-              "title": "AggregationGroupBy"
+              }
             },
             "maxItems": 1
           },
@@ -2818,10 +2862,9 @@
             ]
           },
           "proportionAlertThreshold": {
-            "type": "number",
+            "type": "integer",
             "minimum": 1,
-            "maximum": 99,
-            "multipleOf": 1
+            "maximum": 99
           },
           "queries": {
             "type": "array",
@@ -3017,8 +3060,7 @@
                 "limit": {
                   "type": "number"
                 }
-              },
-              "title": "AggregationGroupBy"
+              }
             },
             "maxItems": 1
           },
@@ -3032,10 +3074,9 @@
             ]
           },
           "proportionAlertThreshold": {
-            "type": "number",
+            "type": "integer",
             "minimum": 1,
-            "maximum": 99,
-            "multipleOf": 1
+            "maximum": 99
           },
           "queries": {
             "type": "array",
@@ -3189,11 +3230,11 @@
           "filter": {
             "type": "object",
             "required": [
-              "teamName",
+              "teamIds",
               "env"
             ],
             "properties": {
-              "teamName": {
+              "teamIds": {
                 "type": "array",
                 "items": {
                   "type": "string"
@@ -3206,6 +3247,40 @@
                 "type": "string"
               }
             }
+          }
+        }
+      },
+      "MonitorConfigurationCertificateExpiry": {
+        "type": "object",
+        "required": [
+          "type",
+          "warnBeforeInDays",
+          "aggregationAlertLogic",
+          "noDataBehavior"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "certificate-expiry"
+            ]
+          },
+          "warnBeforeInDays": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 365
+          },
+          "aggregationAlertLogic": {
+            "type": "string",
+            "enum": [
+              "each"
+            ]
+          },
+          "noDataBehavior": {
+            "type": "string",
+            "enum": [
+              "resolve"
+            ]
           }
         }
       },
@@ -4084,7 +4159,8 @@
                   "type": "string",
                   "format": "tsuga-query",
                   "minLength": 0,
-                  "maxLength": 10000
+                  "maxLength": 10000,
+                  "description": "Filter to apply to the aggregation"
                 }
               },
               "title": "AggregationQuery"
@@ -4120,7 +4196,8 @@
                     "type": "string",
                     "minLength": 0,
                     "maxLength": 250
-                  }
+                  },
+                  "maxItems": 1
                 },
                 "limit": {
                   "type": "number"
@@ -4358,7 +4435,8 @@
                   "type": "string",
                   "format": "tsuga-query",
                   "minLength": 0,
-                  "maxLength": 10000
+                  "maxLength": 10000,
+                  "description": "Filter to apply to the aggregation"
                 }
               },
               "title": "AggregationQuery"
@@ -4394,7 +4472,8 @@
                     "type": "string",
                     "minLength": 0,
                     "maxLength": 250
-                  }
+                  },
+                  "maxItems": 1
                 },
                 "limit": {
                   "type": "number"
@@ -4576,7 +4655,8 @@
                   "type": "string",
                   "format": "tsuga-query",
                   "minLength": 0,
-                  "maxLength": 10000
+                  "maxLength": 10000,
+                  "description": "Filter to apply to the aggregation"
                 }
               },
               "title": "AggregationQuery"
@@ -4612,7 +4692,8 @@
                     "type": "string",
                     "minLength": 0,
                     "maxLength": 250
-                  }
+                  },
+                  "maxItems": 1
                 },
                 "limit": {
                   "type": "number"
@@ -4802,7 +4883,8 @@
                   "type": "string",
                   "format": "tsuga-query",
                   "minLength": 0,
-                  "maxLength": 10000
+                  "maxLength": 10000,
+                  "description": "Filter to apply to the aggregation"
                 }
               },
               "title": "AggregationQuery"
@@ -5047,7 +5129,8 @@
                   "type": "string",
                   "format": "tsuga-query",
                   "minLength": 0,
-                  "maxLength": 10000
+                  "maxLength": 10000,
+                  "description": "Filter to apply to the aggregation"
                 }
               },
               "title": "AggregationQuery"
@@ -5083,7 +5166,8 @@
                     "type": "string",
                     "minLength": 0,
                     "maxLength": 250
-                  }
+                  },
+                  "maxItems": 1
                 },
                 "limit": {
                   "type": "number"
@@ -5421,10 +5505,9 @@
             "maxLength": 250
           },
           "port": {
-            "type": "number",
+            "type": "integer",
             "minimum": 1,
-            "maximum": 65535,
-            "multipleOf": 1
+            "maximum": 65535
           },
           "dbName": {
             "type": "string",
@@ -5471,10 +5554,9 @@
             "maxLength": 250
           },
           "port": {
-            "type": "number",
+            "type": "integer",
             "minimum": 1,
-            "maximum": 65535,
-            "multipleOf": 1
+            "maximum": 65535
           },
           "dbName": {
             "type": "string",
@@ -5536,6 +5618,7 @@
         ],
         "description": "Create a new ingestion API key",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -5606,12 +5689,19 @@
                 ]
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -5716,7 +5806,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -5730,7 +5828,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -5738,7 +5836,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -5752,7 +5858,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -5769,7 +5875,15 @@
         "description": "Retrieve all ingestion API keys",
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -5795,7 +5909,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -5809,7 +5931,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -5817,7 +5939,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -5831,7 +5961,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -5849,6 +5979,7 @@
         ],
         "description": "Update an ingestion API key by its id",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -5919,8 +6050,7 @@
                 ]
               }
             }
-          },
-          "required": true
+          }
         },
         "parameters": [
           {
@@ -5936,7 +6066,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -5959,7 +6097,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -5973,7 +6119,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -5981,7 +6127,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -5995,7 +6149,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -6024,7 +6178,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6062,7 +6224,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6076,7 +6246,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -6084,7 +6254,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6098,7 +6276,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -6115,9 +6293,33 @@
           "dashboards"
         ],
         "description": "Retrieve all dashboards",
+        "parameters": [
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 250
+              }
+            },
+            "in": "query",
+            "name": "owners",
+            "required": false,
+            "description": "Filter by owner team IDs"
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6143,7 +6345,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6157,7 +6367,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -6165,7 +6375,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6179,7 +6397,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -6195,6 +6413,7 @@
         ],
         "description": "Create a new dashboard",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -6306,9 +6525,28 @@
                   "filters": {
                     "type": "array",
                     "items": {
-                      "type": "string",
-                      "minLength": 0,
-                      "maxLength": 250
+                      "type": "object",
+                      "required": [
+                        "key",
+                        "values"
+                      ],
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "minLength": 0,
+                          "maxLength": 250,
+                          "description": "Filter key"
+                        },
+                        "values": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 0,
+                            "maxLength": 250,
+                            "description": "Filter value"
+                          }
+                        }
+                      }
                     },
                     "maxItems": 10,
                     "description": "Filters applied to every widget on the dashboard"
@@ -6397,7 +6635,12 @@
                   }
                 ],
                 "filters": [
-                  "env:production"
+                  {
+                    "key": "env",
+                    "values": [
+                      "production"
+                    ]
+                  }
                 ],
                 "tags": [
                   {
@@ -6408,12 +6651,19 @@
                 "timePreset": "past-1-hour"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6436,7 +6686,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6450,7 +6708,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -6458,7 +6716,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6472,7 +6738,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -6503,7 +6769,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6526,7 +6800,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6540,7 +6822,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -6548,7 +6830,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6562,7 +6852,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -6578,6 +6868,7 @@
         ],
         "description": "Update a dashboard by its id",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -6684,9 +6975,28 @@
                   "filters": {
                     "type": "array",
                     "items": {
-                      "type": "string",
-                      "minLength": 0,
-                      "maxLength": 250
+                      "type": "object",
+                      "required": [
+                        "key",
+                        "values"
+                      ],
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "minLength": 0,
+                          "maxLength": 250,
+                          "description": "Filter key"
+                        },
+                        "values": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 0,
+                            "maxLength": 250,
+                            "description": "Filter value"
+                          }
+                        }
+                      }
                     },
                     "maxItems": 10,
                     "description": "Filters applied to every widget on the dashboard"
@@ -6762,7 +7072,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6785,7 +7103,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6799,7 +7125,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -6807,7 +7133,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6821,7 +7155,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -6850,7 +7184,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6888,7 +7230,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6902,7 +7252,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -6910,7 +7260,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6924,7 +7282,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -6943,7 +7301,15 @@
         "description": "Retrieve all monitors",
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6969,7 +7335,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6983,7 +7357,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -6991,7 +7365,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -7005,7 +7387,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -7021,6 +7403,7 @@
         ],
         "description": "Create a new monitor",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -7088,6 +7471,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/MonitorConfigurationAnomalyMetric"
+                      },
+                      {
+                        "$ref": "#/components/schemas/MonitorConfigurationLogErrorPattern"
                       }
                     ]
                   },
@@ -7154,12 +7540,19 @@
                 "permissions": "all"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -7182,7 +7575,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -7196,7 +7597,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -7204,7 +7605,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -7218,7 +7627,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -7249,7 +7658,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -7272,7 +7689,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -7286,7 +7711,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -7294,7 +7719,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -7308,7 +7741,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -7324,6 +7757,7 @@
         ],
         "description": "Update a monitor by its id",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -7391,6 +7825,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/MonitorConfigurationAnomalyMetric"
+                      },
+                      {
+                        "$ref": "#/components/schemas/MonitorConfigurationLogErrorPattern"
                       }
                     ]
                   },
@@ -7457,8 +7894,7 @@
                 "permissions": "all"
               }
             }
-          },
-          "required": true
+          }
         },
         "parameters": [
           {
@@ -7474,7 +7910,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -7497,7 +7941,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -7511,7 +7963,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -7519,7 +7971,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -7533,7 +7993,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -7562,7 +8022,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -7600,7 +8068,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -7614,7 +8090,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -7622,7 +8098,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -7636,7 +8120,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -7655,7 +8139,15 @@
         "description": "Retrieve all notification rules",
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -7681,7 +8173,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -7695,7 +8195,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -7703,7 +8203,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -7717,7 +8225,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -7733,6 +8241,7 @@
         ],
         "description": "Create a new notification rule",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -8025,12 +8534,19 @@
                 ]
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -8053,7 +8569,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -8067,7 +8591,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -8075,7 +8599,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -8089,7 +8621,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -8120,7 +8652,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -8143,7 +8683,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -8157,7 +8705,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -8165,7 +8713,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -8179,7 +8735,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -8195,6 +8751,7 @@
         ],
         "description": "Update a notification rule by its id",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -8487,8 +9044,7 @@
                 ]
               }
             }
-          },
-          "required": true
+          }
         },
         "parameters": [
           {
@@ -8504,7 +9060,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -8527,7 +9091,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -8541,7 +9113,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -8549,7 +9121,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -8563,7 +9143,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -8592,7 +9172,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -8630,7 +9218,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -8644,7 +9240,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -8652,7 +9248,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -8666,7 +9270,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -8685,7 +9289,15 @@
         "description": "Retrieve all notification silences",
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -8711,7 +9323,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -8725,7 +9345,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -8733,7 +9353,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -8747,7 +9375,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -8763,12 +9391,14 @@
         ],
         "description": "Create a new notification silence",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "required": [
                   "name",
+                  "reason",
                   "owner",
                   "isActive",
                   "schedule",
@@ -8783,11 +9413,11 @@
                     "maxLength": 250,
                     "description": "Display name of the silence"
                   },
-                  "description": {
+                  "reason": {
                     "type": "string",
-                    "minLength": 0,
+                    "minLength": 1,
                     "maxLength": 250,
-                    "description": "Description of the silence"
+                    "description": "Reason for the silence"
                   },
                   "owner": {
                     "type": "string",
@@ -9146,12 +9776,19 @@
                 }
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -9174,7 +9811,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -9188,7 +9833,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -9196,7 +9841,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -9210,7 +9863,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -9241,7 +9894,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -9264,7 +9925,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -9278,7 +9947,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -9286,7 +9955,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -9300,7 +9977,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -9316,12 +9993,14 @@
         ],
         "description": "Update a notification silence by its id",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "required": [
                   "name",
+                  "reason",
                   "owner",
                   "isActive",
                   "schedule",
@@ -9336,11 +10015,11 @@
                     "maxLength": 250,
                     "description": "Display name of the silence"
                   },
-                  "description": {
+                  "reason": {
                     "type": "string",
-                    "minLength": 0,
+                    "minLength": 1,
                     "maxLength": 250,
-                    "description": "Description of the silence"
+                    "description": "Reason for the silence"
                   },
                   "owner": {
                     "type": "string",
@@ -9699,8 +10378,7 @@
                 }
               }
             }
-          },
-          "required": true
+          }
         },
         "parameters": [
           {
@@ -9716,7 +10394,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -9739,7 +10425,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -9753,7 +10447,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -9761,7 +10455,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -9775,7 +10477,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -9804,7 +10506,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -9842,7 +10552,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -9856,7 +10574,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -9864,7 +10582,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -9878,7 +10604,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -9897,7 +10623,15 @@
         "description": "Retrieve all retention policies",
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -9923,7 +10657,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -9937,7 +10679,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -9945,7 +10687,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -9959,7 +10709,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -9975,6 +10725,7 @@
         ],
         "description": "Create a new retention policy",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -10029,12 +10780,19 @@
                 "isEnabled": true
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10057,7 +10815,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10071,7 +10837,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -10079,7 +10845,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10093,7 +10867,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -10124,7 +10898,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10147,7 +10929,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10161,7 +10951,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -10169,7 +10959,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10183,7 +10981,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -10199,6 +10997,7 @@
         ],
         "description": "Update a retention policy by its id",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -10253,8 +11052,7 @@
                 "isEnabled": true
               }
             }
-          },
-          "required": true
+          }
         },
         "parameters": [
           {
@@ -10270,7 +11068,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10293,7 +11099,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10307,7 +11121,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -10315,7 +11129,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10329,7 +11151,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -10358,7 +11180,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10396,7 +11226,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10410,7 +11248,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -10418,7 +11256,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10432,7 +11278,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -10451,7 +11297,15 @@
         "description": "Retrieve all routes",
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10477,7 +11331,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10491,7 +11353,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -10499,7 +11361,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10513,7 +11383,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -10529,6 +11399,7 @@
         ],
         "description": "Create a new route",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -10631,12 +11502,19 @@
                 ]
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10659,7 +11537,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10673,7 +11559,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -10681,7 +11567,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10695,7 +11589,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -10726,7 +11620,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10749,7 +11651,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10763,7 +11673,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -10771,7 +11681,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10785,7 +11703,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -10801,6 +11719,7 @@
         ],
         "description": "Update a route by its id",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -10903,8 +11822,7 @@
                 ]
               }
             }
-          },
-          "required": true
+          }
         },
         "parameters": [
           {
@@ -10920,7 +11838,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10943,7 +11869,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10957,7 +11891,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -10965,7 +11899,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -10979,7 +11921,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -11008,7 +11950,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11046,7 +11996,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11060,7 +12018,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -11068,7 +12026,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11082,7 +12048,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -11101,7 +12067,15 @@
         "description": "Retrieve all tag policies",
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11127,7 +12101,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11141,7 +12123,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -11149,7 +12131,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11163,7 +12153,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -11179,6 +12169,7 @@
         ],
         "description": "Create a new tag policy",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -11330,12 +12321,19 @@
                 }
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11358,7 +12356,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11372,7 +12378,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -11380,7 +12386,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11394,7 +12408,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -11425,7 +12439,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11448,7 +12470,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11462,7 +12492,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -11470,7 +12500,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11484,7 +12522,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -11500,6 +12538,7 @@
         ],
         "description": "Update a tag policy by its id",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -11651,8 +12690,7 @@
                 }
               }
             }
-          },
-          "required": true
+          }
         },
         "parameters": [
           {
@@ -11668,7 +12706,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11691,7 +12737,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11705,7 +12759,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -11713,7 +12767,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11727,7 +12789,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -11756,7 +12818,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11794,7 +12864,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11808,7 +12886,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -11816,7 +12894,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11830,7 +12916,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -11849,7 +12935,15 @@
         "description": "Retrieve all teams",
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11875,7 +12969,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11889,7 +12991,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -11897,7 +12999,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11911,7 +13021,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -11927,6 +13037,7 @@
         ],
         "description": "Create a new team",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -11992,12 +13103,19 @@
                 ]
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -12020,7 +13138,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -12034,7 +13160,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -12042,7 +13168,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -12056,7 +13190,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -12087,7 +13221,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -12110,7 +13252,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -12124,7 +13274,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -12132,7 +13282,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -12146,7 +13304,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -12162,6 +13320,7 @@
         ],
         "description": "Update a team by its id",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -12227,8 +13386,7 @@
                 ]
               }
             }
-          },
-          "required": true
+          }
         },
         "parameters": [
           {
@@ -12244,7 +13402,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -12267,7 +13433,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -12281,7 +13455,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -12289,7 +13463,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -12303,7 +13485,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -12332,7 +13514,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -12370,7 +13560,15 @@
             }
           },
           "4XX": {
-            "description": "Default Response",
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -12384,7 +13582,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ClientErrorResponse"
                     }
                   }
                 }
@@ -12392,7 +13590,15 @@
             }
           },
           "5XX": {
-            "description": "Default Response",
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -12406,7 +13612,7 @@
                       "type": "string"
                     },
                     "error": {
-                      "$ref": "#/components/schemas/ErrorResponse"
+                      "$ref": "#/components/schemas/ServerErrorResponse"
                     }
                   }
                 }
@@ -12449,20 +13655,20 @@
       "description": "Notification silences for alerts"
     },
     {
-      "name": "routes",
-      "description": "Routes for processing log data"
-    },
-    {
-      "name": "teams",
-      "description": "Collection of users for managing ownership and access to resources"
-    },
-    {
       "name": "retention-policies",
       "description": "Data retention rules for telemetry sources"
     },
     {
+      "name": "routes",
+      "description": "Routes for processing log data"
+    },
+    {
       "name": "tag-policies",
       "description": "Tag policies for enforcing tag requirements on Tsuga assets or telemetry data"
+    },
+    {
+      "name": "teams",
+      "description": "Collection of users for managing ownership and access to resources"
     }
   ]
 }

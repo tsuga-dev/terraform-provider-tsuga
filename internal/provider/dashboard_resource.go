@@ -292,7 +292,7 @@ func (r *dashboardResource) buildDashboardRequestBody(ctx context.Context, plan 
 
 	graphs, expandDiags := expandDashboardsGraphs(ctx, plan.Graphs)
 	diags.Append(expandDiags...)
-	filters, expandDiags := expandStringList(ctx, plan.Filters)
+	filters, expandDiags := expandDashboardFilters(ctx, plan.Filters)
 	diags.Append(expandDiags...)
 	if diags.HasError() {
 		return nil, diags
@@ -387,10 +387,15 @@ type dashboardAPIData struct {
 	ID         string              `json:"id"`
 	Name       string              `json:"name"`
 	Owner      string              `json:"owner"`
-	Filters    []string            `json:"filters"`
+	Filters    []dashboardAPIFilter `json:"filters"`
 	Tags       []apiTag            `json:"tags"`
 	TimePreset string              `json:"timePreset,omitempty"`
 	Graphs     []dashboardAPIGraph `json:"graphs"`
+}
+
+type dashboardAPIFilter struct {
+	Key    string   `json:"key"`
+	Values []string `json:"values"`
 }
 
 type dashboardAPIGraph struct {
@@ -468,6 +473,65 @@ type dashboardTimeBucket struct {
 type dashboardListColumn struct {
 	Attribute  string               `json:"attribute"`
 	Normalizer *dashboardNormalizer `json:"normalizer,omitempty"`
+}
+
+func expandDashboardFilters(ctx context.Context, filters types.List) ([]dashboardAPIFilter, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	if filters.IsNull() || filters.IsUnknown() {
+		return nil, diags
+	}
+
+	var filterModels []resource_dashboard.FilterModel
+	diags.Append(filters.ElementsAs(ctx, &filterModels, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	result := make([]dashboardAPIFilter, 0, len(filterModels))
+	for _, f := range filterModels {
+		values, vDiags := expandStringList(ctx, f.Values)
+		diags.Append(vDiags...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		if values == nil {
+			values = []string{}
+		}
+		result = append(result, dashboardAPIFilter{
+			Key:    f.Key.ValueString(),
+			Values: values,
+		})
+	}
+	return result, diags
+}
+
+func flattenDashboardFilters(ctx context.Context, filters []dashboardAPIFilter) (types.List, diag.Diagnostics) {
+	elemType := types.ObjectType{AttrTypes: resource_dashboard.FilterAttrTypes()}
+	if filters == nil {
+		return types.ListNull(elemType), nil
+	}
+	if len(filters) == 0 {
+		return types.ListValue(elemType, []attr.Value{})
+	}
+
+	var diags diag.Diagnostics
+	values := make([]attr.Value, 0, len(filters))
+	for _, f := range filters {
+		filterValues := f.Values
+		if filterValues == nil {
+			filterValues = []string{}
+		}
+		valsList, vDiags := types.ListValueFrom(ctx, types.StringType, filterValues)
+		diags.Append(vDiags...)
+		if diags.HasError() {
+			return types.ListNull(elemType), diags
+		}
+		values = append(values, types.ObjectValueMust(resource_dashboard.FilterAttrTypes(), map[string]attr.Value{
+			"key":    types.StringValue(f.Key),
+			"values": valsList,
+		}))
+	}
+	return types.ListValue(elemType, values)
 }
 
 func expandDashboardsGraphs(ctx context.Context, graphs types.List) ([]dashboardAPIGraph, diag.Diagnostics) {
@@ -635,7 +699,7 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 func flattenDashboard(ctx context.Context, data dashboardAPIData) (resource_dashboard.DashboardModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	filters, filterDiags := types.ListValueFrom(ctx, types.StringType, data.Filters)
+	filters, filterDiags := flattenDashboardFilters(ctx, data.Filters)
 	diags.Append(filterDiags...)
 	tags, tagDiags := flattenTags(ctx, data.Tags)
 	diags.Append(tagDiags...)
