@@ -1,4 +1,75 @@
 {
+	"datasources": [
+		{
+			"name": "team",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Identifier of the team",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthBetween(1, 250)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Human readable team name displayed throughout the app"
+						}
+					},
+					{
+						"name": "tags",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "key",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "value",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									}
+								]
+							},
+							"description": "List of key/value tags applied to the resource"
+						}
+					},
+					{
+						"name": "visibility",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Controls whether the resources of the team are discoverable by users"
+						}
+					}
+				]
+			}
+		}
+	],
 	"provider": {
 		"name": "tsuga"
 	},

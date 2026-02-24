@@ -113,7 +113,9 @@ func (p *tsugaProvider) Metadata(_ context.Context, _ provider.MetadataRequest, 
 }
 
 func (p *tsugaProvider) DataSources(_ context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewTeamDataSource,
+	}
 }
 
 func (p *tsugaProvider) Resources(_ context.Context) []func() resource.Resource {
