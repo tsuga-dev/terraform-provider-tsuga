@@ -26,6 +26,7 @@
         "properties": {
           "code": {
             "enum": [
+              "ABORT_ERROR",
               "BAD_REQUEST",
               "DUPLICATE_KEY_VIOLATION",
               "FOREIGN_KEY_VIOLATION",
@@ -190,6 +191,12 @@
                   "minLength": 0,
                   "maxLength": 250,
                   "description": "Display name of the graph widget"
+                },
+                "description": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 800,
+                  "description": "Description of the graph widget"
                 },
                 "visualization": {
                   "type": "object",
@@ -461,6 +468,9 @@
               },
               {
                 "$ref": "#/components/schemas/MonitorConfigurationLogErrorPattern"
+              },
+              {
+                "$ref": "#/components/schemas/MonitorConfigurationCertificateExpiry"
               }
             ]
           },
@@ -1337,7 +1347,7 @@
             "properties": {
               "id": {
                 "type": "string",
-                "minLength": 0,
+                "minLength": 1,
                 "maxLength": 250,
                 "description": "Identifier of the processor"
               },
@@ -1424,7 +1434,7 @@
             "properties": {
               "id": {
                 "type": "string",
-                "minLength": 0,
+                "minLength": 1,
                 "maxLength": 250,
                 "description": "Identifier of the processor"
               },
@@ -1498,7 +1508,7 @@
                     "properties": {
                       "attributeName": {
                         "type": "string",
-                        "minLength": 0,
+                        "minLength": 1,
                         "maxLength": 250,
                         "description": "Attribute whose value will be parsed with Grok rules"
                       },
@@ -1506,10 +1516,11 @@
                         "type": "array",
                         "items": {
                           "type": "string",
-                          "minLength": 0,
+                          "minLength": 1,
                           "maxLength": 50000,
                           "description": "Grok rule applied to parse text"
                         },
+                        "minItems": 1,
                         "maxItems": 5,
                         "description": "Ordered Grok rules evaluated until one matches"
                       },
@@ -1540,7 +1551,7 @@
                     "properties": {
                       "sourceAttribute": {
                         "type": "string",
-                        "minLength": 0,
+                        "minLength": 1,
                         "maxLength": 250,
                         "description": "Attribute containing the URL to parse"
                       },
@@ -1561,7 +1572,7 @@
                     "properties": {
                       "sourceAttribute": {
                         "type": "string",
-                        "minLength": 0,
+                        "minLength": 1,
                         "maxLength": 250,
                         "description": "Attribute containing the user agent string to parse"
                       },
@@ -1586,7 +1597,7 @@
                     "properties": {
                       "sourceAttribute": {
                         "type": "string",
-                        "minLength": 0,
+                        "minLength": 1,
                         "maxLength": 250,
                         "description": "Attribute containing the key/value string segment to parse"
                       },
@@ -1598,7 +1609,7 @@
                       },
                       "keyValueSplitter": {
                         "type": "string",
-                        "minLength": 0,
+                        "minLength": 1,
                         "maxLength": 250,
                         "description": "Delimiter separating keys from values in the source string"
                       },
@@ -1606,7 +1617,7 @@
                         "type": "string",
                         "minLength": 0,
                         "maxLength": 250,
-                        "description": "Delimiter separating each key/value pair"
+                        "description": "Delimiter separating each key/value pair. Will default to whitespace if not set."
                       },
                       "acceptStandaloneKey": {
                         "type": "boolean"
@@ -1633,7 +1644,7 @@
             "properties": {
               "id": {
                 "type": "string",
-                "minLength": 0,
+                "minLength": 1,
                 "maxLength": 250,
                 "description": "Identifier of the processor"
               },
@@ -1717,7 +1728,7 @@
             "properties": {
               "id": {
                 "type": "string",
-                "minLength": 0,
+                "minLength": 1,
                 "maxLength": 250,
                 "description": "Identifier of the processor"
               },
@@ -1798,6 +1809,7 @@
                         }
                       }
                     },
+                    "minItems": 2,
                     "maxItems": 11,
                     "description": "Conditional branches evaluated in order before falling back to the default"
                   }
@@ -2019,6 +2031,63 @@
             }
           ]
         }
+      },
+      "TeamMembership": {
+        "type": "object",
+        "required": [
+          "id",
+          "userId",
+          "teamId",
+          "roleKey"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string"
+          },
+          "roleKey": {
+            "enum": [
+              "admin",
+              "editor",
+              "viewer"
+            ]
+          }
+        },
+        "description": "Membership of a user in a team"
+      },
+      "User": {
+        "type": "object",
+        "required": [
+          "email",
+          "id",
+          "name",
+          "role"
+        ],
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "admin",
+              "public_editor",
+              "public_viewer",
+              "teams_only"
+            ]
+          }
+        },
+        "description": "A user in the organization"
       },
       "AggregateCount": {
         "type": "object",
@@ -2369,7 +2438,7 @@
                 "type": "string",
                 "format": "math-formula",
                 "minLength": 0,
-                "maxLength": 10000
+                "maxLength": 250
               },
               "operator": {
                 "enum": [
@@ -2383,6 +2452,38 @@
               },
               "threshold": {
                 "type": "number"
+              }
+            }
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "formula",
+                "operator",
+                "threshold"
+              ],
+              "properties": {
+                "formula": {
+                  "type": "string",
+                  "format": "math-formula",
+                  "minLength": 0,
+                  "maxLength": 250
+                },
+                "operator": {
+                  "enum": [
+                    "greater_than",
+                    "less_than",
+                    "equal",
+                    "not_equal",
+                    "greater_than_or_equal",
+                    "less_than_or_equal"
+                  ]
+                },
+                "threshold": {
+                  "type": "number"
+                }
               }
             }
           },
@@ -2587,7 +2688,7 @@
                 "type": "string",
                 "format": "math-formula",
                 "minLength": 0,
-                "maxLength": 10000
+                "maxLength": 250
               },
               "operator": {
                 "enum": [
@@ -2601,6 +2702,38 @@
               },
               "threshold": {
                 "type": "number"
+              }
+            }
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "formula",
+                "operator",
+                "threshold"
+              ],
+              "properties": {
+                "formula": {
+                  "type": "string",
+                  "format": "math-formula",
+                  "minLength": 0,
+                  "maxLength": 250
+                },
+                "operator": {
+                  "enum": [
+                    "greater_than",
+                    "less_than",
+                    "equal",
+                    "not_equal",
+                    "greater_than_or_equal",
+                    "less_than_or_equal"
+                  ]
+                },
+                "threshold": {
+                  "type": "number"
+                }
               }
             }
           },
@@ -2804,7 +2937,7 @@
                 "type": "string",
                 "format": "math-formula",
                 "minLength": 0,
-                "maxLength": 10000
+                "maxLength": 250
               },
               "conditionType": {
                 "enum": [
@@ -3016,7 +3149,7 @@
                 "type": "string",
                 "format": "math-formula",
                 "minLength": 0,
-                "maxLength": 10000
+                "maxLength": 250
               },
               "conditionType": {
                 "enum": [
@@ -3266,9 +3399,16 @@
             ]
           },
           "warnBeforeInDays": {
-            "type": "number",
+            "type": "integer",
             "minimum": 1,
             "maximum": 365
+          },
+          "cloudAccounts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
           },
           "aggregationAlertLogic": {
             "type": "string",
@@ -3379,7 +3519,7 @@
             "type": "array",
             "items": {
               "type": "string",
-              "format": "email",
+              "format": "lowercase-email",
               "minLength": 0,
               "maxLength": 254
             },
@@ -3748,13 +3888,13 @@
         "properties": {
           "targetAttribute": {
             "type": "string",
-            "minLength": 0,
+            "minLength": 1,
             "maxLength": 250,
             "description": "Attribute that will receive the formatted value"
           },
           "formatString": {
             "type": "string",
-            "minLength": 0,
+            "minLength": 1,
             "maxLength": 50000,
             "description": "Template string used to build the target attribute value"
           },
@@ -3783,13 +3923,13 @@
         "properties": {
           "targetAttribute": {
             "type": "string",
-            "minLength": 0,
+            "minLength": 1,
             "maxLength": 250,
             "description": "Attribute that will receive the computed value"
           },
           "formula": {
             "type": "string",
-            "minLength": 0,
+            "minLength": 1,
             "maxLength": 50000,
             "description": "Mathematical formula evaluated to populate the target attribute"
           },
@@ -3826,7 +3966,7 @@
               "properties": {
                 "originAttribute": {
                   "type": "string",
-                  "minLength": 0,
+                  "minLength": 1,
                   "maxLength": 250,
                   "description": "Attribute name to map to the target attribute"
                 },
@@ -3840,12 +3980,13 @@
                 },
                 "targetAttribute": {
                   "type": "string",
-                  "minLength": 0,
+                  "minLength": 1,
                   "maxLength": 250,
                   "description": "Attribute name that will receive the mapped value"
                 }
               }
             },
+            "minItems": 1,
             "maxItems": 50,
             "description": "Mappings that map individual attributes to new targets"
           },
@@ -3866,7 +4007,7 @@
         "properties": {
           "attributeName": {
             "type": "string",
-            "minLength": 0,
+            "minLength": 1,
             "maxLength": 250,
             "description": "Attribute whose value will determine the log level"
           },
@@ -3887,7 +4028,7 @@
         "properties": {
           "attributeName": {
             "type": "string",
-            "minLength": 0,
+            "minLength": 1,
             "maxLength": 250,
             "description": "Attribute whose value will determine the log timestamp"
           },
@@ -4170,6 +4311,7 @@
           },
           "formula": {
             "type": "string",
+            "format": "math-formula",
             "minLength": 0,
             "maxLength": 250,
             "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series"
@@ -4205,7 +4347,7 @@
               },
               "title": "AggregationGroupBy"
             },
-            "maxItems": 3,
+            "maxItems": 7,
             "description": "Fields used to group the results"
           },
           "timeBucket": {
@@ -4446,6 +4588,7 @@
           },
           "formula": {
             "type": "string",
+            "format": "math-formula",
             "minLength": 0,
             "maxLength": 250,
             "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series"
@@ -4481,7 +4624,7 @@
               },
               "title": "AggregationGroupBy"
             },
-            "maxItems": 3,
+            "maxItems": 7,
             "description": "Fields used to group the results"
           },
           "normalizer": {
@@ -4666,6 +4809,7 @@
           },
           "formula": {
             "type": "string",
+            "format": "math-formula",
             "minLength": 0,
             "maxLength": 250,
             "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series"
@@ -4701,7 +4845,7 @@
               },
               "title": "AggregationGroupBy"
             },
-            "maxItems": 3,
+            "maxItems": 7,
             "description": "Fields used to group the results"
           },
           "normalizer": {
@@ -4894,6 +5038,7 @@
           },
           "formula": {
             "type": "string",
+            "format": "math-formula",
             "minLength": 0,
             "maxLength": 250,
             "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series"
@@ -5140,6 +5285,7 @@
           },
           "formula": {
             "type": "string",
+            "format": "math-formula",
             "minLength": 0,
             "maxLength": 250,
             "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series"
@@ -5175,7 +5321,7 @@
               },
               "title": "AggregationGroupBy"
             },
-            "maxItems": 3,
+            "maxItems": 7,
             "description": "Fields used to group the results"
           },
           "timeBucket": {
@@ -5610,6 +5756,725 @@
     }
   },
   "paths": {
+    "/v1/aggregation/multi-query/scalar": {
+      "post": {
+        "operationId": "aggregateScalar",
+        "tags": [
+          "aggregation"
+        ],
+        "description": "Run aggregation queries and return scalar results",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "timeRange",
+                  "queries",
+                  "dataSource"
+                ],
+                "properties": {
+                  "timeRange": {
+                    "type": "object",
+                    "required": [
+                      "from",
+                      "to"
+                    ],
+                    "properties": {
+                      "from": {
+                        "type": "integer",
+                        "description": "Start timestamp in seconds",
+                        "example": 1704067200
+                      },
+                      "to": {
+                        "type": "integer",
+                        "description": "End timestamp in seconds",
+                        "example": 1704067200
+                      }
+                    },
+                    "title": "TimeRange",
+                    "description": "Time range to query",
+                    "example": {
+                      "from": 1704067200,
+                      "to": 1704067200
+                    }
+                  },
+                  "queries": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "aggregate"
+                      ],
+                      "properties": {
+                        "aggregate": {
+                          "title": "Aggregate",
+                          "type": "object",
+                          "discriminator": {
+                            "propertyName": "type"
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "oneOf": [
+                            {
+                              "$ref": "#/components/schemas/AggregateCount"
+                            },
+                            {
+                              "$ref": "#/components/schemas/AggregateUniqueCount"
+                            },
+                            {
+                              "$ref": "#/components/schemas/AggregateAverage"
+                            },
+                            {
+                              "$ref": "#/components/schemas/AggregateMax"
+                            },
+                            {
+                              "$ref": "#/components/schemas/AggregateMin"
+                            },
+                            {
+                              "$ref": "#/components/schemas/AggregateSum"
+                            },
+                            {
+                              "$ref": "#/components/schemas/AggregatePercentile"
+                            }
+                          ]
+                        },
+                        "functions": {
+                          "type": "array",
+                          "items": {
+                            "title": "Function",
+                            "type": "object",
+                            "discriminator": {
+                              "propertyName": "type"
+                            },
+                            "required": [
+                              "type"
+                            ],
+                            "oneOf": [
+                              {
+                                "$ref": "#/components/schemas/FunctionPerSecond"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionPerMinute"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionPerHour"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionRate"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionIncrease"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionRolling"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionLog"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionPower"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionSqrt"
+                              }
+                            ]
+                          },
+                          "maxItems": 10,
+                          "description": "Post-processing functions applied to aggregation results"
+                        },
+                        "filter": {
+                          "type": "string",
+                          "format": "tsuga-query",
+                          "minLength": 0,
+                          "maxLength": 10000,
+                          "description": "Filter to apply to the aggregation"
+                        }
+                      },
+                      "title": "AggregationQuery"
+                    },
+                    "maxItems": 15,
+                    "description": "Aggregations that may be combined together in the same query"
+                  },
+                  "groupBy": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "fields",
+                        "limit"
+                      ],
+                      "properties": {
+                        "fields": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 0,
+                            "maxLength": 250
+                          },
+                          "maxItems": 1
+                        },
+                        "limit": {
+                          "type": "number"
+                        }
+                      },
+                      "title": "AggregationGroupBy"
+                    },
+                    "maxItems": 7,
+                    "description": "Fields used to group the results"
+                  },
+                  "dataSource": {
+                    "enum": [
+                      "logs",
+                      "metrics",
+                      "traces"
+                    ],
+                    "description": "Data source being queried for this aggregation"
+                  },
+                  "formula": {
+                    "type": "string",
+                    "format": "math-formula",
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "results"
+                      ],
+                      "properties": {
+                        "results": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "group",
+                              "value"
+                            ],
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Query identifier (q1, q2, ...) or \"formula\" for formula"
+                              },
+                              "group": {
+                                "type": "object",
+                                "description": "Group-by field values",
+                                "additionalProperties": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "number"
+                                    }
+                                  ]
+                                }
+                              },
+                              "value": {
+                                "type": "number",
+                                "description": "Aggregated value"
+                              }
+                            },
+                            "title": "ScalarResult"
+                          },
+                          "description": "Aggregated results per query and group"
+                        }
+                      },
+                      "title": "ScalarAggregationResponse",
+                      "description": "Scalar aggregation response with single values",
+                      "examples": [
+                        {
+                          "results": [
+                            {
+                              "id": "q1",
+                              "group": {
+                                "host": "server-1"
+                              },
+                              "value": 123.45
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ClientErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ServerErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/aggregation/multi-query/timeseries": {
+      "post": {
+        "operationId": "aggregateTimeseries",
+        "tags": [
+          "aggregation"
+        ],
+        "description": "Run aggregation queries and return timeseries results",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "timeRange",
+                  "queries",
+                  "dataSource",
+                  "aggregationWindow"
+                ],
+                "properties": {
+                  "timeRange": {
+                    "type": "object",
+                    "required": [
+                      "from",
+                      "to"
+                    ],
+                    "properties": {
+                      "from": {
+                        "type": "integer",
+                        "description": "Start timestamp in seconds",
+                        "example": 1704067200
+                      },
+                      "to": {
+                        "type": "integer",
+                        "description": "End timestamp in seconds",
+                        "example": 1704067200
+                      }
+                    },
+                    "title": "TimeRange",
+                    "description": "Time range to query",
+                    "example": {
+                      "from": 1704067200,
+                      "to": 1704067200
+                    }
+                  },
+                  "queries": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "aggregate"
+                      ],
+                      "properties": {
+                        "aggregate": {
+                          "title": "Aggregate",
+                          "type": "object",
+                          "discriminator": {
+                            "propertyName": "type"
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "oneOf": [
+                            {
+                              "$ref": "#/components/schemas/AggregateCount"
+                            },
+                            {
+                              "$ref": "#/components/schemas/AggregateUniqueCount"
+                            },
+                            {
+                              "$ref": "#/components/schemas/AggregateAverage"
+                            },
+                            {
+                              "$ref": "#/components/schemas/AggregateMax"
+                            },
+                            {
+                              "$ref": "#/components/schemas/AggregateMin"
+                            },
+                            {
+                              "$ref": "#/components/schemas/AggregateSum"
+                            },
+                            {
+                              "$ref": "#/components/schemas/AggregatePercentile"
+                            }
+                          ]
+                        },
+                        "functions": {
+                          "type": "array",
+                          "items": {
+                            "title": "Function",
+                            "type": "object",
+                            "discriminator": {
+                              "propertyName": "type"
+                            },
+                            "required": [
+                              "type"
+                            ],
+                            "oneOf": [
+                              {
+                                "$ref": "#/components/schemas/FunctionPerSecond"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionPerMinute"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionPerHour"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionRate"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionIncrease"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionRolling"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionLog"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionPower"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionSqrt"
+                              }
+                            ]
+                          },
+                          "maxItems": 10,
+                          "description": "Post-processing functions applied to aggregation results"
+                        },
+                        "filter": {
+                          "type": "string",
+                          "format": "tsuga-query",
+                          "minLength": 0,
+                          "maxLength": 10000,
+                          "description": "Filter to apply to the aggregation"
+                        }
+                      },
+                      "title": "AggregationQuery"
+                    },
+                    "maxItems": 15,
+                    "description": "Aggregations that may be combined together in the same query"
+                  },
+                  "groupBy": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "fields",
+                        "limit"
+                      ],
+                      "properties": {
+                        "fields": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 0,
+                            "maxLength": 250
+                          },
+                          "maxItems": 1
+                        },
+                        "limit": {
+                          "type": "number"
+                        }
+                      },
+                      "title": "AggregationGroupBy"
+                    },
+                    "maxItems": 7,
+                    "description": "Fields used to group the results"
+                  },
+                  "dataSource": {
+                    "enum": [
+                      "logs",
+                      "metrics",
+                      "traces"
+                    ],
+                    "description": "Data source being queried for this aggregation"
+                  },
+                  "formula": {
+                    "type": "string",
+                    "format": "math-formula",
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series"
+                  },
+                  "aggregationWindow": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "description": "Time bucket size for aggregation (e.g. \"10s\", \"1m\", \"1h\")"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "series"
+                      ],
+                      "properties": {
+                        "series": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "group",
+                              "points"
+                            ],
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Query identifier (q1, q2, ...) or \"formula\" for formula"
+                              },
+                              "group": {
+                                "type": "object",
+                                "description": "Group-by field values",
+                                "additionalProperties": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "number"
+                                    }
+                                  ]
+                                }
+                              },
+                              "points": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "timestamp",
+                                    "value"
+                                  ],
+                                  "properties": {
+                                    "timestamp": {
+                                      "type": "integer",
+                                      "description": "Timestamp in milliseconds"
+                                    },
+                                    "value": {
+                                      "type": "number",
+                                      "description": "Value"
+                                    }
+                                  }
+                                },
+                                "description": "Array of data points"
+                              }
+                            },
+                            "title": "Series"
+                          },
+                          "description": "Time series data per query and group"
+                        }
+                      },
+                      "title": "TimeseriesAggregationResponse",
+                      "description": "Timeseries aggregation response with points over time",
+                      "examples": [
+                        {
+                          "series": [
+                            {
+                              "id": "q1",
+                              "group": {
+                                "host": "server-1"
+                              },
+                              "points": [
+                                {
+                                  "timestamp": 1609459200000,
+                                  "value": 123.45
+                                },
+                                {
+                                  "timestamp": 1609459260000,
+                                  "value": 456.78
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ClientErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ServerErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/ingestion-api-keys": {
       "post": {
         "operationId": "createIngestionApiKey",
@@ -5825,7 +6690,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -5855,7 +6721,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -5928,7 +6795,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -5958,7 +6826,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -6116,7 +6985,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -6146,7 +7016,122 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ServerErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "getIngestionApiKey",
+        "tags": [
+          "ingestion-api-keys"
+        ],
+        "description": "Retrieve an ingestion API key by its id",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/IngestionApiKey"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ClientErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -6243,7 +7228,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -6273,7 +7259,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -6364,7 +7351,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -6394,7 +7382,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -6456,6 +7445,12 @@
                           "minLength": 0,
                           "maxLength": 250,
                           "description": "Display name of the graph widget"
+                        },
+                        "description": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 800,
+                          "description": "Description of the graph widget"
                         },
                         "visualization": {
                           "type": "object",
@@ -6705,7 +7700,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -6735,7 +7731,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -6819,7 +7816,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -6849,7 +7847,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -6906,6 +7905,12 @@
                           "minLength": 0,
                           "maxLength": 250,
                           "description": "Display name of the graph widget"
+                        },
+                        "description": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 800,
+                          "description": "Description of the graph widget"
                         },
                         "visualization": {
                           "type": "object",
@@ -7122,7 +8127,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -7152,7 +8158,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -7249,7 +8256,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -7279,7 +8287,607 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ServerErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/logs/search": {
+      "get": {
+        "operationId": "searchLogs",
+        "tags": [
+          "logs"
+        ],
+        "description": "Search logs",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "tsuga-query",
+              "minLength": 0,
+              "maxLength": 10000
+            },
+            "in": "query",
+            "name": "query",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 1000
+            },
+            "in": "query",
+            "name": "maxResults",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1704067200,
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "description": "Start timestamp in seconds"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1704067200,
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "description": "End timestamp in seconds"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "logs"
+                      ],
+                      "properties": {
+                        "logs": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "timestamp",
+                              "level"
+                            ],
+                            "properties": {
+                              "context": {
+                                "type": "object",
+                                "properties": {
+                                  "team": {
+                                    "type": "string"
+                                  }
+                                },
+                                "additionalProperties": true
+                              },
+                              "message": {
+                                "type": "string"
+                              },
+                              "timestamp": {
+                                "type": "number"
+                              },
+                              "level": {
+                                "enum": [
+                                  "CRITICAL",
+                                  "ERROR",
+                                  "WARN",
+                                  "NOTICE",
+                                  "INFO",
+                                  "DEBUG",
+                                  "TRACE"
+                                ]
+                              }
+                            },
+                            "additionalProperties": true,
+                            "examples": [
+                              {
+                                "context": {
+                                  "team": "platform"
+                                },
+                                "message": "Request completed successfully",
+                                "timestamp": 1704067200000,
+                                "level": "INFO"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ClientErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ServerErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/metrics": {
+      "get": {
+        "operationId": "listMetrics",
+        "tags": [
+          "metrics"
+        ],
+        "description": "Get all metrics with their metadata",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1704067200,
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "description": "Start timestamp in seconds"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1704067200,
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "description": "End timestamp in seconds"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "name",
+                          "type"
+                        ],
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "description": "Name of the metric"
+                          },
+                          "type": {
+                            "enum": [
+                              "counter",
+                              "gauge",
+                              "histogram",
+                              "summary"
+                            ]
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "Human-readable description of the metric"
+                          },
+                          "unit": {
+                            "type": "string",
+                            "description": "Unit of the metric"
+                          },
+                          "temporality": {
+                            "enum": [
+                              "delta",
+                              "cumulative",
+                              "none"
+                            ]
+                          },
+                          "capabilities": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Supported capabilities, an empty array means all capabilities are supported"
+                          },
+                          "attributes": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Metric attributes"
+                          }
+                        },
+                        "examples": [
+                          {
+                            "name": "http.server.request.duration",
+                            "type": "histogram",
+                            "description": "Duration of HTTP server requests",
+                            "unit": "ms",
+                            "temporality": "delta",
+                            "capabilities": [
+                              "max",
+                              "min",
+                              "sum"
+                            ],
+                            "attributes": [
+                              "context.team",
+                              "context.environment",
+                              "context.region"
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ClientErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ServerErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/metrics/{name}": {
+      "get": {
+        "operationId": "getMetric",
+        "tags": [
+          "metrics"
+        ],
+        "description": "Retrieve a metric by name with its metadata",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1704067200,
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "description": "Start timestamp in seconds"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1704067200,
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "description": "End timestamp in seconds"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "description": "The metric name"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "name",
+                        "type"
+                      ],
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "Name of the metric"
+                        },
+                        "type": {
+                          "enum": [
+                            "counter",
+                            "gauge",
+                            "histogram",
+                            "summary"
+                          ]
+                        },
+                        "description": {
+                          "type": "string",
+                          "description": "Human-readable description of the metric"
+                        },
+                        "unit": {
+                          "type": "string",
+                          "description": "Unit of the metric"
+                        },
+                        "temporality": {
+                          "enum": [
+                            "delta",
+                            "cumulative",
+                            "none"
+                          ]
+                        },
+                        "capabilities": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Supported capabilities, an empty array means all capabilities are supported"
+                        },
+                        "attributes": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Metric attributes"
+                        }
+                      },
+                      "examples": [
+                        {
+                          "name": "http.server.request.duration",
+                          "type": "histogram",
+                          "description": "Duration of HTTP server requests",
+                          "unit": "ms",
+                          "temporality": "delta",
+                          "capabilities": [
+                            "max",
+                            "min",
+                            "sum"
+                          ],
+                          "attributes": [
+                            "context.team",
+                            "context.environment",
+                            "context.region"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ClientErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -7354,7 +8962,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -7384,7 +8993,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -7474,6 +9084,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/MonitorConfigurationLogErrorPattern"
+                      },
+                      {
+                        "$ref": "#/components/schemas/MonitorConfigurationCertificateExpiry"
                       }
                     ]
                   },
@@ -7594,7 +9207,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -7624,7 +9238,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -7708,7 +9323,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -7738,7 +9354,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -7828,6 +9445,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/MonitorConfigurationLogErrorPattern"
+                      },
+                      {
+                        "$ref": "#/components/schemas/MonitorConfigurationCertificateExpiry"
                       }
                     ]
                   },
@@ -7960,7 +9580,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -7990,7 +9611,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -8087,7 +9709,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -8117,7 +9740,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -8192,7 +9816,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -8222,7 +9847,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -8588,7 +10214,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -8618,7 +10245,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -8702,7 +10330,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -8732,7 +10361,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -9110,7 +10740,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -9140,7 +10771,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -9237,7 +10869,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -9267,7 +10900,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -9342,7 +10976,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -9372,7 +11007,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -9830,7 +11466,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -9860,7 +11497,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -9944,7 +11582,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -9974,7 +11613,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -10444,7 +12084,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -10474,7 +12115,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -10571,7 +12213,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -10601,7 +12244,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -10676,7 +12320,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -10706,7 +12351,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -10834,7 +12480,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -10864,7 +12511,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -10948,7 +12596,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -10978,7 +12627,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -11118,7 +12768,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -11148,7 +12799,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -11245,7 +12897,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -11275,7 +12928,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -11350,7 +13004,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -11380,7 +13035,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -11414,7 +13070,7 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "minLength": 0,
+                    "minLength": 1,
                     "maxLength": 250,
                     "description": "Human readable name shown for the route"
                   },
@@ -11556,7 +13212,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -11586,7 +13243,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -11670,7 +13328,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -11700,7 +13359,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -11734,7 +13394,7 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "minLength": 0,
+                    "minLength": 1,
                     "maxLength": 250,
                     "description": "Human readable name shown for the route"
                   },
@@ -11888,7 +13548,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -11918,7 +13579,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -12015,7 +13677,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -12045,7 +13708,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -12120,7 +13784,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -12150,7 +13815,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -12375,7 +14041,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -12405,7 +14072,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -12489,7 +14157,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -12519,7 +14188,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -12756,7 +14426,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -12786,7 +14457,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -12883,7 +14555,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -12913,7 +14586,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -12988,7 +14662,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -13018,7 +14693,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -13157,7 +14833,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -13187,7 +14864,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -13271,7 +14949,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -13301,7 +14980,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -13452,7 +15132,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -13482,7 +15163,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -13579,7 +15261,8 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ClientErrorResponse"
@@ -13609,7 +15292,1091 @@
                   ],
                   "properties": {
                     "requestId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ServerErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/team-memberships": {
+      "get": {
+        "operationId": "getTeamMemberships",
+        "tags": [
+          "team-memberships"
+        ],
+        "description": "Get all team memberships",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "userId",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "teamId",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TeamMembership"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ClientErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ServerErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "addUserToTeam",
+        "tags": [
+          "team-memberships"
+        ],
+        "description": "Add a user to a team",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "userId",
+                  "teamId",
+                  "roleKey"
+                ],
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250
+                  },
+                  "teamId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250
+                  },
+                  "roleKey": {
+                    "enum": [
+                      "admin",
+                      "editor",
+                      "viewer"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TeamMembership"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ClientErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ServerErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateTeamMembership",
+        "tags": [
+          "team-memberships"
+        ],
+        "description": "Update a user role in a team",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "userId",
+                  "teamId",
+                  "roleKey"
+                ],
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250
+                  },
+                  "teamId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250
+                  },
+                  "roleKey": {
+                    "enum": [
+                      "admin",
+                      "editor",
+                      "viewer"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TeamMembership"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ClientErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ServerErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "removeUserFromTeam",
+        "tags": [
+          "team-memberships"
+        ],
+        "description": "Remove a user from a team",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "userId",
+                  "teamId"
+                ],
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250
+                  },
+                  "teamId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "success"
+                      ],
+                      "properties": {
+                        "success": {
+                          "type": "boolean",
+                          "description": "Indicates the resource was deleted successfully",
+                          "enum": [
+                            true
+                          ]
+                        }
+                      },
+                      "example": {
+                        "success": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ClientErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ServerErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/traces/search": {
+      "get": {
+        "operationId": "searchSpans",
+        "tags": [
+          "traces"
+        ],
+        "description": "Search spans",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1704067200,
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "description": "Start timestamp in seconds"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1704067200,
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "description": "End timestamp in seconds"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "tsuga-query",
+              "minLength": 0,
+              "maxLength": 10000
+            },
+            "in": "query",
+            "name": "query",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000
+            },
+            "in": "query",
+            "name": "maxResults",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "spans"
+                      ],
+                      "properties": {
+                        "spans": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "resourceAttributes",
+                              "spanAttributes",
+                              "duration",
+                              "startTime",
+                              "endTime",
+                              "spanId",
+                              "span",
+                              "traceId"
+                            ],
+                            "properties": {
+                              "context": {
+                                "type": "object",
+                                "properties": {
+                                  "service": {
+                                    "type": "object",
+                                    "properties": {
+                                      "name": {
+                                        "type": "string"
+                                      },
+                                      "version": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "additionalProperties": true
+                                  }
+                                },
+                                "additionalProperties": true
+                              },
+                              "parentSpanId": {
+                                "type": "string"
+                              },
+                              "resourceAttributes": {
+                                "type": "object",
+                                "properties": {},
+                                "additionalProperties": true
+                              },
+                              "spanAttributes": {
+                                "type": "object",
+                                "properties": {},
+                                "additionalProperties": true
+                              },
+                              "duration": {
+                                "type": "number",
+                                "description": "In milliseconds."
+                              },
+                              "startTime": {
+                                "type": "string",
+                                "description": "In nanoseconds. Transmitted as a string to avoid losing precision, as BigInt is not JSON-compatible."
+                              },
+                              "endTime": {
+                                "type": "string",
+                                "description": "In nanoseconds. Transmitted as a string to avoid losing precision, as BigInt is not JSON-compatible."
+                              },
+                              "error": {
+                                "type": "object",
+                                "required": [
+                                  "message"
+                                ],
+                                "properties": {
+                                  "message": {
+                                    "type": "string"
+                                  }
+                                }
+                              },
+                              "events": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "event_attributes",
+                                    "event_name",
+                                    "event_timestamp_nanos"
+                                  ],
+                                  "properties": {
+                                    "event_attributes": {
+                                      "type": "object",
+                                      "properties": {},
+                                      "additionalProperties": true
+                                    },
+                                    "event_name": {
+                                      "type": "string"
+                                    },
+                                    "event_timestamp_nanos": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              },
+                              "spanId": {
+                                "type": "string"
+                              },
+                              "span": {
+                                "type": "object",
+                                "required": [
+                                  "kind",
+                                  "name"
+                                ],
+                                "properties": {
+                                  "kind": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  }
+                                }
+                              },
+                              "statusCode": {
+                                "type": "string"
+                              },
+                              "traceId": {
+                                "type": "string"
+                              }
+                            },
+                            "additionalProperties": true,
+                            "examples": [
+                              {
+                                "context": {
+                                  "service": {
+                                    "name": "my-service",
+                                    "version": "1.0.0"
+                                  }
+                                },
+                                "parentSpanId": "187a47da1b2560f8",
+                                "resourceAttributes": {},
+                                "spanAttributes": {
+                                  "busyNs": 374640,
+                                  "code": {
+                                    "file": {
+                                      "path": "src/queue/sqs.rs"
+                                    },
+                                    "line": {
+                                      "number": 162
+                                    },
+                                    "module": {
+                                      "name": "queue::sqs"
+                                    }
+                                  },
+                                  "idleNs": 23621445,
+                                  "maxMessages": "1",
+                                  "target": "queue::sqs",
+                                  "thread": {
+                                    "id": 2,
+                                    "name": "tokio-runtime-worker"
+                                  }
+                                },
+                                "duration": 23,
+                                "startTime": "1770923469995353600",
+                                "endTime": "1770923470019349500",
+                                "spanId": "3df8cc3449378f66",
+                                "span": {
+                                  "kind": "internal",
+                                  "name": "receive_messages"
+                                },
+                                "statusCode": "ok",
+                                "traceId": "78c99c5bb1e4a30297fa134b9dbec64f"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ClientErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ServerErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/users": {
+      "get": {
+        "operationId": "listUsers",
+        "tags": [
+          "users"
+        ],
+        "description": "Retrieve all users",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ClientErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ServerErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/users/{id}": {
+      "get": {
+        "operationId": "getUser",
+        "tags": [
+          "users"
+        ],
+        "description": "Retrieve a user by its id",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
+                    },
+                    "error": {
+                      "$ref": "#/components/schemas/ClientErrorResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "error"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "description": "Identifier used to trace the lifecycle of this API request"
                     },
                     "error": {
                       "$ref": "#/components/schemas/ServerErrorResponse"
@@ -13635,12 +16402,24 @@
   ],
   "tags": [
     {
+      "name": "aggregation",
+      "description": "Data aggregation and analytics"
+    },
+    {
       "name": "dashboards",
       "description": "Visualization of telemetry data with customizable graphs and filters"
     },
     {
       "name": "ingestion-api-keys",
       "description": "API keys for ingesting telemetry data"
+    },
+    {
+      "name": "logs",
+      "description": "Log search and log patterns"
+    },
+    {
+      "name": "metrics",
+      "description": "Metrics search and aggregation"
     },
     {
       "name": "monitors",
@@ -13669,6 +16448,18 @@
     {
       "name": "teams",
       "description": "Collection of users for managing ownership and access to resources"
+    },
+    {
+      "name": "team-memberships",
+      "description": "Memberships of users in teams"
+    },
+    {
+      "name": "traces",
+      "description": "Trace search"
+    },
+    {
+      "name": "users",
+      "description": "User management and authentication"
     }
   ]
 }

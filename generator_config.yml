@@ -6,6 +6,10 @@ data_sources:
     read:
       path: /v1/teams/{id}
       method: GET
+  user:
+    read:
+      path: /v1/users/{id}
+      method: GET
 
 resources:
   team:
