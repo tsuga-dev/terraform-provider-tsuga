@@ -68,6 +68,49 @@
 					}
 				]
 			}
+		},
+		{
+			"name": "user",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthBetween(1, 250)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "email",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "role",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					}
+				]
+			}
 		}
 	],
 	"provider": {

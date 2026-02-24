@@ -1,0 +1,17 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+A user in the organization
+---
+
+# {{.Name}} ({{.Type}})
+
+A user in the organization
+
+
+## Example Usage
+
+{{ tffile "examples/data-sources/tsuga_user/data-source.tf" }}
+
+{{ .SchemaMarkdown | trimspace }}
