@@ -18,4 +18,9 @@ tfplugingen-framework generate resources \
   --input ./provider-code-spec.json \
   --output ./internal
 
+# Generate the data sources code
+tfplugingen-framework generate data-sources \
+  --input ./provider-code-spec.json \
+  --output ./internal
+
 rm -f "$TMP_SPEC"

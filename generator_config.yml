@@ -1,6 +1,12 @@
 provider:
   name: tsuga
 
+data_sources:
+  team:
+    read:
+      path: /v1/teams/{id}
+      method: GET
+
 resources:
   team:
     create:
