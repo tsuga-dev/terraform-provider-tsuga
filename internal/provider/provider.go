@@ -121,6 +121,7 @@ func (p *tsugaProvider) DataSources(_ context.Context) []func() datasource.DataS
 
 func (p *tsugaProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
+		NewIngestionApiKeyResource,
 		NewTeamResource,
 		NewNotificationRuleResource,
 		NewNotificationSilenceResource,

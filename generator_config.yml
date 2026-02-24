@@ -12,6 +12,19 @@ data_sources:
       method: GET
 
 resources:
+  ingestion_api_key:
+    create:
+      path: /v1/ingestion-api-keys
+      method: POST
+    read:
+      path: /v1/ingestion-api-keys/{id}
+      method: GET
+    update:
+      path: /v1/ingestion-api-keys/{id}
+      method: PUT
+    delete:
+      path: /v1/ingestion-api-keys/{id}
+      method: DELETE
   team:
     create:
       path: /v1/teams

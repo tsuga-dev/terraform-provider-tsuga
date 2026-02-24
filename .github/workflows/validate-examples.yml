@@ -22,6 +22,7 @@ jobs:
       matrix:
         resource_example:
           - tsuga_dashboard
+          - tsuga_ingestion_api_key
           - tsuga_monitor
           - tsuga_notification_rule
           - tsuga_notification_silence
