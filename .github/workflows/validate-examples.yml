@@ -14,13 +14,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  validate-examples:
-    name: Validate Examples
+  validate-resource-examples:
+    name: Validate Resource Examples
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        example:
+        resource_example:
           - tsuga_dashboard
           - tsuga_monitor
           - tsuga_notification_rule
@@ -56,11 +56,11 @@ jobs:
           cp terraform-provider-tsuga ~/.terraform.d/plugins/registry.terraform.io/tsuga-dev/tsuga/0.1.0/linux_amd64/
 
       - name: Create test directory
-        run: mkdir -p test-${{ matrix.example }}
+        run: mkdir -p test-re-${{ matrix.resource_example }}
 
       - name: Create terraform configuration
         run: |
-          cat > test-${{ matrix.example }}/terraform.tf <<EOF
+          cat > test-re-${{ matrix.resource_example }}/terraform.tf <<EOF
           terraform {
             required_providers {
               tsuga = {
@@ -72,48 +72,137 @@ jobs:
 
       - name: Create provider config
         run: |
-          cat > test-${{ matrix.example }}/provider.tf <<EOF
+          cat > test-re-${{ matrix.resource_example }}/provider.tf <<EOF
           provider "tsuga" {}
           EOF
 
       - name: Copy example
-        run: cp examples/resources/${{ matrix.example }}/resource.tf test-${{ matrix.example }}/
+        run: cp examples/resources/${{ matrix.resource_example }}/resource.tf test-re-${{ matrix.resource_example }}/
 
       - name: Substitute placeholder IDs
         run: |
-          sed -i 's/abc-123-def/${{ vars.TSUGA_TEAM_ID }}/g' test-${{ matrix.example }}/resource.tf
-          sed -i 's/ghi-456-jkl/${{ vars.TSUGA_TEAM_ID }}/g' test-${{ matrix.example }}/resource.tf
-          sed -i 's/123-abc-456/${{ vars.TSUGA_TEAM_ID }}/g' test-${{ matrix.example }}/resource.tf
+          sed -i 's/abc-123-def/${{ vars.TSUGA_TEAM_ID }}/g' test-re-${{ matrix.resource_example }}/resource.tf
+          sed -i 's/ghi-456-jkl/${{ vars.TSUGA_TEAM_ID }}/g' test-re-${{ matrix.resource_example }}/resource.tf
+          sed -i 's/123-abc-456/${{ vars.TSUGA_TEAM_ID }}/g' test-re-${{ matrix.resource_example }}/resource.tf
 
       - name: Terraform init
-        working-directory: test-${{ matrix.example }}
+        working-directory: test-re-${{ matrix.resource_example }}
         run: terraform init
 
       - name: Terraform format check
-        working-directory: test-${{ matrix.example }}
+        working-directory: test-re-${{ matrix.resource_example }}
         run: terraform fmt -check
 
       - name: Terraform validate
-        working-directory: test-${{ matrix.example }}
+        working-directory: test-re-${{ matrix.resource_example }}
         run: terraform validate
 
       - name: Terraform plan
-        working-directory: test-${{ matrix.example }}
+        working-directory: test-re-${{ matrix.resource_example }}
         run: terraform plan
 
       - name: Terraform apply
-        working-directory: test-${{ matrix.example }}
+        working-directory: test-re-${{ matrix.resource_example }}
         run: terraform apply -auto-approve
 
       - name: Terraform destroy
         if: always()
-        working-directory: test-${{ matrix.example }}
+        working-directory: test-re-${{ matrix.resource_example }}
+        run: terraform destroy -auto-approve
+
+  validate-data-source-examples:
+    name: Validate Data Source Examples
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        datasource:
+          - tsuga_team
+          - tsuga_user
+    env:
+      TSUGA_BASE_URL: "https://api.tsuga-staging.com"
+      TSUGA_TOKEN: ${{ secrets.TSUGA_TOKEN }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # pin@v6.1
+        with:
+          go-version: "1.25.3"
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # pin@v3
+        with:
+          terraform_version: latest
+          terraform_wrapper: false
+
+      - name: Build provider
+        run: go build -o terraform-provider-tsuga
+
+      - name: Setup provider for local testing
+        run: |
+          mkdir -p ~/.terraform.d/plugins/registry.terraform.io/tsuga-dev/tsuga/0.1.0/linux_amd64
+          cp terraform-provider-tsuga ~/.terraform.d/plugins/registry.terraform.io/tsuga-dev/tsuga/0.1.0/linux_amd64/
+
+      - name: Create test directory
+        run: mkdir -p test-ds-${{ matrix.datasource }}
+
+      - name: Create terraform configuration
+        run: |
+          cat > test-ds-${{ matrix.datasource }}/terraform.tf <<EOF
+          terraform {
+            required_providers {
+              tsuga = {
+                source = "registry.terraform.io/tsuga-dev/tsuga"
+              }
+            }
+          }
+          EOF
+
+      - name: Create provider config
+        run: |
+          cat > test-ds-${{ matrix.datasource }}/provider.tf <<EOF
+          provider "tsuga" {}
+          EOF
+
+      - name: Copy example
+        run: cp examples/data-sources/${{ matrix.datasource }}/data-source.tf test-ds-${{ matrix.datasource }}/
+
+      - name: Substitute placeholder IDs
+        run: |
+          sed -i 's/abc-123-def/${{ vars.TSUGA_TEAM_ID }}/g' test-ds-${{ matrix.datasource }}/data-source.tf
+          sed -i 's/usr-abc-123/${{ vars.TSUGA_USER_ID }}/g' test-ds-${{ matrix.datasource }}/data-source.tf
+
+      - name: Terraform init
+        working-directory: test-ds-${{ matrix.datasource }}
+        run: terraform init
+
+      - name: Terraform format check
+        working-directory: test-ds-${{ matrix.datasource }}
+        run: terraform fmt -check
+
+      - name: Terraform validate
+        working-directory: test-ds-${{ matrix.datasource }}
+        run: terraform validate
+
+      - name: Terraform plan
+        working-directory: test-ds-${{ matrix.datasource }}
+        run: terraform plan
+
+      - name: Terraform apply
+        working-directory: test-ds-${{ matrix.datasource }}
+        run: terraform apply -auto-approve
+
+      - name: Terraform destroy
+        if: always()
+        working-directory: test-ds-${{ matrix.datasource }}
         run: terraform destroy -auto-approve
 
   notify-failure:
     name: Notify Slack on failure
-    needs: validate-examples
-    if: always() && needs.validate-examples.result == 'failure' && github.event_name != 'pull_request'
+    needs: [validate-resource-examples, validate-data-source-examples]
+    if: always() && (needs.validate-resource-examples.result == 'failure' || needs.validate-data-source-examples.result == 'failure') && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Send Slack notification

@@ -14,7 +14,7 @@ A user in the organization
 
 ```terraform
 data "tsuga_user" "jane" {
-  id = "abc-123-def"
+  id = "usr-abc-123"
 }
 ```
 
