@@ -111,6 +111,7 @@ jobs:
         env:
           TSUGA_BASE_URL: "https://api.tsuga-staging.com"
           TSUGA_TOKEN: ${{ secrets.TSUGA_TOKEN }}
+          TSUGA_USER_ID: ${{ vars.TSUGA_USER_ID }}
           TF_ACC: 1
         run: |
           go test -v ./...

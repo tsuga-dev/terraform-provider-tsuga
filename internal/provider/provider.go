@@ -123,6 +123,7 @@ func (p *tsugaProvider) Resources(_ context.Context) []func() resource.Resource 
 	return []func() resource.Resource{
 		NewIngestionApiKeyResource,
 		NewTeamResource,
+		NewTeamMembershipResource,
 		NewNotificationRuleResource,
 		NewNotificationSilenceResource,
 		NewDashboardResource,
