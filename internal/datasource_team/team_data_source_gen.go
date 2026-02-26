@@ -24,7 +24,8 @@ func TeamDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 			"id": schema.StringAttribute{
-				Required:            true,
+				Optional:            true,
+				Computed:            true,
 				Description:         "Identifier of the team",
 				MarkdownDescription: "Identifier of the team",
 				Validators: []validator.String{
@@ -32,6 +33,7 @@ func TeamDataSourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 			"name": schema.StringAttribute{
+				Optional:            true,
 				Computed:            true,
 				Description:         "Human readable team name displayed throughout the app",
 				MarkdownDescription: "Human readable team name displayed throughout the app",
