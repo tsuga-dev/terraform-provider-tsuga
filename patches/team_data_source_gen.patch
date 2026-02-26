@@ -1,0 +1,20 @@
+--- a/internal/datasource_team/team_data_source_gen.go
++++ b/internal/datasource_team/team_data_source_gen.go
+@@ -24,7 +24,8 @@
+ 				Computed: true,
+ 			},
+ 			"id": schema.StringAttribute{
+-				Required:            true,
++				Optional:            true,
++				Computed:            true,
+ 				Description:         "Identifier of the team",
+ 				MarkdownDescription: "Identifier of the team",
+ 				Validators: []validator.String{
+@@ -32,6 +33,7 @@
+ 				},
+ 			},
+ 			"name": schema.StringAttribute{
++				Optional:            true,
+ 				Computed:            true,
+ 				Description:         "Human readable team name displayed throughout the app",
+ 				MarkdownDescription: "Human readable team name displayed throughout the app",

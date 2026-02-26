@@ -24,3 +24,8 @@ tfplugingen-framework generate data-sources \
   --output ./internal
 
 rm -f "$TMP_SPEC"
+
+# Apply patches to the generated code.
+for patch_file in ./patches/*.patch; do
+  patch -p1 < "$patch_file"
+done
