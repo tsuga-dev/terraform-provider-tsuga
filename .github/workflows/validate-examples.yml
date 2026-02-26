@@ -30,6 +30,7 @@ jobs:
           - tsuga_route
           - tsuga_tag_policy
           - tsuga_team
+          - tsuga_team_membership
     env:
       TSUGA_BASE_URL: "https://api.tsuga-staging.com"
       TSUGA_TOKEN: ${{ secrets.TSUGA_TOKEN }}
@@ -85,6 +86,7 @@ jobs:
           sed -i 's/abc-123-def/${{ vars.TSUGA_TEAM_ID }}/g' test-re-${{ matrix.resource_example }}/resource.tf
           sed -i 's/ghi-456-jkl/${{ vars.TSUGA_TEAM_ID }}/g' test-re-${{ matrix.resource_example }}/resource.tf
           sed -i 's/123-abc-456/${{ vars.TSUGA_TEAM_ID }}/g' test-re-${{ matrix.resource_example }}/resource.tf
+          sed -i 's/usr-abc-123/${{ vars.TSUGA_USER_ID }}/g' test-re-${{ matrix.resource_example }}/resource.tf
 
       - name: Terraform init
         working-directory: test-re-${{ matrix.resource_example }}
