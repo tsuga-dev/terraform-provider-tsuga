@@ -28,3 +28,18 @@ resource "tsuga_monitor" "monitor" {
     }
   }
 }
+
+resource "tsuga_monitor" "certificate_expiry_monitor" {
+  name        = "Certificate expiry warning"
+  owner       = "abc-123-def"
+  permissions = "all"
+  priority    = 1
+  configuration = {
+    certificate_expiry = {
+      warn_before_in_days     = 30
+      cloud_accounts          = ["aws-prod", "gcp-shared"]
+      aggregation_alert_logic = "each"
+      no_data_behavior        = "resolve"
+    }
+  }
+}

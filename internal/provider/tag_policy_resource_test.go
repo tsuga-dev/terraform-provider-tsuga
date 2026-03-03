@@ -127,7 +127,7 @@ resource "tsuga_tag_policy" "test" {
   name        = "scoped-tag-policy"
   description = "Tag policy with team scope"
   is_active   = true
-  tag_key     = "team"
+  tag_key     = "hi-this-is-a-test"
   allowed_tag_values = ["platform", "infrastructure"]
   is_required = true
   owner       = tsuga_team.owner.id
