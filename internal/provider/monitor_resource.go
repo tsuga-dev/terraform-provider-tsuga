@@ -81,11 +81,14 @@ func (r *monitorResource) ValidateConfig(ctx context.Context, req resource.Valid
 	if config.Configuration.AnomalyLog != nil {
 		setCount++
 	}
+	if config.Configuration.CertificateExpiry != nil {
+		setCount++
+	}
 
 	if setCount != 1 {
 		resp.Diagnostics.AddError(
 			"Invalid configuration",
-			"Exactly one of metric, log, anomaly_metric, or anomaly_log must be set in configuration",
+			"Exactly one of metric, log, anomaly_metric, anomaly_log, or certificate_expiry must be set in configuration",
 		)
 		return
 	}
@@ -459,6 +462,8 @@ type monitorAPIConfiguration struct {
 	Timeframe                float64                        `json:"timeframe"`
 	GroupByFields            []monitorAPIAggregationGroupBy `json:"groupByFields"`
 	AggregationAlertLogic    string                         `json:"aggregationAlertLogic"`
+	WarnBeforeInDays         *float64                       `json:"warnBeforeInDays,omitempty"`
+	CloudAccounts            []string                       `json:"cloudAccounts,omitempty"`
 	ProportionAlertThreshold *float64                       `json:"proportionAlertThreshold,omitempty"`
 	Queries                  []monitorAPIQuery              `json:"queries"`
 }
@@ -516,6 +521,9 @@ func expandMonitorConfiguration(ctx context.Context, config resource_monitor.Mon
 	}
 	if config.AnomalyLog != nil {
 		return expandMonitorConfigurationAnomalyLog(ctx, config.AnomalyLog)
+	}
+	if config.CertificateExpiry != nil {
+		return expandMonitorConfigurationCertificateExpiry(ctx, config.CertificateExpiry)
 	}
 
 	diags.AddError("Invalid configuration", "No configuration type set")
@@ -651,6 +659,29 @@ func expandMonitorConfigurationAnomalyLog(ctx context.Context, config *resource_
 
 	if !config.ProportionAlertThreshold.IsNull() && !config.ProportionAlertThreshold.IsUnknown() {
 		result["proportionAlertThreshold"] = float64(config.ProportionAlertThreshold.ValueInt64())
+	}
+
+	return result, diags
+}
+
+func expandMonitorConfigurationCertificateExpiry(ctx context.Context, config *resource_monitor.CertificateExpiryMonitorConfigurationModel) (map[string]interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	result := map[string]interface{}{
+		"type":                  "certificate-expiry",
+		"warnBeforeInDays":      float64(config.WarnBeforeInDays.ValueInt64()),
+		"aggregationAlertLogic": config.AggregationAlertLogic.ValueString(),
+		"noDataBehavior":        config.NoDataBehavior.ValueString(),
+	}
+
+	cloudAccounts, cloudDiags := expandStringList(ctx, config.CloudAccounts)
+	diags.Append(cloudDiags...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if len(cloudAccounts) > 0 {
+		result["cloudAccounts"] = cloudAccounts
 	}
 
 	return result, diags
@@ -1005,6 +1036,10 @@ func flattenMonitorConfiguration(ctx context.Context, config monitorAPIConfigura
 		anomalyLog, d := flattenMonitorConfigurationAnomalyLog(ctx, config)
 		diags.Append(d...)
 		return resource_monitor.MonitorConfigurationModel{AnomalyLog: &anomalyLog}, diags
+	case "certificate-expiry":
+		certificateExpiry, d := flattenMonitorConfigurationCertificateExpiry(ctx, config)
+		diags.Append(d...)
+		return resource_monitor.MonitorConfigurationModel{CertificateExpiry: &certificateExpiry}, diags
 	default:
 		diags.AddError("Unknown configuration type", config.Type)
 		return resource_monitor.MonitorConfigurationModel{}, diags
@@ -1128,6 +1163,34 @@ func flattenMonitorConfigurationAnomalyLog(ctx context.Context, config monitorAP
 
 	if config.ProportionAlertThreshold != nil {
 		result.ProportionAlertThreshold = types.Int64Value(int64(*config.ProportionAlertThreshold))
+	}
+
+	return result, diags
+}
+
+func flattenMonitorConfigurationCertificateExpiry(ctx context.Context, config monitorAPIConfiguration) (resource_monitor.CertificateExpiryMonitorConfigurationModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	warnBeforeInDays := types.Int64Null()
+	if config.WarnBeforeInDays != nil {
+		warnBeforeInDays = types.Int64Value(int64(*config.WarnBeforeInDays))
+	}
+
+	cloudAccounts := types.ListNull(types.StringType)
+	if len(config.CloudAccounts) > 0 {
+		cloudAccountsVal, cloudDiags := types.ListValueFrom(ctx, types.StringType, config.CloudAccounts)
+		diags.Append(cloudDiags...)
+		if diags.HasError() {
+			return resource_monitor.CertificateExpiryMonitorConfigurationModel{}, diags
+		}
+		cloudAccounts = cloudAccountsVal
+	}
+
+	result := resource_monitor.CertificateExpiryMonitorConfigurationModel{
+		WarnBeforeInDays:      warnBeforeInDays,
+		CloudAccounts:         cloudAccounts,
+		AggregationAlertLogic: types.StringValue(config.AggregationAlertLogic),
+		NoDataBehavior:        types.StringValue(config.NoDataBehavior),
 	}
 
 	return result, diags

@@ -67,10 +67,11 @@ func MonitorResourceSchema(ctx context.Context) schema.Schema {
 				Required:    true,
 				Description: "Monitor configuration",
 				Attributes: map[string]schema.Attribute{
-					"metric":         monitorConfigurationSchema(),
-					"log":            monitorConfigurationSchema(),
-					"anomaly_metric": anomalyMonitorConfigurationSchema(),
-					"anomaly_log":    anomalyMonitorConfigurationSchema(),
+					"metric":             monitorConfigurationSchema(),
+					"log":                monitorConfigurationSchema(),
+					"anomaly_metric":     anomalyMonitorConfigurationSchema(),
+					"anomaly_log":        anomalyMonitorConfigurationSchema(),
+					"certificate_expiry": certificateExpiryMonitorConfigurationSchema(),
 				},
 			},
 			"priority": schema.Int64Attribute{
@@ -300,6 +301,39 @@ func anomalyMonitorConfigurationSchema() schema.Attribute {
 	}
 }
 
+func certificateExpiryMonitorConfigurationSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Optional: true,
+		Attributes: map[string]schema.Attribute{
+			"warn_before_in_days": schema.Int64Attribute{
+				Required: true,
+				Validators: []validator.Int64{
+					int64validator.Between(1, 365),
+				},
+			},
+			"cloud_accounts": schema.ListAttribute{
+				Optional:    true,
+				ElementType: types.StringType,
+				Validators: []validator.List{
+					listvalidator.SizeAtLeast(1),
+				},
+			},
+			"aggregation_alert_logic": schema.StringAttribute{
+				Required: true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("each"),
+				},
+			},
+			"no_data_behavior": schema.StringAttribute{
+				Required: true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("resolve"),
+				},
+			},
+		},
+	}
+}
+
 // Model types
 type MonitorModel struct {
 	Id            types.String              `tfsdk:"id"`
@@ -314,10 +348,11 @@ type MonitorModel struct {
 }
 
 type MonitorConfigurationModel struct {
-	Metric        *MonitorConfigurationDetailsModel        `tfsdk:"metric"`
-	Log           *MonitorConfigurationDetailsModel        `tfsdk:"log"`
-	AnomalyMetric *AnomalyMonitorConfigurationDetailsModel `tfsdk:"anomaly_metric"`
-	AnomalyLog    *AnomalyMonitorConfigurationDetailsModel `tfsdk:"anomaly_log"`
+	Metric            *MonitorConfigurationDetailsModel           `tfsdk:"metric"`
+	Log               *MonitorConfigurationDetailsModel           `tfsdk:"log"`
+	AnomalyMetric     *AnomalyMonitorConfigurationDetailsModel    `tfsdk:"anomaly_metric"`
+	AnomalyLog        *AnomalyMonitorConfigurationDetailsModel    `tfsdk:"anomaly_log"`
+	CertificateExpiry *CertificateExpiryMonitorConfigurationModel `tfsdk:"certificate_expiry"`
 }
 
 type MonitorConfigurationDetailsModel struct {
@@ -348,6 +383,13 @@ type AnomalyMonitorConfigurationDetailsModel struct {
 
 type AnomalyConditionModel struct {
 	Formula types.String `tfsdk:"formula"`
+}
+
+type CertificateExpiryMonitorConfigurationModel struct {
+	WarnBeforeInDays      types.Int64  `tfsdk:"warn_before_in_days"`
+	CloudAccounts         types.List   `tfsdk:"cloud_accounts"`
+	AggregationAlertLogic types.String `tfsdk:"aggregation_alert_logic"`
+	NoDataBehavior        types.String `tfsdk:"no_data_behavior"`
 }
 
 type MonitorQueryModel struct {

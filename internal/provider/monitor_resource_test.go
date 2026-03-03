@@ -481,3 +481,84 @@ resource "tsuga_monitor" "test" {
 		},
 	})
 }
+
+func TestAccMonitorResource_CertificateExpiry(t *testing.T) {
+	teamName := fmt.Sprintf("test-%s", randomString(10))
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: providerConfig + fmt.Sprintf(`
+resource "tsuga_team" "test-team" {
+  name = "%s"
+  visibility = "public"
+}
+
+resource "tsuga_monitor" "test" {
+  name        = "test-certificate-expiry-monitor"
+  owner       = tsuga_team.test-team.id
+  priority    = 2
+  permissions = "all"
+  message     = "Certificate expiry monitor"
+
+  configuration = {
+    certificate_expiry = {
+      warn_before_in_days   = 30
+      cloud_accounts        = ["aws-account-1"]
+      aggregation_alert_logic = "each"
+      no_data_behavior      = "resolve"
+    }
+  }
+}
+`, teamName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "name", "test-certificate-expiry-monitor"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "priority", "2"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "permissions", "all"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.certificate_expiry.warn_before_in_days", "30"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.certificate_expiry.cloud_accounts.#", "1"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.certificate_expiry.cloud_accounts.0", "aws-account-1"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.certificate_expiry.aggregation_alert_logic", "each"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.certificate_expiry.no_data_behavior", "resolve"),
+				),
+			},
+			{
+				Config: providerConfig + fmt.Sprintf(`
+resource "tsuga_team" "test-team" {
+  name = "%s"
+  visibility = "public"
+}
+
+resource "tsuga_monitor" "test" {
+  name        = "test-certificate-expiry-monitor-updated"
+  owner       = tsuga_team.test-team.id
+  priority    = 5
+  permissions = "owning-team-only"
+  message     = "Certificate expiry monitor updated"
+
+  configuration = {
+    certificate_expiry = {
+      warn_before_in_days   = 14
+      cloud_accounts        = ["aws-account-1", "gcp-account-2"]
+      aggregation_alert_logic = "each"
+      no_data_behavior      = "resolve"
+    }
+  }
+}
+`, teamName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "name", "test-certificate-expiry-monitor-updated"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "priority", "5"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "permissions", "owning-team-only"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.certificate_expiry.warn_before_in_days", "14"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.certificate_expiry.cloud_accounts.#", "2"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.certificate_expiry.cloud_accounts.0", "aws-account-1"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.certificate_expiry.cloud_accounts.1", "gcp-account-2"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.certificate_expiry.aggregation_alert_logic", "each"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.certificate_expiry.no_data_behavior", "resolve"),
+				),
+			},
+		},
+	})
+}
