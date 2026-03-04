@@ -84,11 +84,14 @@ func (r *monitorResource) ValidateConfig(ctx context.Context, req resource.Valid
 	if config.Configuration.CertificateExpiry != nil {
 		setCount++
 	}
+	if config.Configuration.LogErrorPattern != nil {
+		setCount++
+	}
 
 	if setCount != 1 {
 		resp.Diagnostics.AddError(
 			"Invalid configuration",
-			"Exactly one of metric, log, anomaly_metric, anomaly_log, or certificate_expiry must be set in configuration",
+			"Exactly one of metric, log, anomaly_metric, anomaly_log, certificate_expiry, or log_error_pattern must be set in configuration",
 		)
 		return
 	}
@@ -111,6 +114,16 @@ func (r *monitorResource) ValidateConfig(ctx context.Context, req resource.Valid
 		diags.Append(r.validateProportionAlertConfig(config.Configuration.AnomalyLog.AggregationAlertLogic, config.Configuration.AnomalyLog.ProportionAlertThreshold, "configuration.anomaly_log")...)
 		diags.Append(r.validateLogQueries(ctx, config.Configuration.AnomalyLog.Queries, "configuration.anomaly_log.queries")...)
 	}
+	if config.Configuration.CertificateExpiry != nil {
+		diags.Append(r.validateCertificateExpiryConfig(
+			ctx,
+			config.Configuration.CertificateExpiry.WarnBeforeInDays,
+			config.Configuration.CertificateExpiry.CloudAccounts,
+			config.Configuration.CertificateExpiry.AggregationAlertLogic,
+			config.Configuration.CertificateExpiry.NoDataBehavior,
+			"configuration.certificate_expiry",
+		)...)
+	}
 	resp.Diagnostics.Append(diags...)
 }
 
@@ -125,6 +138,45 @@ func (r *monitorResource) validateProportionAlertConfig(aggregationAlertLogic ty
 					fmt.Sprintf("%s.proportion_alert_threshold is required when aggregation_alert_logic is 'proportion'", pathPrefix),
 				)
 			}
+		}
+	}
+
+	return diags
+}
+
+func (r *monitorResource) validateCertificateExpiryConfig(
+	ctx context.Context,
+	warnBeforeInDays types.Int64,
+	cloudAccounts types.List,
+	aggregationAlertLogic types.String,
+	noDataBehavior types.String,
+	pathPrefix string,
+) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if warnBeforeInDays.IsNull() || warnBeforeInDays.IsUnknown() {
+		diags.AddError("Invalid configuration", fmt.Sprintf("%s.warn_before_in_days is required", pathPrefix))
+	} else if warnBeforeInDays.ValueInt64() < 1 || warnBeforeInDays.ValueInt64() > 365 {
+		diags.AddError("Invalid configuration", fmt.Sprintf("%s.warn_before_in_days must be between 1 and 365", pathPrefix))
+	}
+
+	if aggregationAlertLogic.IsNull() || aggregationAlertLogic.IsUnknown() {
+		diags.AddError("Invalid configuration", fmt.Sprintf("%s.aggregation_alert_logic is required", pathPrefix))
+	} else if aggregationAlertLogic.ValueString() != "each" {
+		diags.AddError("Invalid configuration", fmt.Sprintf("%s.aggregation_alert_logic must be 'each' for certificate_expiry monitors", pathPrefix))
+	}
+
+	if noDataBehavior.IsNull() || noDataBehavior.IsUnknown() {
+		diags.AddError("Invalid configuration", fmt.Sprintf("%s.no_data_behavior is required", pathPrefix))
+	} else if noDataBehavior.ValueString() != "resolve" {
+		diags.AddError("Invalid configuration", fmt.Sprintf("%s.no_data_behavior must be 'resolve' for certificate_expiry monitors", pathPrefix))
+	}
+
+	if !cloudAccounts.IsNull() && !cloudAccounts.IsUnknown() {
+		var accounts []string
+		diags.Append(cloudAccounts.ElementsAs(ctx, &accounts, false)...)
+		if len(accounts) == 0 {
+			diags.AddError("Invalid configuration", fmt.Sprintf("%s.cloud_accounts must include at least one account when set", pathPrefix))
 		}
 	}
 
@@ -456,16 +508,23 @@ type monitorAPIData struct {
 }
 
 type monitorAPIConfiguration struct {
-	Type                     string                         `json:"type"`
-	Condition                monitorAPICondition            `json:"condition"`
-	NoDataBehavior           string                         `json:"noDataBehavior"`
-	Timeframe                float64                        `json:"timeframe"`
-	GroupByFields            []monitorAPIAggregationGroupBy `json:"groupByFields"`
-	AggregationAlertLogic    string                         `json:"aggregationAlertLogic"`
-	WarnBeforeInDays         *float64                       `json:"warnBeforeInDays,omitempty"`
-	CloudAccounts            []string                       `json:"cloudAccounts,omitempty"`
-	ProportionAlertThreshold *float64                       `json:"proportionAlertThreshold,omitempty"`
-	Queries                  []monitorAPIQuery              `json:"queries"`
+	Type                     string                          `json:"type"`
+	Condition                monitorAPICondition             `json:"condition"`
+	NoDataBehavior           string                          `json:"noDataBehavior"`
+	Timeframe                float64                         `json:"timeframe"`
+	GroupByFields            []monitorAPIAggregationGroupBy  `json:"groupByFields"`
+	AggregationAlertLogic    string                          `json:"aggregationAlertLogic"`
+	WarnBeforeInDays         *float64                        `json:"warnBeforeInDays,omitempty"`
+	CloudAccounts            []string                        `json:"cloudAccounts,omitempty"`
+	ProportionAlertThreshold *float64                        `json:"proportionAlertThreshold,omitempty"`
+	Queries                  []monitorAPIQuery               `json:"queries"`
+	Filter                   *monitorAPILogErrorPatternFilter `json:"filter,omitempty"`
+}
+
+type monitorAPILogErrorPatternFilter struct {
+	TeamIds []string `json:"teamIds"`
+	Env     string   `json:"env"`
+	Service string   `json:"service,omitempty"`
 }
 
 type monitorAPICondition struct {
@@ -524,6 +583,9 @@ func expandMonitorConfiguration(ctx context.Context, config resource_monitor.Mon
 	}
 	if config.CertificateExpiry != nil {
 		return expandMonitorConfigurationCertificateExpiry(ctx, config.CertificateExpiry)
+	}
+	if config.LogErrorPattern != nil {
+		return expandMonitorConfigurationLogErrorPattern(ctx, config.LogErrorPattern)
 	}
 
 	diags.AddError("Invalid configuration", "No configuration type set")
@@ -682,6 +744,34 @@ func expandMonitorConfigurationCertificateExpiry(ctx context.Context, config *re
 
 	if len(cloudAccounts) > 0 {
 		result["cloudAccounts"] = cloudAccounts
+	}
+
+	return result, diags
+}
+
+func expandMonitorConfigurationLogErrorPattern(ctx context.Context, config *resource_monitor.LogErrorPatternMonitorConfigurationModel) (map[string]interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	teamIds, tDiags := expandStringList(ctx, config.Filter.TeamIds)
+	diags.Append(tDiags...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	filter := map[string]interface{}{
+		"teamIds": teamIds,
+		"env":     config.Filter.Env.ValueString(),
+	}
+
+	if !config.Filter.Service.IsNull() && !config.Filter.Service.IsUnknown() {
+		filter["service"] = config.Filter.Service.ValueString()
+	}
+
+	result := map[string]interface{}{
+		"type":                  "log-error-pattern",
+		"aggregationAlertLogic": config.AggregationAlertLogic.ValueString(),
+		"noDataBehavior":        config.NoDataBehavior.ValueString(),
+		"filter":                filter,
 	}
 
 	return result, diags
@@ -1040,6 +1130,10 @@ func flattenMonitorConfiguration(ctx context.Context, config monitorAPIConfigura
 		certificateExpiry, d := flattenMonitorConfigurationCertificateExpiry(ctx, config)
 		diags.Append(d...)
 		return resource_monitor.MonitorConfigurationModel{CertificateExpiry: &certificateExpiry}, diags
+	case "log-error-pattern":
+		logErrorPattern, d := flattenMonitorConfigurationLogErrorPattern(ctx, config)
+		diags.Append(d...)
+		return resource_monitor.MonitorConfigurationModel{LogErrorPattern: &logErrorPattern}, diags
 	default:
 		diags.AddError("Unknown configuration type", config.Type)
 		return resource_monitor.MonitorConfigurationModel{}, diags
@@ -1194,6 +1288,36 @@ func flattenMonitorConfigurationCertificateExpiry(ctx context.Context, config mo
 	}
 
 	return result, diags
+}
+
+func flattenMonitorConfigurationLogErrorPattern(ctx context.Context, config monitorAPIConfiguration) (resource_monitor.LogErrorPatternMonitorConfigurationModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if config.Filter == nil {
+		diags.AddError("Invalid API response", "log-error-pattern configuration missing filter")
+		return resource_monitor.LogErrorPatternMonitorConfigurationModel{}, diags
+	}
+
+	teamIds, teamIdsDiags := types.ListValueFrom(ctx, types.StringType, config.Filter.TeamIds)
+	diags.Append(teamIdsDiags...)
+	if diags.HasError() {
+		return resource_monitor.LogErrorPatternMonitorConfigurationModel{}, diags
+	}
+
+	service := types.StringNull()
+	if config.Filter.Service != "" {
+		service = types.StringValue(config.Filter.Service)
+	}
+
+	return resource_monitor.LogErrorPatternMonitorConfigurationModel{
+		AggregationAlertLogic: types.StringValue(config.AggregationAlertLogic),
+		NoDataBehavior:        types.StringValue(config.NoDataBehavior),
+		Filter: resource_monitor.LogErrorPatternFilterModel{
+			TeamIds: teamIds,
+			Env:     types.StringValue(config.Filter.Env),
+			Service: service,
+		},
+	}, diags
 }
 
 func flattenAggregationGroupBy(ctx context.Context, groupBy []monitorAPIAggregationGroupBy) (types.List, diag.Diagnostics) {

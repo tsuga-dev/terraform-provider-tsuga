@@ -72,6 +72,7 @@ func MonitorResourceSchema(ctx context.Context) schema.Schema {
 					"anomaly_metric":     anomalyMonitorConfigurationSchema(),
 					"anomaly_log":        anomalyMonitorConfigurationSchema(),
 					"certificate_expiry": certificateExpiryMonitorConfigurationSchema(),
+					"log_error_pattern":  logErrorPatternMonitorConfigurationSchema(),
 				},
 			},
 			"priority": schema.Int64Attribute{
@@ -334,6 +335,50 @@ func certificateExpiryMonitorConfigurationSchema() schema.Attribute {
 	}
 }
 
+func logErrorPatternMonitorConfigurationSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Optional: true,
+		Attributes: map[string]schema.Attribute{
+			"aggregation_alert_logic": schema.StringAttribute{
+				Required: true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("each"),
+				},
+				Description: "Aggregation alert logic for log error pattern monitors (only 'each' is supported)",
+			},
+			"no_data_behavior": schema.StringAttribute{
+				Required: true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("keep_last_status"),
+				},
+				Description: "Behavior when no data is received (only 'keep_last_status' is supported for log error pattern monitors)",
+			},
+				"filter": schema.SingleNestedAttribute{
+				Required:    true,
+				Description: "Filter to scope the monitor to specific teams, env and optional service",
+				Attributes: map[string]schema.Attribute{
+					"team_ids": schema.ListAttribute{
+						Required:    true,
+						ElementType: types.StringType,
+						Description: "List of team IDs to scope the monitor to",
+						Validators: []validator.List{
+							listvalidator.SizeAtLeast(1),
+						},
+					},
+					"env": schema.StringAttribute{
+						Required:    true,
+						Description: "Environment to scope the monitor to",
+					},
+					"service": schema.StringAttribute{
+						Optional:    true,
+						Description: "Optional service name to scope the monitor to",
+					},
+				},
+			},
+		},
+	}
+}
+
 // Model types
 type MonitorModel struct {
 	Id            types.String              `tfsdk:"id"`
@@ -353,6 +398,19 @@ type MonitorConfigurationModel struct {
 	AnomalyMetric     *AnomalyMonitorConfigurationDetailsModel    `tfsdk:"anomaly_metric"`
 	AnomalyLog        *AnomalyMonitorConfigurationDetailsModel    `tfsdk:"anomaly_log"`
 	CertificateExpiry *CertificateExpiryMonitorConfigurationModel `tfsdk:"certificate_expiry"`
+	LogErrorPattern   *LogErrorPatternMonitorConfigurationModel   `tfsdk:"log_error_pattern"`
+}
+
+type LogErrorPatternMonitorConfigurationModel struct {
+	AggregationAlertLogic types.String               `tfsdk:"aggregation_alert_logic"`
+	NoDataBehavior        types.String               `tfsdk:"no_data_behavior"`
+	Filter                LogErrorPatternFilterModel `tfsdk:"filter"`
+}
+
+type LogErrorPatternFilterModel struct {
+	TeamIds types.List   `tfsdk:"team_ids"`
+	Env     types.String `tfsdk:"env"`
+	Service types.String `tfsdk:"service"`
 }
 
 type MonitorConfigurationDetailsModel struct {
