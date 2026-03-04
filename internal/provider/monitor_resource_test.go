@@ -562,3 +562,86 @@ resource "tsuga_monitor" "test" {
 		},
 	})
 }
+
+func TestAccMonitorResource_LogErrorPattern(t *testing.T) {
+	teamName := fmt.Sprintf("test-%s", randomString(10))
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: providerConfig + fmt.Sprintf(`
+resource "tsuga_team" "test-team" {
+  name       = "%s"
+  visibility = "public"
+}
+
+resource "tsuga_monitor" "test" {
+  name        = "test-log-error-pattern-monitor"
+  owner       = tsuga_team.test-team.id
+  priority    = 2
+  permissions = "all"
+  message     = "A new error pattern was detected in the logs"
+
+  configuration = {
+    log_error_pattern = {
+      aggregation_alert_logic = "each"
+      no_data_behavior        = "keep_last_status"
+      filter = {
+        team_ids = [tsuga_team.test-team.id]
+        env      = "production"
+        service  = "api-gateway"
+      }
+    }
+  }
+}
+`, teamName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "name", "test-log-error-pattern-monitor"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "priority", "2"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "permissions", "all"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "message", "A new error pattern was detected in the logs"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log_error_pattern.aggregation_alert_logic", "each"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log_error_pattern.no_data_behavior", "keep_last_status"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log_error_pattern.filter.env", "production"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log_error_pattern.filter.service", "api-gateway"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log_error_pattern.filter.team_ids.#", "1"),
+				),
+			},
+			{
+				Config: providerConfig + fmt.Sprintf(`
+resource "tsuga_team" "test-team" {
+  name       = "%s"
+  visibility = "public"
+}
+
+resource "tsuga_monitor" "test" {
+  name        = "test-log-error-pattern-monitor-updated"
+  owner       = tsuga_team.test-team.id
+  priority    = 3
+  permissions = "owning-team-and-public"
+  message     = "Updated log error pattern monitor"
+
+  configuration = {
+    log_error_pattern = {
+      aggregation_alert_logic = "each"
+      no_data_behavior        = "keep_last_status"
+      filter = {
+        team_ids = [tsuga_team.test-team.id]
+        env      = "staging"
+      }
+    }
+  }
+}
+`, teamName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "name", "test-log-error-pattern-monitor-updated"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "priority", "3"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "permissions", "owning-team-and-public"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log_error_pattern.filter.env", "staging"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log_error_pattern.filter.team_ids.#", "1"),
+				),
+			},
+		},
+	})
+}

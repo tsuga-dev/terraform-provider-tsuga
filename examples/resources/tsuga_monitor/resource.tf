@@ -29,6 +29,26 @@ resource "tsuga_monitor" "monitor" {
   }
 }
 
+resource "tsuga_monitor" "log_error_pattern" {
+  name        = "New Error Pattern Detector"
+  owner       = "abc-123-def"
+  permissions = "all"
+  priority    = 2
+  message     = "A new error pattern was detected in the logs."
+
+  configuration = {
+    log_error_pattern = {
+      aggregation_alert_logic = "each"
+      no_data_behavior        = "keep_last_status"
+      filter = {
+        team_ids = ["abc-123-def"]
+        env      = "production"
+        service  = "api-gateway"
+      }
+    }
+  }
+}
+
 resource "tsuga_monitor" "certificate_expiry_monitor" {
   name        = "Certificate expiry warning"
   owner       = "abc-123-def"

@@ -44,6 +44,26 @@ resource "tsuga_monitor" "monitor" {
   }
 }
 
+resource "tsuga_monitor" "log_error_pattern" {
+  name        = "New Error Pattern Detector"
+  owner       = "abc-123-def"
+  permissions = "all"
+  priority    = 2
+  message     = "A new error pattern was detected in the logs."
+
+  configuration = {
+    log_error_pattern = {
+      aggregation_alert_logic = "each"
+      no_data_behavior        = "keep_last_status"
+      filter = {
+        team_ids = ["abc-123-def"]
+        env      = "production"
+        service  = "api-gateway"
+      }
+    }
+  }
+}
+
 resource "tsuga_monitor" "certificate_expiry_monitor" {
   name        = "Certificate expiry warning"
   owner       = "abc-123-def"
@@ -90,6 +110,7 @@ Optional:
 - `anomaly_metric` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric))
 - `certificate_expiry` (Attributes) (see [below for nested schema](#nestedatt--configuration--certificate_expiry))
 - `log` (Attributes) (see [below for nested schema](#nestedatt--configuration--log))
+- `log_error_pattern` (Attributes) (see [below for nested schema](#nestedatt--configuration--log_error_pattern))
 - `metric` (Attributes) (see [below for nested schema](#nestedatt--configuration--metric))
 
 <a id="nestedatt--configuration--anomaly_log"></a>
@@ -621,6 +642,29 @@ Required:
 - `window` (String)
 
 
+
+
+
+<a id="nestedatt--configuration--log_error_pattern"></a>
+### Nested Schema for `configuration.log_error_pattern`
+
+Required:
+
+- `aggregation_alert_logic` (String) Aggregation alert logic for log error pattern monitors (only 'each' is supported)
+- `filter` (Attributes) Filter to scope the monitor to specific teams, env and optional service (see [below for nested schema](#nestedatt--configuration--log_error_pattern--filter))
+- `no_data_behavior` (String) Behavior when no data is received (only 'keep_last_status' is supported for log error pattern monitors)
+
+<a id="nestedatt--configuration--log_error_pattern--filter"></a>
+### Nested Schema for `configuration.log_error_pattern.filter`
+
+Required:
+
+- `env` (String) Environment to scope the monitor to
+- `team_ids` (List of String) List of team IDs to scope the monitor to
+
+Optional:
+
+- `service` (String) Optional service name to scope the monitor to
 
 
 
