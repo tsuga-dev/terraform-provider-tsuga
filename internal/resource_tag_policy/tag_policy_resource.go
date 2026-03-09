@@ -44,11 +44,8 @@ func TagPolicyResourceSchema() schema.Schema {
 			},
 			"allowed_tag_values": schema.ListAttribute{
 				Required:    true,
-				Description: "List of allowed values for the tag key",
+				Description: "List of allowed values for the tag key. An empty list means all values are allowed.",
 				ElementType: types.StringType,
-				Validators: []validator.List{
-					listvalidator.SizeAtLeast(1),
-				},
 			},
 			"is_required": schema.BoolAttribute{
 				Required:    true,
