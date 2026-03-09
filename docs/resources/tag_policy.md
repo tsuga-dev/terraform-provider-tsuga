@@ -103,7 +103,7 @@ resource "tsuga_tag_policy" "exclude-policy" {
 
 ### Required
 
-- `allowed_tag_values` (List of String) List of allowed values for the tag key
+- `allowed_tag_values` (List of String) List of allowed values for the tag key. An empty list means all values are allowed.
 - `configuration` (Attributes) Configuration specifying what the policy applies to (see [below for nested schema](#nestedatt--configuration))
 - `is_active` (Boolean) Whether the tag policy is active
 - `is_required` (Boolean) Whether the tag is required on matching assets

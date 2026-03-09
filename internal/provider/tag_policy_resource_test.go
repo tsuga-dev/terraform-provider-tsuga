@@ -59,6 +59,29 @@ func TestAccTagPolicyResource_withTeamScope(t *testing.T) {
 	})
 }
 
+func TestAccTagPolicyResource_emptyAllowedTagValues(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccTagPolicyResource_emptyAllowedTagValues(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tsuga_tag_policy.test", "name", "allow-all-values-policy"),
+					resource.TestCheckResourceAttr("tsuga_tag_policy.test", "allowed_tag_values.#", "0"),
+					resource.TestCheckResourceAttr("tsuga_tag_policy.test", "is_active", "true"),
+					resource.TestCheckResourceAttrSet("tsuga_tag_policy.test", "id"),
+				),
+			},
+			// ImportState testing
+			{
+				ResourceName:      "tsuga_tag_policy.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func testAccTagPolicyResource_telemetry(name string) string {
 	return fmt.Sprintf(`
 resource "tsuga_team" "owner" {
@@ -140,6 +163,32 @@ resource "tsuga_tag_policy" "test" {
   configuration = {
     tsuga_asset = {
       asset_types = ["notification-rule", "notification-silence"]
+    }
+  }
+}
+`
+}
+
+func testAccTagPolicyResource_emptyAllowedTagValues() string {
+	return `
+resource "tsuga_team" "owner" {
+  name       = "tag-policy-test-owner"
+  visibility = "public"
+}
+
+resource "tsuga_tag_policy" "test" {
+  name        = "allow-all-values-policy"
+  description = "Tag policy that allows all values"
+  is_active   = true
+  tag_key     = "some-random-test-key"
+  allowed_tag_values = []
+  is_required = true
+  owner       = tsuga_team.owner.id
+
+  configuration = {
+    telemetry = {
+      asset_types           = ["logs"]
+      should_insert_warning = true
     }
   }
 }
