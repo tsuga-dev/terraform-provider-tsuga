@@ -47,6 +47,20 @@ function addTypeToEnums(obj) {
 // Fix enums missing type across the entire spec
 addTypeToEnums(spec);
 
+/**
+ * Resolve a $ref pointer (e.g. "#/components/schemas/Foo") against the spec.
+ * Returns the referenced object, or the input unchanged if it has no $ref.
+ */
+function resolveRef(obj) {
+  if (!obj || !obj.$ref) return obj;
+  const parts = obj.$ref.replace(/^#\//, "").split("/");
+  let target = spec;
+  for (const p of parts) {
+    target = target?.[p];
+  }
+  return target || obj;
+}
+
 const responses = (spec.paths && Object.values(spec.paths)) || [];
 
 for (const response of responses) {
@@ -64,7 +78,7 @@ for (const response of responses) {
         continue;
       }
 
-      const schema = resp.content["application/json"].schema;
+      const schema = resolveRef(resp.content["application/json"].schema);
       if (
         schema.type === "object" &&
         schema.properties &&
