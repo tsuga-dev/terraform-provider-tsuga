@@ -28,11 +28,11 @@ resource "tsuga_monitor" "monitor" {
           }
         }
       ]
-      condition = {
+      conditions = [{
         formula   = "q1"
         operator  = "equal"
         threshold = 0
-      },
+      }]
       timeframe = 10,
       group_by_fields = [{
         fields = ["context.env"]
@@ -112,6 +112,7 @@ Optional:
 - `log` (Attributes) (see [below for nested schema](#nestedatt--configuration--log))
 - `log_error_pattern` (Attributes) (see [below for nested schema](#nestedatt--configuration--log_error_pattern))
 - `metric` (Attributes) (see [below for nested schema](#nestedatt--configuration--metric))
+- `trace` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace))
 
 <a id="nestedatt--configuration--anomaly_log"></a>
 ### Nested Schema for `configuration.anomaly_log`
@@ -477,7 +478,7 @@ Optional:
 Required:
 
 - `aggregation_alert_logic` (String)
-- `condition` (Attributes) (see [below for nested schema](#nestedatt--configuration--log--condition))
+- `conditions` (Attributes List) (see [below for nested schema](#nestedatt--configuration--log--conditions))
 - `group_by_fields` (Attributes List) (see [below for nested schema](#nestedatt--configuration--log--group_by_fields))
 - `no_data_behavior` (String)
 - `queries` (Attributes List) (see [below for nested schema](#nestedatt--configuration--log--queries))
@@ -487,8 +488,8 @@ Optional:
 
 - `proportion_alert_threshold` (Number)
 
-<a id="nestedatt--configuration--log--condition"></a>
-### Nested Schema for `configuration.log.condition`
+<a id="nestedatt--configuration--log--conditions"></a>
+### Nested Schema for `configuration.log.conditions`
 
 Required:
 
@@ -674,7 +675,7 @@ Optional:
 Required:
 
 - `aggregation_alert_logic` (String)
-- `condition` (Attributes) (see [below for nested schema](#nestedatt--configuration--metric--condition))
+- `conditions` (Attributes List) (see [below for nested schema](#nestedatt--configuration--metric--conditions))
 - `group_by_fields` (Attributes List) (see [below for nested schema](#nestedatt--configuration--metric--group_by_fields))
 - `no_data_behavior` (String)
 - `queries` (Attributes List) (see [below for nested schema](#nestedatt--configuration--metric--queries))
@@ -684,8 +685,8 @@ Optional:
 
 - `proportion_alert_threshold` (Number)
 
-<a id="nestedatt--configuration--metric--condition"></a>
-### Nested Schema for `configuration.metric.condition`
+<a id="nestedatt--configuration--metric--conditions"></a>
+### Nested Schema for `configuration.metric.conditions`
 
 Required:
 
@@ -833,6 +834,180 @@ Optional:
 
 <a id="nestedatt--configuration--metric--queries--functions--rolling"></a>
 ### Nested Schema for `configuration.metric.queries.functions.rolling`
+
+Required:
+
+- `window` (String)
+
+
+
+
+
+<a id="nestedatt--configuration--trace"></a>
+### Nested Schema for `configuration.trace`
+
+Required:
+
+- `aggregation_alert_logic` (String)
+- `conditions` (Attributes List) (see [below for nested schema](#nestedatt--configuration--trace--conditions))
+- `group_by_fields` (Attributes List) (see [below for nested schema](#nestedatt--configuration--trace--group_by_fields))
+- `no_data_behavior` (String)
+- `queries` (Attributes List) (see [below for nested schema](#nestedatt--configuration--trace--queries))
+- `timeframe` (Number) Timeframe of the monitor in minutes
+
+Optional:
+
+- `proportion_alert_threshold` (Number)
+
+<a id="nestedatt--configuration--trace--conditions"></a>
+### Nested Schema for `configuration.trace.conditions`
+
+Required:
+
+- `formula` (String)
+- `operator` (String)
+- `threshold` (Number)
+
+
+<a id="nestedatt--configuration--trace--group_by_fields"></a>
+### Nested Schema for `configuration.trace.group_by_fields`
+
+Required:
+
+- `fields` (List of String)
+- `limit` (Number)
+
+
+<a id="nestedatt--configuration--trace--queries"></a>
+### Nested Schema for `configuration.trace.queries`
+
+Required:
+
+- `aggregate` (Attributes) Aggregate (count, unique_count, average, max, min, sum, or percentile) (see [below for nested schema](#nestedatt--configuration--trace--queries--aggregate))
+- `filter` (String)
+
+Optional:
+
+- `fill` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace--queries--fill))
+- `functions` (Attributes List) (see [below for nested schema](#nestedatt--configuration--trace--queries--functions))
+
+<a id="nestedatt--configuration--trace--queries--aggregate"></a>
+### Nested Schema for `configuration.trace.queries.aggregate`
+
+Optional:
+
+- `average` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace--queries--aggregate--average))
+- `count` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace--queries--aggregate--count))
+- `max` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace--queries--aggregate--max))
+- `min` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace--queries--aggregate--min))
+- `percentile` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace--queries--aggregate--percentile))
+- `sum` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace--queries--aggregate--sum))
+- `unique_count` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace--queries--aggregate--unique_count))
+
+<a id="nestedatt--configuration--trace--queries--aggregate--average"></a>
+### Nested Schema for `configuration.trace.queries.aggregate.average`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--trace--queries--aggregate--count"></a>
+### Nested Schema for `configuration.trace.queries.aggregate.count`
+
+
+<a id="nestedatt--configuration--trace--queries--aggregate--max"></a>
+### Nested Schema for `configuration.trace.queries.aggregate.max`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--trace--queries--aggregate--min"></a>
+### Nested Schema for `configuration.trace.queries.aggregate.min`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--trace--queries--aggregate--percentile"></a>
+### Nested Schema for `configuration.trace.queries.aggregate.percentile`
+
+Required:
+
+- `field` (String)
+- `percentile` (Number)
+
+
+<a id="nestedatt--configuration--trace--queries--aggregate--sum"></a>
+### Nested Schema for `configuration.trace.queries.aggregate.sum`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--trace--queries--aggregate--unique_count"></a>
+### Nested Schema for `configuration.trace.queries.aggregate.unique_count`
+
+Required:
+
+- `field` (String)
+
+
+
+<a id="nestedatt--configuration--trace--queries--fill"></a>
+### Nested Schema for `configuration.trace.queries.fill`
+
+Required:
+
+- `mode` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace--queries--fill--mode))
+
+<a id="nestedatt--configuration--trace--queries--fill--mode"></a>
+### Nested Schema for `configuration.trace.queries.fill.mode`
+
+Required:
+
+- `type` (String)
+
+
+
+<a id="nestedatt--configuration--trace--queries--functions"></a>
+### Nested Schema for `configuration.trace.queries.functions`
+
+Optional:
+
+- `increase` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace--queries--functions--increase))
+- `per_hour` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace--queries--functions--per_hour))
+- `per_minute` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace--queries--functions--per_minute))
+- `per_second` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace--queries--functions--per_second))
+- `rate` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace--queries--functions--rate))
+- `rolling` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace--queries--functions--rolling))
+
+<a id="nestedatt--configuration--trace--queries--functions--increase"></a>
+### Nested Schema for `configuration.trace.queries.functions.increase`
+
+
+<a id="nestedatt--configuration--trace--queries--functions--per_hour"></a>
+### Nested Schema for `configuration.trace.queries.functions.per_hour`
+
+
+<a id="nestedatt--configuration--trace--queries--functions--per_minute"></a>
+### Nested Schema for `configuration.trace.queries.functions.per_minute`
+
+
+<a id="nestedatt--configuration--trace--queries--functions--per_second"></a>
+### Nested Schema for `configuration.trace.queries.functions.per_second`
+
+
+<a id="nestedatt--configuration--trace--queries--functions--rate"></a>
+### Nested Schema for `configuration.trace.queries.functions.rate`
+
+
+<a id="nestedatt--configuration--trace--queries--functions--rolling"></a>
+### Nested Schema for `configuration.trace.queries.functions.rolling`
 
 Required:
 

@@ -278,15 +278,15 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 }
 
 type NotificationRuleModel struct {
-	Id                    types.String        `tfsdk:"id"`
-	Name                  types.String        `tfsdk:"name"`
-	TeamsFilter           *teamsfilter.Model  `tfsdk:"teams_filter"`
-	PrioritiesFilter      types.List          `tfsdk:"priorities_filter"`
-	TransitionTypesFilter types.List          `tfsdk:"transition_types_filter"`
-	Owner                 types.String        `tfsdk:"owner"`
-	Tags                  types.List          `tfsdk:"tags"`
-	IsActive              types.Bool          `tfsdk:"is_active"`
-	Targets               types.List          `tfsdk:"targets"`
+	Id                    types.String       `tfsdk:"id"`
+	Name                  types.String       `tfsdk:"name"`
+	TeamsFilter           *teamsfilter.Model `tfsdk:"teams_filter"`
+	PrioritiesFilter      types.List         `tfsdk:"priorities_filter"`
+	TransitionTypesFilter types.List         `tfsdk:"transition_types_filter"`
+	Owner                 types.String       `tfsdk:"owner"`
+	Tags                  types.List         `tfsdk:"tags"`
+	IsActive              types.Bool         `tfsdk:"is_active"`
+	Targets               types.List         `tfsdk:"targets"`
 }
 
 type TargetModel struct {
