@@ -2,6 +2,8 @@ package resource_monitor
 
 import (
 	"context"
+	"terraform-provider-tsuga/internal/aggregate"
+	"terraform-provider-tsuga/internal/resource_team"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -10,9 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
-	"terraform-provider-tsuga/internal/aggregate"
-	"terraform-provider-tsuga/internal/resource_team"
 )
 
 func MonitorResourceSchema(ctx context.Context) schema.Schema {
@@ -67,8 +66,9 @@ func MonitorResourceSchema(ctx context.Context) schema.Schema {
 				Required:    true,
 				Description: "Monitor configuration",
 				Attributes: map[string]schema.Attribute{
-					"metric":             monitorConfigurationSchema(),
-					"log":                monitorConfigurationSchema(),
+					"metric":             thresholdMonitorConfigurationSchema(),
+					"log":                thresholdMonitorConfigurationSchema(),
+					"trace":              thresholdMonitorConfigurationSchema(),
 					"anomaly_metric":     anomalyMonitorConfigurationSchema(),
 					"anomaly_log":        anomalyMonitorConfigurationSchema(),
 					"certificate_expiry": certificateExpiryMonitorConfigurationSchema(),
@@ -148,23 +148,25 @@ func baseMonitorConfigurationAttributes() map[string]schema.Attribute {
 }
 
 func monitorConditionSchema() schema.Attribute {
-	return schema.SingleNestedAttribute{
+	return schema.ListNestedAttribute{
 		Required: true,
-		Attributes: map[string]schema.Attribute{
-			"formula": schema.StringAttribute{
-				Required: true,
-				Validators: []validator.String{
-					stringvalidator.LengthAtMost(250),
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"formula": schema.StringAttribute{
+					Required: true,
+					Validators: []validator.String{
+						stringvalidator.LengthAtMost(250),
+					},
 				},
-			},
-			"operator": schema.StringAttribute{
-				Required: true,
-				Validators: []validator.String{
-					stringvalidator.OneOf("greater_than", "less_than", "equal", "not_equal", "greater_than_or_equal", "less_than_or_equal"),
+				"operator": schema.StringAttribute{
+					Required: true,
+					Validators: []validator.String{
+						stringvalidator.OneOf("greater_than", "less_than", "equal", "not_equal", "greater_than_or_equal", "less_than_or_equal"),
+					},
 				},
-			},
-			"threshold": schema.Float64Attribute{
-				Required: true,
+				"threshold": schema.Float64Attribute{
+					Required: true,
+				},
 			},
 		},
 	}
@@ -280,9 +282,9 @@ func aggregationFillSchema() schema.Attribute {
 	}
 }
 
-func monitorConfigurationSchema() schema.Attribute {
+func thresholdMonitorConfigurationSchema() schema.Attribute {
 	attrs := baseMonitorConfigurationAttributes()
-	attrs["condition"] = monitorConditionSchema()
+	attrs["conditions"] = monitorConditionSchema()
 	attrs["no_data_behavior"] = monitorNoDataBehaviorSchema(true)
 	attrs["queries"] = queriesSchema()
 	return schema.SingleNestedAttribute{
@@ -353,7 +355,7 @@ func logErrorPatternMonitorConfigurationSchema() schema.Attribute {
 				},
 				Description: "Behavior when no data is received (only 'keep_last_status' is supported for log error pattern monitors)",
 			},
-				"filter": schema.SingleNestedAttribute{
+			"filter": schema.SingleNestedAttribute{
 				Required:    true,
 				Description: "Filter to scope the monitor to specific teams, env and optional service",
 				Attributes: map[string]schema.Attribute{
@@ -395,6 +397,7 @@ type MonitorModel struct {
 type MonitorConfigurationModel struct {
 	Metric            *MonitorConfigurationDetailsModel           `tfsdk:"metric"`
 	Log               *MonitorConfigurationDetailsModel           `tfsdk:"log"`
+	Trace             *MonitorConfigurationDetailsModel           `tfsdk:"trace"`
 	AnomalyMetric     *AnomalyMonitorConfigurationDetailsModel    `tfsdk:"anomaly_metric"`
 	AnomalyLog        *AnomalyMonitorConfigurationDetailsModel    `tfsdk:"anomaly_log"`
 	CertificateExpiry *CertificateExpiryMonitorConfigurationModel `tfsdk:"certificate_expiry"`
@@ -414,13 +417,13 @@ type LogErrorPatternFilterModel struct {
 }
 
 type MonitorConfigurationDetailsModel struct {
-	Condition                MonitorConditionModel `tfsdk:"condition"`
-	NoDataBehavior           types.String          `tfsdk:"no_data_behavior"`
-	Timeframe                types.Int64           `tfsdk:"timeframe"`
-	GroupByFields            types.List            `tfsdk:"group_by_fields"`
-	AggregationAlertLogic    types.String          `tfsdk:"aggregation_alert_logic"`
-	ProportionAlertThreshold types.Int64           `tfsdk:"proportion_alert_threshold"`
-	Queries                  types.List            `tfsdk:"queries"`
+	Conditions               types.List   `tfsdk:"conditions"`
+	NoDataBehavior           types.String `tfsdk:"no_data_behavior"`
+	Timeframe                types.Int64  `tfsdk:"timeframe"`
+	GroupByFields            types.List   `tfsdk:"group_by_fields"`
+	AggregationAlertLogic    types.String `tfsdk:"aggregation_alert_logic"`
+	ProportionAlertThreshold types.Int64  `tfsdk:"proportion_alert_threshold"`
+	Queries                  types.List   `tfsdk:"queries"`
 }
 
 type MonitorConditionModel struct {
@@ -488,6 +491,14 @@ type AggregationFillModel struct {
 
 type AggregationFillModeModel struct {
 	Type types.String `tfsdk:"type"`
+}
+
+func MonitorConditionAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"formula":   types.StringType,
+		"operator":  types.StringType,
+		"threshold": types.Float64Type,
+	}
 }
 
 func QueryAttrTypes() map[string]attr.Type {

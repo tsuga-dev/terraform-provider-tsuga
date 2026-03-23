@@ -13,11 +13,11 @@ resource "tsuga_monitor" "monitor" {
           }
         }
       ]
-      condition = {
+      conditions = [{
         formula   = "q1"
         operator  = "equal"
         threshold = 0
-      },
+      }]
       timeframe = 10,
       group_by_fields = [{
         fields = ["context.env"]

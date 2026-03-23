@@ -153,13 +153,13 @@ func TagPolicyResourceSchema() schema.Schema {
 }
 
 type TagPolicyModel struct {
-	Id               types.String       `tfsdk:"id"`
-	Name             types.String       `tfsdk:"name"`
-	Description      types.String       `tfsdk:"description"`
-	IsActive         types.Bool         `tfsdk:"is_active"`
-	TagKey           types.String       `tfsdk:"tag_key"`
-	AllowedTagValues types.List         `tfsdk:"allowed_tag_values"`
-	IsRequired       types.Bool         `tfsdk:"is_required"`
+	Id               types.String        `tfsdk:"id"`
+	Name             types.String        `tfsdk:"name"`
+	Description      types.String        `tfsdk:"description"`
+	IsActive         types.Bool          `tfsdk:"is_active"`
+	TagKey           types.String        `tfsdk:"tag_key"`
+	AllowedTagValues types.List          `tfsdk:"allowed_tag_values"`
+	IsRequired       types.Bool          `tfsdk:"is_required"`
 	TeamScope        *TeamScopeModel     `tfsdk:"team_scope"`
 	Configuration    *ConfigurationModel `tfsdk:"configuration"`
 	Owner            types.String        `tfsdk:"owner"`

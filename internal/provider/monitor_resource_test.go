@@ -29,11 +29,11 @@ resource "tsuga_monitor" "test" {
 
   configuration = {
     metric = {
-      condition = {
+      conditions = [{
         formula   = "q1"
         operator  = "greater_than"
         threshold = 10.0
-      }
+      }]
       no_data_behavior        = "alert"
       timeframe               = 5
       group_by_fields = [{
@@ -58,9 +58,10 @@ resource "tsuga_monitor" "test" {
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "priority", "3"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "permissions", "all"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "message", "Test monitor message"),
-					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.condition.formula", "q1"),
-					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.condition.operator", "greater_than"),
-					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.condition.threshold", "10"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.conditions.#", "1"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.conditions.0.formula", "q1"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.conditions.0.operator", "greater_than"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.conditions.0.threshold", "10"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.timeframe", "5"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.queries.#", "1"),
 				),
@@ -81,11 +82,11 @@ resource "tsuga_monitor" "test" {
 
   configuration = {
     log = {
-      condition = {
+      conditions = [{
         formula   = "q1 + q2"
         operator  = "less_than"
         threshold = 5.0
-      }
+      }]
       no_data_behavior        = "resolve"
       timeframe               = 10
       group_by_fields = [{
@@ -118,9 +119,10 @@ resource "tsuga_monitor" "test" {
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "priority", "4"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "permissions", "owning-team-only"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "message", "Updated monitor message"),
-					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log.condition.formula", "q1 + q2"),
-					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log.condition.operator", "less_than"),
-					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log.condition.threshold", "5"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log.conditions.#", "1"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log.conditions.0.formula", "q1 + q2"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log.conditions.0.operator", "less_than"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log.conditions.0.threshold", "5"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log.timeframe", "10"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log.queries.#", "2"),
 				),
@@ -161,11 +163,11 @@ resource "tsuga_monitor" "test" {
 
   configuration = {
     metric = {
-      condition = {
+      conditions = [{
         formula   = "q1"
         operator  = "greater_than"
         threshold = 10.0
-      }
+      }]
       no_data_behavior        = "alert"
       timeframe               = 5
       group_by_fields         = []
@@ -231,11 +233,11 @@ resource "tsuga_monitor" "test" {
 
   configuration = {
     metric = {
-      condition = {
+      conditions = [{
         formula   = "q1"
         operator  = "greater_than"
         threshold = 10.0
-      }
+      }]
       no_data_behavior        = "alert"
       timeframe               = 5
       group_by_fields         = []
@@ -481,6 +483,7 @@ resource "tsuga_monitor" "test" {
 		},
 	})
 }
+
 
 func TestAccMonitorResource_CertificateExpiry(t *testing.T) {
 	teamName := fmt.Sprintf("test-%s", randomString(10))

@@ -384,13 +384,13 @@ type dashboardAPIResponse struct {
 }
 
 type dashboardAPIData struct {
-	ID         string              `json:"id"`
-	Name       string              `json:"name"`
-	Owner      string              `json:"owner"`
+	ID         string               `json:"id"`
+	Name       string               `json:"name"`
+	Owner      string               `json:"owner"`
 	Filters    []dashboardAPIFilter `json:"filters"`
-	Tags       []apiTag            `json:"tags"`
-	TimePreset string              `json:"timePreset,omitempty"`
-	Graphs     []dashboardAPIGraph `json:"graphs"`
+	Tags       []apiTag             `json:"tags"`
+	TimePreset string               `json:"timePreset,omitempty"`
+	Graphs     []dashboardAPIGraph  `json:"graphs"`
 }
 
 type dashboardAPIFilter struct {

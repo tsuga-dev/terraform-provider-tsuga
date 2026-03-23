@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-
 	"terraform-provider-tsuga/internal/aggregate"
 	"terraform-provider-tsuga/internal/groupby"
 	"terraform-provider-tsuga/internal/resource_monitor"
@@ -18,10 +17,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-var _ resource.Resource = (*monitorResource)(nil)
-var _ resource.ResourceWithConfigure = (*monitorResource)(nil)
-var _ resource.ResourceWithImportState = (*monitorResource)(nil)
-var _ resource.ResourceWithValidateConfig = (*monitorResource)(nil)
+var (
+	_ resource.Resource                   = (*monitorResource)(nil)
+	_ resource.ResourceWithConfigure      = (*monitorResource)(nil)
+	_ resource.ResourceWithImportState    = (*monitorResource)(nil)
+	_ resource.ResourceWithValidateConfig = (*monitorResource)(nil)
+)
 
 // anomalyConditionTypePlaceholder is sent to the API when creating/updating anomaly monitors.
 // The API computes and returns the actual condition type (rate, error, cpu, general).
@@ -75,6 +76,9 @@ func (r *monitorResource) ValidateConfig(ctx context.Context, req resource.Valid
 	if config.Configuration.Log != nil {
 		setCount++
 	}
+	if config.Configuration.Trace != nil {
+		setCount++
+	}
 	if config.Configuration.AnomalyMetric != nil {
 		setCount++
 	}
@@ -91,28 +95,33 @@ func (r *monitorResource) ValidateConfig(ctx context.Context, req resource.Valid
 	if setCount != 1 {
 		resp.Diagnostics.AddError(
 			"Invalid configuration",
-			"Exactly one of metric, log, anomaly_metric, anomaly_log, certificate_expiry, or log_error_pattern must be set in configuration",
+			"Exactly one of metric, log, trace, anomaly_metric, anomaly_log, certificate_expiry, or log_error_pattern must be set in configuration",
 		)
 		return
 	}
 
 	var diags diag.Diagnostics
+
 	// Validate proportion_alert_threshold is set when aggregation_alert_logic is "proportion"
 	if config.Configuration.Metric != nil {
 		diags.Append(r.validateProportionAlertConfig(config.Configuration.Metric.AggregationAlertLogic, config.Configuration.Metric.ProportionAlertThreshold, "configuration.metric")...)
-		diags.Append(r.validateMetricQueries(ctx, config.Configuration.Metric.Queries, "configuration.metric.queries")...)
+		diags.Append(r.validateQueries(ctx, config.Configuration.Metric.Queries, "configuration.metric.queries")...)
 	}
 	if config.Configuration.Log != nil {
 		diags.Append(r.validateProportionAlertConfig(config.Configuration.Log.AggregationAlertLogic, config.Configuration.Log.ProportionAlertThreshold, "configuration.log")...)
-		diags.Append(r.validateLogQueries(ctx, config.Configuration.Log.Queries, "configuration.log.queries")...)
+		diags.Append(r.validateQueries(ctx, config.Configuration.Log.Queries, "configuration.log.queries")...)
+	}
+	if config.Configuration.Trace != nil {
+		diags.Append(r.validateProportionAlertConfig(config.Configuration.Trace.AggregationAlertLogic, config.Configuration.Trace.ProportionAlertThreshold, "configuration.trace")...)
+		diags.Append(r.validateQueries(ctx, config.Configuration.Trace.Queries, "configuration.trace.queries")...)
 	}
 	if config.Configuration.AnomalyMetric != nil {
 		diags.Append(r.validateProportionAlertConfig(config.Configuration.AnomalyMetric.AggregationAlertLogic, config.Configuration.AnomalyMetric.ProportionAlertThreshold, "configuration.anomaly_metric")...)
-		diags.Append(r.validateMetricQueries(ctx, config.Configuration.AnomalyMetric.Queries, "configuration.anomaly_metric.queries")...)
+		diags.Append(r.validateQueries(ctx, config.Configuration.AnomalyMetric.Queries, "configuration.anomaly_metric.queries")...)
 	}
 	if config.Configuration.AnomalyLog != nil {
 		diags.Append(r.validateProportionAlertConfig(config.Configuration.AnomalyLog.AggregationAlertLogic, config.Configuration.AnomalyLog.ProportionAlertThreshold, "configuration.anomaly_log")...)
-		diags.Append(r.validateLogQueries(ctx, config.Configuration.AnomalyLog.Queries, "configuration.anomaly_log.queries")...)
+		diags.Append(r.validateQueries(ctx, config.Configuration.AnomalyLog.Queries, "configuration.anomaly_log.queries")...)
 	}
 	if config.Configuration.CertificateExpiry != nil {
 		diags.Append(r.validateCertificateExpiryConfig(
@@ -183,7 +192,7 @@ func (r *monitorResource) validateCertificateExpiryConfig(
 	return diags
 }
 
-func (r *monitorResource) validateMetricQueries(ctx context.Context, queries types.List, pathPrefix string) diag.Diagnostics {
+func (r *monitorResource) validateQueries(ctx context.Context, queries types.List, pathPrefix string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if queries.IsNull() || queries.IsUnknown() {
@@ -197,35 +206,13 @@ func (r *monitorResource) validateMetricQueries(ctx context.Context, queries typ
 	}
 
 	for i, query := range queryModels {
-		aggDiags := r.validateMetricAggregate(query.Aggregate, fmt.Sprintf("%s[%d].aggregate", pathPrefix, i))
-		diags.Append(aggDiags...)
+		diags.Append(r.validateAggregate(query.Aggregate, fmt.Sprintf("%s[%d].aggregate", pathPrefix, i))...)
 	}
 
 	return diags
 }
 
-func (r *monitorResource) validateLogQueries(ctx context.Context, queries types.List, pathPrefix string) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	if queries.IsNull() || queries.IsUnknown() {
-		return diags
-	}
-
-	var queryModels []resource_monitor.MonitorQueryModel
-	diags.Append(queries.ElementsAs(ctx, &queryModels, false)...)
-	if diags.HasError() {
-		return diags
-	}
-
-	for i, query := range queryModels {
-		aggDiags := r.validateLogAggregate(query.Aggregate, fmt.Sprintf("%s[%d].aggregate", pathPrefix, i))
-		diags.Append(aggDiags...)
-	}
-
-	return diags
-}
-
-func (r *monitorResource) validateMetricAggregate(agg resource_monitor.MonitorAggregateModel, pathPrefix string) diag.Diagnostics {
+func (r *monitorResource) validateAggregate(agg resource_monitor.MonitorAggregateModel, pathPrefix string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	setCount := 0
@@ -254,43 +241,7 @@ func (r *monitorResource) validateMetricAggregate(agg resource_monitor.MonitorAg
 	if setCount != 1 {
 		diags.AddError(
 			"Invalid aggregate configuration",
-			fmt.Sprintf("%s: exactly one of count, unique_count, sum, average, min, max, or percentile must be set for metric monitors.", pathPrefix),
-		)
-	}
-
-	return diags
-}
-
-func (r *monitorResource) validateLogAggregate(agg resource_monitor.MonitorAggregateModel, pathPrefix string) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	setCount := 0
-	if agg.Count != nil {
-		setCount++
-	}
-	if agg.UniqueCount != nil && !agg.UniqueCount.Field.IsNull() && !agg.UniqueCount.Field.IsUnknown() {
-		setCount++
-	}
-	if agg.Sum != nil && !agg.Sum.Field.IsNull() && !agg.Sum.Field.IsUnknown() {
-		setCount++
-	}
-	if agg.Average != nil && !agg.Average.Field.IsNull() && !agg.Average.Field.IsUnknown() {
-		setCount++
-	}
-	if agg.Min != nil && !agg.Min.Field.IsNull() && !agg.Min.Field.IsUnknown() {
-		setCount++
-	}
-	if agg.Max != nil && !agg.Max.Field.IsNull() && !agg.Max.Field.IsUnknown() {
-		setCount++
-	}
-	if agg.Percentile != nil && !agg.Percentile.Field.IsNull() && !agg.Percentile.Field.IsUnknown() {
-		setCount++
-	}
-
-	if setCount != 1 {
-		diags.AddError(
-			"Invalid aggregate configuration",
-			fmt.Sprintf("%s: exactly one of count, unique_count, sum, average, min, max, or percentile must be set for log monitors.", pathPrefix),
+			fmt.Sprintf("%s: exactly one of count, unique_count, sum, average, min, max, or percentile must be set.", pathPrefix),
 		)
 	}
 
@@ -508,16 +459,17 @@ type monitorAPIData struct {
 }
 
 type monitorAPIConfiguration struct {
-	Type                     string                          `json:"type"`
-	Condition                monitorAPICondition             `json:"condition"`
-	NoDataBehavior           string                          `json:"noDataBehavior"`
-	Timeframe                float64                         `json:"timeframe"`
-	GroupByFields            []monitorAPIAggregationGroupBy  `json:"groupByFields"`
-	AggregationAlertLogic    string                          `json:"aggregationAlertLogic"`
-	WarnBeforeInDays         *float64                        `json:"warnBeforeInDays,omitempty"`
-	CloudAccounts            []string                        `json:"cloudAccounts,omitempty"`
-	ProportionAlertThreshold *float64                        `json:"proportionAlertThreshold,omitempty"`
-	Queries                  []monitorAPIQuery               `json:"queries"`
+	Type                     string                           `json:"type"`
+	Condition                monitorAPICondition              `json:"condition"`
+	Conditions               []monitorAPICondition            `json:"conditions"`
+	NoDataBehavior           string                           `json:"noDataBehavior"`
+	Timeframe                float64                          `json:"timeframe"`
+	GroupByFields            []monitorAPIAggregationGroupBy   `json:"groupByFields"`
+	AggregationAlertLogic    string                           `json:"aggregationAlertLogic"`
+	WarnBeforeInDays         *float64                         `json:"warnBeforeInDays,omitempty"`
+	CloudAccounts            []string                         `json:"cloudAccounts,omitempty"`
+	ProportionAlertThreshold *float64                         `json:"proportionAlertThreshold,omitempty"`
+	Queries                  []monitorAPIQuery                `json:"queries"`
 	Filter                   *monitorAPILogErrorPatternFilter `json:"filter,omitempty"`
 }
 
@@ -570,10 +522,13 @@ func expandMonitorConfiguration(ctx context.Context, config resource_monitor.Mon
 	var diags diag.Diagnostics
 
 	if config.Metric != nil {
-		return expandMonitorConfigurationMetric(ctx, config.Metric)
+		return expandThresholdMonitorConfiguration(ctx, "metric", config.Metric)
 	}
 	if config.Log != nil {
-		return expandMonitorConfigurationLog(ctx, config.Log)
+		return expandThresholdMonitorConfiguration(ctx, "log", config.Log)
+	}
+	if config.Trace != nil {
+		return expandThresholdMonitorConfiguration(ctx, "trace", config.Trace)
 	}
 	if config.AnomalyMetric != nil {
 		return expandMonitorConfigurationAnomalyMetric(ctx, config.AnomalyMetric)
@@ -592,58 +547,23 @@ func expandMonitorConfiguration(ctx context.Context, config resource_monitor.Mon
 	return nil, diags
 }
 
-func expandMonitorConfigurationMetric(ctx context.Context, config *resource_monitor.MonitorConfigurationDetailsModel) (map[string]interface{}, diag.Diagnostics) {
+func expandThresholdMonitorConfiguration(ctx context.Context, monitorType string, config *resource_monitor.MonitorConfigurationDetailsModel) (map[string]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	groupByFields, gDiags := expandAggregationGroupBy(ctx, config.GroupByFields)
 	diags.Append(gDiags...)
-	queries, qDiags := expandMetricQueries(ctx, config.Queries)
+	queries, qDiags := expandMonitorQueries(ctx, config.Queries)
 	diags.Append(qDiags...)
+	conditions, cDiags := expandMonitorConditions(ctx, config.Conditions)
+	diags.Append(cDiags...)
 
 	if diags.HasError() {
 		return nil, diags
 	}
 
 	result := map[string]interface{}{
-		"type": "metric",
-		"condition": map[string]interface{}{
-			"formula":   config.Condition.Formula.ValueString(),
-			"operator":  config.Condition.Operator.ValueString(),
-			"threshold": config.Condition.Threshold.ValueFloat64(),
-		},
-		"noDataBehavior":        config.NoDataBehavior.ValueString(),
-		"timeframe":             float64(config.Timeframe.ValueInt64()),
-		"groupByFields":         groupByFields,
-		"aggregationAlertLogic": config.AggregationAlertLogic.ValueString(),
-		"queries":               queries,
-	}
-
-	if !config.ProportionAlertThreshold.IsNull() && !config.ProportionAlertThreshold.IsUnknown() {
-		result["proportionAlertThreshold"] = float64(config.ProportionAlertThreshold.ValueInt64())
-	}
-
-	return result, diags
-}
-
-func expandMonitorConfigurationLog(ctx context.Context, config *resource_monitor.MonitorConfigurationDetailsModel) (map[string]interface{}, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	groupByFields, gDiags := expandAggregationGroupBy(ctx, config.GroupByFields)
-	diags.Append(gDiags...)
-	queries, qDiags := expandLogQueries(ctx, config.Queries)
-	diags.Append(qDiags...)
-
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	result := map[string]interface{}{
-		"type": "log",
-		"condition": map[string]interface{}{
-			"formula":   config.Condition.Formula.ValueString(),
-			"operator":  config.Condition.Operator.ValueString(),
-			"threshold": config.Condition.Threshold.ValueFloat64(),
-		},
+		"type":                  monitorType,
+		"conditions":            conditions,
 		"noDataBehavior":        config.NoDataBehavior.ValueString(),
 		"timeframe":             float64(config.Timeframe.ValueInt64()),
 		"groupByFields":         groupByFields,
@@ -663,7 +583,7 @@ func expandMonitorConfigurationAnomalyMetric(ctx context.Context, config *resour
 
 	groupByFields, gDiags := expandAggregationGroupBy(ctx, config.GroupByFields)
 	diags.Append(gDiags...)
-	queries, qDiags := expandMetricQueries(ctx, config.Queries)
+	queries, qDiags := expandMonitorQueries(ctx, config.Queries)
 	diags.Append(qDiags...)
 
 	if diags.HasError() {
@@ -697,7 +617,7 @@ func expandMonitorConfigurationAnomalyLog(ctx context.Context, config *resource_
 
 	groupByFields, gDiags := expandAggregationGroupBy(ctx, config.GroupByFields)
 	diags.Append(gDiags...)
-	queries, qDiags := expandLogQueries(ctx, config.Queries)
+	queries, qDiags := expandMonitorQueries(ctx, config.Queries)
 	diags.Append(qDiags...)
 
 	if diags.HasError() {
@@ -772,6 +692,31 @@ func expandMonitorConfigurationLogErrorPattern(ctx context.Context, config *reso
 		"aggregationAlertLogic": config.AggregationAlertLogic.ValueString(),
 		"noDataBehavior":        config.NoDataBehavior.ValueString(),
 		"filter":                filter,
+	}
+
+	return result, diags
+}
+
+func expandMonitorConditions(ctx context.Context, conditions types.List) ([]map[string]interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if conditions.IsNull() || conditions.IsUnknown() {
+		return nil, diags
+	}
+
+	var conditionModels []resource_monitor.MonitorConditionModel
+	diags.Append(conditions.ElementsAs(ctx, &conditionModels, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	result := make([]map[string]interface{}, 0, len(conditionModels))
+	for _, c := range conditionModels {
+		result = append(result, map[string]interface{}{
+			"formula":   c.Formula.ValueString(),
+			"operator":  c.Operator.ValueString(),
+			"threshold": c.Threshold.ValueFloat64(),
+		})
 	}
 
 	return result, diags
@@ -896,7 +841,7 @@ func expandAggregationFill(fill *resource_monitor.AggregationFillModel) (*monito
 	}, diags
 }
 
-func expandMetricQueries(ctx context.Context, queries types.List) ([]map[string]interface{}, diag.Diagnostics) {
+func expandMonitorQueries(ctx context.Context, queries types.List) ([]map[string]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if queries.IsNull() || queries.IsUnknown() {
@@ -911,7 +856,7 @@ func expandMetricQueries(ctx context.Context, queries types.List) ([]map[string]
 
 	result := make([]map[string]interface{}, 0, len(queryModels))
 	for _, q := range queryModels {
-		agg, aggDiags := expandMetricAggregate(q.Aggregate)
+		agg, aggDiags := expandMonitorAggregate(q.Aggregate)
 		diags.Append(aggDiags...)
 		if diags.HasError() {
 			return nil, diags
@@ -941,100 +886,7 @@ func expandMetricQueries(ctx context.Context, queries types.List) ([]map[string]
 	return result, diags
 }
 
-func expandLogQueries(ctx context.Context, queries types.List) ([]map[string]interface{}, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if queries.IsNull() || queries.IsUnknown() {
-		return nil, diags
-	}
-
-	var queryModels []resource_monitor.MonitorQueryModel
-	diags.Append(queries.ElementsAs(ctx, &queryModels, false)...)
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	result := make([]map[string]interface{}, 0, len(queryModels))
-	for _, q := range queryModels {
-		agg, aggDiags := expandLogAggregate(q.Aggregate)
-		diags.Append(aggDiags...)
-		if diags.HasError() {
-			return nil, diags
-		}
-
-		functions, fDiags := expandAggregationFunctions(ctx, q.Functions)
-		diags.Append(fDiags...)
-		fill, fillDiags := expandAggregationFill(q.Fill)
-		diags.Append(fillDiags...)
-
-		query := map[string]interface{}{
-			"filter":    q.Filter.ValueString(),
-			"aggregate": agg,
-		}
-
-		if len(functions) > 0 {
-			query["functions"] = functions
-		}
-
-		if fill != nil {
-			query["fill"] = fill
-		}
-
-		result = append(result, query)
-	}
-
-	return result, diags
-}
-
-func expandMetricAggregate(agg resource_monitor.MonitorAggregateModel) (map[string]interface{}, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if agg.Count != nil {
-		return map[string]interface{}{"type": "count"}, diags
-	}
-	if agg.UniqueCount != nil && !agg.UniqueCount.Field.IsNull() && !agg.UniqueCount.Field.IsUnknown() {
-		return map[string]interface{}{
-			"type":  "unique-count",
-			"field": agg.UniqueCount.Field.ValueString(),
-		}, diags
-	}
-	if agg.Sum != nil && !agg.Sum.Field.IsNull() && !agg.Sum.Field.IsUnknown() {
-		return map[string]interface{}{
-			"type":  "sum",
-			"field": agg.Sum.Field.ValueString(),
-		}, diags
-	}
-	if agg.Average != nil && !agg.Average.Field.IsNull() && !agg.Average.Field.IsUnknown() {
-		return map[string]interface{}{
-			"type":  "average",
-			"field": agg.Average.Field.ValueString(),
-		}, diags
-	}
-	if agg.Min != nil && !agg.Min.Field.IsNull() && !agg.Min.Field.IsUnknown() {
-		return map[string]interface{}{
-			"type":  "min",
-			"field": agg.Min.Field.ValueString(),
-		}, diags
-	}
-	if agg.Max != nil && !agg.Max.Field.IsNull() && !agg.Max.Field.IsUnknown() {
-		return map[string]interface{}{
-			"type":  "max",
-			"field": agg.Max.Field.ValueString(),
-		}, diags
-	}
-	if agg.Percentile != nil && !agg.Percentile.Field.IsNull() && !agg.Percentile.Field.IsUnknown() {
-		return map[string]interface{}{
-			"type":       "percentile",
-			"field":      agg.Percentile.Field.ValueString(),
-			"percentile": agg.Percentile.Percentile.ValueFloat64(),
-		}, diags
-	}
-
-	diags.AddError("Invalid aggregate", "No aggregate type set")
-	return nil, diags
-}
-
-func expandLogAggregate(agg resource_monitor.MonitorAggregateModel) (map[string]interface{}, diag.Diagnostics) {
+func expandMonitorAggregate(agg resource_monitor.MonitorAggregateModel) (map[string]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if agg.Count != nil {
@@ -1111,13 +963,17 @@ func flattenMonitorConfiguration(ctx context.Context, config monitorAPIConfigura
 
 	switch config.Type {
 	case "metric":
-		metric, d := flattenMonitorConfigurationMetric(ctx, config)
+		detail, d := flattenThresholdMonitorConfiguration(ctx, config)
 		diags.Append(d...)
-		return resource_monitor.MonitorConfigurationModel{Metric: &metric}, diags
+		return resource_monitor.MonitorConfigurationModel{Metric: &detail}, diags
 	case "log":
-		log, d := flattenMonitorConfigurationLog(ctx, config)
+		detail, d := flattenThresholdMonitorConfiguration(ctx, config)
 		diags.Append(d...)
-		return resource_monitor.MonitorConfigurationModel{Log: &log}, diags
+		return resource_monitor.MonitorConfigurationModel{Log: &detail}, diags
+	case "trace":
+		detail, d := flattenThresholdMonitorConfiguration(ctx, config)
+		diags.Append(d...)
+		return resource_monitor.MonitorConfigurationModel{Trace: &detail}, diags
 	case "anomaly-metric":
 		anomalyMetric, d := flattenMonitorConfigurationAnomalyMetric(ctx, config)
 		diags.Append(d...)
@@ -1140,58 +996,18 @@ func flattenMonitorConfiguration(ctx context.Context, config monitorAPIConfigura
 	}
 }
 
-func flattenMonitorConfigurationMetric(ctx context.Context, config monitorAPIConfiguration) (resource_monitor.MonitorConfigurationDetailsModel, diag.Diagnostics) {
+func flattenThresholdMonitorConfiguration(ctx context.Context, config monitorAPIConfiguration) (resource_monitor.MonitorConfigurationDetailsModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	groupByFields, gDiags := flattenAggregationGroupBy(ctx, config.GroupByFields)
 	diags.Append(gDiags...)
-	queries, qDiags := flattenMetricQueries(config.Queries)
+	queries, qDiags := flattenMonitorQueries(config.Queries)
 	diags.Append(qDiags...)
-
-	condition := resource_monitor.MonitorConditionModel{
-		Formula:   types.StringValue(config.Condition.Formula),
-		Operator:  types.StringValue(config.Condition.Operator),
-		Threshold: types.Float64Null(),
-	}
-	if config.Condition.Threshold != nil {
-		condition.Threshold = types.Float64Value(*config.Condition.Threshold)
-	}
+	conditions, cDiags := flattenMonitorConditions(config.Conditions)
+	diags.Append(cDiags...)
 
 	result := resource_monitor.MonitorConfigurationDetailsModel{
-		Condition:             condition,
-		NoDataBehavior:        types.StringValue(config.NoDataBehavior),
-		Timeframe:             types.Int64Value(int64(config.Timeframe)),
-		GroupByFields:         groupByFields,
-		AggregationAlertLogic: types.StringValue(config.AggregationAlertLogic),
-		Queries:               queries,
-	}
-
-	if config.ProportionAlertThreshold != nil {
-		result.ProportionAlertThreshold = types.Int64Value(int64(*config.ProportionAlertThreshold))
-	}
-
-	return result, diags
-}
-
-func flattenMonitorConfigurationLog(ctx context.Context, config monitorAPIConfiguration) (resource_monitor.MonitorConfigurationDetailsModel, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	groupByFields, gDiags := flattenAggregationGroupBy(ctx, config.GroupByFields)
-	diags.Append(gDiags...)
-	queries, qDiags := flattenLogQueries(config.Queries)
-	diags.Append(qDiags...)
-
-	condition := resource_monitor.MonitorConditionModel{
-		Formula:   types.StringValue(config.Condition.Formula),
-		Operator:  types.StringValue(config.Condition.Operator),
-		Threshold: types.Float64Null(),
-	}
-	if config.Condition.Threshold != nil {
-		condition.Threshold = types.Float64Value(*config.Condition.Threshold)
-	}
-
-	result := resource_monitor.MonitorConfigurationDetailsModel{
-		Condition:             condition,
+		Conditions:            conditions,
 		NoDataBehavior:        types.StringValue(config.NoDataBehavior),
 		Timeframe:             types.Int64Value(int64(config.Timeframe)),
 		GroupByFields:         groupByFields,
@@ -1211,7 +1027,7 @@ func flattenMonitorConfigurationAnomalyMetric(ctx context.Context, config monito
 
 	groupByFields, gDiags := flattenAggregationGroupBy(ctx, config.GroupByFields)
 	diags.Append(gDiags...)
-	queries, qDiags := flattenMetricQueries(config.Queries)
+	queries, qDiags := flattenMonitorQueries(config.Queries)
 	diags.Append(qDiags...)
 
 	condition := resource_monitor.AnomalyConditionModel{
@@ -1239,7 +1055,7 @@ func flattenMonitorConfigurationAnomalyLog(ctx context.Context, config monitorAP
 
 	groupByFields, gDiags := flattenAggregationGroupBy(ctx, config.GroupByFields)
 	diags.Append(gDiags...)
-	queries, qDiags := flattenLogQueries(config.Queries)
+	queries, qDiags := flattenMonitorQueries(config.Queries)
 	diags.Append(qDiags...)
 
 	condition := resource_monitor.AnomalyConditionModel{
@@ -1318,6 +1134,30 @@ func flattenMonitorConfigurationLogErrorPattern(ctx context.Context, config moni
 			Service: service,
 		},
 	}, diags
+}
+
+func flattenMonitorConditions(conditions []monitorAPICondition) (types.List, diag.Diagnostics) {
+	elemType := types.ObjectType{AttrTypes: resource_monitor.MonitorConditionAttrTypes()}
+
+	if len(conditions) == 0 {
+		return types.ListValueMust(elemType, []attr.Value{}), nil
+	}
+
+	values := make([]attr.Value, 0, len(conditions))
+	for _, c := range conditions {
+		threshold := types.Float64Null()
+		if c.Threshold != nil {
+			threshold = types.Float64Value(*c.Threshold)
+		}
+
+		values = append(values, types.ObjectValueMust(resource_monitor.MonitorConditionAttrTypes(), map[string]attr.Value{
+			"formula":   types.StringValue(c.Formula),
+			"operator":  types.StringValue(c.Operator),
+			"threshold": threshold,
+		}))
+	}
+
+	return types.ListValue(elemType, values)
 }
 
 func flattenAggregationGroupBy(ctx context.Context, groupBy []monitorAPIAggregationGroupBy) (types.List, diag.Diagnostics) {
@@ -1413,7 +1253,7 @@ func flattenAggregationFill(fill *monitorAPIFill) (attr.Value, diag.Diagnostics)
 	})
 }
 
-func flattenMetricQueries(queries []monitorAPIQuery) (types.List, diag.Diagnostics) {
+func flattenMonitorQueries(queries []monitorAPIQuery) (types.List, diag.Diagnostics) {
 	elemType := types.ObjectType{AttrTypes: resource_monitor.QueryAttrTypes()}
 	if len(queries) == 0 {
 		return types.ListNull(elemType), nil
@@ -1421,7 +1261,7 @@ func flattenMetricQueries(queries []monitorAPIQuery) (types.List, diag.Diagnosti
 
 	values := make([]attr.Value, 0, len(queries))
 	for _, q := range queries {
-		aggVal, diags := flattenMetricAggregate(q.Aggregate)
+		aggVal, diags := flattenMonitorAggregate(q.Aggregate)
 		if diags.HasError() {
 			return types.ListNull(elemType), diags
 		}
@@ -1449,43 +1289,7 @@ func flattenMetricQueries(queries []monitorAPIQuery) (types.List, diag.Diagnosti
 	return types.ListValue(elemType, values)
 }
 
-func flattenLogQueries(queries []monitorAPIQuery) (types.List, diag.Diagnostics) {
-	elemType := types.ObjectType{AttrTypes: resource_monitor.QueryAttrTypes()}
-	if len(queries) == 0 {
-		return types.ListNull(elemType), nil
-	}
-
-	values := make([]attr.Value, 0, len(queries))
-	for _, q := range queries {
-		aggVal, diags := flattenLogAggregate(q.Aggregate)
-		if diags.HasError() {
-			return types.ListNull(elemType), diags
-		}
-
-		functionsVal, funcDiags := flattenAggregationFunctions(q.Functions)
-		if funcDiags.HasError() {
-			return types.ListNull(elemType), funcDiags
-		}
-
-		fillVal, fillDiags := flattenAggregationFill(q.Fill)
-		if fillDiags.HasError() {
-			return types.ListNull(elemType), fillDiags
-		}
-
-		obj := map[string]attr.Value{
-			"filter":    types.StringValue(q.Filter),
-			"aggregate": aggVal,
-			"functions": functionsVal,
-			"fill":      fillVal,
-		}
-
-		values = append(values, types.ObjectValueMust(resource_monitor.QueryAttrTypes(), obj))
-	}
-
-	return types.ListValue(elemType, values)
-}
-
-func flattenMetricAggregate(agg monitorAPIAggregate) (attr.Value, diag.Diagnostics) {
+func flattenMonitorAggregate(agg monitorAPIAggregate) (attr.Value, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	nullField := types.ObjectNull(aggregate.FieldAttrTypes())
@@ -1495,51 +1299,6 @@ func flattenMetricAggregate(agg monitorAPIAggregate) (attr.Value, diag.Diagnosti
 	vals := map[string]attr.Value{
 		"count":        nullCount,
 		"average":      nullField,
-		"max":          nullField,
-		"min":          nullField,
-		"sum":          nullField,
-		"percentile":   nullPercentile,
-		"unique_count": nullField,
-	}
-
-	switch agg.Type {
-	case "count":
-		vals["count"] = types.ObjectValueMust(aggregate.CountAttrTypes(), map[string]attr.Value{})
-	case "unique-count":
-		vals["unique_count"] = types.ObjectValueMust(aggregate.FieldAttrTypes(), map[string]attr.Value{
-			"field": types.StringValue(agg.Field),
-		})
-	case "sum", "average", "min", "max":
-		key := agg.Type
-		vals[key] = types.ObjectValueMust(aggregate.FieldAttrTypes(), map[string]attr.Value{
-			"field": types.StringValue(agg.Field),
-		})
-	case "percentile":
-		percentile := types.Float64Null()
-		if agg.Percentile != nil {
-			percentile = types.Float64Value(*agg.Percentile)
-		}
-		vals["percentile"] = types.ObjectValueMust(aggregate.PercentileAttrTypes(), map[string]attr.Value{
-			"field":      types.StringValue(agg.Field),
-			"percentile": percentile,
-		})
-	default:
-		diags.AddWarning("Unknown aggregate type", fmt.Sprintf("Unrecognized aggregate type: %s", agg.Type))
-	}
-
-	return types.ObjectValueMust(aggregate.AttrTypes(), vals), diags
-}
-
-func flattenLogAggregate(agg monitorAPIAggregate) (attr.Value, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	nullField := types.ObjectNull(aggregate.FieldAttrTypes())
-	nullPercentile := types.ObjectNull(aggregate.PercentileAttrTypes())
-	nullCount := types.ObjectNull(aggregate.CountAttrTypes())
-
-	vals := map[string]attr.Value{
-		"average":      nullField,
-		"count":        nullCount,
 		"max":          nullField,
 		"min":          nullField,
 		"sum":          nullField,

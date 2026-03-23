@@ -26,14 +26,6 @@
         "properties": {
           "code": {
             "enum": [
-              "CLUSTER_DB_QUERY_INVALID_CONNECTION_PARAMS",
-              "CLUSTER_DB_QUERY_INVALID_CREDENTIALS",
-              "CLUSTER_DB_QUERY_PERMISSION_DENIED",
-              "CLUSTER_DB_QUERY_QUERY_SYNTAX_ERROR",
-              "CLUSTER_DB_QUERY_DATABASE_UNREACHABLE",
-              "CLUSTER_DB_QUERY_CONNECTION_FAILED",
-              "CLUSTER_DB_QUERY_QUERY_EXECUTION_FAILED",
-              "CLUSTER_DB_QUERY_QUERY_TIMEOUT",
               "ABORT_ERROR",
               "BAD_REQUEST",
               "DUPLICATE_KEY_VIOLATION",
@@ -1885,11 +1877,13 @@
                 "filter": "level:ERROR service:api-gateway"
               }
             ],
-            "condition": {
-              "formula": "q1",
-              "operator": "greater_than",
-              "threshold": 100
-            },
+            "conditions": [
+              {
+                "formula": "q1",
+                "operator": "greater_than",
+                "threshold": 100
+              }
+            ],
             "noDataBehavior": "resolve"
           },
           "priority": 1,
@@ -5961,7 +5955,7 @@
         "type": "object",
         "required": [
           "type",
-          "condition",
+          "conditions",
           "noDataBehavior",
           "timeframe",
           "groupByFields",
@@ -5973,35 +5967,6 @@
             "enum": [
               "metric"
             ]
-          },
-          "condition": {
-            "type": "object",
-            "required": [
-              "formula",
-              "operator",
-              "threshold"
-            ],
-            "properties": {
-              "formula": {
-                "type": "string",
-                "format": "math-formula",
-                "minLength": 0,
-                "maxLength": 250
-              },
-              "operator": {
-                "enum": [
-                  "greater_than",
-                  "less_than",
-                  "equal",
-                  "not_equal",
-                  "greater_than_or_equal",
-                  "less_than_or_equal"
-                ]
-              },
-              "threshold": {
-                "type": "number"
-              }
-            }
           },
           "conditions": {
             "type": "array",
@@ -6234,7 +6199,7 @@
         "type": "object",
         "required": [
           "type",
-          "condition",
+          "conditions",
           "noDataBehavior",
           "timeframe",
           "groupByFields",
@@ -6246,35 +6211,6 @@
             "enum": [
               "log"
             ]
-          },
-          "condition": {
-            "type": "object",
-            "required": [
-              "formula",
-              "operator",
-              "threshold"
-            ],
-            "properties": {
-              "formula": {
-                "type": "string",
-                "format": "math-formula",
-                "minLength": 0,
-                "maxLength": 250
-              },
-              "operator": {
-                "enum": [
-                  "greater_than",
-                  "less_than",
-                  "equal",
-                  "not_equal",
-                  "greater_than_or_equal",
-                  "less_than_or_equal"
-                ]
-              },
-              "threshold": {
-                "type": "number"
-              }
-            }
           },
           "conditions": {
             "type": "array",
@@ -6507,7 +6443,7 @@
         "type": "object",
         "required": [
           "type",
-          "condition",
+          "conditions",
           "noDataBehavior",
           "timeframe",
           "groupByFields",
@@ -6519,35 +6455,6 @@
             "enum": [
               "trace"
             ]
-          },
-          "condition": {
-            "type": "object",
-            "required": [
-              "formula",
-              "operator",
-              "threshold"
-            ],
-            "properties": {
-              "formula": {
-                "type": "string",
-                "format": "math-formula",
-                "minLength": 0,
-                "maxLength": 250
-              },
-              "operator": {
-                "enum": [
-                  "greater_than",
-                  "less_than",
-                  "equal",
-                  "not_equal",
-                  "greater_than_or_equal",
-                  "less_than_or_equal"
-                ]
-              },
-              "threshold": {
-                "type": "number"
-              }
-            }
           },
           "conditions": {
             "type": "array",
@@ -12604,11 +12511,13 @@
                           "filter": "level:ERROR service:api-gateway"
                         }
                       ],
-                      "condition": {
-                        "formula": "q1",
-                        "operator": "greater_than",
-                        "threshold": 100
-                      },
+                      "conditions": [
+                        {
+                          "formula": "q1",
+                          "operator": "greater_than",
+                          "threshold": 100
+                        }
+                      ],
                       "noDataBehavior": "resolve"
                     },
                     "priority": 1,
@@ -12931,11 +12840,13 @@
                           "filter": "level:ERROR service:api-gateway"
                         }
                       ],
-                      "condition": {
-                        "formula": "q1",
-                        "operator": "greater_than",
-                        "threshold": 100
-                      },
+                      "conditions": [
+                        {
+                          "formula": "q1",
+                          "operator": "greater_than",
+                          "threshold": 100
+                        }
+                      ],
                       "noDataBehavior": "resolve"
                     },
                     "priority": 1,
