@@ -486,6 +486,7 @@ Required:
 
 Optional:
 
+- `condition` (Attributes, Deprecated) (see [below for nested schema](#nestedatt--configuration--log--condition))
 - `proportion_alert_threshold` (Number)
 
 <a id="nestedatt--configuration--log--conditions"></a>
@@ -645,6 +646,16 @@ Required:
 
 
 
+<a id="nestedatt--configuration--log--condition"></a>
+### Nested Schema for `configuration.log.condition`
+
+Optional:
+
+- `formula` (String)
+- `operator` (String)
+- `threshold` (Number)
+
+
 
 <a id="nestedatt--configuration--log_error_pattern"></a>
 ### Nested Schema for `configuration.log_error_pattern`
@@ -683,6 +694,7 @@ Required:
 
 Optional:
 
+- `condition` (Attributes, Deprecated) (see [below for nested schema](#nestedatt--configuration--metric--condition))
 - `proportion_alert_threshold` (Number)
 
 <a id="nestedatt--configuration--metric--conditions"></a>
@@ -842,6 +854,16 @@ Required:
 
 
 
+<a id="nestedatt--configuration--metric--condition"></a>
+### Nested Schema for `configuration.metric.condition`
+
+Optional:
+
+- `formula` (String)
+- `operator` (String)
+- `threshold` (Number)
+
+
 
 <a id="nestedatt--configuration--trace"></a>
 ### Nested Schema for `configuration.trace`
@@ -857,6 +879,7 @@ Required:
 
 Optional:
 
+- `condition` (Attributes, Deprecated) (see [below for nested schema](#nestedatt--configuration--trace--condition))
 - `proportion_alert_threshold` (Number)
 
 <a id="nestedatt--configuration--trace--conditions"></a>
@@ -1014,6 +1037,16 @@ Required:
 - `window` (String)
 
 
+
+
+<a id="nestedatt--configuration--trace--condition"></a>
+### Nested Schema for `configuration.trace.condition`
+
+Optional:
+
+- `formula` (String)
+- `operator` (String)
+- `threshold` (Number)
 
 
 

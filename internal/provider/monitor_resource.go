@@ -1008,6 +1008,7 @@ func flattenThresholdMonitorConfiguration(ctx context.Context, config monitorAPI
 
 	result := resource_monitor.MonitorConfigurationDetailsModel{
 		Conditions:            conditions,
+		Condition:             types.ObjectNull(resource_monitor.MonitorConditionAttrTypes()),
 		NoDataBehavior:        types.StringValue(config.NoDataBehavior),
 		Timeframe:             types.Int64Value(int64(config.Timeframe)),
 		GroupByFields:         groupByFields,

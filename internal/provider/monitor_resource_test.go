@@ -484,7 +484,6 @@ resource "tsuga_monitor" "test" {
 	})
 }
 
-
 func TestAccMonitorResource_CertificateExpiry(t *testing.T) {
 	teamName := fmt.Sprintf("test-%s", randomString(10))
 
