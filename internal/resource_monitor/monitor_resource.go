@@ -288,25 +288,21 @@ func thresholdMonitorConfigurationSchema() schema.Attribute {
 	attrs["no_data_behavior"] = monitorNoDataBehaviorSchema(true)
 	attrs["queries"] = queriesSchema()
 	// The Pulumi terraform-provider bridge singularizes list attributes, inferring
-	// a "condition" field from "conditions". Adding it as Optional+Computed prevents
-	// null deserialization errors during refresh operations.
+	// a "condition" field from "conditions". Adding it as Optional
+	// prevents null/unknown deserialization errors during refresh and apply.
 	// See: https://github.com/pulumi/pulumi-terraform-bridge/issues/3315
 	attrs["condition"] = schema.SingleNestedAttribute{
 		Optional:           true,
-		Computed:           true,
 		DeprecationMessage: "Use 'conditions' instead.",
 		Attributes: map[string]schema.Attribute{
 			"formula": schema.StringAttribute{
 				Optional: true,
-				Computed: true,
 			},
 			"operator": schema.StringAttribute{
 				Optional: true,
-				Computed: true,
 			},
 			"threshold": schema.Float64Attribute{
 				Optional: true,
-				Computed: true,
 			},
 		},
 	}
