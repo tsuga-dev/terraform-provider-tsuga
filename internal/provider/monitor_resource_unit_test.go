@@ -2,11 +2,10 @@ package provider
 
 import (
 	"context"
+	"terraform-provider-tsuga/internal/resource_monitor"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
-	"terraform-provider-tsuga/internal/resource_monitor"
 )
 
 func TestFlattenMonitorConfigurationCertificateExpiry_EmptyCloudAccountsIsNull(t *testing.T) {
@@ -30,6 +29,44 @@ func TestFlattenMonitorConfigurationCertificateExpiry_EmptyCloudAccountsIsNull(t
 
 	if !flattened.CertificateExpiry.CloudAccounts.IsNull() {
 		t.Fatalf("expected cloud_accounts to be null when API returns an empty list, got: %v", flattened.CertificateExpiry.CloudAccounts)
+	}
+}
+
+func TestFlattenThresholdMonitorConfiguration_ConditionIsNull(t *testing.T) {
+	// The Pulumi terraform-provider bridge singularizes list attributes,
+	// inferring a "condition" field from "conditions". The flatten function
+	// must set Condition to an explicit null object so the bridge doesn't
+	// fail with a Value Conversion Error during refresh.
+	// See: https://github.com/pulumi/pulumi-terraform-bridge/issues/3315
+	threshold := 10.0
+	config := monitorAPIConfiguration{
+		Type: "log",
+		Conditions: []monitorAPICondition{
+			{Formula: "q1", Operator: "greater_than", Threshold: &threshold},
+		},
+		NoDataBehavior:        "resolve",
+		Timeframe:             5,
+		AggregationAlertLogic: "no_aggregation",
+		Queries: []monitorAPIQuery{
+			{Filter: "level:error", Aggregate: monitorAPIAggregate{Type: "count"}},
+		},
+	}
+
+	flattened, diags := flattenMonitorConfiguration(context.Background(), config)
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+
+	if flattened.Log == nil {
+		t.Fatal("expected log configuration to be set")
+	}
+
+	if !flattened.Log.Condition.IsNull() {
+		t.Fatalf("expected condition (singular) to be null for threshold monitors, got: %v", flattened.Log.Condition)
+	}
+
+	if flattened.Log.Conditions.IsNull() {
+		t.Fatal("expected conditions (plural) to be set")
 	}
 }
 
