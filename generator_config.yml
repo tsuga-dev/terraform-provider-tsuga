@@ -12,6 +12,16 @@ data_sources:
       method: GET
 
 resources:
+  custom_usage_tag:
+    create:
+      path: /v1/custom-usage-tags
+      method: POST
+    read:
+      path: /v1/custom-usage-tags/{id}
+      method: GET
+    delete:
+      path: /v1/custom-usage-tags/{id}
+      method: DELETE
   ingestion_api_key:
     create:
       path: /v1/ingestion-api-keys

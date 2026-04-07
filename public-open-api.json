@@ -552,6 +552,93 @@
           }
         }
       },
+      "CustomUsageTag": {
+        "type": "object",
+        "required": [
+          "id",
+          "tagKey"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "tagKey": {
+            "type": "string"
+          }
+        },
+        "description": "User-defined tag to add to usage telemetry",
+        "example": {
+          "id": "123-456-abc",
+          "tagKey": "cost-center"
+        }
+      },
+      "ListCustomUsageTagsResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomUsageTag"
+            }
+          }
+        }
+      },
+      "GetCustomUsageTagResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/CustomUsageTag"
+          }
+        }
+      },
+      "CreateCustomUsageTagResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/CustomUsageTag"
+          }
+        }
+      },
+      "DeleteCustomUsageTagResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DeleteResponse"
+          }
+        }
+      },
       "Dashboard": {
         "type": "object",
         "required": [
@@ -11830,6 +11917,309 @@
         }
       }
     },
+    "/v1/custom-usage-tags": {
+      "get": {
+        "operationId": "listCustomUsageTags",
+        "tags": [
+          "custom-usage-tags"
+        ],
+        "description": "Retrieve all custom usage tags",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListCustomUsageTagsResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createCustomUsageTag",
+        "tags": [
+          "custom-usage-tags"
+        ],
+        "description": "Create a new custom usage tag",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "tagKey"
+                ],
+                "properties": {
+                  "tagKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250
+                  }
+                }
+              },
+              "example": {
+                "tagKey": "cost-center"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCustomUsageTagResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/custom-usage-tags/{id}": {
+      "get": {
+        "operationId": "getCustomUsageTag",
+        "tags": [
+          "custom-usage-tags"
+        ],
+        "description": "Retrieve a custom usage tag by its id",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetCustomUsageTagResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteCustomUsageTag",
+        "tags": [
+          "custom-usage-tags"
+        ],
+        "description": "Delete a custom usage tag by its id",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteCustomUsageTagResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/dashboards": {
       "get": {
         "operationId": "listDashboards",
@@ -19302,6 +19692,10 @@
     {
       "name": "aggregation",
       "description": "Data aggregation and analytics"
+    },
+    {
+      "name": "custom-usage-tags",
+      "description": "Custom tag keys for tracking usage across telemetry data"
     },
     {
       "name": "dashboards",
