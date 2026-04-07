@@ -81,10 +81,9 @@ func NotificationSilenceResourceSchema(ctx context.Context) schema.Schema {
 			"schedule": schema.SingleNestedAttribute{
 				Required:    true,
 				Description: "Schedule defining when the silence is active",
-				// We might extend this to include one-time schedules in the future
 				Attributes: map[string]schema.Attribute{
 					"recurring": schema.SingleNestedAttribute{
-						Required:    true,
+						Optional:    true,
 						Description: "Recurring weekly silence schedule",
 						Attributes: map[string]schema.Attribute{
 							"monday": schema.ListNestedAttribute{
@@ -136,6 +135,28 @@ func NotificationSilenceResourceSchema(ctx context.Context) schema.Schema {
 									Attributes: timeRangeAttributes(),
 								},
 							},
+							"time_zone": schema.StringAttribute{
+								Optional:    true,
+								Description: "IANA timezone identifier (e.g. America/New_York). Defaults to UTC if omitted.",
+							},
+						},
+					},
+					"one_time": schema.SingleNestedAttribute{
+						Optional:    true,
+						Description: "One-time silence schedule with specific start and end times",
+						Attributes: map[string]schema.Attribute{
+							"start_time": schema.StringAttribute{
+								Required:    true,
+								Description: "Start time as a date-time string",
+							},
+							"end_time": schema.StringAttribute{
+								Required:    true,
+								Description: "End time as a date-time string",
+							},
+							"time_zone": schema.StringAttribute{
+								Optional:    true,
+								Description: "IANA timezone identifier (e.g. America/New_York). Defaults to UTC if omitted.",
+							},
 						},
 					},
 				},
@@ -186,11 +207,11 @@ func timeRangeAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"start_time": schema.StringAttribute{
 			Required:    true,
-			Description: "Start time in HH:MM:SSZ format (e.g., 09:00:00Z)",
+			Description: "Start time in HH:MM:SS format (e.g., 09:00:00)",
 		},
 		"end_time": schema.StringAttribute{
 			Required:    true,
-			Description: "End time in HH:MM:SSZ format (e.g., 17:00:00Z)",
+			Description: "End time in HH:MM:SS format (e.g., 17:00:00)",
 		},
 	}
 }
@@ -212,16 +233,24 @@ type NotificationSilenceModel struct {
 
 type ScheduleModel struct {
 	Recurring *RecurringScheduleModel `tfsdk:"recurring"`
+	OneTime   *OneTimeScheduleModel   `tfsdk:"one_time"`
 }
 
 type RecurringScheduleModel struct {
-	Monday    types.List `tfsdk:"monday"`
-	Tuesday   types.List `tfsdk:"tuesday"`
-	Wednesday types.List `tfsdk:"wednesday"`
-	Thursday  types.List `tfsdk:"thursday"`
-	Friday    types.List `tfsdk:"friday"`
-	Saturday  types.List `tfsdk:"saturday"`
-	Sunday    types.List `tfsdk:"sunday"`
+	Monday    types.List   `tfsdk:"monday"`
+	Tuesday   types.List   `tfsdk:"tuesday"`
+	Wednesday types.List   `tfsdk:"wednesday"`
+	Thursday  types.List   `tfsdk:"thursday"`
+	Friday    types.List   `tfsdk:"friday"`
+	Saturday  types.List   `tfsdk:"saturday"`
+	Sunday    types.List   `tfsdk:"sunday"`
+	TimeZone  types.String `tfsdk:"time_zone"`
+}
+
+type OneTimeScheduleModel struct {
+	StartTime types.String `tfsdk:"start_time"`
+	EndTime   types.String `tfsdk:"end_time"`
+	TimeZone  types.String `tfsdk:"time_zone"`
 }
 
 type TimeRangeModel struct {

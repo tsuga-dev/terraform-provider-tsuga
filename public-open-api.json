@@ -26,6 +26,14 @@
         "properties": {
           "code": {
             "enum": [
+              "CLUSTER_DB_QUERY_INVALID_CONNECTION_PARAMS",
+              "CLUSTER_DB_QUERY_INVALID_CREDENTIALS",
+              "CLUSTER_DB_QUERY_PERMISSION_DENIED",
+              "CLUSTER_DB_QUERY_QUERY_SYNTAX_ERROR",
+              "CLUSTER_DB_QUERY_DATABASE_UNREACHABLE",
+              "CLUSTER_DB_QUERY_CONNECTION_FAILED",
+              "CLUSTER_DB_QUERY_QUERY_EXECUTION_FAILED",
+              "CLUSTER_DB_QUERY_QUERY_TIMEOUT",
               "ABORT_ERROR",
               "BAD_REQUEST",
               "DUPLICATE_KEY_VIOLATION",
@@ -602,6 +610,7 @@
                       "pie": "#/components/schemas/GraphVisualizationPie",
                       "query-value": "#/components/schemas/GraphVisualizationQueryValue",
                       "bar": "#/components/schemas/GraphVisualizationBar",
+                      "table": "#/components/schemas/GraphVisualizationTable",
                       "list": "#/components/schemas/GraphVisualizationList",
                       "note": "#/components/schemas/GraphVisualizationNote"
                     }
@@ -624,6 +633,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/GraphVisualizationBar"
+                    },
+                    {
+                      "$ref": "#/components/schemas/GraphVisualizationTable"
                     },
                     {
                       "$ref": "#/components/schemas/GraphVisualizationList"
@@ -1507,6 +1519,71 @@
           }
         }
       },
+      "GetErrorPatternIncreaseResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "errorPatternIncreases"
+            ],
+            "properties": {
+              "errorPatternIncreases": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "team",
+                    "env",
+                    "pattern",
+                    "increaseTimestamps"
+                  ],
+                  "properties": {
+                    "team": {
+                      "type": "string"
+                    },
+                    "env": {
+                      "type": "string"
+                    },
+                    "pattern": {
+                      "type": "string",
+                      "description": "The error pattern formatted"
+                    },
+                    "increaseTimestamps": {
+                      "type": "array",
+                      "items": {
+                        "type": "number",
+                        "description": "Timestamps in milliseconds when there were increases in this pattern"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "example": {
+              "errorPatternIncreases": [
+                {
+                  "team": "platform",
+                  "env": "production",
+                  "pattern": "Non-resolved segment SegmentId(*) from cache",
+                  "increaseTimestamps": [
+                    1704153600000,
+                    1704239200000
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
       "GetMetricAssetsUsageResponse": {
         "type": "object",
         "required": [
@@ -1746,7 +1823,8 @@
           "owner",
           "configuration",
           "priority",
-          "permissions"
+          "permissions",
+          "clusterIds"
         ],
         "properties": {
           "id": {
@@ -1852,6 +1930,12 @@
           "dashboardId": {
             "type": "string",
             "description": "Identifier of a dashboard related to the monitor"
+          },
+          "clusterIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "description": "Monitor allowing to send alerts based on telemetry data",
@@ -1889,7 +1973,8 @@
           "priority": 1,
           "owner": "abc-123-def",
           "dashboardId": "789-abc-def",
-          "permissions": "all"
+          "permissions": "all",
+          "clusterIds": []
         }
       },
       "ListMonitorsResponse": {
@@ -2200,7 +2285,8 @@
                       "microsoft-teams": "#/components/schemas/RuleTargetConfigMicrosoftTeams",
                       "webhook": "#/components/schemas/RuleTargetConfigWebhook",
                       "servicenow": "#/components/schemas/RuleTargetConfigServiceNow",
-                      "google-chat": "#/components/schemas/RuleTargetConfigGoogleChat"
+                      "google-chat": "#/components/schemas/RuleTargetConfigGoogleChat",
+                      "squadcast": "#/components/schemas/RuleTargetConfigSquadcast"
                     }
                   },
                   "required": [
@@ -2233,6 +2319,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/RuleTargetConfigGoogleChat"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RuleTargetConfigSquadcast"
                     }
                   ]
                 }
@@ -2426,8 +2515,8 @@
             "discriminator": {
               "propertyName": "type",
               "mapping": {
-                "one-time": "#/components/schemas/SilenceScheduleOneTime",
-                "recurring": "#/components/schemas/SilenceScheduleRecurring"
+                "one-time": "#/components/schemas/OutputSilenceScheduleOneTime",
+                "recurring": "#/components/schemas/OutputSilenceScheduleRecurring"
               }
             },
             "required": [
@@ -2435,10 +2524,10 @@
             ],
             "oneOf": [
               {
-                "$ref": "#/components/schemas/SilenceScheduleOneTime"
+                "$ref": "#/components/schemas/OutputSilenceScheduleOneTime"
               },
               {
-                "$ref": "#/components/schemas/SilenceScheduleRecurring"
+                "$ref": "#/components/schemas/OutputSilenceScheduleRecurring"
               }
             ]
           },
@@ -2688,7 +2777,10 @@
                             "metric-usage",
                             "no-stale-dashboards",
                             "no-unused-dashboards",
-                            "no-orphan-monitors"
+                            "no-orphan-monitors",
+                            "no-flapping-monitors",
+                            "no-noisy-group-monitors",
+                            "no-long-alert-monitors"
                           ]
                         },
                         "title": {
@@ -2822,7 +2914,10 @@
                                       "metric-usage",
                                       "no-stale-dashboards",
                                       "no-unused-dashboards",
-                                      "no-orphan-monitors"
+                                      "no-orphan-monitors",
+                                      "no-flapping-monitors",
+                                      "no-noisy-group-monitors",
+                                      "no-long-alert-monitors"
                                     ]
                                   },
                                   "title": {
@@ -2995,7 +3090,10 @@
                                     "metric-usage",
                                     "no-stale-dashboards",
                                     "no-unused-dashboards",
-                                    "no-orphan-monitors"
+                                    "no-orphan-monitors",
+                                    "no-flapping-monitors",
+                                    "no-noisy-group-monitors",
+                                    "no-long-alert-monitors"
                                   ]
                                 },
                                 "title": {
@@ -3224,7 +3322,10 @@
                     "metric-usage",
                     "no-stale-dashboards",
                     "no-unused-dashboards",
-                    "no-orphan-monitors"
+                    "no-orphan-monitors",
+                    "no-flapping-monitors",
+                    "no-noisy-group-monitors",
+                    "no-long-alert-monitors"
                   ]
                 },
                 "title": {
@@ -3358,7 +3459,10 @@
                               "metric-usage",
                               "no-stale-dashboards",
                               "no-unused-dashboards",
-                              "no-orphan-monitors"
+                              "no-orphan-monitors",
+                              "no-flapping-monitors",
+                              "no-noisy-group-monitors",
+                              "no-long-alert-monitors"
                             ]
                           },
                           "title": {
@@ -3531,7 +3635,10 @@
                             "metric-usage",
                             "no-stale-dashboards",
                             "no-unused-dashboards",
-                            "no-orphan-monitors"
+                            "no-orphan-monitors",
+                            "no-flapping-monitors",
+                            "no-noisy-group-monitors",
+                            "no-long-alert-monitors"
                           ]
                         },
                         "title": {
@@ -7446,6 +7553,27 @@
           }
         }
       },
+      "RuleTargetInputSquadcast": {
+        "type": "object",
+        "required": [
+          "type",
+          "integrationId"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "squadcast"
+            ]
+          },
+          "integrationId": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 250,
+            "description": "Identifier of the Squadcast integration to use"
+          }
+        }
+      },
       "RuleTargetConfigSlack": {
         "type": "object",
         "required": [
@@ -7663,6 +7791,30 @@
           "integrationName": {
             "type": "string",
             "description": "Human readable name of the Google Chat integration"
+          }
+        }
+      },
+      "RuleTargetConfigSquadcast": {
+        "type": "object",
+        "required": [
+          "type",
+          "integrationId",
+          "integrationName"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "squadcast"
+            ]
+          },
+          "integrationId": {
+            "type": "string",
+            "description": "Identifier of the Squadcast integration to use"
+          },
+          "integrationName": {
+            "type": "string",
+            "description": "Human readable name of the Squadcast integration"
           }
         }
       },
@@ -7973,9 +8125,10 @@
             "enum": [
               "logs",
               "metrics",
-              "traces"
+              "traces",
+              "connections"
             ],
-            "description": "Data source being queried for this aggregation"
+            "description": "Data source being queried"
           },
           "queries": {
             "type": "array",
@@ -8123,6 +8276,26 @@
             "minLength": 0,
             "maxLength": 250,
             "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series"
+          },
+          "aliases": {
+            "type": "object",
+            "properties": {
+              "formula": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 250,
+                "description": "Optional alias for formula (only used for display in the UI)"
+              },
+              "queries": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 250,
+                  "description": "Optional alias for a query (only used for display in the UI)"
+                }
+              }
+            }
           },
           "visibleSeries": {
             "type": "array",
@@ -8255,6 +8428,151 @@
               "title": "ThresholdMarker"
             },
             "description": "Threshold markers displayed on the chart"
+          },
+          "yAxisSettings": {
+            "type": "object",
+            "required": [
+              "min",
+              "max",
+              "scale",
+              "alwaysIncludeZero"
+            ],
+            "properties": {
+              "min": {
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "auto"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "value"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "number"
+                        ]
+                      },
+                      "value": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                ]
+              },
+              "max": {
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "auto"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "value"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "number"
+                        ]
+                      },
+                      "value": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                ]
+              },
+              "scale": {
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "exponent"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "pow"
+                        ]
+                      },
+                      "exponent": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "linear",
+                          "log",
+                          "sqrt"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              },
+              "alwaysIncludeZero": {
+                "type": "boolean"
+              }
+            }
           }
         },
         "title": "Timeseries"
@@ -8278,9 +8596,10 @@
             "enum": [
               "logs",
               "metrics",
-              "traces"
+              "traces",
+              "connections"
             ],
-            "description": "Data source being queried for this aggregation"
+            "description": "Data source being queried"
           },
           "queries": {
             "type": "array",
@@ -8428,6 +8747,26 @@
             "minLength": 0,
             "maxLength": 250,
             "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series"
+          },
+          "aliases": {
+            "type": "object",
+            "properties": {
+              "formula": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 250,
+                "description": "Optional alias for formula (only used for display in the UI)"
+              },
+              "queries": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 250,
+                  "description": "Optional alias for a query (only used for display in the UI)"
+                }
+              }
+            }
           },
           "visibleSeries": {
             "type": "array",
@@ -8527,9 +8866,10 @@
             "enum": [
               "logs",
               "metrics",
-              "traces"
+              "traces",
+              "connections"
             ],
-            "description": "Data source being queried for this aggregation"
+            "description": "Data source being queried"
           },
           "queries": {
             "type": "array",
@@ -8677,6 +9017,26 @@
             "minLength": 0,
             "maxLength": 250,
             "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series"
+          },
+          "aliases": {
+            "type": "object",
+            "properties": {
+              "formula": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 250,
+                "description": "Optional alias for formula (only used for display in the UI)"
+              },
+              "queries": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 250,
+                  "description": "Optional alias for a query (only used for display in the UI)"
+                }
+              }
+            }
           },
           "visibleSeries": {
             "type": "array",
@@ -8784,9 +9144,10 @@
             "enum": [
               "logs",
               "metrics",
-              "traces"
+              "traces",
+              "connections"
             ],
-            "description": "Data source being queried for this aggregation"
+            "description": "Data source being queried"
           },
           "queries": {
             "type": "array",
@@ -8934,6 +9295,26 @@
             "minLength": 0,
             "maxLength": 250,
             "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series"
+          },
+          "aliases": {
+            "type": "object",
+            "properties": {
+              "formula": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 250,
+                "description": "Optional alias for formula (only used for display in the UI)"
+              },
+              "queries": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 250,
+                  "description": "Optional alias for a query (only used for display in the UI)"
+                }
+              }
+            }
           },
           "visibleSeries": {
             "type": "array",
@@ -9059,9 +9440,10 @@
             "enum": [
               "logs",
               "metrics",
-              "traces"
+              "traces",
+              "connections"
             ],
-            "description": "Data source being queried for this aggregation"
+            "description": "Data source being queried"
           },
           "queries": {
             "type": "array",
@@ -9210,6 +9592,26 @@
             "maxLength": 250,
             "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series"
           },
+          "aliases": {
+            "type": "object",
+            "properties": {
+              "formula": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 250,
+                "description": "Optional alias for formula (only used for display in the UI)"
+              },
+              "queries": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 250,
+                  "description": "Optional alias for a query (only used for display in the UI)"
+                }
+              }
+            }
+          },
           "visibleSeries": {
             "type": "array",
             "items": {
@@ -9341,9 +9743,467 @@
               "no-legend"
             ],
             "description": "Controls whether and how the widget displays legend or series details (e.g. table, legend-only, or no legend)"
+          },
+          "yAxisSettings": {
+            "type": "object",
+            "required": [
+              "min",
+              "max",
+              "scale",
+              "alwaysIncludeZero"
+            ],
+            "properties": {
+              "min": {
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "auto"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "value"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "number"
+                        ]
+                      },
+                      "value": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                ]
+              },
+              "max": {
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "auto"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "value"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "number"
+                        ]
+                      },
+                      "value": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                ]
+              },
+              "scale": {
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "exponent"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "pow"
+                        ]
+                      },
+                      "exponent": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "linear",
+                          "log",
+                          "sqrt"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              },
+              "alwaysIncludeZero": {
+                "type": "boolean"
+              }
+            }
           }
         },
         "title": "Bar"
+      },
+      "GraphVisualizationTable": {
+        "type": "object",
+        "required": [
+          "type",
+          "columns"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Displays the aggregation as a table with multi-level grouping",
+            "enum": [
+              "table"
+            ]
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name",
+                "source",
+                "queries"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 250,
+                  "description": "Display name of the table column"
+                },
+                "source": {
+                  "enum": [
+                    "logs",
+                    "metrics",
+                    "traces"
+                  ],
+                  "description": "Data source being queried for this aggregation"
+                },
+                "queries": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "aggregate"
+                    ],
+                    "properties": {
+                      "aggregate": {
+                        "title": "Aggregate",
+                        "type": "object",
+                        "discriminator": {
+                          "propertyName": "type",
+                          "mapping": {
+                            "count": "#/components/schemas/AggregateCount",
+                            "unique-count": "#/components/schemas/AggregateUniqueCount",
+                            "average": "#/components/schemas/AggregateAverage",
+                            "max": "#/components/schemas/AggregateMax",
+                            "min": "#/components/schemas/AggregateMin",
+                            "sum": "#/components/schemas/AggregateSum",
+                            "percentile": "#/components/schemas/AggregatePercentile"
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "oneOf": [
+                          {
+                            "$ref": "#/components/schemas/AggregateCount"
+                          },
+                          {
+                            "$ref": "#/components/schemas/AggregateUniqueCount"
+                          },
+                          {
+                            "$ref": "#/components/schemas/AggregateAverage"
+                          },
+                          {
+                            "$ref": "#/components/schemas/AggregateMax"
+                          },
+                          {
+                            "$ref": "#/components/schemas/AggregateMin"
+                          },
+                          {
+                            "$ref": "#/components/schemas/AggregateSum"
+                          },
+                          {
+                            "$ref": "#/components/schemas/AggregatePercentile"
+                          }
+                        ]
+                      },
+                      "functions": {
+                        "type": "array",
+                        "items": {
+                          "title": "Function",
+                          "type": "object",
+                          "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                              "per-second": "#/components/schemas/FunctionPerSecond",
+                              "per-minute": "#/components/schemas/FunctionPerMinute",
+                              "per-hour": "#/components/schemas/FunctionPerHour",
+                              "rate": "#/components/schemas/FunctionRate",
+                              "increase": "#/components/schemas/FunctionIncrease",
+                              "rolling": "#/components/schemas/FunctionRolling",
+                              "log": "#/components/schemas/FunctionLog",
+                              "power": "#/components/schemas/FunctionPower",
+                              "sqrt": "#/components/schemas/FunctionSqrt"
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "oneOf": [
+                            {
+                              "$ref": "#/components/schemas/FunctionPerSecond"
+                            },
+                            {
+                              "$ref": "#/components/schemas/FunctionPerMinute"
+                            },
+                            {
+                              "$ref": "#/components/schemas/FunctionPerHour"
+                            },
+                            {
+                              "$ref": "#/components/schemas/FunctionRate"
+                            },
+                            {
+                              "$ref": "#/components/schemas/FunctionIncrease"
+                            },
+                            {
+                              "$ref": "#/components/schemas/FunctionRolling"
+                            },
+                            {
+                              "$ref": "#/components/schemas/FunctionLog"
+                            },
+                            {
+                              "$ref": "#/components/schemas/FunctionPower"
+                            },
+                            {
+                              "$ref": "#/components/schemas/FunctionSqrt"
+                            }
+                          ]
+                        },
+                        "maxItems": 10,
+                        "description": "Post-processing functions applied to aggregation results"
+                      },
+                      "fill": {
+                        "type": "object",
+                        "required": [
+                          "mode"
+                        ],
+                        "properties": {
+                          "mode": {
+                            "type": "object",
+                            "required": [
+                              "type"
+                            ],
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "zero",
+                                  "null"
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "filter": {
+                        "type": "string",
+                        "format": "tsuga-query",
+                        "minLength": 0,
+                        "maxLength": 10000,
+                        "description": "Filter to apply to the aggregation"
+                      }
+                    },
+                    "title": "AggregationQuery"
+                  },
+                  "maxItems": 15,
+                  "description": "Aggregations that may be combined together in the same query"
+                },
+                "formula": {
+                  "type": "string",
+                  "format": "math-formula",
+                  "minLength": 0,
+                  "maxLength": 250,
+                  "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series"
+                },
+                "aliases": {
+                  "type": "object",
+                  "properties": {
+                    "formula": {
+                      "type": "string",
+                      "minLength": 0,
+                      "maxLength": 250,
+                      "description": "Optional alias for formula (only used for display in the UI)"
+                    },
+                    "queries": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 250,
+                        "description": "Optional alias for a query (only used for display in the UI)"
+                      }
+                    }
+                  }
+                },
+                "visibleSeries": {
+                  "type": "array",
+                  "items": {
+                    "type": "boolean"
+                  },
+                  "description": "Flags indicating whether each query or formula series is visible"
+                },
+                "normalizer": {
+                  "title": "Normalizer",
+                  "type": "object",
+                  "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                      "duration": "#/components/schemas/DataNormalizerDuration",
+                      "data": "#/components/schemas/DataNormalizerData",
+                      "percent": "#/components/schemas/DataNormalizerPercent",
+                      "date": "#/components/schemas/DataNormalizerDate",
+                      "level": "#/components/schemas/DataNormalizerLevel",
+                      "custom": "#/components/schemas/DataNormalizerCustom"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerDuration"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerData"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerPercent"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerDate"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerLevel"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerCustom"
+                    }
+                  ]
+                },
+                "precision": {
+                  "type": "number",
+                  "description": "Number of decimal places to display in the value"
+                }
+              },
+              "title": "TableColumn"
+            },
+            "minItems": 1,
+            "description": "Each column defines an independent aggregation displayed as a table column"
+          },
+          "groupBy": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "fields",
+                "limit"
+              ],
+              "properties": {
+                "fields": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 250
+                  },
+                  "maxItems": 1
+                },
+                "limit": {
+                  "type": "number"
+                }
+              },
+              "title": "AggregationGroupBy"
+            },
+            "maxItems": 7,
+            "description": "Fields used to group the results"
+          },
+          "defaultSorting": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "desc"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 250,
+                  "description": "ID of the column to sort by"
+                },
+                "desc": {
+                  "type": "boolean",
+                  "description": "Whether the sort is descending"
+                }
+              },
+              "title": "TableDefaultSorting"
+            }
+          }
+        },
+        "title": "Table"
       },
       "GraphVisualizationList": {
         "type": "object",
@@ -9355,24 +10215,34 @@
         "properties": {
           "type": {
             "type": "string",
-            "description": "Displays matching logs in a tabular list",
+            "description": "Displays matching logs or database rows in a tabular list",
             "enum": [
               "list"
             ]
           },
           "source": {
-            "type": "string",
-            "description": "Indicates that the widget queries logs",
-            "enum": [
-              "logs"
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Indicates that the widget queries logs",
+                "enum": [
+                  "logs"
+                ]
+              },
+              {
+                "type": "string",
+                "description": "Indicates that the widget queries connections like PostgreSQL, BigQuery, etc.",
+                "enum": [
+                  "connections"
+                ]
+              }
             ]
           },
           "query": {
             "type": "string",
-            "format": "tsuga-query",
             "minLength": 0,
-            "maxLength": 10000,
-            "description": "Log query that selects records for the list"
+            "maxLength": 50000,
+            "description": "Query that selects logs or database rows for the list"
           },
           "listColumns": {
             "type": "array",
@@ -9427,7 +10297,13 @@
               },
               "title": "WidgetListColumn"
             },
-            "description": "Custom columns to display for each log entry"
+            "description": "Custom columns to display for each log or database row"
+          },
+          "connectionId": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 250,
+            "description": "Identifier of the connection to query"
           }
         },
         "title": "List"
@@ -9486,7 +10362,7 @@
         },
         "title": "Note"
       },
-      "SilenceScheduleOneTime": {
+      "InputSilenceScheduleOneTime": {
         "type": "object",
         "required": [
           "type",
@@ -9502,16 +10378,21 @@
           },
           "startTime": {
             "type": "string",
-            "format": "date-time"
+            "format": "simple-date-time"
           },
           "endTime": {
             "type": "string",
-            "format": "date-time"
+            "format": "simple-date-time"
+          },
+          "timeZone": {
+            "type": "string",
+            "format": "iana-timezone",
+            "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
           }
         },
         "description": "One-time silence schedule with specific start and end times"
       },
-      "SilenceScheduleRecurring": {
+      "InputSilenceScheduleRecurring": {
         "type": "object",
         "required": [
           "type",
@@ -9538,11 +10419,11 @@
                   "properties": {
                     "startTime": {
                       "type": "string",
-                      "format": "time"
+                      "format": "simple-time"
                     },
                     "endTime": {
                       "type": "string",
-                      "format": "time"
+                      "format": "simple-time"
                     }
                   },
                   "title": "SilenceTimeRange"
@@ -9561,11 +10442,11 @@
                   "properties": {
                     "startTime": {
                       "type": "string",
-                      "format": "time"
+                      "format": "simple-time"
                     },
                     "endTime": {
                       "type": "string",
-                      "format": "time"
+                      "format": "simple-time"
                     }
                   },
                   "title": "SilenceTimeRange"
@@ -9584,11 +10465,11 @@
                   "properties": {
                     "startTime": {
                       "type": "string",
-                      "format": "time"
+                      "format": "simple-time"
                     },
                     "endTime": {
                       "type": "string",
-                      "format": "time"
+                      "format": "simple-time"
                     }
                   },
                   "title": "SilenceTimeRange"
@@ -9607,11 +10488,11 @@
                   "properties": {
                     "startTime": {
                       "type": "string",
-                      "format": "time"
+                      "format": "simple-time"
                     },
                     "endTime": {
                       "type": "string",
-                      "format": "time"
+                      "format": "simple-time"
                     }
                   },
                   "title": "SilenceTimeRange"
@@ -9630,11 +10511,11 @@
                   "properties": {
                     "startTime": {
                       "type": "string",
-                      "format": "time"
+                      "format": "simple-time"
                     },
                     "endTime": {
                       "type": "string",
-                      "format": "time"
+                      "format": "simple-time"
                     }
                   },
                   "title": "SilenceTimeRange"
@@ -9653,11 +10534,11 @@
                   "properties": {
                     "startTime": {
                       "type": "string",
-                      "format": "time"
+                      "format": "simple-time"
                     },
                     "endTime": {
                       "type": "string",
-                      "format": "time"
+                      "format": "simple-time"
                     }
                   },
                   "title": "SilenceTimeRange"
@@ -9676,11 +10557,11 @@
                   "properties": {
                     "startTime": {
                       "type": "string",
-                      "format": "time"
+                      "format": "simple-time"
                     },
                     "endTime": {
                       "type": "string",
-                      "format": "time"
+                      "format": "simple-time"
                     }
                   },
                   "title": "SilenceTimeRange"
@@ -9689,6 +10570,203 @@
                 "description": "Time ranges for this day"
               }
             }
+          },
+          "timeZone": {
+            "type": "string",
+            "format": "iana-timezone",
+            "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
+          }
+        },
+        "description": "Recurring weekly silence schedule"
+      },
+      "OutputSilenceScheduleOneTime": {
+        "type": "object",
+        "required": [
+          "type",
+          "startTime",
+          "endTime"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "one-time"
+            ]
+          },
+          "startTime": {
+            "type": "string"
+          },
+          "endTime": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string",
+            "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
+          }
+        },
+        "description": "One-time silence schedule with specific start and end times"
+      },
+      "OutputSilenceScheduleRecurring": {
+        "type": "object",
+        "required": [
+          "type",
+          "weeklySchedule"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "recurring"
+            ]
+          },
+          "weeklySchedule": {
+            "type": "object",
+            "properties": {
+              "monday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string"
+                    },
+                    "endTime": {
+                      "type": "string"
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "description": "Time ranges for this day"
+              },
+              "tuesday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string"
+                    },
+                    "endTime": {
+                      "type": "string"
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "description": "Time ranges for this day"
+              },
+              "wednesday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string"
+                    },
+                    "endTime": {
+                      "type": "string"
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "description": "Time ranges for this day"
+              },
+              "thursday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string"
+                    },
+                    "endTime": {
+                      "type": "string"
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "description": "Time ranges for this day"
+              },
+              "friday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string"
+                    },
+                    "endTime": {
+                      "type": "string"
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "description": "Time ranges for this day"
+              },
+              "saturday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string"
+                    },
+                    "endTime": {
+                      "type": "string"
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "description": "Time ranges for this day"
+              },
+              "sunday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string"
+                    },
+                    "endTime": {
+                      "type": "string"
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "description": "Time ranges for this day"
+              }
+            }
+          },
+          "timeZone": {
+            "type": "string",
+            "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
           }
         },
         "description": "Recurring weekly silence schedule"
@@ -10899,6 +11977,7 @@
                               "pie": "#/components/schemas/GraphVisualizationPie",
                               "query-value": "#/components/schemas/GraphVisualizationQueryValue",
                               "bar": "#/components/schemas/GraphVisualizationBar",
+                              "table": "#/components/schemas/GraphVisualizationTable",
                               "list": "#/components/schemas/GraphVisualizationList",
                               "note": "#/components/schemas/GraphVisualizationNote"
                             }
@@ -10921,6 +12000,9 @@
                             },
                             {
                               "$ref": "#/components/schemas/GraphVisualizationBar"
+                            },
+                            {
+                              "$ref": "#/components/schemas/GraphVisualizationTable"
                             },
                             {
                               "$ref": "#/components/schemas/GraphVisualizationList"
@@ -11290,6 +12372,7 @@
                               "pie": "#/components/schemas/GraphVisualizationPie",
                               "query-value": "#/components/schemas/GraphVisualizationQueryValue",
                               "bar": "#/components/schemas/GraphVisualizationBar",
+                              "table": "#/components/schemas/GraphVisualizationTable",
                               "list": "#/components/schemas/GraphVisualizationList",
                               "note": "#/components/schemas/GraphVisualizationNote"
                             }
@@ -11312,6 +12395,9 @@
                             },
                             {
                               "$ref": "#/components/schemas/GraphVisualizationBar"
+                            },
+                            {
+                              "$ref": "#/components/schemas/GraphVisualizationTable"
                             },
                             {
                               "$ref": "#/components/schemas/GraphVisualizationList"
@@ -12102,6 +13188,119 @@
         }
       }
     },
+    "/v1/logs/patterns/increase": {
+      "get": {
+        "operationId": "getErrorPatternIncrease",
+        "tags": [
+          "logs"
+        ],
+        "description": "Get error pattern increases for a given team",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1456444800,
+              "maximum": 4927737600,
+              "format": "int64"
+            },
+            "example": 1704067200,
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "description": "Start timestamp in seconds"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1456444800,
+              "maximum": 4927737600,
+              "format": "int64"
+            },
+            "example": 1704067200,
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "description": "End timestamp in seconds"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "team",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "env",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetErrorPatternIncreaseResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/metrics": {
       "get": {
         "operationId": "listMetrics",
@@ -12485,6 +13684,14 @@
                       "owning-team-only"
                     ],
                     "description": "This controls which data the resource can see"
+                  },
+                  "clusterIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 250
+                    }
                   }
                 }
               },
@@ -12523,7 +13730,8 @@
                     "priority": 1,
                     "owner": "abc-123-def",
                     "dashboardId": "789-abc-def",
-                    "permissions": "all"
+                    "permissions": "all",
+                    "clusterIds": []
                   }
                 },
                 "example2": {
@@ -12551,7 +13759,8 @@
                     "priority": 2,
                     "owner": "abc-123-def",
                     "dashboardId": "789-abc-def",
-                    "permissions": "all"
+                    "permissions": "all",
+                    "clusterIds": []
                   }
                 }
               }
@@ -12814,6 +14023,14 @@
                       "owning-team-only"
                     ],
                     "description": "This controls which data the resource can see"
+                  },
+                  "clusterIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 250
+                    }
                   }
                 }
               },
@@ -12852,7 +14069,8 @@
                     "priority": 1,
                     "owner": "abc-123-def",
                     "dashboardId": "789-abc-def",
-                    "permissions": "all"
+                    "permissions": "all",
+                    "clusterIds": []
                   }
                 },
                 "example2": {
@@ -12880,7 +14098,8 @@
                     "priority": 2,
                     "owner": "abc-123-def",
                     "dashboardId": "789-abc-def",
-                    "permissions": "all"
+                    "permissions": "all",
+                    "clusterIds": []
                   }
                 }
               }
@@ -13307,7 +14526,8 @@
                               "microsoft-teams": "#/components/schemas/RuleTargetInputMicrosoftTeams",
                               "webhook": "#/components/schemas/RuleTargetInputWebhook",
                               "servicenow": "#/components/schemas/RuleTargetInputServiceNow",
-                              "google-chat": "#/components/schemas/RuleTargetInputGoogleChat"
+                              "google-chat": "#/components/schemas/RuleTargetInputGoogleChat",
+                              "squadcast": "#/components/schemas/RuleTargetInputSquadcast"
                             }
                           },
                           "required": [
@@ -13340,6 +14560,9 @@
                             },
                             {
                               "$ref": "#/components/schemas/RuleTargetInputGoogleChat"
+                            },
+                            {
+                              "$ref": "#/components/schemas/RuleTargetInputSquadcast"
                             }
                           ]
                         },
@@ -13764,7 +14987,8 @@
                               "microsoft-teams": "#/components/schemas/RuleTargetInputMicrosoftTeams",
                               "webhook": "#/components/schemas/RuleTargetInputWebhook",
                               "servicenow": "#/components/schemas/RuleTargetInputServiceNow",
-                              "google-chat": "#/components/schemas/RuleTargetInputGoogleChat"
+                              "google-chat": "#/components/schemas/RuleTargetInputGoogleChat",
+                              "squadcast": "#/components/schemas/RuleTargetInputSquadcast"
                             }
                           },
                           "required": [
@@ -13797,6 +15021,9 @@
                             },
                             {
                               "$ref": "#/components/schemas/RuleTargetInputGoogleChat"
+                            },
+                            {
+                              "$ref": "#/components/schemas/RuleTargetInputSquadcast"
                             }
                           ]
                         },
@@ -14161,8 +15388,8 @@
                     "discriminator": {
                       "propertyName": "type",
                       "mapping": {
-                        "one-time": "#/components/schemas/SilenceScheduleOneTime",
-                        "recurring": "#/components/schemas/SilenceScheduleRecurring"
+                        "one-time": "#/components/schemas/InputSilenceScheduleOneTime",
+                        "recurring": "#/components/schemas/InputSilenceScheduleRecurring"
                       }
                     },
                     "required": [
@@ -14170,10 +15397,10 @@
                     ],
                     "oneOf": [
                       {
-                        "$ref": "#/components/schemas/SilenceScheduleOneTime"
+                        "$ref": "#/components/schemas/InputSilenceScheduleOneTime"
                       },
                       {
-                        "$ref": "#/components/schemas/SilenceScheduleRecurring"
+                        "$ref": "#/components/schemas/InputSilenceScheduleRecurring"
                       }
                     ]
                   },
@@ -14499,8 +15726,8 @@
                     "discriminator": {
                       "propertyName": "type",
                       "mapping": {
-                        "one-time": "#/components/schemas/SilenceScheduleOneTime",
-                        "recurring": "#/components/schemas/SilenceScheduleRecurring"
+                        "one-time": "#/components/schemas/InputSilenceScheduleOneTime",
+                        "recurring": "#/components/schemas/InputSilenceScheduleRecurring"
                       }
                     },
                     "required": [
@@ -14508,10 +15735,10 @@
                     ],
                     "oneOf": [
                       {
-                        "$ref": "#/components/schemas/SilenceScheduleOneTime"
+                        "$ref": "#/components/schemas/InputSilenceScheduleOneTime"
                       },
                       {
-                        "$ref": "#/components/schemas/SilenceScheduleRecurring"
+                        "$ref": "#/components/schemas/InputSilenceScheduleRecurring"
                       }
                     ]
                   },

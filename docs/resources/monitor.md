@@ -18,6 +18,7 @@ resource "tsuga_monitor" "monitor" {
   owner       = "abc-123-def"
   permissions = "all"
   priority    = 1
+  cluster_ids = ["cluster-1", "cluster-2"]
   configuration = {
     log = {
       queries = [
@@ -93,6 +94,7 @@ resource "tsuga_monitor" "certificate_expiry_monitor" {
 
 ### Optional
 
+- `cluster_ids` (List of String) Cluster IDs associated with this monitor
 - `dashboard_id` (String) Identifier of a dashboard related to the monitor
 - `message` (String) Message to be displayed if a notification is triggered
 - `tags` (Attributes List) List of key/value tags applied to the resource (see [below for nested schema](#nestedatt--tags))

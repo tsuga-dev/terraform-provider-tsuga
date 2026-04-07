@@ -3,6 +3,7 @@ resource "tsuga_monitor" "monitor" {
   owner       = "abc-123-def"
   permissions = "all"
   priority    = 1
+  cluster_ids = ["cluster-1", "cluster-2"]
   configuration = {
     log = {
       queries = [

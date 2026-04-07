@@ -234,6 +234,23 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 										},
 									},
 								},
+								"squadcast": schema.SingleNestedAttribute{
+									Optional: true,
+									Attributes: map[string]schema.Attribute{
+										"type": schema.StringAttribute{
+											Computed: true,
+										},
+										"integration_id": schema.StringAttribute{
+											Required: true,
+											Validators: []validator.String{
+												stringvalidator.LengthAtMost(250),
+											},
+										},
+										"integration_name": schema.StringAttribute{
+											Computed: true,
+										},
+									},
+								},
 							},
 						},
 						"rate_limit": schema.SingleNestedAttribute{
@@ -304,6 +321,7 @@ type TargetConfigModel struct {
 	GrafanaIRM     *IntegrationOnlyConfigModel `tfsdk:"grafana_irm"`
 	MicrosoftTeams *IntegrationOnlyConfigModel `tfsdk:"microsoft_teams"`
 	Webhook        *IntegrationOnlyConfigModel `tfsdk:"webhook"`
+	Squadcast      *IntegrationOnlyConfigModel `tfsdk:"squadcast"`
 }
 
 type TargetRateLimitModel struct {
@@ -346,6 +364,7 @@ func TargetConfigAttrTypes(ctx context.Context) map[string]attr.Type {
 		"grafana_irm":     types.ObjectType{AttrTypes: IntegrationConfigAttrTypes(ctx)},
 		"microsoft_teams": types.ObjectType{AttrTypes: IntegrationConfigAttrTypes(ctx)},
 		"webhook":         types.ObjectType{AttrTypes: IntegrationConfigAttrTypes(ctx)},
+		"squadcast":       types.ObjectType{AttrTypes: IntegrationConfigAttrTypes(ctx)},
 	}
 }
 

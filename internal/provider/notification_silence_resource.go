@@ -62,6 +62,24 @@ func (r *notificationSilenceResource) ValidateConfig(ctx context.Context, req re
 		return
 	}
 
+	// Validate schedule: exactly one of recurring or one_time must be set
+	if config.Schedule != nil {
+		scheduleSetCount := 0
+		if config.Schedule.Recurring != nil {
+			scheduleSetCount++
+		}
+		if config.Schedule.OneTime != nil {
+			scheduleSetCount++
+		}
+		if scheduleSetCount != 1 {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("schedule"),
+				"Invalid schedule configuration",
+				"Exactly one of 'recurring' or 'one_time' must be set in schedule.",
+			)
+		}
+	}
+
 	// Validate teams_filter: teams is required when type is "specific-teams"
 	if config.TeamsFilter != nil && !config.TeamsFilter.Type.IsNull() && !config.TeamsFilter.Type.IsUnknown() {
 		filterType := config.TeamsFilter.Type.ValueString()
@@ -315,6 +333,7 @@ type notificationSilenceSchedule struct {
 	Type           string                 `json:"type"`
 	StartTime      string                 `json:"startTime,omitempty"`
 	EndTime        string                 `json:"endTime,omitempty"`
+	TimeZone       string                 `json:"timeZone,omitempty"`
 	WeeklySchedule *weeklyScheduleAPIData `json:"weeklySchedule,omitempty"`
 }
 
@@ -335,7 +354,23 @@ type timeRangeAPIData struct {
 
 func expandSchedule(ctx context.Context, schedule *resource_notification_silence.ScheduleModel) (map[string]any, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	if schedule == nil || schedule.Recurring == nil {
+	if schedule == nil {
+		return nil, diags
+	}
+
+	if schedule.OneTime != nil {
+		result := map[string]any{
+			"type":      "one-time",
+			"startTime": schedule.OneTime.StartTime.ValueString(),
+			"endTime":   schedule.OneTime.EndTime.ValueString(),
+		}
+		if !schedule.OneTime.TimeZone.IsNull() && !schedule.OneTime.TimeZone.IsUnknown() {
+			result["timeZone"] = schedule.OneTime.TimeZone.ValueString()
+		}
+		return result, diags
+	}
+
+	if schedule.Recurring == nil {
 		return nil, diags
 	}
 
@@ -373,10 +408,14 @@ func expandSchedule(ctx context.Context, schedule *resource_notification_silence
 		}
 	}
 
-	return map[string]any{
+	result := map[string]any{
 		"type":           "recurring",
 		"weeklySchedule": weeklySchedule,
-	}, diags
+	}
+	if !schedule.Recurring.TimeZone.IsNull() && !schedule.Recurring.TimeZone.IsUnknown() {
+		result["timeZone"] = schedule.Recurring.TimeZone.ValueString()
+	}
+	return result, diags
 }
 
 func flattenNotificationSilence(ctx context.Context, data notificationSilenceAPIData) (resource_notification_silence.NotificationSilenceModel, diag.Diagnostics) {
@@ -429,6 +468,15 @@ func flattenSchedule(ctx context.Context, schedule notificationSilenceSchedule) 
 
 	result := &resource_notification_silence.ScheduleModel{}
 
+	if schedule.Type == "one-time" {
+		result.OneTime = &resource_notification_silence.OneTimeScheduleModel{
+			StartTime: types.StringValue(schedule.StartTime),
+			EndTime:   types.StringValue(schedule.EndTime),
+			TimeZone:  stringValueOrNull(schedule.TimeZone),
+		}
+		return result, diags
+	}
+
 	if schedule.Type == "recurring" && schedule.WeeklySchedule != nil {
 		recurring := &resource_notification_silence.RecurringScheduleModel{}
 
@@ -465,6 +513,7 @@ func flattenSchedule(ctx context.Context, schedule notificationSilenceSchedule) 
 		recurring.Sunday, dayDiags = flattenDayTimeRanges(schedule.WeeklySchedule.Sunday)
 		diags.Append(dayDiags...)
 
+		recurring.TimeZone = stringValueOrNull(schedule.TimeZone)
 		result.Recurring = recurring
 	}
 

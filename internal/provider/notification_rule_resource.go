@@ -122,11 +122,14 @@ func (r *notificationRuleResource) validateTargetConfig(cfg resource_notificatio
 	if cfg.Webhook != nil {
 		setCount++
 	}
+	if cfg.Squadcast != nil {
+		setCount++
+	}
 
 	if setCount != 1 {
 		diags.AddError(
 			"Invalid target config configuration",
-			fmt.Sprintf("%s: exactly one of slack, incident_io, pagerduty, email, grafana_irm, microsoft_teams, or webhook must be set.", pathPrefix),
+			fmt.Sprintf("%s: exactly one of slack, incident_io, pagerduty, email, grafana_irm, microsoft_teams, webhook, or squadcast must be set.", pathPrefix),
 		)
 	}
 
@@ -475,6 +478,7 @@ func flattenNotificationRuleTargets(ctx context.Context, targets []notificationR
 			"grafana_irm":     types.ObjectNull(resource_notification_rule.IntegrationConfigAttrTypes(ctx)),
 			"microsoft_teams": types.ObjectNull(resource_notification_rule.IntegrationConfigAttrTypes(ctx)),
 			"webhook":         types.ObjectNull(resource_notification_rule.IntegrationConfigAttrTypes(ctx)),
+			"squadcast":       types.ObjectNull(resource_notification_rule.IntegrationConfigAttrTypes(ctx)),
 		}
 
 		switch t.Config.Type {
@@ -533,6 +537,12 @@ func flattenNotificationRuleTargets(ctx context.Context, targets []notificationR
 			configValues["email"] = types.ObjectValueMust(resource_notification_rule.EmailAttrTypes(ctx), map[string]attr.Value{
 				"type":      types.StringValue("email"),
 				"addresses": addresses,
+			})
+		case "squadcast":
+			configValues["squadcast"] = types.ObjectValueMust(resource_notification_rule.IntegrationConfigAttrTypes(ctx), map[string]attr.Value{
+				"type":             types.StringValue("squadcast"),
+				"integration_id":   types.StringValue(t.Config.IntegrationID),
+				"integration_name": stringValueOrNull(t.Config.IntegrationName),
 			})
 		}
 
@@ -593,9 +603,12 @@ func expandTargetConfig(ctx context.Context, cfg resource_notification_rule.Targ
 	if cfg.Webhook != nil {
 		setCount++
 	}
+	if cfg.Squadcast != nil {
+		setCount++
+	}
 
 	if setCount != 1 {
-		diags.AddError("Invalid target config", "Exactly one of slack, incident_io, pagerduty, email, grafana_irm, microsoft_teams, webhook must be set in config.")
+		diags.AddError("Invalid target config", "Exactly one of slack, incident_io, pagerduty, email, grafana_irm, microsoft_teams, webhook, squadcast must be set in config.")
 		return notificationRuleAPITargetConfig{}, diags
 	}
 
@@ -668,6 +681,15 @@ func expandTargetConfig(ctx context.Context, cfg resource_notification_rule.Targ
 		}
 		if !cfg.Webhook.IntegrationName.IsNull() && !cfg.Webhook.IntegrationName.IsUnknown() {
 			conf.IntegrationName = cfg.Webhook.IntegrationName.ValueString()
+		}
+		return conf, diags
+	case cfg.Squadcast != nil:
+		conf := notificationRuleAPITargetConfig{
+			Type:          "squadcast",
+			IntegrationID: cfg.Squadcast.IntegrationID.ValueString(),
+		}
+		if !cfg.Squadcast.IntegrationName.IsNull() && !cfg.Squadcast.IntegrationName.IsUnknown() {
+			conf.IntegrationName = cfg.Squadcast.IntegrationName.ValueString()
 		}
 		return conf, diags
 	default:
