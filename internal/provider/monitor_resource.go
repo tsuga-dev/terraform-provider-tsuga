@@ -372,6 +372,13 @@ func (r *monitorResource) buildMonitorRequestBody(ctx context.Context, plan reso
 		body["tags"] = tags
 	}
 
+	clusterIds, clusterDiags := expandStringList(ctx, plan.ClusterIds)
+	diags.Append(clusterDiags...)
+	if clusterIds == nil {
+		clusterIds = []string{}
+	}
+	body["clusterIds"] = clusterIds
+
 	config, configDiags := expandMonitorConfiguration(ctx, plan.Configuration)
 	diags.Append(configDiags...)
 	if diags.HasError() {
@@ -456,6 +463,7 @@ type monitorAPIData struct {
 	Owner         string                  `json:"owner"`
 	DashboardId   string                  `json:"dashboardId"`
 	Permissions   string                  `json:"permissions"`
+	ClusterIds    []string                `json:"clusterIds"`
 }
 
 type monitorAPIConfiguration struct {
@@ -943,6 +951,9 @@ func flattenMonitor(ctx context.Context, data monitorAPIData) (resource_monitor.
 	config, configDiags := flattenMonitorConfiguration(ctx, data.Configuration)
 	diags.Append(configDiags...)
 
+	clusterIds, clusterDiags := types.ListValueFrom(ctx, types.StringType, data.ClusterIds)
+	diags.Append(clusterDiags...)
+
 	state := resource_monitor.MonitorModel{
 		Id:            types.StringValue(data.ID),
 		Name:          types.StringValue(data.Name),
@@ -953,6 +964,7 @@ func flattenMonitor(ctx context.Context, data monitorAPIData) (resource_monitor.
 		Owner:         types.StringValue(data.Owner),
 		DashboardId:   stringValueOrNull(data.DashboardId),
 		Permissions:   types.StringValue(data.Permissions),
+		ClusterIds:    clusterIds,
 	}
 
 	return state, diags

@@ -100,6 +100,12 @@ func MonitorResourceSchema(ctx context.Context) schema.Schema {
 					stringvalidator.OneOf("all", "owning-team-only", "owning-team-and-public"),
 				},
 			},
+			"cluster_ids": schema.ListAttribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "Cluster IDs associated with this monitor",
+				ElementType: types.StringType,
+			},
 		},
 	}
 }
@@ -411,6 +417,7 @@ type MonitorModel struct {
 	Owner         types.String              `tfsdk:"owner"`
 	DashboardId   types.String              `tfsdk:"dashboard_id"`
 	Permissions   types.String              `tfsdk:"permissions"`
+	ClusterIds    types.List                `tfsdk:"cluster_ids"`
 }
 
 type MonitorConfigurationModel struct {

@@ -2,17 +2,25 @@
 
 This repository has Tsuga's Terraform provider. We aim at automatically generating this code as much as possible based on our OpenAPI spec.
 
-To that end, we have a `codegen.sh` script which automatically generates part of this codebase.
+To that end, read the "Updating" section.
 
-## Code Generation
+## Updating
 
-To regenerate the provider code from the OpenAPI spec, run:
+**Important:** Always follow all steps here.
+
+First ensure that the repository has an up-to-date version of the OpenAPI spec.
+
+Then run the codegen script:
 
 ```bash
 sh codegen.sh
 ```
 
-**Important:** Always run this script and commit the generated files when you update the OpenAPI spec.
+Note: the codegen script will only update the code for resources defined in `generator_config.yml`. For other resources, you will need to update the code manually.
+
+Remember to update the examples folder too.
+
+Finally run the `docgen.sh` script, so that any examples and documentation that you included in the code be injected in the documentation.
 
 ## Example Validation
 

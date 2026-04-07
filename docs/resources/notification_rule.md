@@ -89,6 +89,7 @@ Optional:
 - `microsoft_teams` (Attributes) (see [below for nested schema](#nestedatt--targets--config--microsoft_teams))
 - `pagerduty` (Attributes) (see [below for nested schema](#nestedatt--targets--config--pagerduty))
 - `slack` (Attributes) (see [below for nested schema](#nestedatt--targets--config--slack))
+- `squadcast` (Attributes) (see [below for nested schema](#nestedatt--targets--config--squadcast))
 - `webhook` (Attributes) (see [below for nested schema](#nestedatt--targets--config--webhook))
 
 <a id="nestedatt--targets--config--email"></a>
@@ -167,6 +168,19 @@ Optional:
 
 - `hide_time` (Boolean) When true, the timestamp is hidden from the Slack message
 - `hide_transition` (Boolean) When true, the transition info is hidden from the Slack message
+
+Read-Only:
+
+- `integration_name` (String)
+- `type` (String)
+
+
+<a id="nestedatt--targets--config--squadcast"></a>
+### Nested Schema for `targets.config.squadcast`
+
+Required:
+
+- `integration_id` (String)
 
 Read-Only:
 
