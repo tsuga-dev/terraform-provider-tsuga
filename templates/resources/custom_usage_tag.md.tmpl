@@ -1,0 +1,17 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  User-defined tag to add to usage telemetry
+---
+
+# {{.Name}} ({{.Type}})
+
+User-defined tag to add to usage telemetry
+
+
+## Example Usage
+
+{{ tffile "examples/resources/tsuga_custom_usage_tag/resource.tf" }}
+
+{{ .SchemaMarkdown | trimspace }}

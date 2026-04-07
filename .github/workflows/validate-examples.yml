@@ -21,6 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         resource_example:
+          - tsuga_custom_usage_tag
           - tsuga_dashboard
           - tsuga_ingestion_api_key
           - tsuga_monitor
