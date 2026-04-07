@@ -584,6 +584,7 @@ Optional:
 - `note` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--note))
 - `pie` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie))
 - `query_value` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value))
+- `table` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--table))
 - `timeseries` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries))
 - `top_list` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list))
 
@@ -597,12 +598,14 @@ Required:
 
 Optional:
 
+- `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar--aliases))
 - `formula` (String)
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--bar--group_by))
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
 - `time_bucket` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar--time_bucket))
 - `visible_series` (List of Boolean)
+- `y_axis_settings` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar--y_axis_settings))
 
 Read-Only:
 
@@ -700,6 +703,15 @@ Optional:
 
 
 
+<a id="nestedatt--graphs--visualization--bar--aliases"></a>
+### Nested Schema for `graphs.visualization.bar.aliases`
+
+Optional:
+
+- `formula` (String)
+- `queries` (Map of String)
+
+
 <a id="nestedatt--graphs--visualization--bar--group_by"></a>
 ### Nested Schema for `graphs.visualization.bar.group_by`
 
@@ -728,6 +740,53 @@ Required:
 
 - `metric` (String)
 - `time` (Number)
+
+
+<a id="nestedatt--graphs--visualization--bar--y_axis_settings"></a>
+### Nested Schema for `graphs.visualization.bar.y_axis_settings`
+
+Required:
+
+- `always_include_zero` (Boolean)
+- `max` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar--y_axis_settings--max))
+- `min` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar--y_axis_settings--min))
+- `scale` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar--y_axis_settings--scale))
+
+<a id="nestedatt--graphs--visualization--bar--y_axis_settings--max"></a>
+### Nested Schema for `graphs.visualization.bar.y_axis_settings.max`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--bar--y_axis_settings--min"></a>
+### Nested Schema for `graphs.visualization.bar.y_axis_settings.min`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--bar--y_axis_settings--scale"></a>
+### Nested Schema for `graphs.visualization.bar.y_axis_settings.scale`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `exponent` (Number)
+
 
 
 
@@ -800,11 +859,13 @@ Required:
 
 Optional:
 
+- `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie--aliases))
 - `formula` (String)
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--pie--group_by))
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
 - `visible_series` (List of Boolean)
+- `y_axis_settings` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie--y_axis_settings))
 
 Read-Only:
 
@@ -902,6 +963,15 @@ Optional:
 
 
 
+<a id="nestedatt--graphs--visualization--pie--aliases"></a>
+### Nested Schema for `graphs.visualization.pie.aliases`
+
+Optional:
+
+- `formula` (String)
+- `queries` (Map of String)
+
+
 <a id="nestedatt--graphs--visualization--pie--group_by"></a>
 ### Nested Schema for `graphs.visualization.pie.group_by`
 
@@ -923,6 +993,53 @@ Optional:
 - `unit` (String)
 
 
+<a id="nestedatt--graphs--visualization--pie--y_axis_settings"></a>
+### Nested Schema for `graphs.visualization.pie.y_axis_settings`
+
+Required:
+
+- `always_include_zero` (Boolean)
+- `max` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie--y_axis_settings--max))
+- `min` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie--y_axis_settings--min))
+- `scale` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie--y_axis_settings--scale))
+
+<a id="nestedatt--graphs--visualization--pie--y_axis_settings--max"></a>
+### Nested Schema for `graphs.visualization.pie.y_axis_settings.max`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--pie--y_axis_settings--min"></a>
+### Nested Schema for `graphs.visualization.pie.y_axis_settings.min`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--pie--y_axis_settings--scale"></a>
+### Nested Schema for `graphs.visualization.pie.y_axis_settings.scale`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `exponent` (Number)
+
+
+
 
 <a id="nestedatt--graphs--visualization--query_value"></a>
 ### Nested Schema for `graphs.visualization.query_value`
@@ -934,6 +1051,7 @@ Required:
 
 Optional:
 
+- `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--aliases))
 - `background_mode` (String)
 - `conditions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--conditions))
 - `formula` (String)
@@ -941,6 +1059,7 @@ Optional:
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
 - `visible_series` (List of Boolean)
+- `y_axis_settings` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--y_axis_settings))
 
 Read-Only:
 
@@ -1038,6 +1157,15 @@ Optional:
 
 
 
+<a id="nestedatt--graphs--visualization--query_value--aliases"></a>
+### Nested Schema for `graphs.visualization.query_value.aliases`
+
+Optional:
+
+- `formula` (String)
+- `queries` (Map of String)
+
+
 <a id="nestedatt--graphs--visualization--query_value--conditions"></a>
 ### Nested Schema for `graphs.visualization.query_value.conditions`
 
@@ -1069,6 +1197,209 @@ Optional:
 - `unit` (String)
 
 
+<a id="nestedatt--graphs--visualization--query_value--y_axis_settings"></a>
+### Nested Schema for `graphs.visualization.query_value.y_axis_settings`
+
+Required:
+
+- `always_include_zero` (Boolean)
+- `max` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--y_axis_settings--max))
+- `min` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--y_axis_settings--min))
+- `scale` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--y_axis_settings--scale))
+
+<a id="nestedatt--graphs--visualization--query_value--y_axis_settings--max"></a>
+### Nested Schema for `graphs.visualization.query_value.y_axis_settings.max`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--query_value--y_axis_settings--min"></a>
+### Nested Schema for `graphs.visualization.query_value.y_axis_settings.min`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--query_value--y_axis_settings--scale"></a>
+### Nested Schema for `graphs.visualization.query_value.y_axis_settings.scale`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `exponent` (Number)
+
+
+
+
+<a id="nestedatt--graphs--visualization--table"></a>
+### Nested Schema for `graphs.visualization.table`
+
+Required:
+
+- `columns` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--table--columns))
+
+Optional:
+
+- `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--table--group_by))
+
+Read-Only:
+
+- `type` (String)
+
+<a id="nestedatt--graphs--visualization--table--columns"></a>
+### Nested Schema for `graphs.visualization.table.columns`
+
+Required:
+
+- `name` (String)
+- `queries` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--table--columns--queries))
+- `source` (String)
+
+Optional:
+
+- `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--table--columns--aliases))
+- `formula` (String)
+- `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--table--columns--normalizer))
+- `precision` (Number)
+- `visible_series` (List of Boolean)
+
+<a id="nestedatt--graphs--visualization--table--columns--queries"></a>
+### Nested Schema for `graphs.visualization.table.columns.queries`
+
+Required:
+
+- `aggregate` (Attributes) Aggregate (count, unique_count, average, max, min, sum, or percentile) (see [below for nested schema](#nestedatt--graphs--visualization--table--columns--queries--aggregate))
+
+Optional:
+
+- `filter` (String)
+- `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--table--columns--queries--functions))
+
+<a id="nestedatt--graphs--visualization--table--columns--queries--aggregate"></a>
+### Nested Schema for `graphs.visualization.table.columns.queries.aggregate`
+
+Optional:
+
+- `average` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--table--columns--queries--aggregate--average))
+- `count` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--table--columns--queries--aggregate--count))
+- `max` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--table--columns--queries--aggregate--max))
+- `min` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--table--columns--queries--aggregate--min))
+- `percentile` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--table--columns--queries--aggregate--percentile))
+- `sum` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--table--columns--queries--aggregate--sum))
+- `unique_count` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--table--columns--queries--aggregate--unique_count))
+
+<a id="nestedatt--graphs--visualization--table--columns--queries--aggregate--average"></a>
+### Nested Schema for `graphs.visualization.table.columns.queries.aggregate.average`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--graphs--visualization--table--columns--queries--aggregate--count"></a>
+### Nested Schema for `graphs.visualization.table.columns.queries.aggregate.count`
+
+
+<a id="nestedatt--graphs--visualization--table--columns--queries--aggregate--max"></a>
+### Nested Schema for `graphs.visualization.table.columns.queries.aggregate.max`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--graphs--visualization--table--columns--queries--aggregate--min"></a>
+### Nested Schema for `graphs.visualization.table.columns.queries.aggregate.min`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--graphs--visualization--table--columns--queries--aggregate--percentile"></a>
+### Nested Schema for `graphs.visualization.table.columns.queries.aggregate.percentile`
+
+Required:
+
+- `field` (String)
+- `percentile` (Number)
+
+
+<a id="nestedatt--graphs--visualization--table--columns--queries--aggregate--sum"></a>
+### Nested Schema for `graphs.visualization.table.columns.queries.aggregate.sum`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--graphs--visualization--table--columns--queries--aggregate--unique_count"></a>
+### Nested Schema for `graphs.visualization.table.columns.queries.aggregate.unique_count`
+
+Required:
+
+- `field` (String)
+
+
+
+<a id="nestedatt--graphs--visualization--table--columns--queries--functions"></a>
+### Nested Schema for `graphs.visualization.table.columns.queries.functions`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `window` (String)
+
+
+
+<a id="nestedatt--graphs--visualization--table--columns--aliases"></a>
+### Nested Schema for `graphs.visualization.table.columns.aliases`
+
+Optional:
+
+- `formula` (String)
+- `queries` (Map of String)
+
+
+<a id="nestedatt--graphs--visualization--table--columns--normalizer"></a>
+### Nested Schema for `graphs.visualization.table.columns.normalizer`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `unit` (String)
+
+
+
+<a id="nestedatt--graphs--visualization--table--group_by"></a>
+### Nested Schema for `graphs.visualization.table.group_by`
+
+Required:
+
+- `fields` (List of String)
+- `limit` (Number)
+
+
 
 <a id="nestedatt--graphs--visualization--timeseries"></a>
 ### Nested Schema for `graphs.visualization.timeseries`
@@ -1080,11 +1411,13 @@ Required:
 
 Optional:
 
+- `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--aliases))
 - `formula` (String)
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--group_by))
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
 - `visible_series` (List of Boolean)
+- `y_axis_settings` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--y_axis_settings))
 
 Read-Only:
 
@@ -1182,6 +1515,15 @@ Optional:
 
 
 
+<a id="nestedatt--graphs--visualization--timeseries--aliases"></a>
+### Nested Schema for `graphs.visualization.timeseries.aliases`
+
+Optional:
+
+- `formula` (String)
+- `queries` (Map of String)
+
+
 <a id="nestedatt--graphs--visualization--timeseries--group_by"></a>
 ### Nested Schema for `graphs.visualization.timeseries.group_by`
 
@@ -1203,6 +1545,53 @@ Optional:
 - `unit` (String)
 
 
+<a id="nestedatt--graphs--visualization--timeseries--y_axis_settings"></a>
+### Nested Schema for `graphs.visualization.timeseries.y_axis_settings`
+
+Required:
+
+- `always_include_zero` (Boolean)
+- `max` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--y_axis_settings--max))
+- `min` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--y_axis_settings--min))
+- `scale` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--y_axis_settings--scale))
+
+<a id="nestedatt--graphs--visualization--timeseries--y_axis_settings--max"></a>
+### Nested Schema for `graphs.visualization.timeseries.y_axis_settings.max`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--timeseries--y_axis_settings--min"></a>
+### Nested Schema for `graphs.visualization.timeseries.y_axis_settings.min`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--timeseries--y_axis_settings--scale"></a>
+### Nested Schema for `graphs.visualization.timeseries.y_axis_settings.scale`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `exponent` (Number)
+
+
+
 
 <a id="nestedatt--graphs--visualization--top_list"></a>
 ### Nested Schema for `graphs.visualization.top_list`
@@ -1214,11 +1603,13 @@ Required:
 
 Optional:
 
+- `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--aliases))
 - `formula` (String)
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--group_by))
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
 - `visible_series` (List of Boolean)
+- `y_axis_settings` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--y_axis_settings))
 
 Read-Only:
 
@@ -1316,6 +1707,15 @@ Optional:
 
 
 
+<a id="nestedatt--graphs--visualization--top_list--aliases"></a>
+### Nested Schema for `graphs.visualization.top_list.aliases`
+
+Optional:
+
+- `formula` (String)
+- `queries` (Map of String)
+
+
 <a id="nestedatt--graphs--visualization--top_list--group_by"></a>
 ### Nested Schema for `graphs.visualization.top_list.group_by`
 
@@ -1335,6 +1735,53 @@ Required:
 Optional:
 
 - `unit` (String)
+
+
+<a id="nestedatt--graphs--visualization--top_list--y_axis_settings"></a>
+### Nested Schema for `graphs.visualization.top_list.y_axis_settings`
+
+Required:
+
+- `always_include_zero` (Boolean)
+- `max` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--y_axis_settings--max))
+- `min` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--y_axis_settings--min))
+- `scale` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--y_axis_settings--scale))
+
+<a id="nestedatt--graphs--visualization--top_list--y_axis_settings--max"></a>
+### Nested Schema for `graphs.visualization.top_list.y_axis_settings.max`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--top_list--y_axis_settings--min"></a>
+### Nested Schema for `graphs.visualization.top_list.y_axis_settings.min`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--top_list--y_axis_settings--scale"></a>
+### Nested Schema for `graphs.visualization.top_list.y_axis_settings.scale`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `exponent` (Number)
+
 
 
 

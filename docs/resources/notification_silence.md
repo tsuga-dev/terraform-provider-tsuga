@@ -25,8 +25,8 @@ resource "tsuga_notification_silence" "maintenance-window" {
       # Maintenance window every Sunday from 2 AM to 6 AM
       sunday = [
         {
-          start_time = "02:00:00Z"
-          end_time   = "06:00:00Z"
+          start_time = "02:00:00"
+          end_time   = "06:00:00"
         }
       ]
     }
@@ -64,65 +64,65 @@ resource "tsuga_notification_silence" "off-hours" {
       # Silence low-priority alerts overnight on weekdays
       monday = [
         {
-          start_time = "00:00:00Z"
-          end_time   = "07:00:00Z"
+          start_time = "00:00:00"
+          end_time   = "07:00:00"
         },
         {
-          start_time = "19:00:00Z"
-          end_time   = "23:59:00Z"
+          start_time = "19:00:00"
+          end_time   = "23:59:00"
         }
       ]
       tuesday = [
         {
-          start_time = "00:00:00Z"
-          end_time   = "07:00:00Z"
+          start_time = "00:00:00"
+          end_time   = "07:00:00"
         },
         {
-          start_time = "19:00:00Z"
-          end_time   = "23:59:00Z"
+          start_time = "19:00:00"
+          end_time   = "23:59:00"
         }
       ]
       wednesday = [
         {
-          start_time = "00:00:00Z"
-          end_time   = "07:00:00Z"
+          start_time = "00:00:00"
+          end_time   = "07:00:00"
         },
         {
-          start_time = "19:00:00Z"
-          end_time   = "23:59:00Z"
+          start_time = "19:00:00"
+          end_time   = "23:59:00"
         }
       ]
       thursday = [
         {
-          start_time = "00:00:00Z"
-          end_time   = "07:00:00Z"
+          start_time = "00:00:00"
+          end_time   = "07:00:00"
         },
         {
-          start_time = "19:00:00Z"
-          end_time   = "23:59:00Z"
+          start_time = "19:00:00"
+          end_time   = "23:59:00"
         }
       ]
       friday = [
         {
-          start_time = "00:00:00Z"
-          end_time   = "07:00:00Z"
+          start_time = "00:00:00"
+          end_time   = "07:00:00"
         },
         {
-          start_time = "19:00:00Z"
-          end_time   = "23:59:00Z"
+          start_time = "19:00:00"
+          end_time   = "23:59:00"
         }
       ]
       # Silence all day on weekends
       saturday = [
         {
-          start_time = "00:00:00Z"
-          end_time   = "23:59:00Z"
+          start_time = "00:00:00"
+          end_time   = "23:59:00"
         }
       ]
       sunday = [
         {
-          start_time = "00:00:00Z"
-          end_time   = "23:59:00Z"
+          start_time = "00:00:00"
+          end_time   = "23:59:00"
         }
       ]
     }
@@ -144,6 +144,56 @@ resource "tsuga_notification_silence" "off-hours" {
   ]
 }
 
+# Example: One-time silence for a planned incident
+resource "tsuga_notification_silence" "incident-silence" {
+  name      = "incident-2024-03"
+  reason    = "Silence alerts during planned database migration"
+  owner     = "abc-123-def"
+  is_active = true
+
+  schedule = {
+    one_time = {
+      start_time = "2035-03-15T02:00:00"
+      end_time   = "2035-03-15T06:00:00"
+      time_zone  = "America/New_York"
+    }
+  }
+
+  teams_filter = {
+    type = "all-teams"
+  }
+
+  priorities_filter       = [1, 2, 3, 4, 5]
+  transition_types_filter = ["triggered", "resolved", "no-data"]
+}
+
+# Example: Recurring silence with timezone
+resource "tsuga_notification_silence" "tokyo-maintenance" {
+  name      = "tokyo-maintenance"
+  reason    = "Silence during Tokyo office maintenance window"
+  owner     = "abc-123-def"
+  is_active = true
+
+  schedule = {
+    recurring = {
+      wednesday = [
+        {
+          start_time = "02:00:00"
+          end_time   = "04:00:00"
+        }
+      ]
+      time_zone = "Asia/Tokyo"
+    }
+  }
+
+  teams_filter = {
+    type = "all-teams"
+  }
+
+  priorities_filter       = [3, 4, 5]
+  transition_types_filter = ["triggered"]
+}
+
 # Example: Silence specific notification rules with query filter
 resource "tsuga_notification_silence" "deployment-silence" {
   name      = "deployment-silence"
@@ -156,14 +206,14 @@ resource "tsuga_notification_silence" "deployment-silence" {
       # Typical deployment windows on Tuesday and Thursday mornings
       tuesday = [
         {
-          start_time = "10:00:00Z"
-          end_time   = "12:00:00Z"
+          start_time = "10:00:00"
+          end_time   = "12:00:00"
         }
       ]
       thursday = [
         {
-          start_time = "10:00:00Z"
-          end_time   = "12:00:00Z"
+          start_time = "10:00:00"
+          end_time   = "12:00:00"
         }
       ]
     }
@@ -208,9 +258,23 @@ resource "tsuga_notification_silence" "deployment-silence" {
 <a id="nestedatt--schedule"></a>
 ### Nested Schema for `schedule`
 
+Optional:
+
+- `one_time` (Attributes) One-time silence schedule with specific start and end times (see [below for nested schema](#nestedatt--schedule--one_time))
+- `recurring` (Attributes) Recurring weekly silence schedule (see [below for nested schema](#nestedatt--schedule--recurring))
+
+<a id="nestedatt--schedule--one_time"></a>
+### Nested Schema for `schedule.one_time`
+
 Required:
 
-- `recurring` (Attributes) Recurring weekly silence schedule (see [below for nested schema](#nestedatt--schedule--recurring))
+- `end_time` (String) End time as a date-time string
+- `start_time` (String) Start time as a date-time string
+
+Optional:
+
+- `time_zone` (String) IANA timezone identifier (e.g. America/New_York). Defaults to UTC if omitted.
+
 
 <a id="nestedatt--schedule--recurring"></a>
 ### Nested Schema for `schedule.recurring`
@@ -222,6 +286,7 @@ Optional:
 - `saturday` (Attributes List) Time ranges for Saturday (see [below for nested schema](#nestedatt--schedule--recurring--saturday))
 - `sunday` (Attributes List) Time ranges for Sunday (see [below for nested schema](#nestedatt--schedule--recurring--sunday))
 - `thursday` (Attributes List) Time ranges for Thursday (see [below for nested schema](#nestedatt--schedule--recurring--thursday))
+- `time_zone` (String) IANA timezone identifier (e.g. America/New_York). Defaults to UTC if omitted.
 - `tuesday` (Attributes List) Time ranges for Tuesday (see [below for nested schema](#nestedatt--schedule--recurring--tuesday))
 - `wednesday` (Attributes List) Time ranges for Wednesday (see [below for nested schema](#nestedatt--schedule--recurring--wednesday))
 
@@ -230,8 +295,8 @@ Optional:
 
 Required:
 
-- `end_time` (String) End time in HH:MM:SSZ format (e.g., 17:00:00Z)
-- `start_time` (String) Start time in HH:MM:SSZ format (e.g., 09:00:00Z)
+- `end_time` (String) End time in HH:MM:SS format (e.g., 17:00:00)
+- `start_time` (String) Start time in HH:MM:SS format (e.g., 09:00:00)
 
 
 <a id="nestedatt--schedule--recurring--monday"></a>
@@ -239,8 +304,8 @@ Required:
 
 Required:
 
-- `end_time` (String) End time in HH:MM:SSZ format (e.g., 17:00:00Z)
-- `start_time` (String) Start time in HH:MM:SSZ format (e.g., 09:00:00Z)
+- `end_time` (String) End time in HH:MM:SS format (e.g., 17:00:00)
+- `start_time` (String) Start time in HH:MM:SS format (e.g., 09:00:00)
 
 
 <a id="nestedatt--schedule--recurring--saturday"></a>
@@ -248,8 +313,8 @@ Required:
 
 Required:
 
-- `end_time` (String) End time in HH:MM:SSZ format (e.g., 17:00:00Z)
-- `start_time` (String) Start time in HH:MM:SSZ format (e.g., 09:00:00Z)
+- `end_time` (String) End time in HH:MM:SS format (e.g., 17:00:00)
+- `start_time` (String) Start time in HH:MM:SS format (e.g., 09:00:00)
 
 
 <a id="nestedatt--schedule--recurring--sunday"></a>
@@ -257,8 +322,8 @@ Required:
 
 Required:
 
-- `end_time` (String) End time in HH:MM:SSZ format (e.g., 17:00:00Z)
-- `start_time` (String) Start time in HH:MM:SSZ format (e.g., 09:00:00Z)
+- `end_time` (String) End time in HH:MM:SS format (e.g., 17:00:00)
+- `start_time` (String) Start time in HH:MM:SS format (e.g., 09:00:00)
 
 
 <a id="nestedatt--schedule--recurring--thursday"></a>
@@ -266,8 +331,8 @@ Required:
 
 Required:
 
-- `end_time` (String) End time in HH:MM:SSZ format (e.g., 17:00:00Z)
-- `start_time` (String) Start time in HH:MM:SSZ format (e.g., 09:00:00Z)
+- `end_time` (String) End time in HH:MM:SS format (e.g., 17:00:00)
+- `start_time` (String) Start time in HH:MM:SS format (e.g., 09:00:00)
 
 
 <a id="nestedatt--schedule--recurring--tuesday"></a>
@@ -275,8 +340,8 @@ Required:
 
 Required:
 
-- `end_time` (String) End time in HH:MM:SSZ format (e.g., 17:00:00Z)
-- `start_time` (String) Start time in HH:MM:SSZ format (e.g., 09:00:00Z)
+- `end_time` (String) End time in HH:MM:SS format (e.g., 17:00:00)
+- `start_time` (String) Start time in HH:MM:SS format (e.g., 09:00:00)
 
 
 <a id="nestedatt--schedule--recurring--wednesday"></a>
@@ -284,8 +349,8 @@ Required:
 
 Required:
 
-- `end_time` (String) End time in HH:MM:SSZ format (e.g., 17:00:00Z)
-- `start_time` (String) Start time in HH:MM:SSZ format (e.g., 09:00:00Z)
+- `end_time` (String) End time in HH:MM:SS format (e.g., 17:00:00)
+- `start_time` (String) Start time in HH:MM:SS format (e.g., 09:00:00)
 
 
 

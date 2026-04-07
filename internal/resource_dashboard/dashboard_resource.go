@@ -178,6 +178,7 @@ func DashboardResourceSchema(ctx context.Context) schema.Schema {
 								"bar":         visualizationBarSchema(),
 								"list":        visualizationListSchema(),
 								"note":        visualizationNoteSchema(),
+								"table":       visualizationTableSchema(),
 							},
 						},
 					},
@@ -197,79 +198,207 @@ func visualizationSeriesSchema() schema.Attribute {
 			"source": schema.StringAttribute{
 				Required: true,
 				Validators: []validator.String{
-					stringvalidator.OneOf("logs", "metrics", "traces"),
+					stringvalidator.OneOf("logs", "metrics", "traces", "connections"),
 				},
 			},
-			"queries": schema.ListNestedAttribute{
+			"queries":        queriesSchema(),
+			"formula":        formulaSchema(),
+			"aliases":        aliasesSchema(),
+			"visible_series": visibleSeriesSchema(),
+			"group_by":       groupBySchema(),
+			"normalizer":     normalizer.Schema(),
+			"precision": schema.Float64Attribute{
+				Optional:    true,
+				Description: "Number of decimal places to display in the value",
+			},
+			"y_axis_settings": yAxisSettingsSchema(),
+		},
+	}
+}
+
+func yAxisSettingsSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Optional: true,
+		Attributes: map[string]schema.Attribute{
+			"min": schema.SingleNestedAttribute{
 				Required: true,
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(15),
+				Attributes: map[string]schema.Attribute{
+					"type": schema.StringAttribute{
+						Required: true,
+						Validators: []validator.String{
+							stringvalidator.OneOf("auto", "number"),
+						},
+					},
+					"value": schema.Float64Attribute{
+						Optional: true,
+					},
 				},
+			},
+			"max": schema.SingleNestedAttribute{
+				Required: true,
+				Attributes: map[string]schema.Attribute{
+					"type": schema.StringAttribute{
+						Required: true,
+						Validators: []validator.String{
+							stringvalidator.OneOf("auto", "number"),
+						},
+					},
+					"value": schema.Float64Attribute{
+						Optional: true,
+					},
+				},
+			},
+			"scale": schema.SingleNestedAttribute{
+				Required: true,
+				Attributes: map[string]schema.Attribute{
+					"type": schema.StringAttribute{
+						Required: true,
+						Validators: []validator.String{
+							stringvalidator.OneOf("linear", "log", "sqrt", "pow"),
+						},
+					},
+					"exponent": schema.Float64Attribute{
+						Optional: true,
+					},
+				},
+			},
+			"always_include_zero": schema.BoolAttribute{
+				Required: true,
+			},
+		},
+	}
+}
+
+func visualizationTableSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Optional: true,
+		Attributes: map[string]schema.Attribute{
+			"type": schema.StringAttribute{
+				Computed: true,
+			},
+			"columns": schema.ListNestedAttribute{
+				Required: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"aggregate": aggregate.Schema(),
-						"filter": schema.StringAttribute{
-							Optional: true,
+						"name": schema.StringAttribute{
+							Required: true,
 							Validators: []validator.String{
-								stringvalidator.LengthAtMost(10000),
+								stringvalidator.LengthAtMost(250),
 							},
 						},
-						"functions": schema.ListNestedAttribute{
-							Optional: true,
-							Validators: []validator.List{
-								listvalidator.SizeAtMost(10),
+						"source": schema.StringAttribute{
+							Required: true,
+							Validators: []validator.String{
+								stringvalidator.OneOf("logs", "metrics", "traces", "connections"),
 							},
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"type": schema.StringAttribute{
-										Required: true,
-										Validators: []validator.String{
-											stringvalidator.OneOf("per-second", "per-minute", "per-hour", "rate", "rolling"),
-										},
-									},
-									"window": schema.StringAttribute{
-										Optional: true,
-									},
+						},
+						"queries":        queriesSchema(),
+						"formula":        formulaSchema(),
+						"aliases":        aliasesSchema(),
+						"visible_series": visibleSeriesSchema(),
+						"normalizer":     normalizer.Schema(),
+						"precision": schema.Float64Attribute{
+							Optional: true,
+						},
+					},
+				},
+			},
+			"group_by": groupBySchema(),
+		},
+	}
+}
+
+func queriesSchema() schema.Attribute {
+	return schema.ListNestedAttribute{
+		Required: true,
+		Validators: []validator.List{
+			listvalidator.SizeAtMost(15),
+		},
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"aggregate": aggregate.Schema(),
+				"filter": schema.StringAttribute{
+					Optional: true,
+					Validators: []validator.String{
+						stringvalidator.LengthAtMost(10000),
+					},
+				},
+				"functions": schema.ListNestedAttribute{
+					Optional: true,
+					Validators: []validator.List{
+						listvalidator.SizeAtMost(10),
+					},
+					NestedObject: schema.NestedAttributeObject{
+						Attributes: map[string]schema.Attribute{
+							"type": schema.StringAttribute{
+								Required: true,
+								Validators: []validator.String{
+									stringvalidator.OneOf("per-second", "per-minute", "per-hour", "rate", "rolling"),
 								},
+							},
+							"window": schema.StringAttribute{
+								Optional: true,
 							},
 						},
 					},
 				},
 			},
+		},
+	}
+}
+
+func formulaSchema() schema.Attribute {
+	return schema.StringAttribute{
+		Optional: true,
+		Validators: []validator.String{
+			stringvalidator.LengthAtMost(250),
+		},
+	}
+}
+
+func aliasesSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Optional: true,
+		Attributes: map[string]schema.Attribute{
 			"formula": schema.StringAttribute{
 				Optional: true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(250),
 				},
 			},
-			"visible_series": schema.ListAttribute{
+			"queries": schema.MapAttribute{
 				Optional:    true,
-				ElementType: types.BoolType,
+				ElementType: types.StringType,
 			},
-			"group_by": schema.ListNestedAttribute{
-				Optional: true,
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(3),
-				},
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"fields": schema.ListAttribute{
-							Required:    true,
-							ElementType: types.StringType,
-							Validators: []validator.List{
-								listvalidator.SizeAtMost(1),
-							},
-						},
-						"limit": schema.Int64Attribute{
-							Required: true,
-						},
+		},
+	}
+}
+
+func visibleSeriesSchema() schema.Attribute {
+	return schema.ListAttribute{
+		Optional:    true,
+		ElementType: types.BoolType,
+	}
+}
+
+func groupBySchema() schema.Attribute {
+	return schema.ListNestedAttribute{
+		Optional: true,
+		Validators: []validator.List{
+			listvalidator.SizeAtMost(3),
+		},
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"fields": schema.ListAttribute{
+					Required:    true,
+					ElementType: types.StringType,
+					Validators: []validator.List{
+						listvalidator.SizeAtMost(1),
 					},
 				},
-			},
-			"normalizer": normalizer.Schema(),
-			"precision": schema.Float64Attribute{
-				Optional:    true,
-				Description: "Number of decimal places to display in the value",
+				"limit": schema.Int64Attribute{
+					Required: true,
+				},
 			},
 		},
 	}
@@ -438,15 +567,57 @@ type VisualizationModel struct {
 	Bar        *BarVisualization         `tfsdk:"bar"`
 	List       *ListVisualization        `tfsdk:"list"`
 	Note       *NoteVisualizationModel   `tfsdk:"note"`
+	Table      *TableVisualizationModel  `tfsdk:"table"`
 }
 
 type SeriesVisualizationModel struct {
-	Type          types.String      `tfsdk:"type"`
+	Type          types.String        `tfsdk:"type"`
+	Source        types.String        `tfsdk:"source"`
+	Queries       types.List          `tfsdk:"queries"`
+	Formula       types.String        `tfsdk:"formula"`
+	Aliases       *AliasesModel       `tfsdk:"aliases"`
+	VisibleSeries types.List          `tfsdk:"visible_series"`
+	GroupBy       types.List          `tfsdk:"group_by"`
+	Normalizer    *normalizer.Model   `tfsdk:"normalizer"`
+	Precision     types.Float64       `tfsdk:"precision"`
+	YAxisSettings *YAxisSettingsModel `tfsdk:"y_axis_settings"`
+}
+
+type AliasesModel struct {
+	Formula types.String `tfsdk:"formula"`
+	Queries types.Map    `tfsdk:"queries"`
+}
+
+type YAxisSettingsModel struct {
+	Min               YAxisBoundModel `tfsdk:"min"`
+	Max               YAxisBoundModel `tfsdk:"max"`
+	Scale             YAxisScaleModel `tfsdk:"scale"`
+	AlwaysIncludeZero types.Bool      `tfsdk:"always_include_zero"`
+}
+
+type YAxisBoundModel struct {
+	Type  types.String  `tfsdk:"type"`
+	Value types.Float64 `tfsdk:"value"`
+}
+
+type YAxisScaleModel struct {
+	Type     types.String  `tfsdk:"type"`
+	Exponent types.Float64 `tfsdk:"exponent"`
+}
+
+type TableVisualizationModel struct {
+	Type    types.String `tfsdk:"type"`
+	Columns types.List   `tfsdk:"columns"`
+	GroupBy types.List   `tfsdk:"group_by"`
+}
+
+type TableColumnModel struct {
+	Name          types.String      `tfsdk:"name"`
 	Source        types.String      `tfsdk:"source"`
 	Queries       types.List        `tfsdk:"queries"`
 	Formula       types.String      `tfsdk:"formula"`
+	Aliases       *AliasesModel     `tfsdk:"aliases"`
 	VisibleSeries types.List        `tfsdk:"visible_series"`
-	GroupBy       types.List        `tfsdk:"group_by"`
 	Normalizer    *normalizer.Model `tfsdk:"normalizer"`
 	Precision     types.Float64     `tfsdk:"precision"`
 }
@@ -553,17 +724,71 @@ func VisualizationAttrTypes() map[string]attr.Type {
 		"bar":         types.ObjectType{AttrTypes: BarVisualizationAttrTypes()},
 		"list":        types.ObjectType{AttrTypes: ListVisualizationAttrTypes()},
 		"note":        types.ObjectType{AttrTypes: NoteVisualizationAttrTypes()},
+		"table":       types.ObjectType{AttrTypes: TableVisualizationAttrTypes()},
 	}
 }
 
 func SeriesVisualizationAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"type":           types.StringType,
+		"type":            types.StringType,
+		"source":          types.StringType,
+		"queries":         types.ListType{ElemType: types.ObjectType{AttrTypes: QueryAttrTypes()}},
+		"formula":         types.StringType,
+		"aliases":         types.ObjectType{AttrTypes: AliasesAttrTypes()},
+		"visible_series":  types.ListType{ElemType: types.BoolType},
+		"group_by":        types.ListType{ElemType: types.ObjectType{AttrTypes: groupby.AttrTypes()}},
+		"normalizer":      types.ObjectType{AttrTypes: normalizer.AttrTypes()},
+		"precision":       types.Float64Type,
+		"y_axis_settings": types.ObjectType{AttrTypes: YAxisSettingsAttrTypes()},
+	}
+}
+
+func AliasesAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"formula": types.StringType,
+		"queries": types.MapType{ElemType: types.StringType},
+	}
+}
+
+func YAxisSettingsAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"min":                 types.ObjectType{AttrTypes: YAxisBoundAttrTypes()},
+		"max":                 types.ObjectType{AttrTypes: YAxisBoundAttrTypes()},
+		"scale":               types.ObjectType{AttrTypes: YAxisScaleAttrTypes()},
+		"always_include_zero": types.BoolType,
+	}
+}
+
+func YAxisBoundAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"type":  types.StringType,
+		"value": types.Float64Type,
+	}
+}
+
+func YAxisScaleAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"type":     types.StringType,
+		"exponent": types.Float64Type,
+	}
+}
+
+func TableVisualizationAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"type":     types.StringType,
+		"columns":  types.ListType{ElemType: types.ObjectType{AttrTypes: TableColumnAttrTypes()}},
+		"group_by": types.ListType{ElemType: types.ObjectType{AttrTypes: groupby.AttrTypes()}},
+	}
+}
+
+func TableColumnAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"name":           types.StringType,
 		"source":         types.StringType,
 		"queries":        types.ListType{ElemType: types.ObjectType{AttrTypes: QueryAttrTypes()}},
 		"formula":        types.StringType,
+		"aliases":        types.ObjectType{AttrTypes: AliasesAttrTypes()},
 		"visible_series": types.ListType{ElemType: types.BoolType},
-		"group_by":       types.ListType{ElemType: types.ObjectType{AttrTypes: groupby.AttrTypes()}},
 		"normalizer":     types.ObjectType{AttrTypes: normalizer.AttrTypes()},
 		"precision":      types.Float64Type,
 	}
