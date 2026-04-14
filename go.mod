@@ -1,6 +1,6 @@
 module terraform-provider-tsuga
 
-go 1.25.3
+go 1.25.7
 
 require (
 	github.com/hashicorp/terraform-plugin-framework v1.16.1
