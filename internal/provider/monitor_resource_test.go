@@ -40,7 +40,7 @@ resource "tsuga_monitor" "test" {
         fields = ["service"]
         limit  = 10
       }]
-      aggregation_alert_logic = "no_aggregation"
+      aggregation_alert_logic = "each"
       queries = [{
         filter = "service:api"
         aggregate = {
@@ -93,7 +93,7 @@ resource "tsuga_monitor" "test" {
         fields = ["service", "env"]
         limit  = 10
       }]
-      aggregation_alert_logic = "no_aggregation"
+      aggregation_alert_logic = "each"
       queries = [
         {
           filter = "service:web"
@@ -294,7 +294,7 @@ resource "tsuga_monitor" "test" {
         fields = ["service"]
         limit  = 10
       }]
-      aggregation_alert_logic = "no_aggregation"
+      aggregation_alert_logic = "each"
       queries = [{
         filter = "service:api"
         aggregate = {
@@ -342,7 +342,7 @@ resource "tsuga_monitor" "test" {
         fields = ["service", "env"]
         limit  = 5
       }]
-      aggregation_alert_logic = "no_aggregation"
+      aggregation_alert_logic = "each"
       queries = [
         {
           filter = "service:web"
@@ -407,7 +407,7 @@ resource "tsuga_monitor" "test" {
         fields = ["host"]
         limit  = 20
       }]
-      aggregation_alert_logic = "no_aggregation"
+      aggregation_alert_logic = "each"
       queries = [{
         filter = "level:error"
         aggregate = {

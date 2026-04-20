@@ -40,7 +40,7 @@ resource "tsuga_monitor" "monitor" {
         limit  = 10
       }]
       no_data_behavior        = "alert"
-      aggregation_alert_logic = "no_aggregation"
+      aggregation_alert_logic = "each"
     }
   }
 }
