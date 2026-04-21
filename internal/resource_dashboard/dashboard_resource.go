@@ -3,6 +3,7 @@ package resource_dashboard
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -333,11 +334,18 @@ func queriesSchema() schema.Attribute {
 							"type": schema.StringAttribute{
 								Required: true,
 								Validators: []validator.String{
-									stringvalidator.OneOf("per-second", "per-minute", "per-hour", "rate", "rolling"),
+									stringvalidator.OneOf("per-second", "per-minute", "per-hour", "rate", "rolling", "time-offset"),
 								},
 							},
 							"window": schema.StringAttribute{
 								Optional: true,
+							},
+							"seconds": schema.Int64Attribute{
+								Optional:    true,
+								Description: "Number of seconds to offset for the time-offset function",
+								Validators: []validator.Int64{
+									int64validator.AtLeast(1),
+								},
 							},
 						},
 					},
@@ -665,8 +673,9 @@ type AggregateModel struct {
 }
 
 type FunctionModel struct {
-	Type   types.String `tfsdk:"type"`
-	Window types.String `tfsdk:"window"`
+	Type    types.String `tfsdk:"type"`
+	Window  types.String `tfsdk:"window"`
+	Seconds types.Int64  `tfsdk:"seconds"`
 }
 
 type ConditionModel struct {
@@ -836,8 +845,9 @@ func QueryAttrTypes() map[string]attr.Type {
 
 func FunctionAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"type":   types.StringType,
-		"window": types.StringType,
+		"type":    types.StringType,
+		"window":  types.StringType,
+		"seconds": types.Int64Type,
 	}
 }
 

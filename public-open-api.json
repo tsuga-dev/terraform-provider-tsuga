@@ -40,6 +40,7 @@
               "FOREIGN_KEY_VIOLATION",
               "FST_ERR_VALIDATION",
               "INVALID_INPUT",
+              "FORBIDDEN",
               "MISSING_PERMISSION",
               "PRIVILEGE_ESCALATION",
               "ORG_NOT_FOUND_AUTHENTICATION_ERROR",
@@ -49,6 +50,7 @@
               "INVALID_INVITATION",
               "TAG_POLICY_ALREADY_EXISTS_ERROR",
               "TAG_POLICY_VALIDATION_ERROR",
+              "UNAUTHORIZED",
               "URL_NOT_FOUND"
             ],
             "description": "Machine readable error code describing what went wrong"
@@ -316,7 +318,8 @@
                   "id",
                   "name",
                   "keyLastCharacters",
-                  "owner"
+                  "owner",
+                  "tags"
                 ],
                 "properties": {
                   "id": {
@@ -403,7 +406,8 @@
           "id",
           "name",
           "keyLastCharacters",
-          "owner"
+          "owner",
+          "tags"
         ],
         "properties": {
           "id": {
@@ -636,6 +640,33 @@
           },
           "data": {
             "$ref": "#/components/schemas/DeleteResponse"
+          }
+        }
+      },
+      "ResponseMetadata": {
+        "type": "object",
+        "required": [
+          "pagination"
+        ],
+        "properties": {
+          "pagination": {
+            "type": "object",
+            "required": [
+              "totalCount",
+              "pageCount"
+            ],
+            "properties": {
+              "totalCount": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "The total number of items matching the query"
+              },
+              "pageCount": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "The total number of pages available"
+              }
+            }
           }
         }
       },
@@ -911,6 +942,9 @@
             "items": {
               "$ref": "#/components/schemas/Dashboard"
             }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
           }
         }
       },
@@ -975,6 +1009,105 @@
           },
           "data": {
             "$ref": "#/components/schemas/DeleteResponse"
+          }
+        }
+      },
+      "DocPage": {
+        "type": "object",
+        "required": [
+          "path",
+          "title",
+          "content"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string",
+            "description": "Raw markdown content of the documentation page"
+          }
+        },
+        "description": "A documentation page with its raw markdown content",
+        "example": {
+          "path": "getting-started/send-your-first-logs",
+          "title": "Send your first logs",
+          "content": "# Send your first logs\n..."
+        }
+      },
+      "GetDocPageResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DocPage"
+          }
+        }
+      },
+      "DocSearchResult": {
+        "type": "object",
+        "required": [
+          "path",
+          "title",
+          "score",
+          "excerpt",
+          "link"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number",
+            "description": "Relevance score between 0 and 1 (higher is more relevant)"
+          },
+          "excerpt": {
+            "type": "string",
+            "description": "Short snippet of matching content"
+          },
+          "link": {
+            "type": "string",
+            "description": "URL to the documentation page in the Tsuga app"
+          }
+        },
+        "description": "A documentation search result",
+        "example": {
+          "path": "getting-started/send-your-first-logs",
+          "title": "Send your first logs",
+          "score": 0.9,
+          "excerpt": "...send your first logs to Tsuga using the ingestion API...",
+          "link": "https://www.app.tsuga.com/documentation/getting-started/send-your-first-logs"
+        }
+      },
+      "SearchDocsResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocSearchResult"
+            }
           }
         }
       },
@@ -2080,6 +2213,9 @@
             "items": {
               "$ref": "#/components/schemas/Monitor"
             }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
           }
         }
       },
@@ -2470,6 +2606,9 @@
             "items": {
               "$ref": "#/components/schemas/Rule"
             }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
           }
         }
       },
@@ -2867,7 +3006,11 @@
                             "no-orphan-monitors",
                             "no-flapping-monitors",
                             "no-noisy-group-monitors",
-                            "no-long-alert-monitors"
+                            "no-long-alert-monitors",
+                            "no-redundant-monitors",
+                            "k8s-recommended-attributes",
+                            "k8s-recommended-metrics",
+                            "k8s-recommended-change-events"
                           ]
                         },
                         "title": {
@@ -3004,7 +3147,11 @@
                                       "no-orphan-monitors",
                                       "no-flapping-monitors",
                                       "no-noisy-group-monitors",
-                                      "no-long-alert-monitors"
+                                      "no-long-alert-monitors",
+                                      "no-redundant-monitors",
+                                      "k8s-recommended-attributes",
+                                      "k8s-recommended-metrics",
+                                      "k8s-recommended-change-events"
                                     ]
                                   },
                                   "title": {
@@ -3180,7 +3327,11 @@
                                     "no-orphan-monitors",
                                     "no-flapping-monitors",
                                     "no-noisy-group-monitors",
-                                    "no-long-alert-monitors"
+                                    "no-long-alert-monitors",
+                                    "no-redundant-monitors",
+                                    "k8s-recommended-attributes",
+                                    "k8s-recommended-metrics",
+                                    "k8s-recommended-change-events"
                                   ]
                                 },
                                 "title": {
@@ -3412,7 +3563,11 @@
                     "no-orphan-monitors",
                     "no-flapping-monitors",
                     "no-noisy-group-monitors",
-                    "no-long-alert-monitors"
+                    "no-long-alert-monitors",
+                    "no-redundant-monitors",
+                    "k8s-recommended-attributes",
+                    "k8s-recommended-metrics",
+                    "k8s-recommended-change-events"
                   ]
                 },
                 "title": {
@@ -3549,7 +3704,11 @@
                               "no-orphan-monitors",
                               "no-flapping-monitors",
                               "no-noisy-group-monitors",
-                              "no-long-alert-monitors"
+                              "no-long-alert-monitors",
+                              "no-redundant-monitors",
+                              "k8s-recommended-attributes",
+                              "k8s-recommended-metrics",
+                              "k8s-recommended-change-events"
                             ]
                           },
                           "title": {
@@ -3725,7 +3884,11 @@
                             "no-orphan-monitors",
                             "no-flapping-monitors",
                             "no-noisy-group-monitors",
-                            "no-long-alert-monitors"
+                            "no-long-alert-monitors",
+                            "no-redundant-monitors",
+                            "k8s-recommended-attributes",
+                            "k8s-recommended-metrics",
+                            "k8s-recommended-change-events"
                           ]
                         },
                         "title": {
@@ -4603,6 +4766,9 @@
             "items": {
               "$ref": "#/components/schemas/Route"
             }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
           }
         }
       },
@@ -4846,6 +5012,9 @@
             "items": {
               "$ref": "#/components/schemas/Service"
             }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
           }
         }
       },
@@ -5171,6 +5340,9 @@
             "items": {
               "$ref": "#/components/schemas/Team"
             }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
           }
         }
       },
@@ -5837,6 +6009,12 @@
             "enum": [
               "count"
             ]
+          },
+          "field": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 250,
+            "description": "Attribute containing the values to aggregate"
           }
         },
         "title": "Count"
@@ -6055,7 +6233,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "description": "`Increase` is designed for cumulative metrics. It computes the increase of cumulative metrics automatically handling counter resets. When used with an aggregation like `sum` it combines all series without requiring an explicit group-by.",
+            "description": "`Increase` is designed for cumulative metrics. It computes the increase of cumulative metrics by automatically handling counter resets. When used with an aggregation such as `sum` it combines all series without requiring an explicit group-by.",
             "enum": [
               "increase"
             ]
@@ -6144,6 +6322,28 @@
           }
         },
         "title": "Sqrt"
+      },
+      "FunctionTimeOffset": {
+        "type": "object",
+        "required": [
+          "type",
+          "seconds"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Shifts a query's data backward by a specified duration for easy comparison over different periods of time.",
+            "enum": [
+              "time-offset"
+            ]
+          },
+          "seconds": {
+            "type": "integer",
+            "description": "Number of seconds to offset",
+            "minimum": 1
+          }
+        },
+        "title": "TimeOffset"
       },
       "MonitorConfigurationMetric": {
         "type": "object",
@@ -6301,7 +6501,7 @@
                 "functions": {
                   "type": "array",
                   "items": {
-                    "title": "Function",
+                    "title": "MonitorFunction",
                     "type": "object",
                     "discriminator": {
                       "propertyName": "type",
@@ -6545,7 +6745,7 @@
                 "functions": {
                   "type": "array",
                   "items": {
-                    "title": "Function",
+                    "title": "MonitorFunction",
                     "type": "object",
                     "discriminator": {
                       "propertyName": "type",
@@ -6789,7 +6989,7 @@
                 "functions": {
                   "type": "array",
                   "items": {
-                    "title": "Function",
+                    "title": "MonitorFunction",
                     "type": "object",
                     "discriminator": {
                       "propertyName": "type",
@@ -7024,7 +7224,7 @@
                 "functions": {
                   "type": "array",
                   "items": {
-                    "title": "Function",
+                    "title": "MonitorFunction",
                     "type": "object",
                     "discriminator": {
                       "propertyName": "type",
@@ -7259,7 +7459,7 @@
                 "functions": {
                   "type": "array",
                   "items": {
-                    "title": "Function",
+                    "title": "MonitorFunction",
                     "type": "object",
                     "discriminator": {
                       "propertyName": "type",
@@ -8283,7 +8483,8 @@
                         "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
-                        "sqrt": "#/components/schemas/FunctionSqrt"
+                        "sqrt": "#/components/schemas/FunctionSqrt",
+                        "time-offset": "#/components/schemas/FunctionTimeOffset"
                       }
                     },
                     "required": [
@@ -8316,6 +8517,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionSqrt"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionTimeOffset"
                       }
                     ]
                   },
@@ -8754,7 +8958,8 @@
                         "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
-                        "sqrt": "#/components/schemas/FunctionSqrt"
+                        "sqrt": "#/components/schemas/FunctionSqrt",
+                        "time-offset": "#/components/schemas/FunctionTimeOffset"
                       }
                     },
                     "required": [
@@ -8787,6 +8992,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionSqrt"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionTimeOffset"
                       }
                     ]
                   },
@@ -9024,7 +9232,8 @@
                         "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
-                        "sqrt": "#/components/schemas/FunctionSqrt"
+                        "sqrt": "#/components/schemas/FunctionSqrt",
+                        "time-offset": "#/components/schemas/FunctionTimeOffset"
                       }
                     },
                     "required": [
@@ -9057,6 +9266,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionSqrt"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionTimeOffset"
                       }
                     ]
                   },
@@ -9302,7 +9514,8 @@
                         "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
-                        "sqrt": "#/components/schemas/FunctionSqrt"
+                        "sqrt": "#/components/schemas/FunctionSqrt",
+                        "time-offset": "#/components/schemas/FunctionTimeOffset"
                       }
                     },
                     "required": [
@@ -9335,6 +9548,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionSqrt"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionTimeOffset"
                       }
                     ]
                   },
@@ -9598,7 +9814,8 @@
                         "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
-                        "sqrt": "#/components/schemas/FunctionSqrt"
+                        "sqrt": "#/components/schemas/FunctionSqrt",
+                        "time-offset": "#/components/schemas/FunctionTimeOffset"
                       }
                     },
                     "required": [
@@ -9631,6 +9848,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionSqrt"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionTimeOffset"
                       }
                     ]
                   },
@@ -10083,7 +10303,8 @@
                               "rolling": "#/components/schemas/FunctionRolling",
                               "log": "#/components/schemas/FunctionLog",
                               "power": "#/components/schemas/FunctionPower",
-                              "sqrt": "#/components/schemas/FunctionSqrt"
+                              "sqrt": "#/components/schemas/FunctionSqrt",
+                              "time-offset": "#/components/schemas/FunctionTimeOffset"
                             }
                           },
                           "required": [
@@ -10116,6 +10337,9 @@
                             },
                             {
                               "$ref": "#/components/schemas/FunctionSqrt"
+                            },
+                            {
+                              "$ref": "#/components/schemas/FunctionTimeOffset"
                             }
                           ]
                         },
@@ -10385,6 +10609,13 @@
               "title": "WidgetListColumn"
             },
             "description": "Custom columns to display for each log or database row"
+          },
+          "listColumnsSize": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "description": "List column width by column id"
+            }
           },
           "connectionId": {
             "type": "string",
@@ -10857,6 +11088,54 @@
           }
         },
         "description": "Recurring weekly silence schedule"
+      },
+      "GithubCrawlerCredentialsInput": {
+        "type": "object",
+        "required": [
+          "type",
+          "personalAccessToken"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "github"
+            ]
+          },
+          "personalAccessToken": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250
+          }
+        }
+      },
+      "GithubCrawlerTargetConfig": {
+        "type": "object",
+        "required": [
+          "type",
+          "owner"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "github"
+            ]
+          },
+          "owner": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250
+          },
+          "repositories": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            }
+          }
+        }
       }
     }
   },
@@ -10977,7 +11256,8 @@
                                 "rolling": "#/components/schemas/FunctionRolling",
                                 "log": "#/components/schemas/FunctionLog",
                                 "power": "#/components/schemas/FunctionPower",
-                                "sqrt": "#/components/schemas/FunctionSqrt"
+                                "sqrt": "#/components/schemas/FunctionSqrt",
+                                "time-offset": "#/components/schemas/FunctionTimeOffset"
                               }
                             },
                             "required": [
@@ -11010,6 +11290,9 @@
                               },
                               {
                                 "$ref": "#/components/schemas/FunctionSqrt"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionTimeOffset"
                               }
                             ]
                           },
@@ -11251,7 +11534,8 @@
                                 "rolling": "#/components/schemas/FunctionRolling",
                                 "log": "#/components/schemas/FunctionLog",
                                 "power": "#/components/schemas/FunctionPower",
-                                "sqrt": "#/components/schemas/FunctionSqrt"
+                                "sqrt": "#/components/schemas/FunctionSqrt",
+                                "time-offset": "#/components/schemas/FunctionTimeOffset"
                               }
                             },
                             "required": [
@@ -11284,6 +11568,9 @@
                               },
                               {
                                 "$ref": "#/components/schemas/FunctionSqrt"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionTimeOffset"
                               }
                             ]
                           },
@@ -11429,7 +11716,8 @@
                 "type": "object",
                 "required": [
                   "name",
-                  "owner"
+                  "owner",
+                  "tags"
                 ],
                 "properties": {
                   "name": {
@@ -11631,7 +11919,8 @@
                 "type": "object",
                 "required": [
                   "name",
-                  "owner"
+                  "owner",
+                  "tags"
                 ],
                 "properties": {
                   "name": {
@@ -12228,6 +12517,25 @@
         ],
         "description": "Retrieve all dashboards",
         "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false
+          },
           {
             "schema": {
               "type": "array",
@@ -13000,7 +13308,8 @@
             },
             "in": "path",
             "name": "id",
-            "required": true
+            "required": true,
+            "description": "The dashboard ID to delete"
           }
         ],
         "responses": {
@@ -13895,6 +14204,40 @@
           "monitors"
         ],
         "description": "Retrieve all monitors",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 250
+              }
+            },
+            "in": "query",
+            "name": "owners",
+            "required": false
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful response",
@@ -14580,7 +14923,8 @@
             },
             "in": "path",
             "name": "id",
-            "required": true
+            "required": true,
+            "description": "The monitor ID to delete"
           }
         ],
         "responses": {
@@ -14648,6 +14992,27 @@
           "notification-rules"
         ],
         "description": "Retrieve all notification rules",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful response",
@@ -15577,7 +15942,8 @@
             },
             "in": "path",
             "name": "id",
-            "required": true
+            "required": true,
+            "description": "The notification rule ID to delete"
           }
         ],
         "responses": {
@@ -16328,7 +16694,8 @@
             },
             "in": "path",
             "name": "id",
-            "required": true
+            "required": true,
+            "description": "The notification silence ID to delete"
           }
         ],
         "responses": {
@@ -16944,6 +17311,27 @@
           "routes"
         ],
         "description": "Retrieve all routes",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful response",
@@ -17511,6 +17899,27 @@
           "services"
         ],
         "description": "Retrieve all services",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful response",
@@ -18318,6 +18727,27 @@
           "teams"
         ],
         "description": "Retrieve all teams",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful response",

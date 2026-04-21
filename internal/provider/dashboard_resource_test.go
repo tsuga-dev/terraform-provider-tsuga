@@ -58,8 +58,20 @@ resource "tsuga_dashboard" "test" {
             aggregate = {
               count = {}
             }
+            functions = [
+              {
+                type    = "time-offset"
+                seconds = 3600
+              }
+            ]
           }]
-          formula = "a"
+          formula = "q1"
+          aliases = {
+            formula = "Total"
+            queries = {
+              q1 = "Errors"
+            }
+          }
         }
       }
     },
@@ -152,6 +164,10 @@ resource "tsuga_dashboard" "test" {
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "name", "test-dashboard"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.0.visualization.note.note", "hello world"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.#", "7"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.timeseries.aliases.formula", "Total"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.timeseries.aliases.queries.q1", "Errors"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.timeseries.queries.0.functions.0.type", "time-offset"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.timeseries.queries.0.functions.0.seconds", "3600"),
 				),
 			},
 			{

@@ -33,10 +33,10 @@ resource "tsuga_ingestion_api_key" "example" {
 
 - `name` (String)
 - `owner` (String)
+- `tags` (Attributes List) List of key/value tags applied to the resource (see [below for nested schema](#nestedatt--tags))
 
 ### Optional
 
-- `tags` (Attributes List) List of key/value tags applied to the resource (see [below for nested schema](#nestedatt--tags))
 - `team_override_fields` (List of String)
 
 ### Read-Only

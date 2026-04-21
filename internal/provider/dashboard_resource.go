@@ -517,8 +517,9 @@ type dashboardAggregate struct {
 }
 
 type dashboardFunction struct {
-	Type   string `json:"type"`
-	Window string `json:"window,omitempty"`
+	Type    string `json:"type"`
+	Window  string `json:"window,omitempty"`
+	Seconds *int64 `json:"seconds,omitempty"`
 }
 
 type dashboardGroupBy struct {
@@ -1072,9 +1073,14 @@ func flattenFunctions(funcs []dashboardFunction) (types.List, diag.Diagnostics) 
 
 	values := make([]attr.Value, 0, len(funcs))
 	for _, f := range funcs {
+		secondsVal := types.Int64Null()
+		if f.Seconds != nil {
+			secondsVal = types.Int64Value(*f.Seconds)
+		}
 		values = append(values, types.ObjectValueMust(resource_dashboard.FunctionAttrTypes(), map[string]attr.Value{
-			"type":   types.StringValue(f.Type),
-			"window": stringValueOrNull(f.Window),
+			"type":    types.StringValue(f.Type),
+			"window":  stringValueOrNull(f.Window),
+			"seconds": secondsVal,
 		}))
 	}
 	return types.ListValue(elemType, values)
@@ -1221,6 +1227,10 @@ func expandFunctions(ctx context.Context, funcs types.List) ([]dashboardFunction
 		}
 		if !f.Window.IsNull() && !f.Window.IsUnknown() {
 			fn.Window = f.Window.ValueString()
+		}
+		if !f.Seconds.IsNull() && !f.Seconds.IsUnknown() {
+			s := f.Seconds.ValueInt64()
+			fn.Seconds = &s
 		}
 		result = append(result, fn)
 	}
