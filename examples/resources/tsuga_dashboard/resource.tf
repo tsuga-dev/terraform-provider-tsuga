@@ -140,6 +140,14 @@ resource "tsuga_dashboard" "dashboard" {
           source  = "metrics"
           formula = "(q1 / (q1 + q2)) * 100"
 
+          aliases = {
+            formula = "Memory usage (%)"
+            queries = {
+              q1 = "Used"
+              q2 = "Available"
+            }
+          }
+
           group_by = [
             {
               limit  = 5
@@ -400,7 +408,17 @@ resource "tsuga_dashboard" "dashboard" {
       }
       visualization = {
         timeseries = {
-          source = "metrics"
+          source  = "metrics"
+          formula = "q1 - q2"
+
+          aliases = {
+            formula = "Week-over-week delta"
+            queries = {
+              q1 = "Now"
+              q2 = "7 days ago"
+            }
+          }
+
           group_by = [
             {
               limit  = 10
@@ -422,6 +440,22 @@ resource "tsuga_dashboard" "dashboard" {
               functions = [
                 {
                   type = "rate"
+                }
+              ]
+            },
+            {
+              aggregate = {
+                max = {
+                  field = "k8s.node.network.io"
+                }
+              }
+              functions = [
+                {
+                  type = "rate"
+                },
+                {
+                  type    = "time-offset"
+                  seconds = 604800
                 }
               ]
             }

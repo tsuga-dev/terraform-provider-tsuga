@@ -63,8 +63,7 @@ func IngestionApiKeyResourceSchema(ctx context.Context) schema.Schema {
 						},
 					},
 				},
-				Optional:            true,
-				Computed:            true,
+				Required:            true,
 				Description:         "List of key/value tags applied to the resource",
 				MarkdownDescription: "List of key/value tags applied to the resource",
 				Validators: []validator.List{
