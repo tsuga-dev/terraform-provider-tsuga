@@ -133,6 +133,7 @@ func TagPolicyResourceSchema() schema.Schema {
 											"monitor",
 											"notification-rule",
 											"notification-silence",
+											"slo",
 										),
 									),
 								},

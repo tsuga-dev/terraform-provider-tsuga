@@ -60,6 +60,9 @@ resource "tsuga_dashboard" "test" {
             }
             functions = [
               {
+                type = "last"
+              },
+              {
                 type    = "time-offset"
                 seconds = 3600
               }
@@ -100,6 +103,11 @@ resource "tsuga_dashboard" "test" {
                 field = "duration"
               }
             }
+          }]
+          conditions = [{
+            operator = "greater_than"
+            value    = 5
+            color    = "alert"
           }]
         }
       }
@@ -166,8 +174,12 @@ resource "tsuga_dashboard" "test" {
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.#", "7"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.timeseries.aliases.formula", "Total"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.timeseries.aliases.queries.q1", "Errors"),
-					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.timeseries.queries.0.functions.0.type", "time-offset"),
-					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.timeseries.queries.0.functions.0.seconds", "3600"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.timeseries.queries.0.functions.0.type", "last"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.timeseries.queries.0.functions.1.type", "time-offset"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.timeseries.queries.0.functions.1.seconds", "3600"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.3.visualization.top_list.conditions.0.operator", "greater_than"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.3.visualization.top_list.conditions.0.value", "5"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.3.visualization.top_list.conditions.0.color", "alert"),
 				),
 			},
 			{
@@ -243,6 +255,11 @@ resource "tsuga_dashboard" "test" {
               }
             }
           }]
+          conditions = [{
+            operator = "less_than"
+            value    = 10
+            color    = "warning"
+          }]
         }
       }
     },
@@ -299,6 +316,9 @@ resource "tsuga_dashboard" "test" {
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.0.visualization.note.note", "updated"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.0.name", "Graph One Updated"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.#", "7"),
+          resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.3.visualization.top_list.conditions.0.operator", "less_than"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.3.visualization.top_list.conditions.0.value", "10"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.3.visualization.top_list.conditions.0.color", "warning"),
 				),
 			},
 		},

@@ -5,6 +5,7 @@ import (
 	"terraform-provider-tsuga/internal/resource_monitor"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -90,5 +91,88 @@ func TestExpandMonitorConfigurationCertificateExpiry_OmitsEmptyCloudAccounts(t *
 
 	if _, exists := expanded["cloudAccounts"]; exists {
 		t.Fatalf("expected cloudAccounts to be omitted for empty cloud_accounts, got: %#v", expanded["cloudAccounts"])
+	}
+}
+
+func TestExpandAggregationFunctions_SupportsLastAndTimeOffset(t *testing.T) {
+	functions, diags := types.ListValue(
+		types.ObjectType{AttrTypes: resource_monitor.AggregationFunctionAttrTypes()},
+		[]attr.Value{
+			types.ObjectValueMust(resource_monitor.AggregationFunctionAttrTypes(), map[string]attr.Value{
+				"per_second":  types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes()),
+				"per_minute":  types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes()),
+				"per_hour":    types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes()),
+				"rate":        types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes()),
+				"increase":    types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes()),
+				"last":        types.ObjectValueMust(resource_monitor.AggregationFunctionEmptyAttrTypes(), map[string]attr.Value{}),
+				"rolling":     types.ObjectNull(resource_monitor.AggregationFunctionRollingAttrTypes()),
+				"time_offset": types.ObjectNull(resource_monitor.AggregationFunctionTimeOffsetAttrTypes()),
+			}),
+			types.ObjectValueMust(resource_monitor.AggregationFunctionAttrTypes(), map[string]attr.Value{
+				"per_second": types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes()),
+				"per_minute": types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes()),
+				"per_hour":   types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes()),
+				"rate":       types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes()),
+				"increase":   types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes()),
+				"last":       types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes()),
+				"rolling":    types.ObjectNull(resource_monitor.AggregationFunctionRollingAttrTypes()),
+				"time_offset": types.ObjectValueMust(resource_monitor.AggregationFunctionTimeOffsetAttrTypes(), map[string]attr.Value{
+					"seconds": types.Int64Value(3600),
+				}),
+			}),
+		},
+	)
+	if diags.HasError() {
+		t.Fatalf("failed to build functions list: %v", diags)
+	}
+
+	expanded, expandDiags := expandAggregationFunctions(context.Background(), functions)
+	if expandDiags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", expandDiags)
+	}
+
+	if len(expanded) != 2 {
+		t.Fatalf("expected 2 functions, got %d", len(expanded))
+	}
+	if expanded[0].Type != "last" {
+		t.Fatalf("expected first function type to be last, got %q", expanded[0].Type)
+	}
+	if expanded[1].Type != "time-offset" {
+		t.Fatalf("expected second function type to be time-offset, got %q", expanded[1].Type)
+	}
+	if expanded[1].Seconds == nil || *expanded[1].Seconds != 3600 {
+		t.Fatalf("expected second function seconds to be 3600, got %#v", expanded[1].Seconds)
+	}
+}
+
+func TestFlattenAggregationFunctions_SupportsLastAndTimeOffset(t *testing.T) {
+	seconds := int64(1800)
+	functions := []monitorAPIFunction{
+		{Type: "last"},
+		{Type: "time-offset", Seconds: &seconds},
+	}
+
+	flattened, diags := flattenAggregationFunctions(functions)
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+
+	var models []resource_monitor.AggregationFunctionModel
+	diags.Append(flattened.ElementsAs(context.Background(), &models, false)...)
+	if diags.HasError() {
+		t.Fatalf("failed to decode flattened functions: %v", diags)
+	}
+
+	if len(models) != 2 {
+		t.Fatalf("expected 2 function models, got %d", len(models))
+	}
+	if models[0].Last == nil {
+		t.Fatal("expected first function model to have last set")
+	}
+	if models[1].TimeOffset == nil {
+		t.Fatal("expected second function model to have time_offset set")
+	}
+	if models[1].TimeOffset.Seconds.IsNull() || models[1].TimeOffset.Seconds.ValueInt64() != 1800 {
+		t.Fatalf("expected second function time_offset.seconds to be 1800, got %v", models[1].TimeOffset.Seconds)
 	}
 }

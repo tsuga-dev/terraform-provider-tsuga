@@ -173,7 +173,7 @@ func DashboardResourceSchema(ctx context.Context) schema.Schema {
 							Required: true,
 							Attributes: map[string]schema.Attribute{
 								"timeseries":  visualizationSeriesSchema(),
-								"top_list":    visualizationSeriesSchema(),
+								"top_list":    visualizationTopListSchema(),
 								"pie":         visualizationSeriesSchema(),
 								"query_value": visualizationQueryValueSchema(),
 								"bar":         visualizationBarSchema(),
@@ -334,7 +334,7 @@ func queriesSchema() schema.Attribute {
 							"type": schema.StringAttribute{
 								Required: true,
 								Validators: []validator.String{
-									stringvalidator.OneOf("per-second", "per-minute", "per-hour", "rate", "rolling", "time-offset"),
+									stringvalidator.OneOf("per-second", "per-minute", "per-hour", "rate", "rolling", "last", "time-offset"),
 								},
 							},
 							"window": schema.StringAttribute{
@@ -412,15 +412,8 @@ func groupBySchema() schema.Attribute {
 	}
 }
 
-func visualizationQueryValueSchema() schema.Attribute {
-	attr := visualizationSeriesSchema().(schema.SingleNestedAttribute)
-	attr.Attributes["background_mode"] = schema.StringAttribute{
-		Optional: true,
-		Validators: []validator.String{
-			stringvalidator.OneOf("background", "no-background"),
-		},
-	}
-	attr.Attributes["conditions"] = schema.ListNestedAttribute{
+func conditionsSchema() schema.Attribute {
+	return schema.ListNestedAttribute{
 		Optional: true,
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
@@ -442,6 +435,23 @@ func visualizationQueryValueSchema() schema.Attribute {
 			},
 		},
 	}
+}
+
+func visualizationTopListSchema() schema.Attribute {
+	attr := visualizationSeriesSchema().(schema.SingleNestedAttribute)
+	attr.Attributes["conditions"] = conditionsSchema()
+	return attr
+}
+
+func visualizationQueryValueSchema() schema.Attribute {
+	attr := visualizationSeriesSchema().(schema.SingleNestedAttribute)
+	attr.Attributes["background_mode"] = schema.StringAttribute{
+		Optional: true,
+		Validators: []validator.String{
+			stringvalidator.OneOf("background", "no-background"),
+		},
+	}
+	attr.Attributes["conditions"] = conditionsSchema()
 	return attr
 }
 
@@ -569,7 +579,7 @@ type GraphLayoutModel struct {
 
 type VisualizationModel struct {
 	Timeseries *SeriesVisualizationModel `tfsdk:"timeseries"`
-	TopList    *SeriesVisualizationModel `tfsdk:"top_list"`
+	TopList    *TopListVisualization     `tfsdk:"top_list"`
 	Pie        *SeriesVisualizationModel `tfsdk:"pie"`
 	QueryValue *QueryValueVisualization  `tfsdk:"query_value"`
 	Bar        *BarVisualization         `tfsdk:"bar"`
@@ -634,6 +644,11 @@ type QueryValueVisualization struct {
 	SeriesVisualizationModel
 	BackgroundMode types.String `tfsdk:"background_mode"`
 	Conditions     types.List   `tfsdk:"conditions"`
+}
+
+type TopListVisualization struct {
+	SeriesVisualizationModel
+	Conditions types.List `tfsdk:"conditions"`
 }
 
 type BarVisualization struct {
@@ -727,7 +742,7 @@ func GraphLayoutAttrTypes() map[string]attr.Type {
 func VisualizationAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"timeseries":  types.ObjectType{AttrTypes: SeriesVisualizationAttrTypes()},
-		"top_list":    types.ObjectType{AttrTypes: SeriesVisualizationAttrTypes()},
+		"top_list":    types.ObjectType{AttrTypes: TopListVisualizationAttrTypes()},
 		"pie":         types.ObjectType{AttrTypes: SeriesVisualizationAttrTypes()},
 		"query_value": types.ObjectType{AttrTypes: QueryValueVisualizationAttrTypes()},
 		"bar":         types.ObjectType{AttrTypes: BarVisualizationAttrTypes()},
@@ -806,6 +821,12 @@ func TableColumnAttrTypes() map[string]attr.Type {
 func QueryValueVisualizationAttrTypes() map[string]attr.Type {
 	attrs := SeriesVisualizationAttrTypes()
 	attrs["background_mode"] = types.StringType
+	attrs["conditions"] = types.ListType{ElemType: types.ObjectType{AttrTypes: ConditionAttrTypes()}}
+	return attrs
+}
+
+func TopListVisualizationAttrTypes() map[string]attr.Type {
+	attrs := SeriesVisualizationAttrTypes()
 	attrs["conditions"] = types.ListType{ElemType: types.ObjectType{AttrTypes: ConditionAttrTypes()}}
 	return attrs
 }
