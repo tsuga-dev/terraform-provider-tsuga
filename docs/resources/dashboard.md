@@ -1643,6 +1643,7 @@ Required:
 Optional:
 
 - `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--aliases))
+- `conditions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--conditions))
 - `formula` (String)
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--group_by))
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--normalizer))
@@ -1754,6 +1755,16 @@ Optional:
 
 - `formula` (String)
 - `queries` (Map of String)
+
+
+<a id="nestedatt--graphs--visualization--top_list--conditions"></a>
+### Nested Schema for `graphs.visualization.top_list.conditions`
+
+Required:
+
+- `color` (String)
+- `operator` (String)
+- `value` (Number)
 
 
 <a id="nestedatt--graphs--visualization--top_list--group_by"></a>

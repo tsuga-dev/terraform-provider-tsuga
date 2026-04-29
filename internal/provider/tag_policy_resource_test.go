@@ -36,7 +36,7 @@ func TestAccTagPolicyResource_telemetry(t *testing.T) {
 				Config: testAccTagPolicyResource_tsugaAsset("test-tag-policy-updated"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("tsuga_tag_policy.test", "name", "test-tag-policy-updated"),
-					resource.TestCheckResourceAttr("tsuga_tag_policy.test", "configuration.tsuga_asset.asset_types.#", "2"),
+					resource.TestCheckResourceAttr("tsuga_tag_policy.test", "configuration.tsuga_asset.asset_types.#", "3"),
 				),
 			},
 		},
@@ -127,7 +127,7 @@ resource "tsuga_tag_policy" "test" {
 
   configuration = {
     tsuga_asset = {
-      asset_types = ["dashboard", "monitor"]
+      asset_types = ["dashboard", "monitor", "slo"]
     }
   }
 }

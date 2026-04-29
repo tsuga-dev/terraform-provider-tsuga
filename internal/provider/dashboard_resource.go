@@ -120,7 +120,7 @@ func (r *dashboardResource) validateVisualization(ctx context.Context, vis resou
 		diags.Append(r.validateSeriesVisualization(ctx, vis.Timeseries, fmt.Sprintf("%s.timeseries", pathPrefix))...)
 	}
 	if vis.TopList != nil {
-		diags.Append(r.validateSeriesVisualization(ctx, vis.TopList, fmt.Sprintf("%s.top_list", pathPrefix))...)
+		diags.Append(r.validateSeriesVisualization(ctx, &vis.TopList.SeriesVisualizationModel, fmt.Sprintf("%s.top_list", pathPrefix))...)
 	}
 	if vis.Pie != nil {
 		diags.Append(r.validateSeriesVisualization(ctx, vis.Pie, fmt.Sprintf("%s.pie", pathPrefix))...)
@@ -719,8 +719,13 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 	}
 	if v.TopList != nil {
 		setCount++
-		vz, d := buildSeries(v.TopList, "top-list")
+		vz, d := buildSeries(&v.TopList.SeriesVisualizationModel, "top-list")
 		diags.Append(d...)
+		if !v.TopList.Conditions.IsNull() && !v.TopList.Conditions.IsUnknown() {
+			conds, cDiags := expandConditions(ctx, v.TopList.Conditions)
+			diags.Append(cDiags...)
+			vz.Conditions = conds
+		}
 		vis = vz
 	}
 	if v.Pie != nil {
@@ -865,7 +870,7 @@ func flattenVisualization(ctx context.Context, vis dashboardVisualization) (attr
 	nullVizBase := func() map[string]attr.Value {
 		return map[string]attr.Value{
 			"timeseries":  types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes()),
-			"top_list":    types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes()),
+			"top_list":    types.ObjectNull(resource_dashboard.TopListVisualizationAttrTypes()),
 			"pie":         types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes()),
 			"query_value": types.ObjectNull(resource_dashboard.QueryValueVisualizationAttrTypes()),
 			"bar":         types.ObjectNull(resource_dashboard.BarVisualizationAttrTypes()),
@@ -981,6 +986,13 @@ func flattenSeriesVisualization(ctx context.Context, vis dashboardVisualization)
 		obj["background_mode"] = stringValueOrNull(vis.BackgroundMode)
 		obj["conditions"] = condVal
 		return types.ObjectValueMust(resource_dashboard.QueryValueVisualizationAttrTypes(), obj), diags
+	}
+
+	if vis.Type == "top-list" {
+		condVal, cDiags := flattenConditions(vis.Conditions)
+		diags.Append(cDiags...)
+		obj["conditions"] = condVal
+		return types.ObjectValueMust(resource_dashboard.TopListVisualizationAttrTypes(), obj), diags
 	}
 
 	if vis.Type == "bar" {

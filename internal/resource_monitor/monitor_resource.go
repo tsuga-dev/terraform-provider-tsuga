@@ -237,12 +237,14 @@ func aggregationFunctionsSchema() schema.Attribute {
 		},
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
-				"per_second": aggregationFunctionEmptySchema(),
-				"per_minute": aggregationFunctionEmptySchema(),
-				"per_hour":   aggregationFunctionEmptySchema(),
-				"rate":       aggregationFunctionEmptySchema(),
-				"increase":   aggregationFunctionEmptySchema(),
-				"rolling":    aggregationFunctionRollingSchema(),
+				"per_second":  aggregationFunctionEmptySchema(),
+				"per_minute":  aggregationFunctionEmptySchema(),
+				"per_hour":    aggregationFunctionEmptySchema(),
+				"rate":        aggregationFunctionEmptySchema(),
+				"increase":    aggregationFunctionEmptySchema(),
+				"last":        aggregationFunctionEmptySchema(),
+				"rolling":     aggregationFunctionRollingSchema(),
+				"time_offset": aggregationFunctionTimeOffsetSchema(),
 			},
 		},
 	}
@@ -263,6 +265,20 @@ func aggregationFunctionRollingSchema() schema.Attribute {
 				Required: true,
 				Validators: []validator.String{
 					stringvalidator.LengthBetween(1, 250),
+				},
+			},
+		},
+	}
+}
+
+func aggregationFunctionTimeOffsetSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Optional: true,
+		Attributes: map[string]schema.Attribute{
+			"seconds": schema.Int64Attribute{
+				Required: true,
+				Validators: []validator.Int64{
+					int64validator.AtLeast(1),
 				},
 			},
 		},
@@ -498,18 +514,24 @@ type MonitorAggregateModel struct {
 }
 
 type AggregationFunctionModel struct {
-	PerSecond *AggregationFunctionEmptyModel   `tfsdk:"per_second"`
-	PerMinute *AggregationFunctionEmptyModel   `tfsdk:"per_minute"`
-	PerHour   *AggregationFunctionEmptyModel   `tfsdk:"per_hour"`
-	Rate      *AggregationFunctionEmptyModel   `tfsdk:"rate"`
-	Increase  *AggregationFunctionEmptyModel   `tfsdk:"increase"`
-	Rolling   *AggregationFunctionRollingModel `tfsdk:"rolling"`
+	PerSecond  *AggregationFunctionEmptyModel      `tfsdk:"per_second"`
+	PerMinute  *AggregationFunctionEmptyModel      `tfsdk:"per_minute"`
+	PerHour    *AggregationFunctionEmptyModel      `tfsdk:"per_hour"`
+	Rate       *AggregationFunctionEmptyModel      `tfsdk:"rate"`
+	Increase   *AggregationFunctionEmptyModel      `tfsdk:"increase"`
+	Last       *AggregationFunctionEmptyModel      `tfsdk:"last"`
+	Rolling    *AggregationFunctionRollingModel    `tfsdk:"rolling"`
+	TimeOffset *AggregationFunctionTimeOffsetModel `tfsdk:"time_offset"`
 }
 
 type AggregationFunctionEmptyModel struct{}
 
 type AggregationFunctionRollingModel struct {
 	Window types.String `tfsdk:"window"`
+}
+
+type AggregationFunctionTimeOffsetModel struct {
+	Seconds types.Int64 `tfsdk:"seconds"`
 }
 
 type AggregationFillModel struct {
@@ -539,12 +561,14 @@ func QueryAttrTypes() map[string]attr.Type {
 
 func AggregationFunctionAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"per_second": types.ObjectType{AttrTypes: AggregationFunctionEmptyAttrTypes()},
-		"per_minute": types.ObjectType{AttrTypes: AggregationFunctionEmptyAttrTypes()},
-		"per_hour":   types.ObjectType{AttrTypes: AggregationFunctionEmptyAttrTypes()},
-		"rate":       types.ObjectType{AttrTypes: AggregationFunctionEmptyAttrTypes()},
-		"increase":   types.ObjectType{AttrTypes: AggregationFunctionEmptyAttrTypes()},
-		"rolling":    types.ObjectType{AttrTypes: AggregationFunctionRollingAttrTypes()},
+		"per_second":  types.ObjectType{AttrTypes: AggregationFunctionEmptyAttrTypes()},
+		"per_minute":  types.ObjectType{AttrTypes: AggregationFunctionEmptyAttrTypes()},
+		"per_hour":    types.ObjectType{AttrTypes: AggregationFunctionEmptyAttrTypes()},
+		"rate":        types.ObjectType{AttrTypes: AggregationFunctionEmptyAttrTypes()},
+		"increase":    types.ObjectType{AttrTypes: AggregationFunctionEmptyAttrTypes()},
+		"last":        types.ObjectType{AttrTypes: AggregationFunctionEmptyAttrTypes()},
+		"rolling":     types.ObjectType{AttrTypes: AggregationFunctionRollingAttrTypes()},
+		"time_offset": types.ObjectType{AttrTypes: AggregationFunctionTimeOffsetAttrTypes()},
 	}
 }
 
@@ -555,6 +579,12 @@ func AggregationFunctionEmptyAttrTypes() map[string]attr.Type {
 func AggregationFunctionRollingAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"window": types.StringType,
+	}
+}
+
+func AggregationFunctionTimeOffsetAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"seconds": types.Int64Type,
 	}
 }
 

@@ -34,6 +34,7 @@
               "CLUSTER_DB_QUERY_CONNECTION_FAILED",
               "CLUSTER_DB_QUERY_QUERY_EXECUTION_FAILED",
               "CLUSTER_DB_QUERY_QUERY_TIMEOUT",
+              "CLUSTER_AGGREGATION_STRUCTURE",
               "ABORT_ERROR",
               "BAD_REQUEST",
               "DUPLICATE_KEY_VIOLATION",
@@ -553,6 +554,68 @@
           },
           "data": {
             "$ref": "#/components/schemas/DeleteResponse"
+          }
+        }
+      },
+      "Cluster": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "clusterType",
+          "clusterRegion"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the Tsuga cluster containing your observability data"
+          },
+          "name": {
+            "type": "string",
+            "description": "Internal name of the Tsuga cluster"
+          },
+          "friendlyName": {
+            "type": "string",
+            "description": "Human-readable display name set by an operator"
+          },
+          "clusterType": {
+            "enum": [
+              "aws",
+              "gcp",
+              "azure"
+            ],
+            "description": "Cloud provider hosting the Tsuga cluster"
+          },
+          "clusterRegion": {
+            "type": "string",
+            "description": "Region where the Tsuga cluster is deployed"
+          }
+        },
+        "description": "A Tsuga cluster containing your observability data",
+        "example": {
+          "id": "abc-123-def",
+          "name": "production",
+          "friendlyName": "Production (US)",
+          "clusterType": "aws",
+          "clusterRegion": "us-east-1"
+        }
+      },
+      "ListClustersResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Cluster"
+            }
           }
         }
       },
@@ -1207,6 +1270,2715 @@
             }
           }
         }
+      },
+      "ListInventoryResourcesResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "cloudPlatform",
+                    "cloudAccount",
+                    "fullyQualifiedResourceId",
+                    "displayName",
+                    "nativeResourceType",
+                    "resourceLastSeenAt"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Identifier of the inventory resource"
+                    },
+                    "cloudPlatform": {
+                      "enum": [
+                        "aws",
+                        "gcp",
+                        "azure"
+                      ],
+                      "description": "Cloud platform that hosts this resource"
+                    },
+                    "cloudAccount": {
+                      "type": "string",
+                      "description": "Cloud-native account identifier the resource was discovered in"
+                    },
+                    "cloudRegion": {
+                      "type": "string",
+                      "description": "Cloud region the resource was discovered in, when applicable"
+                    },
+                    "fullyQualifiedResourceId": {
+                      "type": "string",
+                      "description": "Cloud-native unique identifier for this resource (for example an AWS ARN or GCP resource name)"
+                    },
+                    "displayName": {
+                      "type": "string",
+                      "description": "Human-readable name shown in the Tsuga UI"
+                    },
+                    "nativeResourceType": {
+                      "type": "string",
+                      "description": "Cloud-native resource type, for example aws_ec2_instance or gcp_bucket"
+                    },
+                    "resourceCreatedAt": {
+                      "description": "When the resource was created in the cloud, when known",
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "resourceUpdatedAt": {
+                      "description": "When the resource was last updated in the cloud, when known",
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "resourceLastSeenAt": {
+                      "description": "When this resource was last observed during an inventory scan",
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "key",
+                          "value"
+                        ],
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "maxLength": 128
+                          },
+                          "value": {
+                            "type": "string",
+                            "maxLength": 256,
+                            "pattern": "^\\S(.*\\S)?$"
+                          }
+                        },
+                        "title": "Tag"
+                      },
+                      "title": "Tags",
+                      "maxItems": 50,
+                      "description": "List of key/value tags applied to the resource"
+                    }
+                  },
+                  "description": "Base fields of a cloud resource discovered by an inventory scan"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "required": [
+                        "category",
+                        "resourceType"
+                      ],
+                      "properties": {
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "application"
+                          ]
+                        },
+                        "resourceType": {
+                          "type": "string",
+                          "enum": [
+                            "webService"
+                          ]
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "instanceCount": {
+                              "type": "number"
+                            },
+                            "hostnames": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "runtime": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "category",
+                        "resourceType"
+                      ],
+                      "properties": {
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "data"
+                          ]
+                        },
+                        "resourceType": {
+                          "type": "string",
+                          "enum": [
+                            "bucket"
+                          ]
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "versioningStatus": {
+                              "enum": [
+                                "Enabled",
+                                "Disabled",
+                                "Suspended",
+                                "Not configured"
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "category",
+                        "resourceType"
+                      ],
+                      "properties": {
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "data"
+                          ]
+                        },
+                        "resourceType": {
+                          "type": "string",
+                          "enum": [
+                            "messagingService"
+                          ]
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "url": {
+                              "type": "string"
+                            },
+                            "maxMessageSizeBytes": {
+                              "type": "number"
+                            },
+                            "messageRetentionHours": {
+                              "type": "number"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "category",
+                        "resourceType"
+                      ],
+                      "properties": {
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "data"
+                          ]
+                        },
+                        "resourceType": {
+                          "type": "string",
+                          "enum": [
+                            "fileSystem"
+                          ]
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "isEncrypted": {
+                              "type": "boolean"
+                            },
+                            "ownerId": {
+                              "type": "string"
+                            },
+                            "state": {
+                              "enum": [
+                                "creating",
+                                "available",
+                                "deleting",
+                                "deleted",
+                                "error",
+                                "updating"
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "category",
+                        "resourceType"
+                      ],
+                      "properties": {
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "data"
+                          ]
+                        },
+                        "resourceType": {
+                          "type": "string",
+                          "enum": [
+                            "contentDeliveryNetwork"
+                          ]
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "domainName": {
+                              "type": "string"
+                            },
+                            "origins": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "category",
+                        "resourceType"
+                      ],
+                      "properties": {
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "data"
+                          ]
+                        },
+                        "resourceType": {
+                          "type": "string",
+                          "enum": [
+                            "database"
+                          ]
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "allocatedStorageGib": {
+                              "type": "number"
+                            },
+                            "encryptedAtRest": {
+                              "type": "boolean"
+                            },
+                            "engine": {
+                              "type": "string"
+                            },
+                            "dynamoDbItemCount": {
+                              "type": "number"
+                            },
+                            "dynamoDbActualSizeGib": {
+                              "type": "number"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "category",
+                        "resourceType"
+                      ],
+                      "properties": {
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "data"
+                          ]
+                        },
+                        "resourceType": {
+                          "type": "string",
+                          "enum": [
+                            "storageAccount"
+                          ]
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "category",
+                        "resourceType"
+                      ],
+                      "properties": {
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "data"
+                          ]
+                        },
+                        "resourceType": {
+                          "type": "string",
+                          "enum": [
+                            "volume"
+                          ]
+                        },
+                        "attributes": {
+                          "allOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "isEncrypted": {
+                                  "type": "boolean"
+                                },
+                                "sizeGib": {
+                                  "type": "number"
+                                }
+                              }
+                            },
+                            {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "state": {
+                                      "enum": [
+                                        "creating",
+                                        "available",
+                                        "deleting",
+                                        "deleted",
+                                        "error",
+                                        "in-use"
+                                      ]
+                                    },
+                                    "volumeType": {
+                                      "enum": [
+                                        "gp2",
+                                        "gp3",
+                                        "io1",
+                                        "io2",
+                                        "st1",
+                                        "sc1",
+                                        "standard"
+                                      ]
+                                    }
+                                  }
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "state": {
+                                      "type": "string"
+                                    },
+                                    "volumeType": {
+                                      "type": "string"
+                                    }
+                                  }
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "osType": {
+                                      "enum": [
+                                        "Windows",
+                                        "Linux"
+                                      ]
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "category",
+                        "resourceType"
+                      ],
+                      "properties": {
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "compute"
+                          ]
+                        },
+                        "resourceType": {
+                          "type": "string",
+                          "enum": [
+                            "virtualMachine"
+                          ]
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "required": [
+                            "instanceId"
+                          ],
+                          "properties": {
+                            "instanceId": {
+                              "type": "string"
+                            },
+                            "architecture": {
+                              "type": "string"
+                            },
+                            "instanceType": {
+                              "type": "string"
+                            },
+                            "operatingSystem": {
+                              "type": "string"
+                            },
+                            "memoryMib": {
+                              "type": "number"
+                            },
+                            "vCpus": {
+                              "type": "number"
+                            },
+                            "vpcId": {
+                              "type": "string"
+                            },
+                            "k8sClusterId": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "category",
+                        "resourceType"
+                      ],
+                      "properties": {
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "compute"
+                          ]
+                        },
+                        "resourceType": {
+                          "type": "string",
+                          "enum": [
+                            "serverless"
+                          ]
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "runtime": {
+                              "type": "string"
+                            },
+                            "memoryAllocationMib": {
+                              "type": "number"
+                            },
+                            "timeoutMs": {
+                              "type": "number"
+                            },
+                            "codeSha256": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "category",
+                        "resourceType"
+                      ],
+                      "properties": {
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "container"
+                          ]
+                        },
+                        "resourceType": {
+                          "type": "string",
+                          "enum": [
+                            "kubernetesCluster"
+                          ]
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "version": {
+                              "type": "string"
+                            },
+                            "virtualNetworkId": {
+                              "type": "string"
+                            },
+                            "subnets": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "category",
+                        "resourceType"
+                      ],
+                      "properties": {
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "container"
+                          ]
+                        },
+                        "resourceType": {
+                          "type": "string",
+                          "enum": [
+                            "containerRepository"
+                          ]
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "artifactRegistryFormat": {
+                              "enum": [
+                                "FORMAT_UNSPECIFIED",
+                                "DOCKER",
+                                "MAVEN",
+                                "NPM",
+                                "APT",
+                                "YUM",
+                                "PYTHON",
+                                "KFP",
+                                "GO",
+                                "GENERIC"
+                              ]
+                            },
+                            "uri": {
+                              "type": "string"
+                            },
+                            "tagMutability": {
+                              "enum": [
+                                "MUTABLE",
+                                "IMMUTABLE"
+                              ]
+                            },
+                            "scanOnPush": {
+                              "type": "boolean"
+                            },
+                            "encryptionType": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "category",
+                        "resourceType"
+                      ],
+                      "properties": {
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "container"
+                          ]
+                        },
+                        "resourceType": {
+                          "type": "string",
+                          "enum": [
+                            "containerCluster"
+                          ]
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "status": {
+                              "type": "string"
+                            },
+                            "activeServices": {
+                              "type": "number"
+                            },
+                            "pendingTasks": {
+                              "type": "number"
+                            },
+                            "runningTasks": {
+                              "type": "number"
+                            },
+                            "registeredContainerInstances": {
+                              "type": "number"
+                            },
+                            "capacityProviders": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "category",
+                        "resourceType"
+                      ],
+                      "properties": {
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "container"
+                          ]
+                        },
+                        "resourceType": {
+                          "type": "string",
+                          "enum": [
+                            "containerServiceTask"
+                          ]
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "status": {
+                              "type": "string"
+                            },
+                            "desiredStatus": {
+                              "type": "string"
+                            },
+                            "healthStatus": {
+                              "type": "string"
+                            },
+                            "availabilityZone": {
+                              "type": "string"
+                            },
+                            "startedAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "category",
+                        "resourceType"
+                      ],
+                      "properties": {
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "container"
+                          ]
+                        },
+                        "resourceType": {
+                          "type": "string",
+                          "enum": [
+                            "containerService"
+                          ]
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string"
+                            },
+                            "osType": {
+                              "type": "string"
+                            },
+                            "subnetIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "nbContainers": {
+                              "type": "number"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "category",
+                        "resourceType"
+                      ],
+                      "properties": {
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "container"
+                          ]
+                        },
+                        "resourceType": {
+                          "type": "string",
+                          "enum": [
+                            "containerImage"
+                          ]
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "required": [
+                            "digest",
+                            "imageTags",
+                            "repositoryName"
+                          ],
+                          "properties": {
+                            "digest": {
+                              "type": "string"
+                            },
+                            "imageTags": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "imageSizeBytes": {
+                              "type": "number"
+                            },
+                            "imagePushedAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "mediaType": {
+                              "type": "string"
+                            },
+                            "repositoryName": {
+                              "type": "string"
+                            },
+                            "repositoryId": {
+                              "type": "string"
+                            },
+                            "scanStatus": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "category",
+                        "resourceType"
+                      ],
+                      "properties": {
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "network"
+                          ]
+                        },
+                        "resourceType": {
+                          "type": "string",
+                          "enum": [
+                            "virtualNetwork"
+                          ]
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "required": [
+                            "ipCidrBlocks"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "ipCidrBlocks": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "category",
+                        "resourceType",
+                        "attributes"
+                      ],
+                      "properties": {
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "network"
+                          ]
+                        },
+                        "resourceType": {
+                          "type": "string",
+                          "enum": [
+                            "loadBalancer"
+                          ]
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "required": [
+                            "subnetIds"
+                          ],
+                          "properties": {
+                            "loadBalancerType": {
+                              "type": "string"
+                            },
+                            "dnsName": {
+                              "type": "string"
+                            },
+                            "virtualNetworkId": {
+                              "type": "string"
+                            },
+                            "subnetIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "scheme": {
+                              "type": "string"
+                            },
+                            "listeners": {
+                              "anyOf": [
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "protocol": {
+                                        "enum": [
+                                          "HTTP",
+                                          "HTTPS",
+                                          "TCP",
+                                          "UDP",
+                                          "GENEVE",
+                                          "TLS",
+                                          "TLS_QUIC",
+                                          "TCP_UDP",
+                                          "TCP_QUIC",
+                                          "QUIC"
+                                        ]
+                                      },
+                                      "port": {
+                                        "type": "number"
+                                      },
+                                      "instanceProtocol": {
+                                        "enum": [
+                                          "HTTP",
+                                          "HTTPS",
+                                          "TCP",
+                                          "UDP",
+                                          "GENEVE",
+                                          "TLS",
+                                          "TLS_QUIC",
+                                          "TCP_UDP",
+                                          "TCP_QUIC",
+                                          "QUIC"
+                                        ]
+                                      },
+                                      "instancePort": {
+                                        "type": "number"
+                                      }
+                                    }
+                                  }
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "protocol": {
+                                        "type": "string"
+                                      },
+                                      "ports": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "portRange": {
+                                        "type": "string"
+                                      },
+                                      "allPorts": {
+                                        "type": "boolean"
+                                      }
+                                    }
+                                  }
+                                }
+                              ]
+                            },
+                            "targets": {
+                              "anyOf": [
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "instanceId": {
+                                        "type": "string"
+                                      },
+                                      "state": {
+                                        "type": "string"
+                                      },
+                                      "reasonCode": {
+                                        "type": "string"
+                                      },
+                                      "description": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  }
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string"
+                                      },
+                                      "name": {
+                                        "type": "string"
+                                      },
+                                      "alwaysServe": {
+                                        "type": "boolean"
+                                      },
+                                      "subnets": {
+                                        "type": "array",
+                                        "items": {
+                                          "anyOf": [
+                                            {
+                                              "type": "number"
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "first": {
+                                                  "type": "string"
+                                                },
+                                                "last": {
+                                                  "type": "string"
+                                                },
+                                                "scope": {
+                                                  "type": "number"
+                                                }
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "target": {
+                                        "type": "string"
+                                      },
+                                      "weight": {
+                                        "type": "number"
+                                      },
+                                      "priority": {
+                                        "type": "number"
+                                      },
+                                      "status": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  }
+                                }
+                              ]
+                            },
+                            "azureLoadBalancingRules": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "required": [
+                                  "backendIpPools"
+                                ],
+                                "properties": {
+                                  "frontendIp": {
+                                    "type": "object",
+                                    "required": [
+                                      "name",
+                                      "type"
+                                    ],
+                                    "properties": {
+                                      "name": {
+                                        "type": "string"
+                                      },
+                                      "ip": {
+                                        "type": "string"
+                                      },
+                                      "type": {
+                                        "enum": [
+                                          "public",
+                                          "private"
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  "backendIpPools": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "required": [
+                                        "type",
+                                        "name"
+                                      ],
+                                      "properties": {
+                                        "type": {
+                                          "type": "string"
+                                        },
+                                        "name": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "category",
+                        "resourceType"
+                      ],
+                      "properties": {
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "network"
+                          ]
+                        },
+                        "resourceType": {
+                          "type": "string",
+                          "enum": [
+                            "targetGroup"
+                          ]
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "protocol": {
+                              "enum": [
+                                "HTTP",
+                                "HTTPS",
+                                "TCP",
+                                "UDP",
+                                "GENEVE",
+                                "TLS",
+                                "TLS_QUIC",
+                                "TCP_UDP",
+                                "TCP_QUIC",
+                                "QUIC"
+                              ]
+                            },
+                            "port": {
+                              "type": "number"
+                            },
+                            "type": {
+                              "enum": [
+                                "alb",
+                                "lambda",
+                                "instance",
+                                "ip"
+                              ]
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "targetGroupArn": {
+                              "type": "string"
+                            },
+                            "virtualNetworkId": {
+                              "type": "string"
+                            },
+                            "healthCheckProtocol": {
+                              "type": "string"
+                            },
+                            "healthCheckPort": {
+                              "type": "string"
+                            },
+                            "healthCheckPath": {
+                              "type": "string"
+                            },
+                            "healthCheckIntervalSeconds": {
+                              "type": "number"
+                            },
+                            "healthCheckTimeoutSeconds": {
+                              "type": "number"
+                            },
+                            "healthyThresholdCount": {
+                              "type": "number"
+                            },
+                            "unhealthyThresholdCount": {
+                              "type": "number"
+                            },
+                            "targets": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "required": [
+                                  "targetId"
+                                ],
+                                "properties": {
+                                  "targetId": {
+                                    "type": "string"
+                                  },
+                                  "targetPort": {
+                                    "type": "number"
+                                  },
+                                  "targetType": {
+                                    "enum": [
+                                      "instance",
+                                      "ip",
+                                      "lambda",
+                                      "alb"
+                                    ]
+                                  },
+                                  "healthState": {
+                                    "type": "string"
+                                  },
+                                  "healthReason": {
+                                    "type": "string"
+                                  },
+                                  "healthDescription": {
+                                    "type": "string"
+                                  },
+                                  "availabilityZone": {
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            },
+                            "targetCount": {
+                              "type": "number"
+                            },
+                            "healthyTargetCount": {
+                              "type": "number"
+                            },
+                            "loadBalancerArns": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "category",
+                        "resourceType"
+                      ],
+                      "properties": {
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "network"
+                          ]
+                        },
+                        "resourceType": {
+                          "type": "string",
+                          "enum": [
+                            "certificate"
+                          ]
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "domainName": {
+                              "type": "string"
+                            },
+                            "expiresAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "inUseBy": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "renewalEligibility": {
+                              "type": "string"
+                            },
+                            "revokedAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "status": {
+                              "type": "string"
+                            },
+                            "type": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              ],
+              "description": "A cloud resource discovered by an inventory scan, together with its category, type and category-specific attributes",
+              "example": {
+                "id": "123-456-abc",
+                "cloudPlatform": "aws",
+                "cloudAccount": "123456789012",
+                "cloudRegion": "us-east-1",
+                "fullyQualifiedResourceId": "arn:aws:s3:::tsuga-example-bucket",
+                "displayName": "tsuga-example-bucket",
+                "nativeResourceType": "aws_s3_bucket",
+                "resourceCreatedAt": "2024-01-01T08:00:00.000Z",
+                "resourceLastSeenAt": "2024-01-15T12:34:56.000Z",
+                "tags": [
+                  {
+                    "key": "team",
+                    "value": "platform"
+                  }
+                ],
+                "category": "data",
+                "resourceType": "bucket",
+                "attributes": {
+                  "versioningStatus": "Enabled"
+                }
+              }
+            }
+          }
+        }
+      },
+      "InventoryResource": {
+        "allOf": [
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "cloudPlatform",
+              "cloudAccount",
+              "fullyQualifiedResourceId",
+              "displayName",
+              "nativeResourceType",
+              "resourceLastSeenAt"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Identifier of the inventory resource"
+              },
+              "cloudPlatform": {
+                "enum": [
+                  "aws",
+                  "gcp",
+                  "azure"
+                ],
+                "description": "Cloud platform that hosts this resource"
+              },
+              "cloudAccount": {
+                "type": "string",
+                "description": "Cloud-native account identifier the resource was discovered in"
+              },
+              "cloudRegion": {
+                "type": "string",
+                "description": "Cloud region the resource was discovered in, when applicable"
+              },
+              "fullyQualifiedResourceId": {
+                "type": "string",
+                "description": "Cloud-native unique identifier for this resource (for example an AWS ARN or GCP resource name)"
+              },
+              "displayName": {
+                "type": "string",
+                "description": "Human-readable name shown in the Tsuga UI"
+              },
+              "nativeResourceType": {
+                "type": "string",
+                "description": "Cloud-native resource type, for example aws_ec2_instance or gcp_bucket"
+              },
+              "resourceCreatedAt": {
+                "description": "When the resource was created in the cloud, when known",
+                "type": "string",
+                "format": "date-time"
+              },
+              "resourceUpdatedAt": {
+                "description": "When the resource was last updated in the cloud, when known",
+                "type": "string",
+                "format": "date-time"
+              },
+              "resourceLastSeenAt": {
+                "description": "When this resource was last observed during an inventory scan",
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "key",
+                    "value"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "maxLength": 128
+                    },
+                    "value": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "pattern": "^\\S(.*\\S)?$"
+                    }
+                  },
+                  "title": "Tag"
+                },
+                "title": "Tags",
+                "maxItems": 50,
+                "description": "List of key/value tags applied to the resource"
+              }
+            },
+            "description": "Base fields of a cloud resource discovered by an inventory scan"
+          },
+          {
+            "anyOf": [
+              {
+                "type": "object",
+                "required": [
+                  "category",
+                  "resourceType"
+                ],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "application"
+                    ]
+                  },
+                  "resourceType": {
+                    "type": "string",
+                    "enum": [
+                      "webService"
+                    ]
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "properties": {
+                      "instanceCount": {
+                        "type": "number"
+                      },
+                      "hostnames": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "runtime": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "category",
+                  "resourceType"
+                ],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "data"
+                    ]
+                  },
+                  "resourceType": {
+                    "type": "string",
+                    "enum": [
+                      "bucket"
+                    ]
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "properties": {
+                      "versioningStatus": {
+                        "enum": [
+                          "Enabled",
+                          "Disabled",
+                          "Suspended",
+                          "Not configured"
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "category",
+                  "resourceType"
+                ],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "data"
+                    ]
+                  },
+                  "resourceType": {
+                    "type": "string",
+                    "enum": [
+                      "messagingService"
+                    ]
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "properties": {
+                      "url": {
+                        "type": "string"
+                      },
+                      "maxMessageSizeBytes": {
+                        "type": "number"
+                      },
+                      "messageRetentionHours": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "category",
+                  "resourceType"
+                ],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "data"
+                    ]
+                  },
+                  "resourceType": {
+                    "type": "string",
+                    "enum": [
+                      "fileSystem"
+                    ]
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "properties": {
+                      "isEncrypted": {
+                        "type": "boolean"
+                      },
+                      "ownerId": {
+                        "type": "string"
+                      },
+                      "state": {
+                        "enum": [
+                          "creating",
+                          "available",
+                          "deleting",
+                          "deleted",
+                          "error",
+                          "updating"
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "category",
+                  "resourceType"
+                ],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "data"
+                    ]
+                  },
+                  "resourceType": {
+                    "type": "string",
+                    "enum": [
+                      "contentDeliveryNetwork"
+                    ]
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "properties": {
+                      "domainName": {
+                        "type": "string"
+                      },
+                      "origins": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "category",
+                  "resourceType"
+                ],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "data"
+                    ]
+                  },
+                  "resourceType": {
+                    "type": "string",
+                    "enum": [
+                      "database"
+                    ]
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "properties": {
+                      "allocatedStorageGib": {
+                        "type": "number"
+                      },
+                      "encryptedAtRest": {
+                        "type": "boolean"
+                      },
+                      "engine": {
+                        "type": "string"
+                      },
+                      "dynamoDbItemCount": {
+                        "type": "number"
+                      },
+                      "dynamoDbActualSizeGib": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "category",
+                  "resourceType"
+                ],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "data"
+                    ]
+                  },
+                  "resourceType": {
+                    "type": "string",
+                    "enum": [
+                      "storageAccount"
+                    ]
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "category",
+                  "resourceType"
+                ],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "data"
+                    ]
+                  },
+                  "resourceType": {
+                    "type": "string",
+                    "enum": [
+                      "volume"
+                    ]
+                  },
+                  "attributes": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "isEncrypted": {
+                            "type": "boolean"
+                          },
+                          "sizeGib": {
+                            "type": "number"
+                          }
+                        }
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "state": {
+                                "enum": [
+                                  "creating",
+                                  "available",
+                                  "deleting",
+                                  "deleted",
+                                  "error",
+                                  "in-use"
+                                ]
+                              },
+                              "volumeType": {
+                                "enum": [
+                                  "gp2",
+                                  "gp3",
+                                  "io1",
+                                  "io2",
+                                  "st1",
+                                  "sc1",
+                                  "standard"
+                                ]
+                              }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "state": {
+                                "type": "string"
+                              },
+                              "volumeType": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "osType": {
+                                "enum": [
+                                  "Windows",
+                                  "Linux"
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "category",
+                  "resourceType"
+                ],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "compute"
+                    ]
+                  },
+                  "resourceType": {
+                    "type": "string",
+                    "enum": [
+                      "virtualMachine"
+                    ]
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "required": [
+                      "instanceId"
+                    ],
+                    "properties": {
+                      "instanceId": {
+                        "type": "string"
+                      },
+                      "architecture": {
+                        "type": "string"
+                      },
+                      "instanceType": {
+                        "type": "string"
+                      },
+                      "operatingSystem": {
+                        "type": "string"
+                      },
+                      "memoryMib": {
+                        "type": "number"
+                      },
+                      "vCpus": {
+                        "type": "number"
+                      },
+                      "vpcId": {
+                        "type": "string"
+                      },
+                      "k8sClusterId": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "category",
+                  "resourceType"
+                ],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "compute"
+                    ]
+                  },
+                  "resourceType": {
+                    "type": "string",
+                    "enum": [
+                      "serverless"
+                    ]
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "properties": {
+                      "runtime": {
+                        "type": "string"
+                      },
+                      "memoryAllocationMib": {
+                        "type": "number"
+                      },
+                      "timeoutMs": {
+                        "type": "number"
+                      },
+                      "codeSha256": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "category",
+                  "resourceType"
+                ],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "container"
+                    ]
+                  },
+                  "resourceType": {
+                    "type": "string",
+                    "enum": [
+                      "kubernetesCluster"
+                    ]
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "string"
+                      },
+                      "virtualNetworkId": {
+                        "type": "string"
+                      },
+                      "subnets": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "category",
+                  "resourceType"
+                ],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "container"
+                    ]
+                  },
+                  "resourceType": {
+                    "type": "string",
+                    "enum": [
+                      "containerRepository"
+                    ]
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "properties": {
+                      "artifactRegistryFormat": {
+                        "enum": [
+                          "FORMAT_UNSPECIFIED",
+                          "DOCKER",
+                          "MAVEN",
+                          "NPM",
+                          "APT",
+                          "YUM",
+                          "PYTHON",
+                          "KFP",
+                          "GO",
+                          "GENERIC"
+                        ]
+                      },
+                      "uri": {
+                        "type": "string"
+                      },
+                      "tagMutability": {
+                        "enum": [
+                          "MUTABLE",
+                          "IMMUTABLE"
+                        ]
+                      },
+                      "scanOnPush": {
+                        "type": "boolean"
+                      },
+                      "encryptionType": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "category",
+                  "resourceType"
+                ],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "container"
+                    ]
+                  },
+                  "resourceType": {
+                    "type": "string",
+                    "enum": [
+                      "containerCluster"
+                    ]
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string"
+                      },
+                      "activeServices": {
+                        "type": "number"
+                      },
+                      "pendingTasks": {
+                        "type": "number"
+                      },
+                      "runningTasks": {
+                        "type": "number"
+                      },
+                      "registeredContainerInstances": {
+                        "type": "number"
+                      },
+                      "capacityProviders": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "category",
+                  "resourceType"
+                ],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "container"
+                    ]
+                  },
+                  "resourceType": {
+                    "type": "string",
+                    "enum": [
+                      "containerServiceTask"
+                    ]
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string"
+                      },
+                      "desiredStatus": {
+                        "type": "string"
+                      },
+                      "healthStatus": {
+                        "type": "string"
+                      },
+                      "availabilityZone": {
+                        "type": "string"
+                      },
+                      "startedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "category",
+                  "resourceType"
+                ],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "container"
+                    ]
+                  },
+                  "resourceType": {
+                    "type": "string",
+                    "enum": [
+                      "containerService"
+                    ]
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      },
+                      "osType": {
+                        "type": "string"
+                      },
+                      "subnetIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "nbContainers": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "category",
+                  "resourceType"
+                ],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "container"
+                    ]
+                  },
+                  "resourceType": {
+                    "type": "string",
+                    "enum": [
+                      "containerImage"
+                    ]
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "required": [
+                      "digest",
+                      "imageTags",
+                      "repositoryName"
+                    ],
+                    "properties": {
+                      "digest": {
+                        "type": "string"
+                      },
+                      "imageTags": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "imageSizeBytes": {
+                        "type": "number"
+                      },
+                      "imagePushedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "mediaType": {
+                        "type": "string"
+                      },
+                      "repositoryName": {
+                        "type": "string"
+                      },
+                      "repositoryId": {
+                        "type": "string"
+                      },
+                      "scanStatus": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "category",
+                  "resourceType"
+                ],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "network"
+                    ]
+                  },
+                  "resourceType": {
+                    "type": "string",
+                    "enum": [
+                      "virtualNetwork"
+                    ]
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "required": [
+                      "ipCidrBlocks"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "ipCidrBlocks": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "category",
+                  "resourceType",
+                  "attributes"
+                ],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "network"
+                    ]
+                  },
+                  "resourceType": {
+                    "type": "string",
+                    "enum": [
+                      "loadBalancer"
+                    ]
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "required": [
+                      "subnetIds"
+                    ],
+                    "properties": {
+                      "loadBalancerType": {
+                        "type": "string"
+                      },
+                      "dnsName": {
+                        "type": "string"
+                      },
+                      "virtualNetworkId": {
+                        "type": "string"
+                      },
+                      "subnetIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "scheme": {
+                        "type": "string"
+                      },
+                      "listeners": {
+                        "anyOf": [
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "protocol": {
+                                  "enum": [
+                                    "HTTP",
+                                    "HTTPS",
+                                    "TCP",
+                                    "UDP",
+                                    "GENEVE",
+                                    "TLS",
+                                    "TLS_QUIC",
+                                    "TCP_UDP",
+                                    "TCP_QUIC",
+                                    "QUIC"
+                                  ]
+                                },
+                                "port": {
+                                  "type": "number"
+                                },
+                                "instanceProtocol": {
+                                  "enum": [
+                                    "HTTP",
+                                    "HTTPS",
+                                    "TCP",
+                                    "UDP",
+                                    "GENEVE",
+                                    "TLS",
+                                    "TLS_QUIC",
+                                    "TCP_UDP",
+                                    "TCP_QUIC",
+                                    "QUIC"
+                                  ]
+                                },
+                                "instancePort": {
+                                  "type": "number"
+                                }
+                              }
+                            }
+                          },
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "protocol": {
+                                  "type": "string"
+                                },
+                                "ports": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "portRange": {
+                                  "type": "string"
+                                },
+                                "allPorts": {
+                                  "type": "boolean"
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "targets": {
+                        "anyOf": [
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "instanceId": {
+                                  "type": "string"
+                                },
+                                "state": {
+                                  "type": "string"
+                                },
+                                "reasonCode": {
+                                  "type": "string"
+                                },
+                                "description": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          },
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "alwaysServe": {
+                                  "type": "boolean"
+                                },
+                                "subnets": {
+                                  "type": "array",
+                                  "items": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "first": {
+                                            "type": "string"
+                                          },
+                                          "last": {
+                                            "type": "string"
+                                          },
+                                          "scope": {
+                                            "type": "number"
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                },
+                                "target": {
+                                  "type": "string"
+                                },
+                                "weight": {
+                                  "type": "number"
+                                },
+                                "priority": {
+                                  "type": "number"
+                                },
+                                "status": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "azureLoadBalancingRules": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "backendIpPools"
+                          ],
+                          "properties": {
+                            "frontendIp": {
+                              "type": "object",
+                              "required": [
+                                "name",
+                                "type"
+                              ],
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "ip": {
+                                  "type": "string"
+                                },
+                                "type": {
+                                  "enum": [
+                                    "public",
+                                    "private"
+                                  ]
+                                }
+                              }
+                            },
+                            "backendIpPools": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "required": [
+                                  "type",
+                                  "name"
+                                ],
+                                "properties": {
+                                  "type": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "category",
+                  "resourceType"
+                ],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "network"
+                    ]
+                  },
+                  "resourceType": {
+                    "type": "string",
+                    "enum": [
+                      "targetGroup"
+                    ]
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "properties": {
+                      "protocol": {
+                        "enum": [
+                          "HTTP",
+                          "HTTPS",
+                          "TCP",
+                          "UDP",
+                          "GENEVE",
+                          "TLS",
+                          "TLS_QUIC",
+                          "TCP_UDP",
+                          "TCP_QUIC",
+                          "QUIC"
+                        ]
+                      },
+                      "port": {
+                        "type": "number"
+                      },
+                      "type": {
+                        "enum": [
+                          "alb",
+                          "lambda",
+                          "instance",
+                          "ip"
+                        ]
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "targetGroupArn": {
+                        "type": "string"
+                      },
+                      "virtualNetworkId": {
+                        "type": "string"
+                      },
+                      "healthCheckProtocol": {
+                        "type": "string"
+                      },
+                      "healthCheckPort": {
+                        "type": "string"
+                      },
+                      "healthCheckPath": {
+                        "type": "string"
+                      },
+                      "healthCheckIntervalSeconds": {
+                        "type": "number"
+                      },
+                      "healthCheckTimeoutSeconds": {
+                        "type": "number"
+                      },
+                      "healthyThresholdCount": {
+                        "type": "number"
+                      },
+                      "unhealthyThresholdCount": {
+                        "type": "number"
+                      },
+                      "targets": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "targetId"
+                          ],
+                          "properties": {
+                            "targetId": {
+                              "type": "string"
+                            },
+                            "targetPort": {
+                              "type": "number"
+                            },
+                            "targetType": {
+                              "enum": [
+                                "instance",
+                                "ip",
+                                "lambda",
+                                "alb"
+                              ]
+                            },
+                            "healthState": {
+                              "type": "string"
+                            },
+                            "healthReason": {
+                              "type": "string"
+                            },
+                            "healthDescription": {
+                              "type": "string"
+                            },
+                            "availabilityZone": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      },
+                      "targetCount": {
+                        "type": "number"
+                      },
+                      "healthyTargetCount": {
+                        "type": "number"
+                      },
+                      "loadBalancerArns": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "category",
+                  "resourceType"
+                ],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "network"
+                    ]
+                  },
+                  "resourceType": {
+                    "type": "string",
+                    "enum": [
+                      "certificate"
+                    ]
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "properties": {
+                      "domainName": {
+                        "type": "string"
+                      },
+                      "expiresAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "inUseBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "renewalEligibility": {
+                        "type": "string"
+                      },
+                      "revokedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "description": "A cloud resource discovered by an inventory scan, together with its category, type and category-specific attributes",
+        "example": {
+          "id": "123-456-abc",
+          "cloudPlatform": "aws",
+          "cloudAccount": "123456789012",
+          "cloudRegion": "us-east-1",
+          "fullyQualifiedResourceId": "arn:aws:s3:::tsuga-example-bucket",
+          "displayName": "tsuga-example-bucket",
+          "nativeResourceType": "aws_s3_bucket",
+          "resourceCreatedAt": "2024-01-01T08:00:00.000Z",
+          "resourceLastSeenAt": "2024-01-15T12:34:56.000Z",
+          "tags": [
+            {
+              "key": "team",
+              "value": "platform"
+            }
+          ],
+          "category": "data",
+          "resourceType": "bucket",
+          "attributes": {
+            "versioningStatus": "Enabled"
+          }
+        }
+      },
+      "InventoryResourceBase": {
+        "type": "object",
+        "required": [
+          "id",
+          "cloudPlatform",
+          "cloudAccount",
+          "fullyQualifiedResourceId",
+          "displayName",
+          "nativeResourceType",
+          "resourceLastSeenAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier of the inventory resource"
+          },
+          "cloudPlatform": {
+            "enum": [
+              "aws",
+              "gcp",
+              "azure"
+            ],
+            "description": "Cloud platform that hosts this resource"
+          },
+          "cloudAccount": {
+            "type": "string",
+            "description": "Cloud-native account identifier the resource was discovered in"
+          },
+          "cloudRegion": {
+            "type": "string",
+            "description": "Cloud region the resource was discovered in, when applicable"
+          },
+          "fullyQualifiedResourceId": {
+            "type": "string",
+            "description": "Cloud-native unique identifier for this resource (for example an AWS ARN or GCP resource name)"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable name shown in the Tsuga UI"
+          },
+          "nativeResourceType": {
+            "type": "string",
+            "description": "Cloud-native resource type, for example aws_ec2_instance or gcp_bucket"
+          },
+          "resourceCreatedAt": {
+            "description": "When the resource was created in the cloud, when known",
+            "type": "string",
+            "format": "date-time"
+          },
+          "resourceUpdatedAt": {
+            "description": "When the resource was last updated in the cloud, when known",
+            "type": "string",
+            "format": "date-time"
+          },
+          "resourceLastSeenAt": {
+            "description": "When this resource was last observed during an inventory scan",
+            "type": "string",
+            "format": "date-time"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "value"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "maxLength": 128
+                },
+                "value": {
+                  "type": "string",
+                  "maxLength": 256,
+                  "pattern": "^\\S(.*\\S)?$"
+                }
+              },
+              "title": "Tag"
+            },
+            "title": "Tags",
+            "maxItems": 50,
+            "description": "List of key/value tags applied to the resource"
+          }
+        },
+        "description": "Base fields of a cloud resource discovered by an inventory scan"
       },
       "SearchLogsResponse": {
         "type": "object",
@@ -3008,6 +5780,7 @@
                             "no-noisy-group-monitors",
                             "no-long-alert-monitors",
                             "no-redundant-monitors",
+                            "no-absent-log-fields",
                             "k8s-recommended-attributes",
                             "k8s-recommended-metrics",
                             "k8s-recommended-change-events"
@@ -3149,6 +5922,7 @@
                                       "no-noisy-group-monitors",
                                       "no-long-alert-monitors",
                                       "no-redundant-monitors",
+                                      "no-absent-log-fields",
                                       "k8s-recommended-attributes",
                                       "k8s-recommended-metrics",
                                       "k8s-recommended-change-events"
@@ -3329,6 +6103,7 @@
                                     "no-noisy-group-monitors",
                                     "no-long-alert-monitors",
                                     "no-redundant-monitors",
+                                    "no-absent-log-fields",
                                     "k8s-recommended-attributes",
                                     "k8s-recommended-metrics",
                                     "k8s-recommended-change-events"
@@ -3565,6 +6340,7 @@
                     "no-noisy-group-monitors",
                     "no-long-alert-monitors",
                     "no-redundant-monitors",
+                    "no-absent-log-fields",
                     "k8s-recommended-attributes",
                     "k8s-recommended-metrics",
                     "k8s-recommended-change-events"
@@ -3706,6 +6482,7 @@
                               "no-noisy-group-monitors",
                               "no-long-alert-monitors",
                               "no-redundant-monitors",
+                              "no-absent-log-fields",
                               "k8s-recommended-attributes",
                               "k8s-recommended-metrics",
                               "k8s-recommended-change-events"
@@ -3886,6 +6663,7 @@
                             "no-noisy-group-monitors",
                             "no-long-alert-monitors",
                             "no-redundant-monitors",
+                            "no-absent-log-fields",
                             "k8s-recommended-attributes",
                             "k8s-recommended-metrics",
                             "k8s-recommended-change-events"
@@ -5034,6 +7812,64 @@
           }
         }
       },
+      "GetServiceGraphResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "nodes",
+              "edges"
+            ],
+            "properties": {
+              "nodes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "serviceName"
+                  ],
+                  "properties": {
+                    "serviceName": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "edges": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "from",
+                    "to",
+                    "count"
+                  ],
+                  "properties": {
+                    "from": {
+                      "type": "string"
+                    },
+                    "to": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "TagPolicy": {
         "type": "object",
         "required": [
@@ -5161,7 +7997,8 @@
                         "log-route",
                         "monitor",
                         "notification-rule",
-                        "notification-silence"
+                        "notification-silence",
+                        "slo"
                       ]
                     }
                   }
@@ -6323,6 +9160,22 @@
         },
         "title": "Sqrt"
       },
+      "FunctionLast": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Takes the last value of the metric for the selected time frame",
+            "enum": [
+              "last"
+            ]
+          }
+        },
+        "title": "Last"
+      },
       "FunctionTimeOffset": {
         "type": "object",
         "required": [
@@ -6374,9 +9227,10 @@
               "properties": {
                 "formula": {
                   "type": "string",
-                  "format": "math-formula",
+                  "format": "tsuga-formula",
                   "minLength": 0,
-                  "maxLength": 250
+                  "maxLength": 250,
+                  "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
                 },
                 "operator": {
                   "enum": [
@@ -6501,7 +9355,7 @@
                 "functions": {
                   "type": "array",
                   "items": {
-                    "title": "MonitorFunction",
+                    "title": "Function",
                     "type": "object",
                     "discriminator": {
                       "propertyName": "type",
@@ -6514,7 +9368,9 @@
                         "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
-                        "sqrt": "#/components/schemas/FunctionSqrt"
+                        "sqrt": "#/components/schemas/FunctionSqrt",
+                        "last": "#/components/schemas/FunctionLast",
+                        "time-offset": "#/components/schemas/FunctionTimeOffset"
                       }
                     },
                     "required": [
@@ -6547,6 +9403,12 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionSqrt"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionLast"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionTimeOffset"
                       }
                     ]
                   },
@@ -6618,9 +9480,10 @@
               "properties": {
                 "formula": {
                   "type": "string",
-                  "format": "math-formula",
+                  "format": "tsuga-formula",
                   "minLength": 0,
-                  "maxLength": 250
+                  "maxLength": 250,
+                  "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
                 },
                 "operator": {
                   "enum": [
@@ -6745,7 +9608,7 @@
                 "functions": {
                   "type": "array",
                   "items": {
-                    "title": "MonitorFunction",
+                    "title": "Function",
                     "type": "object",
                     "discriminator": {
                       "propertyName": "type",
@@ -6758,7 +9621,9 @@
                         "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
-                        "sqrt": "#/components/schemas/FunctionSqrt"
+                        "sqrt": "#/components/schemas/FunctionSqrt",
+                        "last": "#/components/schemas/FunctionLast",
+                        "time-offset": "#/components/schemas/FunctionTimeOffset"
                       }
                     },
                     "required": [
@@ -6791,6 +9656,12 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionSqrt"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionLast"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionTimeOffset"
                       }
                     ]
                   },
@@ -6862,9 +9733,10 @@
               "properties": {
                 "formula": {
                   "type": "string",
-                  "format": "math-formula",
+                  "format": "tsuga-formula",
                   "minLength": 0,
-                  "maxLength": 250
+                  "maxLength": 250,
+                  "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
                 },
                 "operator": {
                   "enum": [
@@ -6989,7 +9861,7 @@
                 "functions": {
                   "type": "array",
                   "items": {
-                    "title": "MonitorFunction",
+                    "title": "Function",
                     "type": "object",
                     "discriminator": {
                       "propertyName": "type",
@@ -7002,7 +9874,9 @@
                         "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
-                        "sqrt": "#/components/schemas/FunctionSqrt"
+                        "sqrt": "#/components/schemas/FunctionSqrt",
+                        "last": "#/components/schemas/FunctionLast",
+                        "time-offset": "#/components/schemas/FunctionTimeOffset"
                       }
                     },
                     "required": [
@@ -7035,6 +9909,12 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionSqrt"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionLast"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionTimeOffset"
                       }
                     ]
                   },
@@ -7103,9 +9983,10 @@
             "properties": {
               "formula": {
                 "type": "string",
-                "format": "math-formula",
+                "format": "tsuga-formula",
                 "minLength": 0,
-                "maxLength": 250
+                "maxLength": 250,
+                "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
               },
               "conditionType": {
                 "enum": [
@@ -7224,7 +10105,7 @@
                 "functions": {
                   "type": "array",
                   "items": {
-                    "title": "MonitorFunction",
+                    "title": "Function",
                     "type": "object",
                     "discriminator": {
                       "propertyName": "type",
@@ -7237,7 +10118,9 @@
                         "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
-                        "sqrt": "#/components/schemas/FunctionSqrt"
+                        "sqrt": "#/components/schemas/FunctionSqrt",
+                        "last": "#/components/schemas/FunctionLast",
+                        "time-offset": "#/components/schemas/FunctionTimeOffset"
                       }
                     },
                     "required": [
@@ -7270,6 +10153,12 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionSqrt"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionLast"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionTimeOffset"
                       }
                     ]
                   },
@@ -7338,9 +10227,10 @@
             "properties": {
               "formula": {
                 "type": "string",
-                "format": "math-formula",
+                "format": "tsuga-formula",
                 "minLength": 0,
-                "maxLength": 250
+                "maxLength": 250,
+                "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
               },
               "conditionType": {
                 "enum": [
@@ -7459,7 +10349,7 @@
                 "functions": {
                   "type": "array",
                   "items": {
-                    "title": "MonitorFunction",
+                    "title": "Function",
                     "type": "object",
                     "discriminator": {
                       "propertyName": "type",
@@ -7472,7 +10362,9 @@
                         "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
-                        "sqrt": "#/components/schemas/FunctionSqrt"
+                        "sqrt": "#/components/schemas/FunctionSqrt",
+                        "last": "#/components/schemas/FunctionLast",
+                        "time-offset": "#/components/schemas/FunctionTimeOffset"
                       }
                     },
                     "required": [
@@ -7505,6 +10397,12 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionSqrt"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionLast"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionTimeOffset"
                       }
                     ]
                   },
@@ -7727,7 +10625,8 @@
               "type": "string",
               "format": "lowercase-email",
               "minLength": 0,
-              "maxLength": 254
+              "maxLength": 254,
+              "errorMessage": "Must be a valid lowercase email address."
             },
             "minItems": 1,
             "maxItems": 20,
@@ -8484,6 +11383,7 @@
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
+                        "last": "#/components/schemas/FunctionLast",
                         "time-offset": "#/components/schemas/FunctionTimeOffset"
                       }
                     },
@@ -8517,6 +11417,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionSqrt"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionLast"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionTimeOffset"
@@ -8563,10 +11466,11 @@
           },
           "formula": {
             "type": "string",
-            "format": "math-formula",
+            "format": "tsuga-formula",
             "minLength": 0,
             "maxLength": 250,
-            "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series"
+            "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series",
+            "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
           },
           "aliases": {
             "type": "object",
@@ -8959,6 +11863,7 @@
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
+                        "last": "#/components/schemas/FunctionLast",
                         "time-offset": "#/components/schemas/FunctionTimeOffset"
                       }
                     },
@@ -8992,6 +11897,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionSqrt"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionLast"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionTimeOffset"
@@ -9038,10 +11946,11 @@
           },
           "formula": {
             "type": "string",
-            "format": "math-formula",
+            "format": "tsuga-formula",
             "minLength": 0,
             "maxLength": 250,
-            "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series"
+            "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series",
+            "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
           },
           "aliases": {
             "type": "object",
@@ -9138,6 +12047,44 @@
           "precision": {
             "type": "number",
             "description": "Number of decimal places to display in the value"
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "operator",
+                "value",
+                "color"
+              ],
+              "properties": {
+                "operator": {
+                  "enum": [
+                    "greater_than",
+                    "less_than",
+                    "equal",
+                    "not_equal",
+                    "greater_than_or_equal",
+                    "less_than_or_equal"
+                  ],
+                  "description": "Comparator used to evaluate the metric value"
+                },
+                "value": {
+                  "type": "number",
+                  "description": "Threshold value used when evaluating the operator"
+                },
+                "color": {
+                  "enum": [
+                    "alert",
+                    "warning",
+                    "success"
+                  ],
+                  "description": "Color applied when the condition is met"
+                }
+              },
+              "title": "ConditionalFormatting"
+            },
+            "description": "Conditional formatting rules applied to the displayed value"
           }
         },
         "title": "TopList"
@@ -9233,6 +12180,7 @@
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
+                        "last": "#/components/schemas/FunctionLast",
                         "time-offset": "#/components/schemas/FunctionTimeOffset"
                       }
                     },
@@ -9266,6 +12214,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionSqrt"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionLast"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionTimeOffset"
@@ -9312,10 +12263,11 @@
           },
           "formula": {
             "type": "string",
-            "format": "math-formula",
+            "format": "tsuga-formula",
             "minLength": 0,
             "maxLength": 250,
-            "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series"
+            "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series",
+            "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
           },
           "aliases": {
             "type": "object",
@@ -9515,6 +12467,7 @@
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
+                        "last": "#/components/schemas/FunctionLast",
                         "time-offset": "#/components/schemas/FunctionTimeOffset"
                       }
                     },
@@ -9548,6 +12501,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionSqrt"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionLast"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionTimeOffset"
@@ -9594,10 +12550,11 @@
           },
           "formula": {
             "type": "string",
-            "format": "math-formula",
+            "format": "tsuga-formula",
             "minLength": 0,
             "maxLength": 250,
-            "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series"
+            "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series",
+            "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
           },
           "aliases": {
             "type": "object",
@@ -9815,6 +12772,7 @@
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
+                        "last": "#/components/schemas/FunctionLast",
                         "time-offset": "#/components/schemas/FunctionTimeOffset"
                       }
                     },
@@ -9848,6 +12806,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionSqrt"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionLast"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionTimeOffset"
@@ -9894,10 +12855,11 @@
           },
           "formula": {
             "type": "string",
-            "format": "math-formula",
+            "format": "tsuga-formula",
             "minLength": 0,
             "maxLength": 250,
-            "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series"
+            "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series",
+            "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
           },
           "aliases": {
             "type": "object",
@@ -10304,6 +13266,7 @@
                               "log": "#/components/schemas/FunctionLog",
                               "power": "#/components/schemas/FunctionPower",
                               "sqrt": "#/components/schemas/FunctionSqrt",
+                              "last": "#/components/schemas/FunctionLast",
                               "time-offset": "#/components/schemas/FunctionTimeOffset"
                             }
                           },
@@ -10337,6 +13300,9 @@
                             },
                             {
                               "$ref": "#/components/schemas/FunctionSqrt"
+                            },
+                            {
+                              "$ref": "#/components/schemas/FunctionLast"
                             },
                             {
                               "$ref": "#/components/schemas/FunctionTimeOffset"
@@ -10383,10 +13349,11 @@
                 },
                 "formula": {
                   "type": "string",
-                  "format": "math-formula",
+                  "format": "tsuga-formula",
                   "minLength": 0,
                   "maxLength": 250,
-                  "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series"
+                  "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series",
+                  "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
                 },
                 "aliases": {
                   "type": "object",
@@ -11089,10 +14056,11 @@
         },
         "description": "Recurring weekly silence schedule"
       },
-      "GithubCrawlerCredentialsInput": {
+      "GithubCrawlerConfig": {
         "type": "object",
         "required": [
           "type",
+          "owner",
           "personalAccessToken"
         ],
         "properties": {
@@ -11102,6 +14070,19 @@
               "github"
             ]
           },
+          "owner": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250
+          },
+          "repositories": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            }
+          },
           "personalAccessToken": {
             "type": "string",
             "minLength": 1,
@@ -11109,7 +14090,40 @@
           }
         }
       },
-      "GithubCrawlerTargetConfig": {
+      "GithubCrawlerConfigUpdate": {
+        "type": "object",
+        "required": [
+          "type",
+          "owner"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "github"
+            ]
+          },
+          "owner": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250
+          },
+          "repositories": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            }
+          },
+          "personalAccessToken": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250
+          }
+        }
+      },
+      "RedactedGithubCrawlerConfig": {
         "type": "object",
         "required": [
           "type",
@@ -11257,6 +14271,7 @@
                                 "log": "#/components/schemas/FunctionLog",
                                 "power": "#/components/schemas/FunctionPower",
                                 "sqrt": "#/components/schemas/FunctionSqrt",
+                                "last": "#/components/schemas/FunctionLast",
                                 "time-offset": "#/components/schemas/FunctionTimeOffset"
                               }
                             },
@@ -11290,6 +14305,9 @@
                               },
                               {
                                 "$ref": "#/components/schemas/FunctionSqrt"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionLast"
                               },
                               {
                                 "$ref": "#/components/schemas/FunctionTimeOffset"
@@ -11349,10 +14367,11 @@
                   },
                   "formula": {
                     "type": "string",
-                    "format": "math-formula",
+                    "format": "tsuga-formula",
                     "minLength": 0,
                     "maxLength": 250,
-                    "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series"
+                    "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series",
+                    "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
                   }
                 }
               }
@@ -11535,6 +14554,7 @@
                                 "log": "#/components/schemas/FunctionLog",
                                 "power": "#/components/schemas/FunctionPower",
                                 "sqrt": "#/components/schemas/FunctionSqrt",
+                                "last": "#/components/schemas/FunctionLast",
                                 "time-offset": "#/components/schemas/FunctionTimeOffset"
                               }
                             },
@@ -11568,6 +14588,9 @@
                               },
                               {
                                 "$ref": "#/components/schemas/FunctionSqrt"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionLast"
                               },
                               {
                                 "$ref": "#/components/schemas/FunctionTimeOffset"
@@ -11627,10 +14650,11 @@
                   },
                   "formula": {
                     "type": "string",
-                    "format": "math-formula",
+                    "format": "tsuga-formula",
                     "minLength": 0,
                     "maxLength": 250,
-                    "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series"
+                    "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series",
+                    "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
                   },
                   "aggregationWindow": {
                     "type": "string",
@@ -12163,6 +15187,71 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DeleteIngestionApiKeyResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/clusters": {
+      "get": {
+        "operationId": "listClusters",
+        "tags": [
+          "clusters"
+        ],
+        "description": "Retrieve all clusters",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListClustersResponse"
                 }
               }
             }
@@ -13396,7 +16485,8 @@
                       "type": "string",
                       "format": "lowercase-email",
                       "minLength": 0,
-                      "maxLength": 254
+                      "maxLength": 254,
+                      "errorMessage": "Must be a valid lowercase email address."
                     },
                     "teamId": {
                       "type": "string",
@@ -13503,6 +16593,71 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ListInvitationsResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/inventory/resources": {
+      "get": {
+        "operationId": "listInventoryResources",
+        "tags": [
+          "inventory"
+        ],
+        "description": "Retrieve all cloud resources discovered by inventory scans",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListInventoryResourcesResponse"
                 }
               }
             }
@@ -16174,7 +19329,8 @@
                     "format": "tags-query",
                     "minLength": 0,
                     "maxLength": 10000,
-                    "description": "Query string to filter which alerts this silence applies to"
+                    "description": "Query string to filter which alerts this silence applies to",
+                    "errorMessage": "Must be a valid tags query: only tag:value searches (no wildcards), boolean operators, and parentheses are supported. The query you provided is invalid: ${0}"
                   },
                   "teamsFilter": {
                     "type": "object",
@@ -16512,7 +19668,8 @@
                     "format": "tags-query",
                     "minLength": 0,
                     "maxLength": 10000,
-                    "description": "Query string to filter which alerts this silence applies to"
+                    "description": "Query string to filter which alerts this silence applies to",
+                    "errorMessage": "Must be a valid tags query: only tag:value searches (no wildcards), boolean operators, and parentheses are supported. The query you provided is invalid: ${0}"
                   },
                   "teamsFilter": {
                     "type": "object",
@@ -18055,6 +21212,120 @@
         }
       }
     },
+    "/v1/services/{serviceId}/graph": {
+      "get": {
+        "operationId": "getServiceGraph",
+        "tags": [
+          "services"
+        ],
+        "description": "Retrieve the dependency graph for a service, showing which services call each other",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1456444800,
+              "maximum": 4927737600,
+              "format": "int64"
+            },
+            "example": 1704067200,
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "description": "Start timestamp in seconds"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1456444800,
+              "maximum": 4927737600,
+              "format": "int64"
+            },
+            "example": 1704067200,
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "description": "End timestamp in seconds"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "tsuga-query",
+              "minLength": 0,
+              "maxLength": 10000
+            },
+            "in": "query",
+            "name": "query",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "serviceId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetServiceGraphResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/tag-policies": {
       "get": {
         "operationId": "listTagPolicies",
@@ -18262,7 +21533,8 @@
                                 "log-route",
                                 "monitor",
                                 "notification-rule",
-                                "notification-silence"
+                                "notification-silence",
+                                "slo"
                               ]
                             }
                           }
@@ -18557,7 +21829,8 @@
                                 "log-route",
                                 "monitor",
                                 "notification-rule",
-                                "notification-silence"
+                                "notification-silence",
+                                "slo"
                               ]
                             }
                           }
@@ -19644,7 +22917,8 @@
                           "type": "string",
                           "format": "lowercase-email",
                           "minLength": 1,
-                          "maxLength": 254
+                          "maxLength": 254,
+                          "errorMessage": "Must be a valid lowercase email address."
                         },
                         "roleKey": {
                           "enum": [
@@ -19771,7 +23045,8 @@
                       "type": "string",
                       "format": "lowercase-email",
                       "minLength": 1,
-                      "maxLength": 254
+                      "maxLength": 254,
+                      "errorMessage": "Must be a valid lowercase email address."
                     },
                     "minItems": 1,
                     "maxItems": 500
@@ -20122,6 +23397,10 @@
     {
       "name": "aggregation",
       "description": "Data aggregation and analytics"
+    },
+    {
+      "name": "clusters",
+      "description": "Cluster management"
     },
     {
       "name": "custom-usage-tags",

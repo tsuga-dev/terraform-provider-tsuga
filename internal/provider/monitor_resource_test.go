@@ -48,6 +48,16 @@ resource "tsuga_monitor" "test" {
             field = "duration"
           }
         }
+        functions = [
+          {
+            last = {}
+          },
+          {
+            time_offset = {
+              seconds = 3600
+            }
+          }
+        ]
       }]
     }
   }
@@ -64,6 +74,8 @@ resource "tsuga_monitor" "test" {
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.conditions.0.threshold", "10"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.timeframe", "5"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.queries.#", "1"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.queries.0.functions.#", "2"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.queries.0.functions.1.time_offset.seconds", "3600"),
 				),
 			},
 			{
