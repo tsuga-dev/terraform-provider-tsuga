@@ -50,9 +50,9 @@ resource "tsuga_dashboard" "test" {
     },
     {
       id   = "graph-2"
-      name = "Timeseries Graph"
+      name = "Top List Graph"
       visualization = {
-        timeseries = {
+        top_list = {
           source = "logs"
           queries = [{
             aggregate = {
@@ -172,11 +172,11 @@ resource "tsuga_dashboard" "test" {
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "name", "test-dashboard"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.0.visualization.note.note", "hello world"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.#", "7"),
-					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.timeseries.aliases.formula", "Total"),
-					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.timeseries.aliases.queries.q1", "Errors"),
-					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.timeseries.queries.0.functions.0.type", "last"),
-					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.timeseries.queries.0.functions.1.type", "time-offset"),
-					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.timeseries.queries.0.functions.1.seconds", "3600"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.top_list.aliases.formula", "Total"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.top_list.aliases.queries.q1", "Errors"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.top_list.queries.0.functions.0.type", "last"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.top_list.queries.0.functions.1.type", "time-offset"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.top_list.queries.0.functions.1.seconds", "3600"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.3.visualization.top_list.conditions.0.operator", "greater_than"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.3.visualization.top_list.conditions.0.value", "5"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.3.visualization.top_list.conditions.0.color", "alert"),
@@ -212,18 +212,22 @@ resource "tsuga_dashboard" "test" {
     },
     {
       id   = "graph-2"
-      name = "Timeseries Graph"
+      name = "Top List Graph Updated"
       visualization = {
-        query_value = {
+        top_list = {
           source = "metrics"
           queries = [{
             aggregate = {
-              sum = {
-                field = "duration"
-              }
+              count = {}
             }
           }]
-          background_mode = "no-background"
+          formula = "q1"
+          aliases = {
+            formula = "Total"
+            queries = {
+              q1 = "Errors"
+            }
+          }
         }
       }
     },
@@ -316,7 +320,7 @@ resource "tsuga_dashboard" "test" {
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.0.visualization.note.note", "updated"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.0.name", "Graph One Updated"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.#", "7"),
-          resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.3.visualization.top_list.conditions.0.operator", "less_than"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.3.visualization.top_list.conditions.0.operator", "less_than"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.3.visualization.top_list.conditions.0.value", "10"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.3.visualization.top_list.conditions.0.color", "warning"),
 				),

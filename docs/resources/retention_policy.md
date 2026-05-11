@@ -17,7 +17,7 @@ resource "tsuga_retention_policy" "retention_policy" {
   env           = "prod"
   team_id       = "123-abc-456"
   data_source   = "logs"
-  duration_days = "30-days"
+  duration_days = 30
   is_enabled    = true
 }
 ```
@@ -28,7 +28,7 @@ resource "tsuga_retention_policy" "retention_policy" {
 ### Required
 
 - `data_source` (String)
-- `duration_days` (String)
+- `duration_days` (Number)
 - `is_enabled` (Boolean)
 
 ### Optional

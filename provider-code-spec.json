@@ -332,17 +332,17 @@
           },
           {
             "name": "duration_days",
-            "string": {
+            "int64": {
               "computed_optional_required": "required",
               "validators": [
                 {
                   "custom": {
                     "imports": [
                       {
-                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
                       }
                     ],
-                    "schema_definition": "stringvalidator.OneOf(\n\"1-day\",\n\"3-days\",\n\"15-days\",\n\"30-days\",\n\"60-days\",\n\"90-days\",\n\"120-days\",\n\"180-days\",\n\"360-days\",\n\"10-years\",\n)"
+                    "schema_definition": "int64validator.Between(1, 3650)"
                   }
                 }
               ]

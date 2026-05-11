@@ -4,6 +4,7 @@ package resource_retention_policy
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -24,21 +25,10 @@ func RetentionPolicyResourceSchema(ctx context.Context) schema.Schema {
 					),
 				},
 			},
-			"duration_days": schema.StringAttribute{
+			"duration_days": schema.Int64Attribute{
 				Required: true,
-				Validators: []validator.String{
-					stringvalidator.OneOf(
-						"1-day",
-						"3-days",
-						"15-days",
-						"30-days",
-						"60-days",
-						"90-days",
-						"120-days",
-						"180-days",
-						"360-days",
-						"10-years",
-					),
+				Validators: []validator.Int64{
+					int64validator.Between(1, 3650),
 				},
 			},
 			"env": schema.StringAttribute{
@@ -67,7 +57,7 @@ func RetentionPolicyResourceSchema(ctx context.Context) schema.Schema {
 
 type RetentionPolicyModel struct {
 	DataSource   types.String `tfsdk:"data_source"`
-	DurationDays types.String `tfsdk:"duration_days"`
+	DurationDays types.Int64  `tfsdk:"duration_days"`
 	Env          types.String `tfsdk:"env"`
 	Id           types.String `tfsdk:"id"`
 	IsEnabled    types.Bool   `tfsdk:"is_enabled"`

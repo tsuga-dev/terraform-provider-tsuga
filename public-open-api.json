@@ -1059,6 +1059,120 @@
           }
         }
       },
+      "UpdateDashboardGraphResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "id",
+              "visualization"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 250,
+                "description": "Identifier of the graph widget"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 250,
+                "description": "Display name of the graph widget"
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 800,
+                "description": "Description of the graph widget"
+              },
+              "visualization": {
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type",
+                  "mapping": {
+                    "timeseries": "#/components/schemas/GraphVisualizationTimeseries",
+                    "top-list": "#/components/schemas/GraphVisualizationTopList",
+                    "pie": "#/components/schemas/GraphVisualizationPie",
+                    "query-value": "#/components/schemas/GraphVisualizationQueryValue",
+                    "bar": "#/components/schemas/GraphVisualizationBar",
+                    "table": "#/components/schemas/GraphVisualizationTable",
+                    "list": "#/components/schemas/GraphVisualizationList",
+                    "note": "#/components/schemas/GraphVisualizationNote"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/GraphVisualizationTimeseries"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GraphVisualizationTopList"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GraphVisualizationPie"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GraphVisualizationQueryValue"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GraphVisualizationBar"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GraphVisualizationTable"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GraphVisualizationList"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GraphVisualizationNote"
+                  }
+                ]
+              },
+              "layout": {
+                "type": "object",
+                "required": [
+                  "x",
+                  "y",
+                  "w",
+                  "h"
+                ],
+                "properties": {
+                  "x": {
+                    "type": "number",
+                    "description": "Horizontal grid position of the widget"
+                  },
+                  "y": {
+                    "type": "number",
+                    "description": "Vertical grid position of the widget"
+                  },
+                  "w": {
+                    "type": "number",
+                    "description": "Width of the widget in grid units"
+                  },
+                  "h": {
+                    "type": "number",
+                    "description": "Height of the widget in grid units"
+                  }
+                },
+                "description": "Grid layout coordinates for this widget"
+              }
+            },
+            "title": "Graph"
+          }
+        }
+      },
       "DeleteDashboardResponse": {
         "type": "object",
         "required": [
@@ -4511,6 +4625,45 @@
           }
         }
       },
+      "GetLogAttributesResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "attributes"
+            ],
+            "properties": {
+              "attributes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Log attribute dot-paths observed in the time range"
+              }
+            },
+            "example": {
+              "attributes": [
+                "context.env",
+                "context.k8s.pod.name",
+                "context.service.name",
+                "context.team",
+                "level",
+                "message",
+                "timestamp"
+              ]
+            }
+          }
+        }
+      },
       "GetErrorPatternIncreaseResponse": {
         "type": "object",
         "required": [
@@ -4970,6 +5123,28 @@
         }
       },
       "ListMonitorsResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Monitor"
+            }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
+          }
+        }
+      },
+      "QueryMonitorsResponse": {
         "type": "object",
         "required": [
           "requestId",
@@ -6867,18 +7042,9 @@
             ]
           },
           "durationDays": {
-            "enum": [
-              "1-day",
-              "3-days",
-              "15-days",
-              "30-days",
-              "60-days",
-              "90-days",
-              "120-days",
-              "180-days",
-              "360-days",
-              "10-years"
-            ]
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3650
           },
           "isEnabled": {
             "type": "boolean"
@@ -6890,7 +7056,7 @@
           "env": "production",
           "teamId": "abc-123-def",
           "dataSource": "logs",
-          "durationDays": "30-days",
+          "durationDays": 30,
           "isEnabled": true
         }
       },
@@ -9230,7 +9396,9 @@
                   "format": "tsuga-formula",
                   "minLength": 0,
                   "maxLength": 250,
-                  "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                  "errorMessage": {
+                    "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                  }
                 },
                 "operator": {
                   "enum": [
@@ -9483,7 +9651,9 @@
                   "format": "tsuga-formula",
                   "minLength": 0,
                   "maxLength": 250,
-                  "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                  "errorMessage": {
+                    "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                  }
                 },
                 "operator": {
                   "enum": [
@@ -9736,7 +9906,9 @@
                   "format": "tsuga-formula",
                   "minLength": 0,
                   "maxLength": 250,
-                  "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                  "errorMessage": {
+                    "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                  }
                 },
                 "operator": {
                   "enum": [
@@ -9986,7 +10158,9 @@
                 "format": "tsuga-formula",
                 "minLength": 0,
                 "maxLength": 250,
-                "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                "errorMessage": {
+                  "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                }
               },
               "conditionType": {
                 "enum": [
@@ -10230,7 +10404,9 @@
                 "format": "tsuga-formula",
                 "minLength": 0,
                 "maxLength": 250,
-                "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                "errorMessage": {
+                  "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                }
               },
               "conditionType": {
                 "enum": [
@@ -10626,7 +10802,9 @@
               "format": "lowercase-email",
               "minLength": 0,
               "maxLength": 254,
-              "errorMessage": "Must be a valid lowercase email address."
+              "errorMessage": {
+                "format": "Must be a valid lowercase email address."
+              }
             },
             "minItems": 1,
             "maxItems": 20,
@@ -11470,7 +11648,9 @@
             "minLength": 0,
             "maxLength": 250,
             "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series",
-            "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+            "errorMessage": {
+              "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+            }
           },
           "aliases": {
             "type": "object",
@@ -11950,7 +12130,9 @@
             "minLength": 0,
             "maxLength": 250,
             "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series",
-            "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+            "errorMessage": {
+              "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+            }
           },
           "aliases": {
             "type": "object",
@@ -12267,7 +12449,9 @@
             "minLength": 0,
             "maxLength": 250,
             "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series",
-            "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+            "errorMessage": {
+              "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+            }
           },
           "aliases": {
             "type": "object",
@@ -12554,7 +12738,9 @@
             "minLength": 0,
             "maxLength": 250,
             "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series",
-            "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+            "errorMessage": {
+              "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+            }
           },
           "aliases": {
             "type": "object",
@@ -12859,7 +13045,9 @@
             "minLength": 0,
             "maxLength": 250,
             "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series",
-            "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+            "errorMessage": {
+              "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+            }
           },
           "aliases": {
             "type": "object",
@@ -13353,7 +13541,9 @@
                   "minLength": 0,
                   "maxLength": 250,
                   "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series",
-                  "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                  "errorMessage": {
+                    "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                  }
                 },
                 "aliases": {
                   "type": "object",
@@ -14371,7 +14561,14 @@
                     "minLength": 0,
                     "maxLength": 250,
                     "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series",
-                    "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                    "errorMessage": {
+                      "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                    }
+                  },
+                  "clusterId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250
                   }
                 }
               }
@@ -14654,7 +14851,14 @@
                     "minLength": 0,
                     "maxLength": 250,
                     "description": "Formula referencing query outputs (e.g. q1+q2) to compute derived series",
-                    "errorMessage": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                    "errorMessage": {
+                      "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                    }
+                  },
+                  "clusterId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250
                   },
                   "aggregationWindow": {
                     "type": "string",
@@ -14746,6 +14950,7 @@
                 "properties": {
                   "name": {
                     "type": "string",
+                    "format": "kebab-case",
                     "minLength": 1,
                     "maxLength": 100
                   },
@@ -14949,6 +15154,7 @@
                 "properties": {
                   "name": {
                     "type": "string",
+                    "format": "kebab-case",
                     "minLength": 1,
                     "maxLength": 100
                   },
@@ -15614,7 +15820,8 @@
             },
             "in": "query",
             "name": "limit",
-            "required": false
+            "required": false,
+            "description": "The maximum number of items to return"
           },
           {
             "schema": {
@@ -15623,7 +15830,8 @@
             },
             "in": "query",
             "name": "offset",
-            "required": false
+            "required": false,
+            "description": "The offset of the first item to return"
           },
           {
             "schema": {
@@ -16459,6 +16667,195 @@
         }
       }
     },
+    "/v1/dashboards/{id}/graphs/{graphId}": {
+      "put": {
+        "operationId": "updateDashboardGraph",
+        "tags": [
+          "dashboards"
+        ],
+        "description": "Update a single graph within a dashboard by ID.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "visualization"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "description": "Display name of the graph widget"
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 800,
+                    "description": "Description of the graph widget"
+                  },
+                  "visualization": {
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type",
+                      "mapping": {
+                        "timeseries": "#/components/schemas/GraphVisualizationTimeseries",
+                        "top-list": "#/components/schemas/GraphVisualizationTopList",
+                        "pie": "#/components/schemas/GraphVisualizationPie",
+                        "query-value": "#/components/schemas/GraphVisualizationQueryValue",
+                        "bar": "#/components/schemas/GraphVisualizationBar",
+                        "table": "#/components/schemas/GraphVisualizationTable",
+                        "list": "#/components/schemas/GraphVisualizationList",
+                        "note": "#/components/schemas/GraphVisualizationNote"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/GraphVisualizationTimeseries"
+                      },
+                      {
+                        "$ref": "#/components/schemas/GraphVisualizationTopList"
+                      },
+                      {
+                        "$ref": "#/components/schemas/GraphVisualizationPie"
+                      },
+                      {
+                        "$ref": "#/components/schemas/GraphVisualizationQueryValue"
+                      },
+                      {
+                        "$ref": "#/components/schemas/GraphVisualizationBar"
+                      },
+                      {
+                        "$ref": "#/components/schemas/GraphVisualizationTable"
+                      },
+                      {
+                        "$ref": "#/components/schemas/GraphVisualizationList"
+                      },
+                      {
+                        "$ref": "#/components/schemas/GraphVisualizationNote"
+                      }
+                    ]
+                  },
+                  "layout": {
+                    "type": "object",
+                    "required": [
+                      "x",
+                      "y",
+                      "w",
+                      "h"
+                    ],
+                    "properties": {
+                      "x": {
+                        "type": "number",
+                        "description": "Horizontal grid position of the widget"
+                      },
+                      "y": {
+                        "type": "number",
+                        "description": "Vertical grid position of the widget"
+                      },
+                      "w": {
+                        "type": "number",
+                        "description": "Width of the widget in grid units"
+                      },
+                      "h": {
+                        "type": "number",
+                        "description": "Height of the widget in grid units"
+                      }
+                    },
+                    "description": "Grid layout coordinates for this widget"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "The dashboard ID containing the graph"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "graphId",
+            "required": true,
+            "description": "The graph ID to update"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateDashboardGraphResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/invitations": {
       "post": {
         "operationId": "inviteUsers",
@@ -16486,7 +16883,9 @@
                       "format": "lowercase-email",
                       "minLength": 0,
                       "maxLength": 254,
-                      "errorMessage": "Must be a valid lowercase email address."
+                      "errorMessage": {
+                        "format": "Must be a valid lowercase email address."
+                      }
                     },
                     "teamId": {
                       "type": "string",
@@ -16732,6 +17131,16 @@
           },
           {
             "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "clusterId",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "integer",
               "minimum": 1456444800,
               "maximum": 4927737600,
@@ -16859,6 +17268,16 @@
             "in": "query",
             "name": "query",
             "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "clusterId",
+            "required": false
           }
         ],
         "responses": {
@@ -16982,6 +17401,16 @@
             "in": "query",
             "name": "service",
             "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "clusterId",
+            "required": false
           }
         ],
         "responses": {
@@ -16999,6 +17428,109 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GetNewErrorPatternsResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/logs/attributes": {
+      "get": {
+        "operationId": "getLogAttributes",
+        "tags": [
+          "logs"
+        ],
+        "description": "Get log attributes",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1456444800,
+              "maximum": 4927737600,
+              "format": "int64"
+            },
+            "example": 1704067200,
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "description": "Start timestamp in seconds"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1456444800,
+              "maximum": 4927737600,
+              "format": "int64"
+            },
+            "example": 1704067200,
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "description": "End timestamp in seconds"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "clusterId",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetLogAttributesResponse"
                 }
               }
             }
@@ -17095,6 +17627,16 @@
             "in": "query",
             "name": "env",
             "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "clusterId",
+            "required": false
           }
         ],
         "responses": {
@@ -17188,6 +17730,16 @@
             "name": "to",
             "required": true,
             "description": "End timestamp in seconds"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "clusterId",
+            "required": false
           }
         ],
         "responses": {
@@ -17288,6 +17840,16 @@
               "minLength": 1,
               "maxLength": 250
             },
+            "in": "query",
+            "name": "clusterId",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
             "in": "path",
             "name": "name",
             "required": true,
@@ -17368,7 +17930,8 @@
             },
             "in": "query",
             "name": "limit",
-            "required": false
+            "required": false,
+            "description": "The maximum number of items to return"
           },
           {
             "schema": {
@@ -17377,7 +17940,8 @@
             },
             "in": "query",
             "name": "offset",
-            "required": false
+            "required": false,
+            "description": "The offset of the first item to return"
           },
           {
             "schema": {
@@ -17670,6 +18234,213 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CreateMonitorResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/monitors/query": {
+      "post": {
+        "operationId": "queryMonitors",
+        "tags": [
+          "monitors"
+        ],
+        "description": "Query monitors with filters, sorting, and pagination",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
+                    "description": "The maximum number of items to return"
+                  },
+                  "offset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "The offset of the first item to return"
+                  },
+                  "filters": {
+                    "type": "object",
+                    "properties": {
+                      "owners": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 250
+                        },
+                        "description": "Restrict results to monitors owned by any of these team IDs",
+                        "maxItems": 50
+                      },
+                      "searchQuery": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 250,
+                        "description": "Substring matched against monitor name and configuration"
+                      },
+                      "tags": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "key",
+                            "value"
+                          ],
+                          "properties": {
+                            "key": {
+                              "type": "string",
+                              "maxLength": 128
+                            },
+                            "value": {
+                              "type": "string",
+                              "maxLength": 256,
+                              "pattern": "^\\S(.*\\S)?$"
+                            }
+                          },
+                          "title": "Tag"
+                        },
+                        "description": "Restrict results to monitors that have at least one of the listed key/value tags",
+                        "maxItems": 50
+                      },
+                      "priorities": {
+                        "type": "array",
+                        "items": {
+                          "enum": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            5
+                          ]
+                        },
+                        "description": "Restrict results to monitors with one of these priorities",
+                        "maxItems": 5
+                      },
+                      "types": {
+                        "type": "array",
+                        "items": {
+                          "enum": [
+                            "threshold",
+                            "certificate-expiry",
+                            "anomaly-detection",
+                            "log-error-pattern"
+                          ]
+                        },
+                        "description": "Restrict results to monitors with these types",
+                        "maxItems": 4
+                      },
+                      "activity": {
+                        "enum": [
+                          "active",
+                          "snoozed"
+                        ],
+                        "description": "Restrict results by activity status: active monitors or currently snoozed monitors"
+                      },
+                      "clusterIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 250
+                        },
+                        "description": "Restrict results to monitors deployed to any of these cluster IDs (monitors with no cluster restriction are always included)",
+                        "maxItems": 50
+                      }
+                    }
+                  },
+                  "sort": {
+                    "type": "object",
+                    "required": [
+                      "by",
+                      "direction"
+                    ],
+                    "properties": {
+                      "by": {
+                        "enum": [
+                          "priority",
+                          "type",
+                          "name",
+                          "owner",
+                          "tags",
+                          "clusterIds",
+                          "pauseUntil",
+                          "assetUpdatedAt"
+                        ],
+                        "description": "Field to sort the returned monitors by"
+                      },
+                      "direction": {
+                        "enum": [
+                          "asc",
+                          "desc"
+                        ],
+                        "description": "Sort direction: ascending or descending"
+                      }
+                    },
+                    "description": "Optional sorting applied to the returned monitors"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryMonitorsResponse"
                 }
               }
             }
@@ -18156,7 +18927,8 @@
             },
             "in": "query",
             "name": "limit",
-            "required": false
+            "required": false,
+            "description": "The maximum number of items to return"
           },
           {
             "schema": {
@@ -18165,7 +18937,8 @@
             },
             "in": "query",
             "name": "offset",
-            "required": false
+            "required": false,
+            "description": "The offset of the first item to return"
           }
         ],
         "responses": {
@@ -19330,7 +20103,9 @@
                     "minLength": 0,
                     "maxLength": 10000,
                     "description": "Query string to filter which alerts this silence applies to",
-                    "errorMessage": "Must be a valid tags query: only tag:value searches (no wildcards), boolean operators, and parentheses are supported. The query you provided is invalid: ${0}"
+                    "errorMessage": {
+                      "format": "Must be a valid tags query: only tag:value searches (no wildcards), boolean operators, and parentheses are supported. The query you provided is invalid: ${0}"
+                    }
                   },
                   "teamsFilter": {
                     "type": "object",
@@ -19669,7 +20444,9 @@
                     "minLength": 0,
                     "maxLength": 10000,
                     "description": "Query string to filter which alerts this silence applies to",
-                    "errorMessage": "Must be a valid tags query: only tag:value searches (no wildcards), boolean operators, and parentheses are supported. The query you provided is invalid: ${0}"
+                    "errorMessage": {
+                      "format": "Must be a valid tags query: only tag:value searches (no wildcards), boolean operators, and parentheses are supported. The query you provided is invalid: ${0}"
+                    }
                   },
                   "teamsFilter": {
                     "type": "object",
@@ -20090,18 +20867,9 @@
                     ]
                   },
                   "durationDays": {
-                    "enum": [
-                      "1-day",
-                      "3-days",
-                      "15-days",
-                      "30-days",
-                      "60-days",
-                      "90-days",
-                      "120-days",
-                      "180-days",
-                      "360-days",
-                      "10-years"
-                    ]
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 3650
                   },
                   "isEnabled": {
                     "type": "boolean"
@@ -20112,7 +20880,7 @@
                 "env": "production",
                 "teamId": "abc-123-def",
                 "dataSource": "logs",
-                "durationDays": "30-days",
+                "durationDays": 30,
                 "isEnabled": true
               }
             }
@@ -20288,18 +21056,9 @@
                     ]
                   },
                   "durationDays": {
-                    "enum": [
-                      "1-day",
-                      "3-days",
-                      "15-days",
-                      "30-days",
-                      "60-days",
-                      "90-days",
-                      "120-days",
-                      "180-days",
-                      "360-days",
-                      "10-years"
-                    ]
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 3650
                   },
                   "isEnabled": {
                     "type": "boolean"
@@ -20310,7 +21069,7 @@
                 "env": "production",
                 "teamId": "abc-123-def",
                 "dataSource": "logs",
-                "durationDays": "30-days",
+                "durationDays": 30,
                 "isEnabled": true
               }
             }
@@ -20477,7 +21236,8 @@
             },
             "in": "query",
             "name": "limit",
-            "required": false
+            "required": false,
+            "description": "The maximum number of items to return"
           },
           {
             "schema": {
@@ -20486,7 +21246,8 @@
             },
             "in": "query",
             "name": "offset",
-            "required": false
+            "required": false,
+            "description": "The offset of the first item to return"
           }
         ],
         "responses": {
@@ -21065,7 +21826,8 @@
             },
             "in": "query",
             "name": "limit",
-            "required": false
+            "required": false,
+            "description": "The maximum number of items to return"
           },
           {
             "schema": {
@@ -21074,7 +21836,8 @@
             },
             "in": "query",
             "name": "offset",
-            "required": false
+            "required": false,
+            "description": "The offset of the first item to return"
           }
         ],
         "responses": {
@@ -22009,7 +22772,8 @@
             },
             "in": "query",
             "name": "limit",
-            "required": false
+            "required": false,
+            "description": "The maximum number of items to return"
           },
           {
             "schema": {
@@ -22018,7 +22782,8 @@
             },
             "in": "query",
             "name": "offset",
-            "required": false
+            "required": false,
+            "description": "The offset of the first item to return"
           }
         ],
         "responses": {
@@ -22918,7 +23683,9 @@
                           "format": "lowercase-email",
                           "minLength": 1,
                           "maxLength": 254,
-                          "errorMessage": "Must be a valid lowercase email address."
+                          "errorMessage": {
+                            "format": "Must be a valid lowercase email address."
+                          }
                         },
                         "roleKey": {
                           "enum": [
@@ -23046,7 +23813,9 @@
                       "format": "lowercase-email",
                       "minLength": 1,
                       "maxLength": 254,
-                      "errorMessage": "Must be a valid lowercase email address."
+                      "errorMessage": {
+                        "format": "Must be a valid lowercase email address."
+                      }
                     },
                     "minItems": 1,
                     "maxItems": 500
@@ -23179,6 +23948,16 @@
             },
             "in": "query",
             "name": "maxResults",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "clusterId",
             "required": false
           }
         ],
