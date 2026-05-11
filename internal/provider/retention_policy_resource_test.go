@@ -24,13 +24,13 @@ resource "tsuga_retention_policy" "test" {
   env           = "prod"
   team_id       = tsuga_team.test-team.id
   data_source   = "logs"
-  duration_days = "30-days"
+  duration_days = 30
   is_enabled    = true
 }
 `, teamName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("tsuga_retention_policy.test", "data_source", "logs"),
-					resource.TestCheckResourceAttr("tsuga_retention_policy.test", "duration_days", "30-days"),
+					resource.TestCheckResourceAttr("tsuga_retention_policy.test", "duration_days", "30"),
 					resource.TestCheckResourceAttr("tsuga_retention_policy.test", "is_enabled", "true"),
 					resource.TestCheckResourceAttrSet("tsuga_retention_policy.test", "id"),
 				),
@@ -47,13 +47,13 @@ resource "tsuga_retention_policy" "test" {
   env           = "prod"
   team_id       = tsuga_team.test-team.id
   data_source   = "logs"
-  duration_days = "60-days"
+  duration_days = 60
   is_enabled    = false
 }
 `, teamName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("tsuga_retention_policy.test", "data_source", "logs"),
-					resource.TestCheckResourceAttr("tsuga_retention_policy.test", "duration_days", "60-days"),
+					resource.TestCheckResourceAttr("tsuga_retention_policy.test", "duration_days", "60"),
 					resource.TestCheckResourceAttr("tsuga_retention_policy.test", "is_enabled", "false"),
 				),
 			},

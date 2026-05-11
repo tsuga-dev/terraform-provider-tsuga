@@ -65,7 +65,7 @@ func (r *retentionPolicyResource) Create(ctx context.Context, req resource.Creat
 
 	requestBody := map[string]interface{}{
 		"dataSource":   plan.DataSource.ValueString(),
-		"durationDays": plan.DurationDays.ValueString(),
+		"durationDays": plan.DurationDays.ValueInt64(),
 		"isEnabled":    plan.IsEnabled.ValueBool(),
 	}
 
@@ -104,7 +104,7 @@ func (r *retentionPolicyResource) Create(ctx context.Context, req resource.Creat
 
 	plan.Id = types.StringValue(apiResp.Data.ID)
 	plan.DataSource = types.StringValue(apiResp.Data.DataSource)
-	plan.DurationDays = types.StringValue(apiResp.Data.DurationDays)
+	plan.DurationDays = types.Int64Value(apiResp.Data.DurationDays)
 	plan.IsEnabled = types.BoolValue(apiResp.Data.IsEnabled)
 
 	if apiResp.Data.Env != "" {
@@ -164,7 +164,7 @@ func (r *retentionPolicyResource) Read(ctx context.Context, req resource.ReadReq
 
 	state.Id = types.StringValue(apiResp.Data.ID)
 	state.DataSource = types.StringValue(apiResp.Data.DataSource)
-	state.DurationDays = types.StringValue(apiResp.Data.DurationDays)
+	state.DurationDays = types.Int64Value(apiResp.Data.DurationDays)
 	state.IsEnabled = types.BoolValue(apiResp.Data.IsEnabled)
 
 	if apiResp.Data.Env != "" {
@@ -195,7 +195,7 @@ func (r *retentionPolicyResource) Update(ctx context.Context, req resource.Updat
 
 	requestBody := map[string]interface{}{
 		"dataSource":   plan.DataSource.ValueString(),
-		"durationDays": plan.DurationDays.ValueString(),
+		"durationDays": plan.DurationDays.ValueInt64(),
 		"isEnabled":    plan.IsEnabled.ValueBool(),
 	}
 
@@ -235,7 +235,7 @@ func (r *retentionPolicyResource) Update(ctx context.Context, req resource.Updat
 
 	plan.Id = types.StringValue(apiResp.Data.ID)
 	plan.DataSource = types.StringValue(apiResp.Data.DataSource)
-	plan.DurationDays = types.StringValue(apiResp.Data.DurationDays)
+	plan.DurationDays = types.Int64Value(apiResp.Data.DurationDays)
 	plan.IsEnabled = types.BoolValue(apiResp.Data.IsEnabled)
 
 	if apiResp.Data.Env != "" {
@@ -284,7 +284,7 @@ type retentionPolicyAPIResponse struct {
 		Env          string `json:"env"`
 		TeamId       string `json:"teamId"`
 		DataSource   string `json:"dataSource"`
-		DurationDays string `json:"durationDays"`
+		DurationDays int64  `json:"durationDays"`
 		IsEnabled    bool   `json:"isEnabled"`
 	} `json:"data"`
 }
