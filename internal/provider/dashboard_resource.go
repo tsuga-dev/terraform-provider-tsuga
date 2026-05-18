@@ -107,11 +107,17 @@ func (r *dashboardResource) validateVisualization(ctx context.Context, vis resou
 	if vis.Table != nil {
 		setCount++
 	}
+	if vis.TimeseriesConnection != nil {
+		setCount++
+	}
+	if vis.ListConnection != nil {
+		setCount++
+	}
 
 	if setCount != 1 {
 		diags.AddError(
 			"Invalid visualization configuration",
-			fmt.Sprintf("%s: exactly one of timeseries, top_list, pie, query_value, bar, list, note, or table must be set.", pathPrefix),
+			fmt.Sprintf("%s: exactly one of timeseries, top_list, pie, query_value, bar, list, note, table, timeseries_connection, or list_connection must be set.", pathPrefix),
 		)
 	}
 
@@ -449,26 +455,73 @@ type dashboardGraphLayout struct {
 }
 
 type dashboardVisualization struct {
-	Type           string                  `json:"type"`
-	Source         string                  `json:"source,omitempty"`
-	Queries        []dashboardQuery        `json:"queries,omitempty"`
-	Formula        string                  `json:"formula,omitempty"`
-	Aliases        *dashboardAliases       `json:"aliases,omitempty"`
-	VisibleSeries  []bool                  `json:"visibleSeries,omitempty"`
-	GroupBy        []dashboardGroupBy      `json:"groupBy,omitempty"`
-	Normalizer     *dashboardNormalizer    `json:"normalizer,omitempty"`
-	BackgroundMode string                  `json:"backgroundMode,omitempty"`
-	Conditions     []dashboardCondition    `json:"conditions,omitempty"`
-	Precision      *float64                `json:"precision,omitempty"`
-	YAxisSettings  *dashboardYAxisSettings `json:"yAxisSettings,omitempty"`
-	TimeBucket     *dashboardTimeBucket    `json:"timeBucket,omitempty"`
-	Query          string                  `json:"query,omitempty"`
-	ListColumns    []dashboardListColumn   `json:"listColumns,omitempty"`
-	Note           string                  `json:"note,omitempty"`
-	NoteAlign      string                  `json:"noteAlign,omitempty"`
-	NoteJustify    string                  `json:"noteJustifyContent,omitempty"`
-	NoteColor      string                  `json:"noteColor,omitempty"`
-	Columns        []dashboardTableColumn  `json:"columns,omitempty"`
+	Type            string                  `json:"type"`
+	Source          string                  `json:"source,omitempty"`
+	Queries         []dashboardQuery        `json:"-"`
+	SqlQueries      []string                `json:"-"`
+	Formula         string                  `json:"formula,omitempty"`
+	Aliases         *dashboardAliases       `json:"aliases,omitempty"`
+	VisibleSeries   []bool                  `json:"visibleSeries,omitempty"`
+	GroupBy         []dashboardGroupBy      `json:"groupBy,omitempty"`
+	Normalizer      *dashboardNormalizer    `json:"normalizer,omitempty"`
+	BackgroundMode  string                  `json:"backgroundMode,omitempty"`
+	Conditions      []dashboardCondition    `json:"conditions,omitempty"`
+	Precision       *float64                `json:"precision,omitempty"`
+	YAxisSettings   *dashboardYAxisSettings `json:"yAxisSettings,omitempty"`
+	TimeBucket      *dashboardTimeBucket    `json:"timeBucket,omitempty"`
+	Query           string                  `json:"query,omitempty"`
+	ListColumns     []dashboardListColumn   `json:"listColumns,omitempty"`
+	ListColumnsSize map[string]float64      `json:"listColumnsSize,omitempty"`
+	Note            string                  `json:"note,omitempty"`
+	NoteAlign       string                  `json:"noteAlign,omitempty"`
+	NoteJustify     string                  `json:"noteJustifyContent,omitempty"`
+	NoteColor       string                  `json:"noteColor,omitempty"`
+	Columns         []dashboardTableColumn  `json:"columns,omitempty"`
+	ConnectionId    string                  `json:"connectionId,omitempty"`
+	LegendMode      string                  `json:"legendMode,omitempty"`
+	Thresholds      []dashboardThreshold    `json:"thresholds,omitempty"`
+}
+
+// MarshalJSON handles the polymorphic "queries" field: []dashboardQuery for
+// standard visualizations, []string for connection-based visualizations.
+func (v dashboardVisualization) MarshalJSON() ([]byte, error) {
+	type Alias dashboardVisualization
+	aux := struct {
+		Alias
+		Queries interface{} `json:"queries,omitempty"`
+	}{Alias: Alias(v)}
+	if len(v.SqlQueries) > 0 {
+		aux.Queries = v.SqlQueries
+	} else if len(v.Queries) > 0 {
+		aux.Queries = v.Queries
+	}
+	return json.Marshal(aux)
+}
+
+// UnmarshalJSON handles the polymorphic "queries" field based on visualization type.
+func (v *dashboardVisualization) UnmarshalJSON(data []byte) error {
+	type Alias dashboardVisualization
+	aux := &struct {
+		*Alias
+		Queries json.RawMessage `json:"queries,omitempty"`
+	}{Alias: (*Alias)(v)}
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+	if len(aux.Queries) > 0 {
+		switch v.Type {
+		case "timeseries-connection":
+			return json.Unmarshal(aux.Queries, &v.SqlQueries)
+		default:
+			return json.Unmarshal(aux.Queries, &v.Queries)
+		}
+	}
+	return nil
+}
+
+type dashboardThreshold struct {
+	Value float64 `json:"value"`
+	Level string  `json:"level"`
 }
 
 type dashboardAliases struct {
@@ -682,31 +735,7 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 		}
 		result.Aliases = expandAliases(sv.Aliases)
 		if sv.YAxisSettings != nil {
-			yas := &dashboardYAxisSettings{
-				AlwaysIncludeZero: sv.YAxisSettings.AlwaysIncludeZero.ValueBool(),
-				Min: dashboardYAxisBound{
-					Type: sv.YAxisSettings.Min.Type.ValueString(),
-				},
-				Max: dashboardYAxisBound{
-					Type: sv.YAxisSettings.Max.Type.ValueString(),
-				},
-				Scale: dashboardYAxisScale{
-					Type: sv.YAxisSettings.Scale.Type.ValueString(),
-				},
-			}
-			if !sv.YAxisSettings.Min.Value.IsNull() && !sv.YAxisSettings.Min.Value.IsUnknown() {
-				v := sv.YAxisSettings.Min.Value.ValueFloat64()
-				yas.Min.Value = &v
-			}
-			if !sv.YAxisSettings.Max.Value.IsNull() && !sv.YAxisSettings.Max.Value.IsUnknown() {
-				v := sv.YAxisSettings.Max.Value.ValueFloat64()
-				yas.Max.Value = &v
-			}
-			if !sv.YAxisSettings.Scale.Exponent.IsNull() && !sv.YAxisSettings.Scale.Exponent.IsUnknown() {
-				v := sv.YAxisSettings.Scale.Exponent.ValueFloat64()
-				yas.Scale.Exponent = &v
-			}
-			result.YAxisSettings = yas
+			result.YAxisSettings = expandYAxisSettings(sv.YAxisSettings)
 		}
 		return result, d
 	}
@@ -763,15 +792,15 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 	if v.List != nil {
 		setCount++
 		vz := dashboardVisualization{
-			Type:   "list",
-			Source: v.List.Source.ValueString(),
-			Query:  v.List.Query.ValueString(),
+			Type:  "list",
+			Query: v.List.Query.ValueString(),
 		}
 		if !v.List.ListColumns.IsNull() && !v.List.ListColumns.IsUnknown() {
 			cols, cDiags := expandListColumns(ctx, v.List.ListColumns)
 			diags.Append(cDiags...)
 			vz.ListColumns = cols
 		}
+		vz.ListColumnsSize = expandListColumnsSize(v.List.ListColumnsSize)
 		vis = vz
 	}
 	if v.Note != nil {
@@ -796,6 +825,41 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 		gb, gDiags := expandGroupBy(ctx, v.Table.GroupBy)
 		diags.Append(gDiags...)
 		vz.GroupBy = gb
+		vis = vz
+	}
+	if v.TimeseriesConnection != nil {
+		setCount++
+		sqlQueries, sqDiags := expandStringList(ctx, v.TimeseriesConnection.Queries)
+		diags.Append(sqDiags...)
+		vz := dashboardVisualization{
+			Type:         "timeseries-connection",
+			ConnectionId: v.TimeseriesConnection.ConnectionId.ValueString(),
+			SqlQueries:   sqlQueries,
+			LegendMode:   stringValue(v.TimeseriesConnection.LegendMode),
+		}
+		if !v.TimeseriesConnection.Thresholds.IsNull() && !v.TimeseriesConnection.Thresholds.IsUnknown() {
+			thresholds, tDiags := expandThresholds(ctx, v.TimeseriesConnection.Thresholds)
+			diags.Append(tDiags...)
+			vz.Thresholds = thresholds
+		}
+		if v.TimeseriesConnection.YAxisSettings != nil {
+			vz.YAxisSettings = expandYAxisSettings(v.TimeseriesConnection.YAxisSettings)
+		}
+		vis = vz
+	}
+	if v.ListConnection != nil {
+		setCount++
+		vz := dashboardVisualization{
+			Type:         "list-connection",
+			ConnectionId: v.ListConnection.ConnectionId.ValueString(),
+			Query:        v.ListConnection.Query.ValueString(),
+		}
+		if !v.ListConnection.ListColumns.IsNull() && !v.ListConnection.ListColumns.IsUnknown() {
+			cols, cDiags := expandListColumns(ctx, v.ListConnection.ListColumns)
+			diags.Append(cDiags...)
+			vz.ListColumns = cols
+		}
+		vz.ListColumnsSize = expandListColumnsSize(v.ListConnection.ListColumnsSize)
 		vis = vz
 	}
 
@@ -869,14 +933,16 @@ func flattenDashboardGraphs(ctx context.Context, graphs []dashboardAPIGraph) (ty
 func flattenVisualization(ctx context.Context, vis dashboardVisualization) (attr.Value, diag.Diagnostics) {
 	nullVizBase := func() map[string]attr.Value {
 		return map[string]attr.Value{
-			"timeseries":  types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes()),
-			"top_list":    types.ObjectNull(resource_dashboard.TopListVisualizationAttrTypes()),
-			"pie":         types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes()),
-			"query_value": types.ObjectNull(resource_dashboard.QueryValueVisualizationAttrTypes()),
-			"bar":         types.ObjectNull(resource_dashboard.BarVisualizationAttrTypes()),
-			"list":        types.ObjectNull(resource_dashboard.ListVisualizationAttrTypes()),
-			"note":        types.ObjectNull(resource_dashboard.NoteVisualizationAttrTypes()),
-			"table":       types.ObjectNull(resource_dashboard.TableVisualizationAttrTypes()),
+			"timeseries":            types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes()),
+			"top_list":              types.ObjectNull(resource_dashboard.TopListVisualizationAttrTypes()),
+			"pie":                   types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes()),
+			"query_value":           types.ObjectNull(resource_dashboard.QueryValueVisualizationAttrTypes()),
+			"bar":                   types.ObjectNull(resource_dashboard.BarVisualizationAttrTypes()),
+			"list":                  types.ObjectNull(resource_dashboard.ListVisualizationAttrTypes()),
+			"note":                  types.ObjectNull(resource_dashboard.NoteVisualizationAttrTypes()),
+			"table":                 types.ObjectNull(resource_dashboard.TableVisualizationAttrTypes()),
+			"timeseries_connection": types.ObjectNull(resource_dashboard.TimeseriesConnectionVisualizationAttrTypes()),
+			"list_connection":       types.ObjectNull(resource_dashboard.ListConnectionVisualizationAttrTypes()),
 		}
 	}
 
@@ -898,10 +964,10 @@ func flattenVisualization(ctx context.Context, vis dashboardVisualization) (attr
 		}
 		obj := nullVizBase()
 		obj["list"] = types.ObjectValueMust(resource_dashboard.ListVisualizationAttrTypes(), map[string]attr.Value{
-			"type":         types.StringValue("list"),
-			"source":       types.StringValue(vis.Source),
-			"query":        types.StringValue(vis.Query),
-			"list_columns": listCols,
+			"type":              types.StringValue("list"),
+			"query":             types.StringValue(vis.Query),
+			"list_columns":      listCols,
+			"list_columns_size": flattenListColumnsSize(vis.ListColumnsSize),
 		})
 		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(), obj), nil
 	case "table":
@@ -938,6 +1004,37 @@ func flattenVisualization(ctx context.Context, vis dashboardVisualization) (attr
 		case "bar":
 			obj["bar"] = seriesVal
 		}
+		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(), obj), nil
+	case "timeseries-connection":
+		obj := nullVizBase()
+		sqlQueries, diags := flattenStringList(vis.SqlQueries)
+		if diags.HasError() {
+			return types.ObjectNull(resource_dashboard.VisualizationAttrTypes()), diags
+		}
+		thresholds, tDiags := flattenThresholds(vis.Thresholds)
+		diags.Append(tDiags...)
+		obj["timeseries_connection"] = types.ObjectValueMust(resource_dashboard.TimeseriesConnectionVisualizationAttrTypes(), map[string]attr.Value{
+			"type":            types.StringValue("timeseries-connection"),
+			"connection_id":   types.StringValue(vis.ConnectionId),
+			"queries":         sqlQueries,
+			"legend_mode":     stringValueOrNull(vis.LegendMode),
+			"thresholds":      thresholds,
+			"y_axis_settings": flattenYAxisSettings(vis.YAxisSettings),
+		})
+		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(), obj), diags
+	case "list-connection":
+		listCols, diags := flattenListColumns(vis.ListColumns)
+		if diags.HasError() {
+			return types.ObjectNull(resource_dashboard.VisualizationAttrTypes()), diags
+		}
+		obj := nullVizBase()
+		obj["list_connection"] = types.ObjectValueMust(resource_dashboard.ListConnectionVisualizationAttrTypes(), map[string]attr.Value{
+			"type":              types.StringValue("list-connection"),
+			"connection_id":     types.StringValue(vis.ConnectionId),
+			"query":             types.StringValue(vis.Query),
+			"list_columns":      listCols,
+			"list_columns_size": flattenListColumnsSize(vis.ListColumnsSize),
+		})
 		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(), obj), nil
 	default:
 		var diags diag.Diagnostics
@@ -1495,4 +1592,100 @@ func flattenTableColumns(ctx context.Context, cols []dashboardTableColumn) (type
 		}))
 	}
 	return types.ListValue(elemType, values)
+}
+
+func expandYAxisSettings(yas *resource_dashboard.YAxisSettingsModel) *dashboardYAxisSettings {
+	result := &dashboardYAxisSettings{
+		AlwaysIncludeZero: yas.AlwaysIncludeZero.ValueBool(),
+		Min: dashboardYAxisBound{
+			Type: yas.Min.Type.ValueString(),
+		},
+		Max: dashboardYAxisBound{
+			Type: yas.Max.Type.ValueString(),
+		},
+		Scale: dashboardYAxisScale{
+			Type: yas.Scale.Type.ValueString(),
+		},
+	}
+	if !yas.Min.Value.IsNull() && !yas.Min.Value.IsUnknown() {
+		v := yas.Min.Value.ValueFloat64()
+		result.Min.Value = &v
+	}
+	if !yas.Max.Value.IsNull() && !yas.Max.Value.IsUnknown() {
+		v := yas.Max.Value.ValueFloat64()
+		result.Max.Value = &v
+	}
+	if !yas.Scale.Exponent.IsNull() && !yas.Scale.Exponent.IsUnknown() {
+		v := yas.Scale.Exponent.ValueFloat64()
+		result.Scale.Exponent = &v
+	}
+	return result
+}
+
+func expandThresholds(ctx context.Context, thresholds types.List) ([]dashboardThreshold, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	if thresholds.IsNull() || thresholds.IsUnknown() {
+		return nil, diags
+	}
+	var models []resource_dashboard.ThresholdModel
+	diags.Append(thresholds.ElementsAs(ctx, &models, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+	result := make([]dashboardThreshold, 0, len(models))
+	for _, t := range models {
+		result = append(result, dashboardThreshold{
+			Value: t.Value.ValueFloat64(),
+			Level: t.Level.ValueString(),
+		})
+	}
+	return result, diags
+}
+
+func flattenThresholds(thresholds []dashboardThreshold) (types.List, diag.Diagnostics) {
+	elemType := types.ObjectType{AttrTypes: resource_dashboard.ThresholdAttrTypes()}
+	if len(thresholds) == 0 {
+		return types.ListNull(elemType), nil
+	}
+	values := make([]attr.Value, 0, len(thresholds))
+	for _, t := range thresholds {
+		values = append(values, types.ObjectValueMust(resource_dashboard.ThresholdAttrTypes(), map[string]attr.Value{
+			"value": types.Float64Value(t.Value),
+			"level": types.StringValue(t.Level),
+		}))
+	}
+	return types.ListValue(elemType, values)
+}
+
+func expandListColumnsSize(m types.Map) map[string]float64 {
+	if m.IsNull() || m.IsUnknown() {
+		return nil
+	}
+	result := make(map[string]float64, len(m.Elements()))
+	for k, v := range m.Elements() {
+		result[k] = v.(types.Float64).ValueFloat64()
+	}
+	return result
+}
+
+func flattenListColumnsSize(m map[string]float64) types.Map {
+	if len(m) == 0 {
+		return types.MapNull(types.Float64Type)
+	}
+	vals := make(map[string]attr.Value, len(m))
+	for k, v := range m {
+		vals[k] = types.Float64Value(v)
+	}
+	return types.MapValueMust(types.Float64Type, vals)
+}
+
+func flattenStringList(s []string) (types.List, diag.Diagnostics) {
+	if len(s) == 0 {
+		return types.ListNull(types.StringType), nil
+	}
+	values := make([]attr.Value, 0, len(s))
+	for _, v := range s {
+		values = append(values, types.StringValue(v))
+	}
+	return types.ListValue(types.StringType, values)
 }

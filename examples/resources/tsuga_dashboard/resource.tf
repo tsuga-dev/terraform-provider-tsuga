@@ -497,8 +497,7 @@ resource "tsuga_dashboard" "dashboard" {
       }
       visualization = {
         list = {
-          source = "logs"
-          query  = "object.reason:* OR object.note:*"
+          query = "object.reason:* OR object.note:*"
 
           list_columns = [
             {

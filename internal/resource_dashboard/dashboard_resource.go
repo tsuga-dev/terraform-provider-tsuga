@@ -172,14 +172,16 @@ func DashboardResourceSchema(ctx context.Context) schema.Schema {
 						"visualization": schema.SingleNestedAttribute{
 							Required: true,
 							Attributes: map[string]schema.Attribute{
-								"timeseries":  visualizationSeriesSchema(),
-								"top_list":    visualizationTopListSchema(),
-								"pie":         visualizationSeriesSchema(),
-								"query_value": visualizationQueryValueSchema(),
-								"bar":         visualizationBarSchema(),
-								"list":        visualizationListSchema(),
-								"note":        visualizationNoteSchema(),
-								"table":       visualizationTableSchema(),
+								"timeseries":             visualizationSeriesSchema(),
+								"top_list":               visualizationTopListSchema(),
+								"pie":                    visualizationSeriesSchema(),
+								"query_value":            visualizationQueryValueSchema(),
+								"bar":                    visualizationBarSchema(),
+								"list":                   visualizationListSchema(),
+								"note":                   visualizationNoteSchema(),
+								"table":                  visualizationTableSchema(),
+								"timeseries_connection":  visualizationTimeseriesConnectionSchema(),
+								"list_connection":        visualizationListConnectionSchema(),
 							},
 						},
 					},
@@ -199,7 +201,7 @@ func visualizationSeriesSchema() schema.Attribute {
 			"source": schema.StringAttribute{
 				Required: true,
 				Validators: []validator.String{
-					stringvalidator.OneOf("logs", "metrics", "traces", "connections"),
+					stringvalidator.OneOf("logs", "metrics", "traces"),
 				},
 			},
 			"queries":        queriesSchema(),
@@ -290,7 +292,7 @@ func visualizationTableSchema() schema.Attribute {
 						"source": schema.StringAttribute{
 							Required: true,
 							Validators: []validator.String{
-								stringvalidator.OneOf("logs", "metrics", "traces", "connections"),
+								stringvalidator.OneOf("logs", "metrics", "traces"),
 							},
 						},
 						"queries":        queriesSchema(),
@@ -479,28 +481,124 @@ func visualizationListSchema() schema.Attribute {
 			"type": schema.StringAttribute{
 				Computed: true,
 			},
-			"source": schema.StringAttribute{
-				Required: true,
-				Validators: []validator.String{
-					stringvalidator.OneOf("logs"),
-				},
-			},
 			"query": schema.StringAttribute{
 				Required: true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(10000),
 				},
 			},
-			"list_columns": schema.ListNestedAttribute{
-				Optional: true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"attribute": schema.StringAttribute{
-							Required: true,
-						},
-						"normalizer": normalizer.Schema(),
+			"list_columns": listColumnsSchema(),
+			"list_columns_size": schema.MapAttribute{
+				Optional:    true,
+				ElementType: types.Float64Type,
+				Description: "Column widths keyed by column id",
+			},
+		},
+	}
+}
+
+func listColumnsSchema() schema.Attribute {
+	return schema.ListNestedAttribute{
+		Optional: true,
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"attribute": schema.StringAttribute{
+					Required: true,
+				},
+				"normalizer": normalizer.Schema(),
+			},
+		},
+	}
+}
+
+func thresholdsSchema() schema.Attribute {
+	return schema.ListNestedAttribute{
+		Optional:    true,
+		Description: "Threshold markers displayed on the chart",
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"value": schema.Float64Attribute{
+					Required:    true,
+					Description: "Y-axis value where the threshold marker is placed",
+				},
+				"level": schema.StringAttribute{
+					Required:    true,
+					Description: "Level applied to the threshold marker",
+					Validators: []validator.String{
+						stringvalidator.OneOf("alert", "warning", "success"),
 					},
 				},
+			},
+		},
+	}
+}
+
+func visualizationTimeseriesConnectionSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Optional:    true,
+		Description: "Displays database rows-based aggregation as a time series chart",
+		Attributes: map[string]schema.Attribute{
+			"type": schema.StringAttribute{
+				Computed: true,
+			},
+			"connection_id": schema.StringAttribute{
+				Required:    true,
+				Description: "The ID of the connection to use to query the datastore",
+				Validators: []validator.String{
+					stringvalidator.LengthBetween(1, 250),
+				},
+			},
+			"queries": schema.ListAttribute{
+				Required:    true,
+				ElementType: types.StringType,
+				Description: "Read-only SQL queries to execute against the connection",
+				Validators: []validator.List{
+					listvalidator.SizeAtLeast(1),
+					listvalidator.ValueStringsAre(
+						stringvalidator.LengthBetween(1, 50000),
+					),
+				},
+			},
+			"legend_mode": schema.StringAttribute{
+				Optional:    true,
+				Description: "Controls whether and how the widget displays legend or series details",
+				Validators: []validator.String{
+					stringvalidator.OneOf("table", "legend-only", "no-legend"),
+				},
+			},
+			"thresholds":     thresholdsSchema(),
+			"y_axis_settings": yAxisSettingsSchema(),
+		},
+	}
+}
+
+func visualizationListConnectionSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Optional:    true,
+		Description: "Displays database rows as a tabular list",
+		Attributes: map[string]schema.Attribute{
+			"type": schema.StringAttribute{
+				Computed: true,
+			},
+			"connection_id": schema.StringAttribute{
+				Required:    true,
+				Description: "The ID of the connection to use to query the datastore",
+				Validators: []validator.String{
+					stringvalidator.LengthBetween(1, 250),
+				},
+			},
+			"query": schema.StringAttribute{
+				Required:    true,
+				Description: "Read-only SQL query to execute against the connection",
+				Validators: []validator.String{
+					stringvalidator.LengthBetween(1, 50000),
+				},
+			},
+			"list_columns": listColumnsSchema(),
+			"list_columns_size": schema.MapAttribute{
+				Optional:    true,
+				ElementType: types.Float64Type,
+				Description: "Column widths keyed by column id",
 			},
 		},
 	}
@@ -578,14 +676,16 @@ type GraphLayoutModel struct {
 }
 
 type VisualizationModel struct {
-	Timeseries *SeriesVisualizationModel `tfsdk:"timeseries"`
-	TopList    *TopListVisualization     `tfsdk:"top_list"`
-	Pie        *SeriesVisualizationModel `tfsdk:"pie"`
-	QueryValue *QueryValueVisualization  `tfsdk:"query_value"`
-	Bar        *BarVisualization         `tfsdk:"bar"`
-	List       *ListVisualization        `tfsdk:"list"`
-	Note       *NoteVisualizationModel   `tfsdk:"note"`
-	Table      *TableVisualizationModel  `tfsdk:"table"`
+	Timeseries            *SeriesVisualizationModel            `tfsdk:"timeseries"`
+	TopList               *TopListVisualization                 `tfsdk:"top_list"`
+	Pie                   *SeriesVisualizationModel            `tfsdk:"pie"`
+	QueryValue            *QueryValueVisualization             `tfsdk:"query_value"`
+	Bar                   *BarVisualization                    `tfsdk:"bar"`
+	List                  *ListVisualization                   `tfsdk:"list"`
+	Note                  *NoteVisualizationModel              `tfsdk:"note"`
+	Table                 *TableVisualizationModel             `tfsdk:"table"`
+	TimeseriesConnection  *TimeseriesConnectionVisualization   `tfsdk:"timeseries_connection"`
+	ListConnection        *ListConnectionVisualization         `tfsdk:"list_connection"`
 }
 
 type SeriesVisualizationModel struct {
@@ -657,10 +757,32 @@ type BarVisualization struct {
 }
 
 type ListVisualization struct {
-	Type        types.String `tfsdk:"type"`
-	Source      types.String `tfsdk:"source"`
-	Query       types.String `tfsdk:"query"`
-	ListColumns types.List   `tfsdk:"list_columns"`
+	Type            types.String `tfsdk:"type"`
+	Query           types.String `tfsdk:"query"`
+	ListColumns     types.List   `tfsdk:"list_columns"`
+	ListColumnsSize types.Map    `tfsdk:"list_columns_size"`
+}
+
+type TimeseriesConnectionVisualization struct {
+	Type          types.String        `tfsdk:"type"`
+	ConnectionId  types.String        `tfsdk:"connection_id"`
+	Queries       types.List          `tfsdk:"queries"`
+	LegendMode    types.String        `tfsdk:"legend_mode"`
+	Thresholds    types.List          `tfsdk:"thresholds"`
+	YAxisSettings *YAxisSettingsModel `tfsdk:"y_axis_settings"`
+}
+
+type ThresholdModel struct {
+	Value types.Float64 `tfsdk:"value"`
+	Level types.String  `tfsdk:"level"`
+}
+
+type ListConnectionVisualization struct {
+	Type            types.String `tfsdk:"type"`
+	ConnectionId    types.String `tfsdk:"connection_id"`
+	Query           types.String `tfsdk:"query"`
+	ListColumns     types.List   `tfsdk:"list_columns"`
+	ListColumnsSize types.Map    `tfsdk:"list_columns_size"`
 }
 
 type NoteVisualizationModel struct {
@@ -741,14 +863,16 @@ func GraphLayoutAttrTypes() map[string]attr.Type {
 
 func VisualizationAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"timeseries":  types.ObjectType{AttrTypes: SeriesVisualizationAttrTypes()},
-		"top_list":    types.ObjectType{AttrTypes: TopListVisualizationAttrTypes()},
-		"pie":         types.ObjectType{AttrTypes: SeriesVisualizationAttrTypes()},
-		"query_value": types.ObjectType{AttrTypes: QueryValueVisualizationAttrTypes()},
-		"bar":         types.ObjectType{AttrTypes: BarVisualizationAttrTypes()},
-		"list":        types.ObjectType{AttrTypes: ListVisualizationAttrTypes()},
-		"note":        types.ObjectType{AttrTypes: NoteVisualizationAttrTypes()},
-		"table":       types.ObjectType{AttrTypes: TableVisualizationAttrTypes()},
+		"timeseries":            types.ObjectType{AttrTypes: SeriesVisualizationAttrTypes()},
+		"top_list":              types.ObjectType{AttrTypes: TopListVisualizationAttrTypes()},
+		"pie":                   types.ObjectType{AttrTypes: SeriesVisualizationAttrTypes()},
+		"query_value":           types.ObjectType{AttrTypes: QueryValueVisualizationAttrTypes()},
+		"bar":                   types.ObjectType{AttrTypes: BarVisualizationAttrTypes()},
+		"list":                  types.ObjectType{AttrTypes: ListVisualizationAttrTypes()},
+		"note":                  types.ObjectType{AttrTypes: NoteVisualizationAttrTypes()},
+		"table":                 types.ObjectType{AttrTypes: TableVisualizationAttrTypes()},
+		"timeseries_connection": types.ObjectType{AttrTypes: TimeseriesConnectionVisualizationAttrTypes()},
+		"list_connection":       types.ObjectType{AttrTypes: ListConnectionVisualizationAttrTypes()},
 	}
 }
 
@@ -839,10 +963,38 @@ func BarVisualizationAttrTypes() map[string]attr.Type {
 
 func ListVisualizationAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"type":         types.StringType,
-		"source":       types.StringType,
-		"query":        types.StringType,
-		"list_columns": types.ListType{ElemType: types.ObjectType{AttrTypes: ListColumnAttrTypes()}},
+		"type":              types.StringType,
+		"query":             types.StringType,
+		"list_columns":      types.ListType{ElemType: types.ObjectType{AttrTypes: ListColumnAttrTypes()}},
+		"list_columns_size": types.MapType{ElemType: types.Float64Type},
+	}
+}
+
+func ThresholdAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"value": types.Float64Type,
+		"level": types.StringType,
+	}
+}
+
+func TimeseriesConnectionVisualizationAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"type":            types.StringType,
+		"connection_id":   types.StringType,
+		"queries":         types.ListType{ElemType: types.StringType},
+		"legend_mode":     types.StringType,
+		"thresholds":      types.ListType{ElemType: types.ObjectType{AttrTypes: ThresholdAttrTypes()}},
+		"y_axis_settings": types.ObjectType{AttrTypes: YAxisSettingsAttrTypes()},
+	}
+}
+
+func ListConnectionVisualizationAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"type":              types.StringType,
+		"connection_id":     types.StringType,
+		"query":             types.StringType,
+		"list_columns":      types.ListType{ElemType: types.ObjectType{AttrTypes: ListColumnAttrTypes()}},
+		"list_columns_size": types.MapType{ElemType: types.Float64Type},
 	}
 }
 
