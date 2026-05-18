@@ -512,8 +512,7 @@ resource "tsuga_dashboard" "dashboard" {
       }
       visualization = {
         list = {
-          source = "logs"
-          query  = "object.reason:* OR object.note:*"
+          query = "object.reason:* OR object.note:*"
 
           list_columns = [
             {
@@ -615,11 +614,13 @@ Optional:
 
 - `bar` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar))
 - `list` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--list))
+- `list_connection` (Attributes) Displays database rows as a tabular list (see [below for nested schema](#nestedatt--graphs--visualization--list_connection))
 - `note` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--note))
 - `pie` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie))
 - `query_value` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value))
 - `table` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--table))
 - `timeseries` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries))
+- `timeseries_connection` (Attributes) Displays database rows-based aggregation as a time series chart (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_connection))
 - `top_list` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list))
 
 <a id="nestedatt--graphs--visualization--bar"></a>
@@ -831,11 +832,11 @@ Optional:
 Required:
 
 - `query` (String)
-- `source` (String)
 
 Optional:
 
 - `list_columns` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--list--list_columns))
+- `list_columns_size` (Map of Number) Column widths keyed by column id
 
 Read-Only:
 
@@ -854,6 +855,48 @@ Optional:
 
 <a id="nestedatt--graphs--visualization--list--list_columns--normalizer"></a>
 ### Nested Schema for `graphs.visualization.list.list_columns.normalizer`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `unit` (String)
+
+
+
+
+<a id="nestedatt--graphs--visualization--list_connection"></a>
+### Nested Schema for `graphs.visualization.list_connection`
+
+Required:
+
+- `connection_id` (String) The ID of the connection to use to query the datastore
+- `query` (String) Read-only SQL query to execute against the connection
+
+Optional:
+
+- `list_columns` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--list_connection--list_columns))
+- `list_columns_size` (Map of Number) Column widths keyed by column id
+
+Read-Only:
+
+- `type` (String)
+
+<a id="nestedatt--graphs--visualization--list_connection--list_columns"></a>
+### Nested Schema for `graphs.visualization.list_connection.list_columns`
+
+Required:
+
+- `attribute` (String)
+
+Optional:
+
+- `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--list_connection--list_columns--normalizer))
+
+<a id="nestedatt--graphs--visualization--list_connection--list_columns--normalizer"></a>
+### Nested Schema for `graphs.visualization.list_connection.list_columns.normalizer`
 
 Required:
 
@@ -1620,6 +1663,81 @@ Optional:
 
 <a id="nestedatt--graphs--visualization--timeseries--y_axis_settings--scale"></a>
 ### Nested Schema for `graphs.visualization.timeseries.y_axis_settings.scale`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `exponent` (Number)
+
+
+
+
+<a id="nestedatt--graphs--visualization--timeseries_connection"></a>
+### Nested Schema for `graphs.visualization.timeseries_connection`
+
+Required:
+
+- `connection_id` (String) The ID of the connection to use to query the datastore
+- `queries` (List of String) Read-only SQL queries to execute against the connection
+
+Optional:
+
+- `legend_mode` (String) Controls whether and how the widget displays legend or series details
+- `thresholds` (Attributes List) Threshold markers displayed on the chart (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_connection--thresholds))
+- `y_axis_settings` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_connection--y_axis_settings))
+
+Read-Only:
+
+- `type` (String)
+
+<a id="nestedatt--graphs--visualization--timeseries_connection--thresholds"></a>
+### Nested Schema for `graphs.visualization.timeseries_connection.thresholds`
+
+Required:
+
+- `level` (String) Level applied to the threshold marker
+- `value` (Number) Y-axis value where the threshold marker is placed
+
+
+<a id="nestedatt--graphs--visualization--timeseries_connection--y_axis_settings"></a>
+### Nested Schema for `graphs.visualization.timeseries_connection.y_axis_settings`
+
+Required:
+
+- `always_include_zero` (Boolean)
+- `max` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_connection--y_axis_settings--max))
+- `min` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_connection--y_axis_settings--min))
+- `scale` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_connection--y_axis_settings--scale))
+
+<a id="nestedatt--graphs--visualization--timeseries_connection--y_axis_settings--max"></a>
+### Nested Schema for `graphs.visualization.timeseries_connection.y_axis_settings.max`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--timeseries_connection--y_axis_settings--min"></a>
+### Nested Schema for `graphs.visualization.timeseries_connection.y_axis_settings.min`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--timeseries_connection--y_axis_settings--scale"></a>
+### Nested Schema for `graphs.visualization.timeseries_connection.y_axis_settings.scale`
 
 Required:
 

@@ -83,7 +83,6 @@ resource "tsuga_dashboard" "test" {
       name = "List Graph"
       visualization = {
         list = {
-          source = "logs"
           query  = "service:api"
           list_columns = [{
             attribute = "attr1"
@@ -164,6 +163,37 @@ resource "tsuga_dashboard" "test" {
           }
         }
       }
+    },
+    {
+      id   = "graph-8"
+      name = "Timeseries Connection Graph"
+      visualization = {
+        timeseries_connection = {
+          connection_id = "conn-123"
+          queries       = ["SELECT timestamp, value FROM metrics ORDER BY timestamp"]
+          legend_mode   = "table"
+          thresholds = [{
+            value = 100
+            level = "warning"
+          }]
+        }
+      }
+    },
+    {
+      id   = "graph-9"
+      name = "List Connection Graph"
+      visualization = {
+        list_connection = {
+          connection_id = "conn-456"
+          query         = "SELECT id, name, status FROM users LIMIT 100"
+          list_columns = [{
+            attribute = "name"
+          }]
+          list_columns_size = {
+            "name" = 200
+          }
+        }
+      }
     }
   ]
 }
@@ -171,7 +201,7 @@ resource "tsuga_dashboard" "test" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "name", "test-dashboard"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.0.visualization.note.note", "hello world"),
-					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.#", "7"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.#", "9"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.top_list.aliases.formula", "Total"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.top_list.aliases.queries.q1", "Errors"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.top_list.queries.0.functions.0.type", "last"),
@@ -180,6 +210,15 @@ resource "tsuga_dashboard" "test" {
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.3.visualization.top_list.conditions.0.operator", "greater_than"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.3.visualization.top_list.conditions.0.value", "5"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.3.visualization.top_list.conditions.0.color", "alert"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.7.visualization.timeseries_connection.connection_id", "conn-123"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.7.visualization.timeseries_connection.queries.0", "SELECT timestamp, value FROM metrics ORDER BY timestamp"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.7.visualization.timeseries_connection.legend_mode", "table"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.7.visualization.timeseries_connection.thresholds.0.value", "100"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.7.visualization.timeseries_connection.thresholds.0.level", "warning"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.8.visualization.list_connection.connection_id", "conn-456"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.8.visualization.list_connection.query", "SELECT id, name, status FROM users LIMIT 100"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.8.visualization.list_connection.list_columns.0.attribute", "name"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.8.visualization.list_connection.list_columns_size.name", "200"),
 				),
 			},
 			{
@@ -304,7 +343,6 @@ resource "tsuga_dashboard" "test" {
       name = "Bar Graph Updated"
       visualization = {
         list = {
-          source = "logs"
           query  = "service:web"
           list_columns = [{
             attribute = "attr2"

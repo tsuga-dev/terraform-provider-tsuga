@@ -786,6 +786,8 @@
                   "discriminator": {
                     "propertyName": "type",
                     "mapping": {
+                      "timeseries-connection": "#/components/schemas/GraphVisualizationTimeseriesConnection",
+                      "list-connection": "#/components/schemas/GraphVisualizationListConnection",
                       "timeseries": "#/components/schemas/GraphVisualizationTimeseries",
                       "top-list": "#/components/schemas/GraphVisualizationTopList",
                       "pie": "#/components/schemas/GraphVisualizationPie",
@@ -800,6 +802,12 @@
                     "type"
                   ],
                   "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/GraphVisualizationTimeseriesConnection"
+                    },
+                    {
+                      "$ref": "#/components/schemas/GraphVisualizationListConnection"
+                    },
                     {
                       "$ref": "#/components/schemas/GraphVisualizationTimeseries"
                     },
@@ -1100,6 +1108,8 @@
                 "discriminator": {
                   "propertyName": "type",
                   "mapping": {
+                    "timeseries-connection": "#/components/schemas/GraphVisualizationTimeseriesConnection",
+                    "list-connection": "#/components/schemas/GraphVisualizationListConnection",
                     "timeseries": "#/components/schemas/GraphVisualizationTimeseries",
                     "top-list": "#/components/schemas/GraphVisualizationTopList",
                     "pie": "#/components/schemas/GraphVisualizationPie",
@@ -1114,6 +1124,12 @@
                   "type"
                 ],
                 "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/GraphVisualizationTimeseriesConnection"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GraphVisualizationListConnection"
+                  },
                   {
                     "$ref": "#/components/schemas/GraphVisualizationTimeseries"
                   },
@@ -5122,28 +5138,6 @@
           "clusterIds": []
         }
       },
-      "ListMonitorsResponse": {
-        "type": "object",
-        "required": [
-          "requestId",
-          "data"
-        ],
-        "properties": {
-          "requestId": {
-            "type": "string",
-            "description": "Identifier used to trace the lifecycle of this API request"
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Monitor"
-            }
-          },
-          "metadata": {
-            "$ref": "#/components/schemas/ResponseMetadata"
-          }
-        }
-      },
       "QueryMonitorsResponse": {
         "type": "object",
         "required": [
@@ -5883,6 +5877,60 @@
           },
           "data": {
             "$ref": "#/components/schemas/DeleteResponse"
+          }
+        }
+      },
+      "AllowedDomains": {
+        "type": "object",
+        "required": [
+          "allowedDomains"
+        ],
+        "properties": {
+          "allowedDomains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Email domains whose users are allowed to join the account. Domains are stored in lowercase."
+          }
+        },
+        "description": "Email domains whose users are allowed to join the account.",
+        "example": {
+          "allowedDomains": [
+            "acme.com",
+            "acme.io"
+          ]
+        }
+      },
+      "GetAllowedDomainsResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AllowedDomains"
+          }
+        }
+      },
+      "UpdateAllowedDomainsResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AllowedDomains"
           }
         }
       },
@@ -11470,6 +11518,319 @@
         },
         "title": "Custom"
       },
+      "GraphVisualizationTimeseriesConnection": {
+        "type": "object",
+        "required": [
+          "type",
+          "connectionId",
+          "queries"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Displays the database rows-based aggregation as a time series chart",
+            "enum": [
+              "timeseries-connection"
+            ]
+          },
+          "connectionId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250,
+            "description": "The ID of the connection to use to query the datastore."
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "readonly-sql-query",
+              "minLength": 1,
+              "maxLength": 50000,
+              "description": "The read-only SQL query to execute against the connection.",
+              "errorMessage": {
+                "format": "Must be a readonly SQL query (only SELECT statements are allowed). The SQL query you provided is not a readonly SQL query: ${0}."
+              }
+            },
+            "minItems": 1
+          },
+          "legendMode": {
+            "enum": [
+              "table",
+              "legend-only",
+              "no-legend"
+            ],
+            "description": "Controls whether and how the widget displays legend or series details (e.g. table, legend-only, or no legend)"
+          },
+          "thresholds": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "value",
+                "level"
+              ],
+              "properties": {
+                "value": {
+                  "type": "number",
+                  "description": "Y-axis value where the threshold marker is placed"
+                },
+                "level": {
+                  "enum": [
+                    "alert",
+                    "warning",
+                    "success"
+                  ],
+                  "description": "Level applied to the threshold marker"
+                }
+              },
+              "title": "ThresholdMarker"
+            },
+            "description": "Threshold markers displayed on the chart"
+          },
+          "yAxisSettings": {
+            "type": "object",
+            "required": [
+              "min",
+              "max",
+              "scale",
+              "alwaysIncludeZero"
+            ],
+            "properties": {
+              "min": {
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "auto"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "value"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "number"
+                        ]
+                      },
+                      "value": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                ]
+              },
+              "max": {
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "auto"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "value"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "number"
+                        ]
+                      },
+                      "value": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                ]
+              },
+              "scale": {
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "exponent"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "pow"
+                        ]
+                      },
+                      "exponent": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "linear",
+                          "log",
+                          "sqrt"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              },
+              "alwaysIncludeZero": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "title": "TimeseriesConnection"
+      },
+      "GraphVisualizationListConnection": {
+        "type": "object",
+        "required": [
+          "type",
+          "connectionId",
+          "query"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Displays database rows as a tabular list",
+            "enum": [
+              "list-connection"
+            ]
+          },
+          "connectionId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250,
+            "description": "The ID of the connection to use to query the datastore."
+          },
+          "query": {
+            "type": "string",
+            "format": "readonly-sql-query",
+            "minLength": 1,
+            "maxLength": 50000,
+            "description": "The read-only SQL query to execute against the connection.",
+            "errorMessage": {
+              "format": "Must be a readonly SQL query (only SELECT statements are allowed). The SQL query you provided is not a readonly SQL query: ${0}."
+            }
+          },
+          "listColumns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "attribute"
+              ],
+              "properties": {
+                "attribute": {
+                  "type": "string",
+                  "description": "Attribute (log field or database row column) displayed as a column in the list"
+                },
+                "normalizer": {
+                  "title": "Normalizer",
+                  "type": "object",
+                  "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                      "duration": "#/components/schemas/DataNormalizerDuration",
+                      "data": "#/components/schemas/DataNormalizerData",
+                      "percent": "#/components/schemas/DataNormalizerPercent",
+                      "date": "#/components/schemas/DataNormalizerDate",
+                      "level": "#/components/schemas/DataNormalizerLevel",
+                      "custom": "#/components/schemas/DataNormalizerCustom"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerDuration"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerData"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerPercent"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerDate"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerLevel"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerCustom"
+                    }
+                  ]
+                }
+              },
+              "title": "WidgetListColumn"
+            },
+            "description": "Custom columns to display for each database row"
+          },
+          "listColumnsSize": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "description": "List column width by column id"
+            }
+          }
+        },
+        "title": "ListConnection"
+      },
       "GraphVisualizationTimeseries": {
         "type": "object",
         "required": [
@@ -11489,10 +11850,9 @@
             "enum": [
               "logs",
               "metrics",
-              "traces",
-              "connections"
+              "traces"
             ],
-            "description": "Data source being queried"
+            "description": "Data source being queried for this aggregation"
           },
           "queries": {
             "type": "array",
@@ -11971,10 +12331,9 @@
             "enum": [
               "logs",
               "metrics",
-              "traces",
-              "connections"
+              "traces"
             ],
-            "description": "Data source being queried"
+            "description": "Data source being queried for this aggregation"
           },
           "queries": {
             "type": "array",
@@ -12290,10 +12649,9 @@
             "enum": [
               "logs",
               "metrics",
-              "traces",
-              "connections"
+              "traces"
             ],
-            "description": "Data source being queried"
+            "description": "Data source being queried for this aggregation"
           },
           "queries": {
             "type": "array",
@@ -12579,10 +12937,9 @@
             "enum": [
               "logs",
               "metrics",
-              "traces",
-              "connections"
+              "traces"
             ],
-            "description": "Data source being queried"
+            "description": "Data source being queried for this aggregation"
           },
           "queries": {
             "type": "array",
@@ -12886,10 +13243,9 @@
             "enum": [
               "logs",
               "metrics",
-              "traces",
-              "connections"
+              "traces"
             ],
-            "description": "Data source being queried"
+            "description": "Data source being queried for this aggregation"
           },
           "queries": {
             "type": "array",
@@ -13677,40 +14033,22 @@
         "type": "object",
         "required": [
           "type",
-          "source",
           "query"
         ],
         "properties": {
           "type": {
             "type": "string",
-            "description": "Displays matching logs or database rows in a tabular list",
+            "description": "Displays matching logs in a tabular list",
             "enum": [
               "list"
             ]
           },
-          "source": {
-            "anyOf": [
-              {
-                "type": "string",
-                "description": "Indicates that the widget queries logs",
-                "enum": [
-                  "logs"
-                ]
-              },
-              {
-                "type": "string",
-                "description": "Indicates that the widget queries connections like PostgreSQL, BigQuery, etc.",
-                "enum": [
-                  "connections"
-                ]
-              }
-            ]
-          },
           "query": {
             "type": "string",
+            "format": "tsuga-query",
             "minLength": 0,
-            "maxLength": 50000,
-            "description": "Query that selects logs or database rows for the list"
+            "maxLength": 10000,
+            "description": "Query that selects logs for the list"
           },
           "listColumns": {
             "type": "array",
@@ -13722,7 +14060,7 @@
               "properties": {
                 "attribute": {
                   "type": "string",
-                  "description": "Attribute displayed as a column in the log list"
+                  "description": "Attribute (log field or database row column) displayed as a column in the list"
                 },
                 "normalizer": {
                   "title": "Normalizer",
@@ -13765,7 +14103,7 @@
               },
               "title": "WidgetListColumn"
             },
-            "description": "Custom columns to display for each log or database row"
+            "description": "Custom columns to display for each log"
           },
           "listColumnsSize": {
             "type": "object",
@@ -13773,12 +14111,6 @@
               "type": "number",
               "description": "List column width by column id"
             }
-          },
-          "connectionId": {
-            "type": "string",
-            "minLength": 0,
-            "maxLength": 250,
-            "description": "Identifier of the connection to query"
           }
         },
         "title": "List"
@@ -14568,7 +14900,8 @@
                   "clusterId": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 250
+                    "maxLength": 250,
+                    "description": "ID of the cluster to target. Omit to use the default cluster."
                   }
                 }
               }
@@ -14858,7 +15191,8 @@
                   "clusterId": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 250
+                    "maxLength": 250,
+                    "description": "ID of the cluster to target. Omit to use the default cluster."
                   },
                   "aggregationWindow": {
                     "type": "string",
@@ -15967,6 +16301,8 @@
                           "discriminator": {
                             "propertyName": "type",
                             "mapping": {
+                              "timeseries-connection": "#/components/schemas/GraphVisualizationTimeseriesConnection",
+                              "list-connection": "#/components/schemas/GraphVisualizationListConnection",
                               "timeseries": "#/components/schemas/GraphVisualizationTimeseries",
                               "top-list": "#/components/schemas/GraphVisualizationTopList",
                               "pie": "#/components/schemas/GraphVisualizationPie",
@@ -15981,6 +16317,12 @@
                             "type"
                           ],
                           "oneOf": [
+                            {
+                              "$ref": "#/components/schemas/GraphVisualizationTimeseriesConnection"
+                            },
+                            {
+                              "$ref": "#/components/schemas/GraphVisualizationListConnection"
+                            },
                             {
                               "$ref": "#/components/schemas/GraphVisualizationTimeseries"
                             },
@@ -16362,6 +16704,8 @@
                           "discriminator": {
                             "propertyName": "type",
                             "mapping": {
+                              "timeseries-connection": "#/components/schemas/GraphVisualizationTimeseriesConnection",
+                              "list-connection": "#/components/schemas/GraphVisualizationListConnection",
                               "timeseries": "#/components/schemas/GraphVisualizationTimeseries",
                               "top-list": "#/components/schemas/GraphVisualizationTopList",
                               "pie": "#/components/schemas/GraphVisualizationPie",
@@ -16376,6 +16720,12 @@
                             "type"
                           ],
                           "oneOf": [
+                            {
+                              "$ref": "#/components/schemas/GraphVisualizationTimeseriesConnection"
+                            },
+                            {
+                              "$ref": "#/components/schemas/GraphVisualizationListConnection"
+                            },
                             {
                               "$ref": "#/components/schemas/GraphVisualizationTimeseries"
                             },
@@ -16701,6 +17051,8 @@
                     "discriminator": {
                       "propertyName": "type",
                       "mapping": {
+                        "timeseries-connection": "#/components/schemas/GraphVisualizationTimeseriesConnection",
+                        "list-connection": "#/components/schemas/GraphVisualizationListConnection",
                         "timeseries": "#/components/schemas/GraphVisualizationTimeseries",
                         "top-list": "#/components/schemas/GraphVisualizationTopList",
                         "pie": "#/components/schemas/GraphVisualizationPie",
@@ -16715,6 +17067,12 @@
                       "type"
                     ],
                     "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/GraphVisualizationTimeseriesConnection"
+                      },
+                      {
+                        "$ref": "#/components/schemas/GraphVisualizationListConnection"
+                      },
                       {
                         "$ref": "#/components/schemas/GraphVisualizationTimeseries"
                       },
@@ -17137,7 +17495,8 @@
             },
             "in": "query",
             "name": "clusterId",
-            "required": false
+            "required": false,
+            "description": "ID of the cluster to target. Omit to use the default cluster."
           },
           {
             "schema": {
@@ -17277,7 +17636,8 @@
             },
             "in": "query",
             "name": "clusterId",
-            "required": false
+            "required": false,
+            "description": "ID of the cluster to target. Omit to use the default cluster."
           }
         ],
         "responses": {
@@ -17410,7 +17770,8 @@
             },
             "in": "query",
             "name": "clusterId",
-            "required": false
+            "required": false,
+            "description": "ID of the cluster to target. Omit to use the default cluster."
           }
         ],
         "responses": {
@@ -17513,7 +17874,8 @@
             },
             "in": "query",
             "name": "clusterId",
-            "required": false
+            "required": false,
+            "description": "ID of the cluster to target. Omit to use the default cluster."
           }
         ],
         "responses": {
@@ -17636,7 +17998,8 @@
             },
             "in": "query",
             "name": "clusterId",
-            "required": false
+            "required": false,
+            "description": "ID of the cluster to target. Omit to use the default cluster."
           }
         ],
         "responses": {
@@ -17739,7 +18102,8 @@
             },
             "in": "query",
             "name": "clusterId",
-            "required": false
+            "required": false,
+            "description": "ID of the cluster to target. Omit to use the default cluster."
           }
         ],
         "responses": {
@@ -17842,7 +18206,8 @@
             },
             "in": "query",
             "name": "clusterId",
-            "required": false
+            "required": false,
+            "description": "ID of the cluster to target. Omit to use the default cluster."
           },
           {
             "schema": {
@@ -17871,369 +18236,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GetMetricResponse"
-                }
-              }
-            }
-          },
-          "4XX": {
-            "description": "Client error",
-            "headers": {
-              "x-request-id": {
-                "schema": {
-                  "type": "string"
-                },
-                "description": "Unique identifier for this API request, useful for debugging and support"
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClientErrorEnvelope"
-                }
-              }
-            }
-          },
-          "5XX": {
-            "description": "Server error",
-            "headers": {
-              "x-request-id": {
-                "schema": {
-                  "type": "string"
-                },
-                "description": "Unique identifier for this API request, useful for debugging and support"
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServerErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/monitors": {
-      "get": {
-        "operationId": "listMonitors",
-        "tags": [
-          "monitors"
-        ],
-        "description": "Retrieve all monitors",
-        "parameters": [
-          {
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 1000
-            },
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "description": "The maximum number of items to return"
-          },
-          {
-            "schema": {
-              "type": "integer",
-              "minimum": 0
-            },
-            "in": "query",
-            "name": "offset",
-            "required": false,
-            "description": "The offset of the first item to return"
-          },
-          {
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 250
-              }
-            },
-            "in": "query",
-            "name": "owners",
-            "required": false
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "headers": {
-              "x-request-id": {
-                "schema": {
-                  "type": "string"
-                },
-                "description": "Unique identifier for this API request, useful for debugging and support"
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ListMonitorsResponse"
-                }
-              }
-            }
-          },
-          "4XX": {
-            "description": "Client error",
-            "headers": {
-              "x-request-id": {
-                "schema": {
-                  "type": "string"
-                },
-                "description": "Unique identifier for this API request, useful for debugging and support"
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClientErrorEnvelope"
-                }
-              }
-            }
-          },
-          "5XX": {
-            "description": "Server error",
-            "headers": {
-              "x-request-id": {
-                "schema": {
-                  "type": "string"
-                },
-                "description": "Unique identifier for this API request, useful for debugging and support"
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServerErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "operationId": "createMonitor",
-        "tags": [
-          "monitors"
-        ],
-        "description": "Create a new monitor",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "name",
-                  "configuration",
-                  "priority",
-                  "owner",
-                  "permissions"
-                ],
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 0,
-                    "maxLength": 250
-                  },
-                  "message": {
-                    "type": "string",
-                    "minLength": 0,
-                    "maxLength": 50000
-                  },
-                  "tags": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "required": [
-                        "key",
-                        "value"
-                      ],
-                      "properties": {
-                        "key": {
-                          "type": "string",
-                          "maxLength": 128
-                        },
-                        "value": {
-                          "type": "string",
-                          "maxLength": 256,
-                          "pattern": "^\\S(.*\\S)?$"
-                        }
-                      },
-                      "title": "Tag"
-                    },
-                    "title": "Tags",
-                    "maxItems": 50,
-                    "description": "List of key/value tags applied to the resource"
-                  },
-                  "configuration": {
-                    "type": "object",
-                    "discriminator": {
-                      "propertyName": "type",
-                      "mapping": {
-                        "metric": "#/components/schemas/MonitorConfigurationMetric",
-                        "log": "#/components/schemas/MonitorConfigurationLog",
-                        "trace": "#/components/schemas/MonitorConfigurationTrace",
-                        "anomaly-log": "#/components/schemas/MonitorConfigurationAnomalyLog",
-                        "anomaly-metric": "#/components/schemas/MonitorConfigurationAnomalyMetric",
-                        "log-error-pattern": "#/components/schemas/MonitorConfigurationLogErrorPattern",
-                        "certificate-expiry": "#/components/schemas/MonitorConfigurationCertificateExpiry"
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "oneOf": [
-                      {
-                        "$ref": "#/components/schemas/MonitorConfigurationMetric"
-                      },
-                      {
-                        "$ref": "#/components/schemas/MonitorConfigurationLog"
-                      },
-                      {
-                        "$ref": "#/components/schemas/MonitorConfigurationTrace"
-                      },
-                      {
-                        "$ref": "#/components/schemas/MonitorConfigurationAnomalyLog"
-                      },
-                      {
-                        "$ref": "#/components/schemas/MonitorConfigurationAnomalyMetric"
-                      },
-                      {
-                        "$ref": "#/components/schemas/MonitorConfigurationLogErrorPattern"
-                      },
-                      {
-                        "$ref": "#/components/schemas/MonitorConfigurationCertificateExpiry"
-                      }
-                    ]
-                  },
-                  "priority": {
-                    "enum": [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5
-                    ]
-                  },
-                  "owner": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 250
-                  },
-                  "dashboardId": {
-                    "type": "string",
-                    "minLength": 0,
-                    "maxLength": 250
-                  },
-                  "permissions": {
-                    "enum": [
-                      "all",
-                      "owning-team-and-public",
-                      "owning-team-only"
-                    ],
-                    "description": "This controls which data the resource can see"
-                  },
-                  "clusterIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 250
-                    }
-                  }
-                }
-              },
-              "examples": {
-                "example1": {
-                  "value": {
-                    "name": "High Error Rate Alert",
-                    "message": "Error rate exceeded threshold. Check the API gateway logs.",
-                    "tags": [
-                      {
-                        "key": "severity",
-                        "value": "critical"
-                      }
-                    ],
-                    "configuration": {
-                      "type": "log",
-                      "timeframe": 5,
-                      "groupByFields": [],
-                      "queries": [
-                        {
-                          "aggregate": {
-                            "type": "count"
-                          },
-                          "filter": "level:ERROR service:api-gateway"
-                        }
-                      ],
-                      "conditions": [
-                        {
-                          "formula": "q1",
-                          "operator": "greater_than",
-                          "threshold": 100
-                        }
-                      ],
-                      "noDataBehavior": "resolve"
-                    },
-                    "priority": 1,
-                    "owner": "abc-123-def",
-                    "dashboardId": "789-abc-def",
-                    "permissions": "all",
-                    "clusterIds": []
-                  }
-                },
-                "example2": {
-                  "value": {
-                    "name": "New Error Pattern Detector",
-                    "message": "A new error pattern was detected in the logs.",
-                    "tags": [
-                      {
-                        "key": "team",
-                        "value": "platform"
-                      }
-                    ],
-                    "configuration": {
-                      "type": "log-error-pattern",
-                      "aggregationAlertLogic": "each",
-                      "noDataBehavior": "keep_last_status",
-                      "filter": {
-                        "teamIds": [
-                          "abc-123-def"
-                        ],
-                        "env": "production",
-                        "service": "api-gateway"
-                      }
-                    },
-                    "priority": 2,
-                    "owner": "abc-123-def",
-                    "dashboardId": "789-abc-def",
-                    "permissions": "all",
-                    "clusterIds": []
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "headers": {
-              "x-request-id": {
-                "schema": {
-                  "type": "string"
-                },
-                "description": "Unique identifier for this API request, useful for debugging and support"
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateMonitorResponse"
                 }
               }
             }
@@ -18422,6 +18424,29 @@
                     "description": "Optional sorting applied to the returned monitors"
                   }
                 }
+              },
+              "example": {
+                "filters": {
+                  "owners": [
+                    "team-123-abc"
+                  ],
+                  "searchQuery": "service:api-gateway",
+                  "tags": [
+                    {
+                      "key": "paging",
+                      "value": "true"
+                    }
+                  ],
+                  "priorities": [
+                    1
+                  ]
+                },
+                "sort": {
+                  "by": "name",
+                  "direction": "asc"
+                },
+                "limit": 10,
+                "offset": 0
               }
             }
           }
@@ -18868,6 +18893,270 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DeleteMonitorResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/monitors": {
+      "post": {
+        "operationId": "createMonitor",
+        "tags": [
+          "monitors"
+        ],
+        "description": "Create a new monitor",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "configuration",
+                  "priority",
+                  "owner",
+                  "permissions"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 250
+                  },
+                  "message": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 50000
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "key",
+                        "value"
+                      ],
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "maxLength": 128
+                        },
+                        "value": {
+                          "type": "string",
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$"
+                        }
+                      },
+                      "title": "Tag"
+                    },
+                    "title": "Tags",
+                    "maxItems": 50,
+                    "description": "List of key/value tags applied to the resource"
+                  },
+                  "configuration": {
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type",
+                      "mapping": {
+                        "metric": "#/components/schemas/MonitorConfigurationMetric",
+                        "log": "#/components/schemas/MonitorConfigurationLog",
+                        "trace": "#/components/schemas/MonitorConfigurationTrace",
+                        "anomaly-log": "#/components/schemas/MonitorConfigurationAnomalyLog",
+                        "anomaly-metric": "#/components/schemas/MonitorConfigurationAnomalyMetric",
+                        "log-error-pattern": "#/components/schemas/MonitorConfigurationLogErrorPattern",
+                        "certificate-expiry": "#/components/schemas/MonitorConfigurationCertificateExpiry"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/MonitorConfigurationMetric"
+                      },
+                      {
+                        "$ref": "#/components/schemas/MonitorConfigurationLog"
+                      },
+                      {
+                        "$ref": "#/components/schemas/MonitorConfigurationTrace"
+                      },
+                      {
+                        "$ref": "#/components/schemas/MonitorConfigurationAnomalyLog"
+                      },
+                      {
+                        "$ref": "#/components/schemas/MonitorConfigurationAnomalyMetric"
+                      },
+                      {
+                        "$ref": "#/components/schemas/MonitorConfigurationLogErrorPattern"
+                      },
+                      {
+                        "$ref": "#/components/schemas/MonitorConfigurationCertificateExpiry"
+                      }
+                    ]
+                  },
+                  "priority": {
+                    "enum": [
+                      1,
+                      2,
+                      3,
+                      4,
+                      5
+                    ]
+                  },
+                  "owner": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250
+                  },
+                  "dashboardId": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 250
+                  },
+                  "permissions": {
+                    "enum": [
+                      "all",
+                      "owning-team-and-public",
+                      "owning-team-only"
+                    ],
+                    "description": "This controls which data the resource can see"
+                  },
+                  "clusterIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 250
+                    }
+                  }
+                }
+              },
+              "examples": {
+                "example1": {
+                  "value": {
+                    "name": "High Error Rate Alert",
+                    "message": "Error rate exceeded threshold. Check the API gateway logs.",
+                    "tags": [
+                      {
+                        "key": "severity",
+                        "value": "critical"
+                      }
+                    ],
+                    "configuration": {
+                      "type": "log",
+                      "timeframe": 5,
+                      "groupByFields": [],
+                      "queries": [
+                        {
+                          "aggregate": {
+                            "type": "count"
+                          },
+                          "filter": "level:ERROR service:api-gateway"
+                        }
+                      ],
+                      "conditions": [
+                        {
+                          "formula": "q1",
+                          "operator": "greater_than",
+                          "threshold": 100
+                        }
+                      ],
+                      "noDataBehavior": "resolve"
+                    },
+                    "priority": 1,
+                    "owner": "abc-123-def",
+                    "dashboardId": "789-abc-def",
+                    "permissions": "all",
+                    "clusterIds": []
+                  }
+                },
+                "example2": {
+                  "value": {
+                    "name": "New Error Pattern Detector",
+                    "message": "A new error pattern was detected in the logs.",
+                    "tags": [
+                      {
+                        "key": "team",
+                        "value": "platform"
+                      }
+                    ],
+                    "configuration": {
+                      "type": "log-error-pattern",
+                      "aggregationAlertLogic": "each",
+                      "noDataBehavior": "keep_last_status",
+                      "filter": {
+                        "teamIds": [
+                          "abc-123-def"
+                        ],
+                        "env": "production",
+                        "service": "api-gateway"
+                      }
+                    },
+                    "priority": 2,
+                    "owner": "abc-123-def",
+                    "dashboardId": "789-abc-def",
+                    "permissions": "all",
+                    "clusterIds": []
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateMonitorResponse"
                 }
               }
             }
@@ -20690,6 +20979,167 @@
         }
       }
     },
+    "/v1/allowed-domains": {
+      "get": {
+        "operationId": "getAllowedDomains",
+        "tags": [
+          "organization"
+        ],
+        "description": "Retrieve the list of email domains from which users are allowed to join the account.",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAllowedDomainsResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateAllowedDomains",
+        "tags": [
+          "organization"
+        ],
+        "description": "Update the list of allowed email domains",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "allowedDomains"
+                ],
+                "properties": {
+                  "allowedDomains": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "lowercase-domain",
+                      "minLength": 1,
+                      "maxLength": 250,
+                      "description": "A lowercase email domain (e.g. \"acme.com\")."
+                    },
+                    "maxItems": 10,
+                    "description": "The new full list of email domains whose users are allowed to join the account. Replaces the existing list."
+                  }
+                }
+              },
+              "example": {
+                "allowedDomains": [
+                  "acme.com",
+                  "acme.io"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateAllowedDomainsResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/quality-reports/latest": {
       "get": {
         "operationId": "getLatestQualityReport",
@@ -20706,7 +21156,8 @@
             },
             "in": "query",
             "name": "clusterId",
-            "required": false
+            "required": false,
+            "description": "ID of the cluster to target. Omit to use the default cluster."
           }
         ],
         "responses": {
@@ -23958,7 +24409,8 @@
             },
             "in": "query",
             "name": "clusterId",
-            "required": false
+            "required": false,
+            "description": "ID of the cluster to target. Omit to use the default cluster."
           }
         ],
         "responses": {
