@@ -1,0 +1,14 @@
+examples/resources/tsuga_monitor/resource.tf
+  h_1ab25eb74e85c4 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "957b7dea59c72d734dfd7312c5920f0402988ba8",
+  "prompts": {},
+  "humans": {
+    "h_1ab25eb74e85c4": {
+      "author": "Cecile Guyon <cecile@tsuga.com>"
+    }
+  }
+}
