@@ -29,10 +29,32 @@ jobs:
               with:
                   gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
                   passphrase: ${{ secrets.PASSPHRASE }}
+            - name: Extract release notes from CHANGELOG
+              id: notes
+              run: |
+                  VERSION="${GITHUB_REF_NAME#v}"
+                  NOTES_FILE="$(mktemp)"
+                  # Print the body of the "## [<version>]" section, stopping at the next "## [" heading.
+                  awk -v ver="$VERSION" '
+                      /^## \[/ {
+                          if (found) exit
+                          if (index($0, "[" ver "]")) { found = 1; next }
+                      }
+                      found { print }
+                  ' CHANGELOG.md > "$NOTES_FILE"
+                  # Trim leading blank lines.
+                  sed -i -e '/./,$!d' "$NOTES_FILE"
+                  if [ ! -s "$NOTES_FILE" ]; then
+                      echo "::error::No CHANGELOG section found for ${VERSION}. Add a '## [${VERSION}]' section to CHANGELOG.md and re-tag."
+                      exit 1
+                  fi
+                  echo "file=$NOTES_FILE" >> "$GITHUB_OUTPUT"
+                  echo "----- release notes for ${GITHUB_REF_NAME} -----"
+                  cat "$NOTES_FILE"
             - name: Run GoReleaser
               uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6.4.0
               with:
-                  args: release --clean
+                  args: release --clean --release-notes=${{ steps.notes.outputs.file }}
               env:
                   # GitHub sets the GITHUB_TOKEN secret automatically.
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
