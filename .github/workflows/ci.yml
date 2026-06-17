@@ -145,8 +145,14 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
-      - name: Go format
-        run: go fmt ./...
+      - name: Go format check
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "These files are not gofmt'd. Run 'gofmt -w .':" >&2
+            echo "$unformatted" >&2
+            exit 1
+          fi
 
       - name: Go test
         run: go test -v ./...
