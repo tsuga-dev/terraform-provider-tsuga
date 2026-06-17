@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fix the `tsuga_monitor` example.
+- Always pass teamOverrideFields for ingestion API keys.
 
 ## [2.1.1] - 2026-05-18
 
