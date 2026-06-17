@@ -172,16 +172,16 @@ func DashboardResourceSchema(ctx context.Context) schema.Schema {
 						"visualization": schema.SingleNestedAttribute{
 							Required: true,
 							Attributes: map[string]schema.Attribute{
-								"timeseries":             visualizationSeriesSchema(),
-								"top_list":               visualizationTopListSchema(),
-								"pie":                    visualizationSeriesSchema(),
-								"query_value":            visualizationQueryValueSchema(),
-								"bar":                    visualizationBarSchema(),
-								"list":                   visualizationListSchema(),
-								"note":                   visualizationNoteSchema(),
-								"table":                  visualizationTableSchema(),
-								"timeseries_connection":  visualizationTimeseriesConnectionSchema(),
-								"list_connection":        visualizationListConnectionSchema(),
+								"timeseries":            visualizationSeriesSchema(),
+								"top_list":              visualizationTopListSchema(),
+								"pie":                   visualizationSeriesSchema(),
+								"query_value":           visualizationQueryValueSchema(),
+								"bar":                   visualizationBarSchema(),
+								"list":                  visualizationListSchema(),
+								"note":                  visualizationNoteSchema(),
+								"table":                 visualizationTableSchema(),
+								"timeseries_connection": visualizationTimeseriesConnectionSchema(),
+								"list_connection":       visualizationListConnectionSchema(),
 							},
 						},
 					},
@@ -566,7 +566,7 @@ func visualizationTimeseriesConnectionSchema() schema.Attribute {
 					stringvalidator.OneOf("table", "legend-only", "no-legend"),
 				},
 			},
-			"thresholds":     thresholdsSchema(),
+			"thresholds":      thresholdsSchema(),
 			"y_axis_settings": yAxisSettingsSchema(),
 		},
 	}
@@ -676,16 +676,16 @@ type GraphLayoutModel struct {
 }
 
 type VisualizationModel struct {
-	Timeseries            *SeriesVisualizationModel            `tfsdk:"timeseries"`
-	TopList               *TopListVisualization                 `tfsdk:"top_list"`
-	Pie                   *SeriesVisualizationModel            `tfsdk:"pie"`
-	QueryValue            *QueryValueVisualization             `tfsdk:"query_value"`
-	Bar                   *BarVisualization                    `tfsdk:"bar"`
-	List                  *ListVisualization                   `tfsdk:"list"`
-	Note                  *NoteVisualizationModel              `tfsdk:"note"`
-	Table                 *TableVisualizationModel             `tfsdk:"table"`
-	TimeseriesConnection  *TimeseriesConnectionVisualization   `tfsdk:"timeseries_connection"`
-	ListConnection        *ListConnectionVisualization         `tfsdk:"list_connection"`
+	Timeseries           *SeriesVisualizationModel          `tfsdk:"timeseries"`
+	TopList              *TopListVisualization              `tfsdk:"top_list"`
+	Pie                  *SeriesVisualizationModel          `tfsdk:"pie"`
+	QueryValue           *QueryValueVisualization           `tfsdk:"query_value"`
+	Bar                  *BarVisualization                  `tfsdk:"bar"`
+	List                 *ListVisualization                 `tfsdk:"list"`
+	Note                 *NoteVisualizationModel            `tfsdk:"note"`
+	Table                *TableVisualizationModel           `tfsdk:"table"`
+	TimeseriesConnection *TimeseriesConnectionVisualization `tfsdk:"timeseries_connection"`
+	ListConnection       *ListConnectionVisualization       `tfsdk:"list_connection"`
 }
 
 type SeriesVisualizationModel struct {
