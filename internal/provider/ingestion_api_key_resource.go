@@ -293,7 +293,13 @@ func (r *ingestionApiKeyResource) modelToRequest(ctx context.Context, model inge
 		if diags.HasError() {
 			return nil, diags
 		}
-		body["teamOverrideFields"] = fields
+		if len(fields) == 0 {
+			body["teamOverrideFields"] = nil
+		} else {
+			body["teamOverrideFields"] = fields
+		}
+	} else {
+		body["teamOverrideFields"] = nil
 	}
 
 	return body, diags
