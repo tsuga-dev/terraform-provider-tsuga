@@ -310,6 +310,50 @@ func processorsListAttribute(ctx context.Context, depth int) schema.ListNestedAt
 								"replace_missing_by_0": schema.BoolAttribute{Optional: true, Computed: true},
 							},
 						},
+						"category": schema.SingleNestedAttribute{
+							Optional: true,
+							Attributes: map[string]schema.Attribute{
+								"target_attribute": schema.StringAttribute{
+									Required:    true,
+									Description: "Attribute that will receive the category value",
+									Validators: []validator.String{
+										stringvalidator.LengthBetween(1, 250),
+									},
+								},
+								"clauses": schema.ListNestedAttribute{
+									Required:    true,
+									Description: "Conditions evaluated in order to determine the category value",
+									Validators: []validator.List{
+										listvalidator.SizeBetween(1, 15),
+									},
+									NestedObject: schema.NestedAttributeObject{
+										Attributes: map[string]schema.Attribute{
+											"query": schema.StringAttribute{
+												Required:    true,
+												Description: "Query that selects the logs assigned to this category",
+												Validators: []validator.String{
+													stringvalidator.LengthBetween(1, 10000),
+												},
+											},
+											"value": schema.StringAttribute{
+												Required:    true,
+												Description: "Category value assigned when the query matches",
+												Validators: []validator.String{
+													stringvalidator.LengthBetween(1, 250),
+												},
+											},
+										},
+									},
+								},
+								"default_value": schema.StringAttribute{
+									Optional:    true,
+									Description: "Category value used when no condition matches",
+									Validators: []validator.String{
+										stringvalidator.LengthAtMost(250),
+									},
+								},
+							},
+						},
 					},
 				},
 				"split": splitAttr,
@@ -423,6 +467,7 @@ type ParseKeyValueModel struct {
 type CreatorModel struct {
 	FormatString *CreatorFormatStringModel `tfsdk:"format_string"`
 	MathFormula  *CreatorMathFormulaModel  `tfsdk:"math_formula"`
+	Category     *CreatorCategoryModel     `tfsdk:"category"`
 }
 
 type CreatorFormatStringModel struct {
@@ -437,6 +482,17 @@ type CreatorMathFormulaModel struct {
 	Formula           types.String `tfsdk:"formula"`
 	OverrideTarget    types.Bool   `tfsdk:"override_target"`
 	ReplaceMissingBy0 types.Bool   `tfsdk:"replace_missing_by_0"`
+}
+
+type CreatorCategoryModel struct {
+	TargetAttribute types.String                 `tfsdk:"target_attribute"`
+	Clauses         []CreatorCategoryClauseModel `tfsdk:"clauses"`
+	DefaultValue    types.String                 `tfsdk:"default_value"`
+}
+
+type CreatorCategoryClauseModel struct {
+	Query types.String `tfsdk:"query"`
+	Value types.String `tfsdk:"value"`
 }
 
 type SplitModel struct {
@@ -552,6 +608,7 @@ func CreatorAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"format_string": types.ObjectType{AttrTypes: CreatorFormatStringAttrTypes()},
 		"math_formula":  types.ObjectType{AttrTypes: CreatorMathFormulaAttrTypes()},
+		"category":      types.ObjectType{AttrTypes: CreatorCategoryAttrTypes()},
 	}
 }
 
@@ -570,6 +627,21 @@ func CreatorMathFormulaAttrTypes() map[string]attr.Type {
 		"formula":              types.StringType,
 		"override_target":      types.BoolType,
 		"replace_missing_by_0": types.BoolType,
+	}
+}
+
+func CreatorCategoryAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"target_attribute": types.StringType,
+		"clauses":          types.ListType{ElemType: types.ObjectType{AttrTypes: CreatorCategoryClauseAttrTypes()}},
+		"default_value":    types.StringType,
+	}
+}
+
+func CreatorCategoryClauseAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"query": types.StringType,
+		"value": types.StringType,
 	}
 }
 

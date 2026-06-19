@@ -47,6 +47,25 @@ resource "tsuga_route" "route" {
       }
     },
     {
+      id = "severity-creator"
+      creator = {
+        category = {
+          target_attribute = "severity"
+          clauses = [
+            {
+              query = "status_code:>=500"
+              value = "error"
+            },
+            {
+              query = "status_code:>=400"
+              value = "warning"
+            }
+          ]
+          default_value = "info"
+        }
+      }
+    },
+    {
       id = "otel-splitter"
       split = {
         items = [

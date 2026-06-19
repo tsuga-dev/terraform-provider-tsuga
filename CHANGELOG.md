@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.3] - 2026-06-18
+
+### Added
+- Support the `log`, `power`, `sqrt`, and `increase` query functions on dashboards.
+- Add dashboard visualization types: `gauge`, `distribution`, `heatmap`, `list-log-patterns`, and the connection-based `bar`, `pie`, `top-list`, and `query-value` variants.
+- Add the `cpu` data normalizer, `timeseries` smoothing, and graph description alignment fields to dashboards.
+- Add the `category` creator subtype for routes.
+- Add the `rum-public-token` asset type for tag policies.
+
 ## [2.1.2] - 2026-06-17
 
 ### Fixed

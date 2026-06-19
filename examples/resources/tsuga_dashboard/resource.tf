@@ -458,6 +458,24 @@ resource "tsuga_dashboard" "dashboard" {
                   seconds = 604800
                 }
               ]
+            },
+            {
+              aggregate = {
+                max = {
+                  field = "k8s.node.network.io"
+                }
+              }
+              # Math functions: "log" requires a base, "power" requires an exponent.
+              functions = [
+                {
+                  type = "log"
+                  base = 10
+                },
+                {
+                  type     = "power"
+                  exponent = 2
+                }
+              ]
             }
           ]
 

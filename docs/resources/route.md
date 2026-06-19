@@ -62,6 +62,25 @@ resource "tsuga_route" "route" {
       }
     },
     {
+      id = "severity-creator"
+      creator = {
+        category = {
+          target_attribute = "severity"
+          clauses = [
+            {
+              query = "status_code:>=500"
+              value = "error"
+            },
+            {
+              query = "status_code:>=400"
+              value = "warning"
+            }
+          ]
+          default_value = "info"
+        }
+      }
+    },
+    {
       id = "otel-splitter"
       split = {
         items = [
@@ -139,8 +158,31 @@ Optional:
 
 Optional:
 
+- `category` (Attributes) (see [below for nested schema](#nestedatt--processors--creator--category))
 - `format_string` (Attributes) (see [below for nested schema](#nestedatt--processors--creator--format_string))
 - `math_formula` (Attributes) (see [below for nested schema](#nestedatt--processors--creator--math_formula))
+
+<a id="nestedatt--processors--creator--category"></a>
+### Nested Schema for `processors.creator.category`
+
+Required:
+
+- `clauses` (Attributes List) Conditions evaluated in order to determine the category value (see [below for nested schema](#nestedatt--processors--creator--category--clauses))
+- `target_attribute` (String) Attribute that will receive the category value
+
+Optional:
+
+- `default_value` (String) Category value used when no condition matches
+
+<a id="nestedatt--processors--creator--category--clauses"></a>
+### Nested Schema for `processors.creator.category.clauses`
+
+Required:
+
+- `query` (String) Query that selects the logs assigned to this category
+- `value` (String) Category value assigned when the query matches
+
+
 
 <a id="nestedatt--processors--creator--format_string"></a>
 ### Nested Schema for `processors.creator.format_string`
@@ -302,8 +344,31 @@ Optional:
 
 Optional:
 
+- `category` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--creator--category))
 - `format_string` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--creator--format_string))
 - `math_formula` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--creator--math_formula))
+
+<a id="nestedatt--processors--split--items--processors--creator--category"></a>
+### Nested Schema for `processors.split.items.processors.creator.category`
+
+Required:
+
+- `clauses` (Attributes List) Conditions evaluated in order to determine the category value (see [below for nested schema](#nestedatt--processors--split--items--processors--creator--category--clauses))
+- `target_attribute` (String) Attribute that will receive the category value
+
+Optional:
+
+- `default_value` (String) Category value used when no condition matches
+
+<a id="nestedatt--processors--split--items--processors--creator--category--clauses"></a>
+### Nested Schema for `processors.split.items.processors.creator.category.clauses`
+
+Required:
+
+- `query` (String) Query that selects the logs assigned to this category
+- `value` (String) Category value assigned when the query matches
+
+
 
 <a id="nestedatt--processors--split--items--processors--creator--format_string"></a>
 ### Nested Schema for `processors.split.items.processors.creator.format_string`
@@ -465,8 +530,31 @@ Optional:
 
 Optional:
 
+- `category` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--creator--category))
 - `format_string` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--creator--format_string))
 - `math_formula` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--creator--math_formula))
+
+<a id="nestedatt--processors--split--items--processors--split--items--processors--creator--category"></a>
+### Nested Schema for `processors.split.items.processors.split.items.processors.creator.category`
+
+Required:
+
+- `clauses` (Attributes List) Conditions evaluated in order to determine the category value (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--creator--category--clauses))
+- `target_attribute` (String) Attribute that will receive the category value
+
+Optional:
+
+- `default_value` (String) Category value used when no condition matches
+
+<a id="nestedatt--processors--split--items--processors--split--items--processors--creator--category--clauses"></a>
+### Nested Schema for `processors.split.items.processors.split.items.processors.creator.category.clauses`
+
+Required:
+
+- `query` (String) Query that selects the logs assigned to this category
+- `value` (String) Category value assigned when the query matches
+
+
 
 <a id="nestedatt--processors--split--items--processors--split--items--processors--creator--format_string"></a>
 ### Nested Schema for `processors.split.items.processors.split.items.processors.creator.format_string`
@@ -628,8 +716,31 @@ Optional:
 
 Optional:
 
+- `category` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--creator--category))
 - `format_string` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--creator--format_string))
 - `math_formula` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--creator--math_formula))
+
+<a id="nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--creator--category"></a>
+### Nested Schema for `processors.split.items.processors.split.items.processors.split.items.processors.creator.category`
+
+Required:
+
+- `clauses` (Attributes List) Conditions evaluated in order to determine the category value (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--creator--category--clauses))
+- `target_attribute` (String) Attribute that will receive the category value
+
+Optional:
+
+- `default_value` (String) Category value used when no condition matches
+
+<a id="nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--creator--category--clauses"></a>
+### Nested Schema for `processors.split.items.processors.split.items.processors.split.items.processors.creator.category.clauses`
+
+Required:
+
+- `query` (String) Query that selects the logs assigned to this category
+- `value` (String) Category value assigned when the query matches
+
+
 
 <a id="nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--creator--format_string"></a>
 ### Nested Schema for `processors.split.items.processors.split.items.processors.split.items.processors.creator.format_string`
@@ -791,8 +902,31 @@ Optional:
 
 Optional:
 
+- `category` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--category))
 - `format_string` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--format_string))
 - `math_formula` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--math_formula))
+
+<a id="nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--category"></a>
+### Nested Schema for `processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.creator.category`
+
+Required:
+
+- `clauses` (Attributes List) Conditions evaluated in order to determine the category value (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--category--clauses))
+- `target_attribute` (String) Attribute that will receive the category value
+
+Optional:
+
+- `default_value` (String) Category value used when no condition matches
+
+<a id="nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--category--clauses"></a>
+### Nested Schema for `processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.creator.category.clauses`
+
+Required:
+
+- `query` (String) Query that selects the logs assigned to this category
+- `value` (String) Category value assigned when the query matches
+
+
 
 <a id="nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--format_string"></a>
 ### Nested Schema for `processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.creator.format_string`
@@ -954,8 +1088,31 @@ Optional:
 
 Optional:
 
+- `category` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--category))
 - `format_string` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--format_string))
 - `math_formula` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--math_formula))
+
+<a id="nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--category"></a>
+### Nested Schema for `processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.creator.category`
+
+Required:
+
+- `clauses` (Attributes List) Conditions evaluated in order to determine the category value (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--category--clauses))
+- `target_attribute` (String) Attribute that will receive the category value
+
+Optional:
+
+- `default_value` (String) Category value used when no condition matches
+
+<a id="nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--category--clauses"></a>
+### Nested Schema for `processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.creator.category.clauses`
+
+Required:
+
+- `query` (String) Query that selects the logs assigned to this category
+- `value` (String) Category value assigned when the query matches
+
+
 
 <a id="nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--format_string"></a>
 ### Nested Schema for `processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.creator.format_string`
@@ -1117,8 +1274,31 @@ Optional:
 
 Optional:
 
+- `category` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--category))
 - `format_string` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--format_string))
 - `math_formula` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--math_formula))
+
+<a id="nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--category"></a>
+### Nested Schema for `processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.creator.category`
+
+Required:
+
+- `clauses` (Attributes List) Conditions evaluated in order to determine the category value (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--category--clauses))
+- `target_attribute` (String) Attribute that will receive the category value
+
+Optional:
+
+- `default_value` (String) Category value used when no condition matches
+
+<a id="nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--category--clauses"></a>
+### Nested Schema for `processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.creator.category.clauses`
+
+Required:
+
+- `query` (String) Query that selects the logs assigned to this category
+- `value` (String) Category value assigned when the query matches
+
+
 
 <a id="nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--format_string"></a>
 ### Nested Schema for `processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.creator.format_string`
@@ -1280,8 +1460,31 @@ Optional:
 
 Optional:
 
+- `category` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--category))
 - `format_string` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--format_string))
 - `math_formula` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--math_formula))
+
+<a id="nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--category"></a>
+### Nested Schema for `processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.creator.category`
+
+Required:
+
+- `clauses` (Attributes List) Conditions evaluated in order to determine the category value (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--category--clauses))
+- `target_attribute` (String) Attribute that will receive the category value
+
+Optional:
+
+- `default_value` (String) Category value used when no condition matches
+
+<a id="nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--category--clauses"></a>
+### Nested Schema for `processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.creator.category.clauses`
+
+Required:
+
+- `query` (String) Query that selects the logs assigned to this category
+- `value` (String) Category value assigned when the query matches
+
+
 
 <a id="nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--format_string"></a>
 ### Nested Schema for `processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.creator.format_string`
@@ -1446,8 +1649,31 @@ Read-Only:
 
 Optional:
 
+- `category` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--category))
 - `format_string` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--format_string))
 - `math_formula` (Attributes) (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--math_formula))
+
+<a id="nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--category"></a>
+### Nested Schema for `processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.creator.category`
+
+Required:
+
+- `clauses` (Attributes List) Conditions evaluated in order to determine the category value (see [below for nested schema](#nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--category--clauses))
+- `target_attribute` (String) Attribute that will receive the category value
+
+Optional:
+
+- `default_value` (String) Category value used when no condition matches
+
+<a id="nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--category--clauses"></a>
+### Nested Schema for `processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.creator.category.clauses`
+
+Required:
+
+- `query` (String) Query that selects the logs assigned to this category
+- `value` (String) Category value assigned when the query matches
+
+
 
 <a id="nestedatt--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--split--items--processors--creator--format_string"></a>
 ### Nested Schema for `processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.split.items.processors.creator.format_string`

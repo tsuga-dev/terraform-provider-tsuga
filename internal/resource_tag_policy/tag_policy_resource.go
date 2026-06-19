@@ -128,6 +128,7 @@ func TagPolicyResourceSchema() schema.Schema {
 										stringvalidator.OneOf(
 											"ingestion-api-key",
 											"operation-api-key",
+											"rum-public-token",
 											"dashboard",
 											"log-route",
 											"monitor",
