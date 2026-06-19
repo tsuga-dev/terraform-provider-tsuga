@@ -473,6 +473,24 @@ resource "tsuga_dashboard" "dashboard" {
                   seconds = 604800
                 }
               ]
+            },
+            {
+              aggregate = {
+                max = {
+                  field = "k8s.node.network.io"
+                }
+              }
+              # Math functions: "log" requires a base, "power" requires an exponent.
+              functions = [
+                {
+                  type = "log"
+                  base = 10
+                },
+                {
+                  type     = "power"
+                  exponent = 2
+                }
+              ]
             }
           ]
 
@@ -604,6 +622,9 @@ Required:
 
 Optional:
 
+- `description` (String) Description of the graph widget
+- `description_align` (String) Flex alignment keyword used for widget layout
+- `description_justify_content` (String) Flex alignment keyword used for widget layout
 - `layout` (Attributes) Grid layout coordinates for this widget (see [below for nested schema](#nestedatt--graphs--layout))
 - `name` (String) Display name of the graph widget
 
@@ -613,15 +634,23 @@ Optional:
 Optional:
 
 - `bar` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar))
+- `bar_connection` (Attributes) Displays the database rows-based aggregation as a bar chart (see [below for nested schema](#nestedatt--graphs--visualization--bar_connection))
+- `distribution` (Attributes) Displays the aggregation as a distribution chart (see [below for nested schema](#nestedatt--graphs--visualization--distribution))
+- `gauge` (Attributes) Displays the aggregation as a gauge (see [below for nested schema](#nestedatt--graphs--visualization--gauge))
+- `heatmap` (Attributes) Displays the aggregation as a heatmap chart (see [below for nested schema](#nestedatt--graphs--visualization--heatmap))
 - `list` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--list))
 - `list_connection` (Attributes) Displays database rows as a tabular list (see [below for nested schema](#nestedatt--graphs--visualization--list_connection))
+- `list_log_patterns` (Attributes) Displays log patterns clustered from logs matching the query (see [below for nested schema](#nestedatt--graphs--visualization--list_log_patterns))
 - `note` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--note))
 - `pie` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie))
+- `pie_connection` (Attributes) Displays the database rows-based aggregation as a pie chart (see [below for nested schema](#nestedatt--graphs--visualization--pie_connection))
 - `query_value` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value))
+- `query_value_connection` (Attributes) Displays a single value computed by a SQL query against a database connection (see [below for nested schema](#nestedatt--graphs--visualization--query_value_connection))
 - `table` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--table))
 - `timeseries` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries))
 - `timeseries_connection` (Attributes) Displays database rows-based aggregation as a time series chart (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_connection))
 - `top_list` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list))
+- `top_list_connection` (Attributes) Displays the database rows-based aggregation as a ranked top list (see [below for nested schema](#nestedatt--graphs--visualization--top_list_connection))
 
 <a id="nestedatt--graphs--visualization--bar"></a>
 ### Nested Schema for `graphs.visualization.bar`
@@ -734,6 +763,8 @@ Required:
 
 Optional:
 
+- `base` (Number) Base of the logarithm for the log function
+- `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
 - `window` (String)
 
@@ -766,7 +797,7 @@ Required:
 
 Optional:
 
-- `unit` (String)
+- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
 
 
 <a id="nestedatt--graphs--visualization--bar--time_bucket"></a>
@@ -826,6 +857,526 @@ Optional:
 
 
 
+<a id="nestedatt--graphs--visualization--bar_connection"></a>
+### Nested Schema for `graphs.visualization.bar_connection`
+
+Required:
+
+- `connection_id` (String) The ID of the connection to use to query the datastore
+- `queries` (List of String) Read-only SQL queries to execute against the connection
+
+Optional:
+
+- `legend_mode` (String) Controls whether and how the widget displays legend or series details
+- `thresholds` (Attributes List) Threshold markers displayed on the chart (see [below for nested schema](#nestedatt--graphs--visualization--bar_connection--thresholds))
+- `y_axis_settings` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar_connection--y_axis_settings))
+
+Read-Only:
+
+- `type` (String)
+
+<a id="nestedatt--graphs--visualization--bar_connection--thresholds"></a>
+### Nested Schema for `graphs.visualization.bar_connection.thresholds`
+
+Required:
+
+- `level` (String) Level applied to the threshold marker
+- `value` (Number) Y-axis value where the threshold marker is placed
+
+
+<a id="nestedatt--graphs--visualization--bar_connection--y_axis_settings"></a>
+### Nested Schema for `graphs.visualization.bar_connection.y_axis_settings`
+
+Required:
+
+- `always_include_zero` (Boolean)
+- `max` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar_connection--y_axis_settings--max))
+- `min` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar_connection--y_axis_settings--min))
+- `scale` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar_connection--y_axis_settings--scale))
+
+<a id="nestedatt--graphs--visualization--bar_connection--y_axis_settings--max"></a>
+### Nested Schema for `graphs.visualization.bar_connection.y_axis_settings.max`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--bar_connection--y_axis_settings--min"></a>
+### Nested Schema for `graphs.visualization.bar_connection.y_axis_settings.min`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--bar_connection--y_axis_settings--scale"></a>
+### Nested Schema for `graphs.visualization.bar_connection.y_axis_settings.scale`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `exponent` (Number)
+
+
+
+
+<a id="nestedatt--graphs--visualization--distribution"></a>
+### Nested Schema for `graphs.visualization.distribution`
+
+Required:
+
+- `queries` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--distribution--queries))
+- `source` (String)
+
+Optional:
+
+- `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--distribution--aliases))
+- `bounds_scale` (String)
+- `formula` (String)
+- `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--distribution--group_by))
+- `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--distribution--normalizer))
+- `percentile_markers` (List of Number) Percentile markers (0-100) displayed on top of the distribution chart
+- `precision` (Number) Number of decimal places to display in the value
+- `visible_series` (List of Boolean)
+
+Read-Only:
+
+- `type` (String)
+
+<a id="nestedatt--graphs--visualization--distribution--queries"></a>
+### Nested Schema for `graphs.visualization.distribution.queries`
+
+Required:
+
+- `aggregate` (Attributes) Aggregate (count, unique_count, average, max, min, sum, or percentile) (see [below for nested schema](#nestedatt--graphs--visualization--distribution--queries--aggregate))
+
+Optional:
+
+- `filter` (String)
+- `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--distribution--queries--functions))
+
+<a id="nestedatt--graphs--visualization--distribution--queries--aggregate"></a>
+### Nested Schema for `graphs.visualization.distribution.queries.aggregate`
+
+Optional:
+
+- `average` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--distribution--queries--aggregate--average))
+- `count` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--distribution--queries--aggregate--count))
+- `max` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--distribution--queries--aggregate--max))
+- `min` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--distribution--queries--aggregate--min))
+- `percentile` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--distribution--queries--aggregate--percentile))
+- `sum` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--distribution--queries--aggregate--sum))
+- `unique_count` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--distribution--queries--aggregate--unique_count))
+
+<a id="nestedatt--graphs--visualization--distribution--queries--aggregate--average"></a>
+### Nested Schema for `graphs.visualization.distribution.queries.aggregate.average`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--graphs--visualization--distribution--queries--aggregate--count"></a>
+### Nested Schema for `graphs.visualization.distribution.queries.aggregate.count`
+
+
+<a id="nestedatt--graphs--visualization--distribution--queries--aggregate--max"></a>
+### Nested Schema for `graphs.visualization.distribution.queries.aggregate.max`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--graphs--visualization--distribution--queries--aggregate--min"></a>
+### Nested Schema for `graphs.visualization.distribution.queries.aggregate.min`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--graphs--visualization--distribution--queries--aggregate--percentile"></a>
+### Nested Schema for `graphs.visualization.distribution.queries.aggregate.percentile`
+
+Required:
+
+- `field` (String)
+- `percentile` (Number)
+
+
+<a id="nestedatt--graphs--visualization--distribution--queries--aggregate--sum"></a>
+### Nested Schema for `graphs.visualization.distribution.queries.aggregate.sum`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--graphs--visualization--distribution--queries--aggregate--unique_count"></a>
+### Nested Schema for `graphs.visualization.distribution.queries.aggregate.unique_count`
+
+Required:
+
+- `field` (String)
+
+
+
+<a id="nestedatt--graphs--visualization--distribution--queries--functions"></a>
+### Nested Schema for `graphs.visualization.distribution.queries.functions`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `base` (Number) Base of the logarithm for the log function
+- `exponent` (Number) Exponent to raise values to for the power function
+- `seconds` (Number) Number of seconds to offset for the time-offset function
+- `window` (String)
+
+
+
+<a id="nestedatt--graphs--visualization--distribution--aliases"></a>
+### Nested Schema for `graphs.visualization.distribution.aliases`
+
+Optional:
+
+- `formula` (String)
+- `queries` (Map of String)
+
+
+<a id="nestedatt--graphs--visualization--distribution--group_by"></a>
+### Nested Schema for `graphs.visualization.distribution.group_by`
+
+Required:
+
+- `fields` (List of String)
+- `limit` (Number)
+
+
+<a id="nestedatt--graphs--visualization--distribution--normalizer"></a>
+### Nested Schema for `graphs.visualization.distribution.normalizer`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+
+
+
+<a id="nestedatt--graphs--visualization--gauge"></a>
+### Nested Schema for `graphs.visualization.gauge`
+
+Required:
+
+- `queries` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--gauge--queries))
+- `source` (String)
+
+Optional:
+
+- `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--gauge--aliases))
+- `color_thresholds` (Attributes List) Color thresholds inside the gauge range (see [below for nested schema](#nestedatt--graphs--visualization--gauge--color_thresholds))
+- `formula` (String)
+- `max` (Number) Gauge maximum value
+- `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--gauge--normalizer))
+- `precision` (Number) Number of decimal places to display in the value
+- `visible_series` (List of Boolean)
+
+Read-Only:
+
+- `type` (String)
+
+<a id="nestedatt--graphs--visualization--gauge--queries"></a>
+### Nested Schema for `graphs.visualization.gauge.queries`
+
+Required:
+
+- `aggregate` (Attributes) Aggregate (count, unique_count, average, max, min, sum, or percentile) (see [below for nested schema](#nestedatt--graphs--visualization--gauge--queries--aggregate))
+
+Optional:
+
+- `filter` (String)
+- `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--gauge--queries--functions))
+
+<a id="nestedatt--graphs--visualization--gauge--queries--aggregate"></a>
+### Nested Schema for `graphs.visualization.gauge.queries.aggregate`
+
+Optional:
+
+- `average` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--gauge--queries--aggregate--average))
+- `count` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--gauge--queries--aggregate--count))
+- `max` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--gauge--queries--aggregate--max))
+- `min` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--gauge--queries--aggregate--min))
+- `percentile` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--gauge--queries--aggregate--percentile))
+- `sum` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--gauge--queries--aggregate--sum))
+- `unique_count` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--gauge--queries--aggregate--unique_count))
+
+<a id="nestedatt--graphs--visualization--gauge--queries--aggregate--average"></a>
+### Nested Schema for `graphs.visualization.gauge.queries.aggregate.average`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--graphs--visualization--gauge--queries--aggregate--count"></a>
+### Nested Schema for `graphs.visualization.gauge.queries.aggregate.count`
+
+
+<a id="nestedatt--graphs--visualization--gauge--queries--aggregate--max"></a>
+### Nested Schema for `graphs.visualization.gauge.queries.aggregate.max`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--graphs--visualization--gauge--queries--aggregate--min"></a>
+### Nested Schema for `graphs.visualization.gauge.queries.aggregate.min`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--graphs--visualization--gauge--queries--aggregate--percentile"></a>
+### Nested Schema for `graphs.visualization.gauge.queries.aggregate.percentile`
+
+Required:
+
+- `field` (String)
+- `percentile` (Number)
+
+
+<a id="nestedatt--graphs--visualization--gauge--queries--aggregate--sum"></a>
+### Nested Schema for `graphs.visualization.gauge.queries.aggregate.sum`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--graphs--visualization--gauge--queries--aggregate--unique_count"></a>
+### Nested Schema for `graphs.visualization.gauge.queries.aggregate.unique_count`
+
+Required:
+
+- `field` (String)
+
+
+
+<a id="nestedatt--graphs--visualization--gauge--queries--functions"></a>
+### Nested Schema for `graphs.visualization.gauge.queries.functions`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `base` (Number) Base of the logarithm for the log function
+- `exponent` (Number) Exponent to raise values to for the power function
+- `seconds` (Number) Number of seconds to offset for the time-offset function
+- `window` (String)
+
+
+
+<a id="nestedatt--graphs--visualization--gauge--aliases"></a>
+### Nested Schema for `graphs.visualization.gauge.aliases`
+
+Optional:
+
+- `formula` (String)
+- `queries` (Map of String)
+
+
+<a id="nestedatt--graphs--visualization--gauge--color_thresholds"></a>
+### Nested Schema for `graphs.visualization.gauge.color_thresholds`
+
+Required:
+
+- `color` (String) Color applied to the band starting at this value
+- `from` (Number) Lower bound of the gauge color threshold; runs up to the next threshold or the max
+
+
+<a id="nestedatt--graphs--visualization--gauge--normalizer"></a>
+### Nested Schema for `graphs.visualization.gauge.normalizer`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+
+
+
+<a id="nestedatt--graphs--visualization--heatmap"></a>
+### Nested Schema for `graphs.visualization.heatmap`
+
+Required:
+
+- `queries` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--queries))
+- `source` (String)
+
+Optional:
+
+- `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--aliases))
+- `formula` (String)
+- `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--group_by))
+- `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--normalizer))
+- `palette` (String) Color palette used to render the heatmap intensity gradient
+- `precision` (Number) Number of decimal places to display in the value
+- `visible_series` (List of Boolean)
+
+Read-Only:
+
+- `type` (String)
+
+<a id="nestedatt--graphs--visualization--heatmap--queries"></a>
+### Nested Schema for `graphs.visualization.heatmap.queries`
+
+Required:
+
+- `aggregate` (Attributes) Aggregate (count, unique_count, average, max, min, sum, or percentile) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--queries--aggregate))
+
+Optional:
+
+- `filter` (String)
+- `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--queries--functions))
+
+<a id="nestedatt--graphs--visualization--heatmap--queries--aggregate"></a>
+### Nested Schema for `graphs.visualization.heatmap.queries.aggregate`
+
+Optional:
+
+- `average` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--queries--aggregate--average))
+- `count` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--queries--aggregate--count))
+- `max` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--queries--aggregate--max))
+- `min` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--queries--aggregate--min))
+- `percentile` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--queries--aggregate--percentile))
+- `sum` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--queries--aggregate--sum))
+- `unique_count` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--queries--aggregate--unique_count))
+
+<a id="nestedatt--graphs--visualization--heatmap--queries--aggregate--average"></a>
+### Nested Schema for `graphs.visualization.heatmap.queries.aggregate.average`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--graphs--visualization--heatmap--queries--aggregate--count"></a>
+### Nested Schema for `graphs.visualization.heatmap.queries.aggregate.count`
+
+
+<a id="nestedatt--graphs--visualization--heatmap--queries--aggregate--max"></a>
+### Nested Schema for `graphs.visualization.heatmap.queries.aggregate.max`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--graphs--visualization--heatmap--queries--aggregate--min"></a>
+### Nested Schema for `graphs.visualization.heatmap.queries.aggregate.min`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--graphs--visualization--heatmap--queries--aggregate--percentile"></a>
+### Nested Schema for `graphs.visualization.heatmap.queries.aggregate.percentile`
+
+Required:
+
+- `field` (String)
+- `percentile` (Number)
+
+
+<a id="nestedatt--graphs--visualization--heatmap--queries--aggregate--sum"></a>
+### Nested Schema for `graphs.visualization.heatmap.queries.aggregate.sum`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--graphs--visualization--heatmap--queries--aggregate--unique_count"></a>
+### Nested Schema for `graphs.visualization.heatmap.queries.aggregate.unique_count`
+
+Required:
+
+- `field` (String)
+
+
+
+<a id="nestedatt--graphs--visualization--heatmap--queries--functions"></a>
+### Nested Schema for `graphs.visualization.heatmap.queries.functions`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `base` (Number) Base of the logarithm for the log function
+- `exponent` (Number) Exponent to raise values to for the power function
+- `seconds` (Number) Number of seconds to offset for the time-offset function
+- `window` (String)
+
+
+
+<a id="nestedatt--graphs--visualization--heatmap--aliases"></a>
+### Nested Schema for `graphs.visualization.heatmap.aliases`
+
+Optional:
+
+- `formula` (String)
+- `queries` (Map of String)
+
+
+<a id="nestedatt--graphs--visualization--heatmap--group_by"></a>
+### Nested Schema for `graphs.visualization.heatmap.group_by`
+
+Required:
+
+- `fields` (List of String)
+- `limit` (Number)
+
+
+<a id="nestedatt--graphs--visualization--heatmap--normalizer"></a>
+### Nested Schema for `graphs.visualization.heatmap.normalizer`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+
+
+
 <a id="nestedatt--graphs--visualization--list"></a>
 ### Nested Schema for `graphs.visualization.list`
 
@@ -862,7 +1413,7 @@ Required:
 
 Optional:
 
-- `unit` (String)
+- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
 
 
 
@@ -904,9 +1455,25 @@ Required:
 
 Optional:
 
-- `unit` (String)
+- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
 
 
+
+
+<a id="nestedatt--graphs--visualization--list_log_patterns"></a>
+### Nested Schema for `graphs.visualization.list_log_patterns`
+
+Required:
+
+- `query` (String) Tsuga query that selects logs to cluster into patterns
+
+Optional:
+
+- `layout` (String) Layout used to render log patterns
+
+Read-Only:
+
+- `type` (String)
 
 
 <a id="nestedatt--graphs--visualization--note"></a>
@@ -943,7 +1510,6 @@ Optional:
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
 - `visible_series` (List of Boolean)
-- `y_axis_settings` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie--y_axis_settings))
 
 Read-Only:
 
@@ -1037,6 +1603,8 @@ Required:
 
 Optional:
 
+- `base` (Number) Base of the logarithm for the log function
+- `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
 - `window` (String)
 
@@ -1069,55 +1637,25 @@ Required:
 
 Optional:
 
-- `unit` (String)
+- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
 
 
-<a id="nestedatt--graphs--visualization--pie--y_axis_settings"></a>
-### Nested Schema for `graphs.visualization.pie.y_axis_settings`
 
-Required:
-
-- `always_include_zero` (Boolean)
-- `max` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie--y_axis_settings--max))
-- `min` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie--y_axis_settings--min))
-- `scale` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie--y_axis_settings--scale))
-
-<a id="nestedatt--graphs--visualization--pie--y_axis_settings--max"></a>
-### Nested Schema for `graphs.visualization.pie.y_axis_settings.max`
+<a id="nestedatt--graphs--visualization--pie_connection"></a>
+### Nested Schema for `graphs.visualization.pie_connection`
 
 Required:
 
-- `type` (String)
+- `connection_id` (String) The ID of the connection to use to query the datastore
+- `queries` (List of String) Read-only SQL queries to execute against the connection
 
 Optional:
 
-- `value` (Number)
+- `legend_mode` (String) Controls whether and how the widget displays legend or series details
 
-
-<a id="nestedatt--graphs--visualization--pie--y_axis_settings--min"></a>
-### Nested Schema for `graphs.visualization.pie.y_axis_settings.min`
-
-Required:
+Read-Only:
 
 - `type` (String)
-
-Optional:
-
-- `value` (Number)
-
-
-<a id="nestedatt--graphs--visualization--pie--y_axis_settings--scale"></a>
-### Nested Schema for `graphs.visualization.pie.y_axis_settings.scale`
-
-Required:
-
-- `type` (String)
-
-Optional:
-
-- `exponent` (Number)
-
-
 
 
 <a id="nestedatt--graphs--visualization--query_value"></a>
@@ -1134,11 +1672,9 @@ Optional:
 - `background_mode` (String)
 - `conditions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--conditions))
 - `formula` (String)
-- `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--group_by))
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
 - `visible_series` (List of Boolean)
-- `y_axis_settings` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--y_axis_settings))
 
 Read-Only:
 
@@ -1232,6 +1768,8 @@ Required:
 
 Optional:
 
+- `base` (Number) Base of the logarithm for the log function
+- `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
 - `window` (String)
 
@@ -1256,15 +1794,6 @@ Required:
 - `value` (Number)
 
 
-<a id="nestedatt--graphs--visualization--query_value--group_by"></a>
-### Nested Schema for `graphs.visualization.query_value.group_by`
-
-Required:
-
-- `fields` (List of String)
-- `limit` (Number)
-
-
 <a id="nestedatt--graphs--visualization--query_value--normalizer"></a>
 ### Nested Schema for `graphs.visualization.query_value.normalizer`
 
@@ -1274,33 +1803,42 @@ Required:
 
 Optional:
 
-- `unit` (String)
+- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
 
 
-<a id="nestedatt--graphs--visualization--query_value--y_axis_settings"></a>
-### Nested Schema for `graphs.visualization.query_value.y_axis_settings`
 
-Required:
-
-- `always_include_zero` (Boolean)
-- `max` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--y_axis_settings--max))
-- `min` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--y_axis_settings--min))
-- `scale` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--y_axis_settings--scale))
-
-<a id="nestedatt--graphs--visualization--query_value--y_axis_settings--max"></a>
-### Nested Schema for `graphs.visualization.query_value.y_axis_settings.max`
+<a id="nestedatt--graphs--visualization--query_value_connection"></a>
+### Nested Schema for `graphs.visualization.query_value_connection`
 
 Required:
 
-- `type` (String)
+- `connection_id` (String) The ID of the connection to use to query the datastore
+- `queries` (List of String) Read-only SQL queries to execute against the connection
 
 Optional:
 
+- `background_mode` (String)
+- `conditions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--query_value_connection--conditions))
+- `legend_mode` (String) Controls whether and how the widget displays legend or series details
+- `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value_connection--normalizer))
+- `precision` (Number) Number of decimal places to display in the value
+
+Read-Only:
+
+- `type` (String)
+
+<a id="nestedatt--graphs--visualization--query_value_connection--conditions"></a>
+### Nested Schema for `graphs.visualization.query_value_connection.conditions`
+
+Required:
+
+- `color` (String)
+- `operator` (String)
 - `value` (Number)
 
 
-<a id="nestedatt--graphs--visualization--query_value--y_axis_settings--min"></a>
-### Nested Schema for `graphs.visualization.query_value.y_axis_settings.min`
+<a id="nestedatt--graphs--visualization--query_value_connection--normalizer"></a>
+### Nested Schema for `graphs.visualization.query_value_connection.normalizer`
 
 Required:
 
@@ -1308,20 +1846,7 @@ Required:
 
 Optional:
 
-- `value` (Number)
-
-
-<a id="nestedatt--graphs--visualization--query_value--y_axis_settings--scale"></a>
-### Nested Schema for `graphs.visualization.query_value.y_axis_settings.scale`
-
-Required:
-
-- `type` (String)
-
-Optional:
-
-- `exponent` (Number)
-
+- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
 
 
 
@@ -1445,6 +1970,8 @@ Required:
 
 Optional:
 
+- `base` (Number) Base of the logarithm for the log function
+- `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
 - `window` (String)
 
@@ -1468,7 +1995,7 @@ Required:
 
 Optional:
 
-- `unit` (String)
+- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
 
 
 
@@ -1497,6 +2024,7 @@ Optional:
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--group_by))
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
+- `smoothing` (Boolean) Whether to apply automatic smoothing to the rendered timeseries
 - `visible_series` (List of Boolean)
 - `y_axis_settings` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--y_axis_settings))
 
@@ -1592,6 +2120,8 @@ Required:
 
 Optional:
 
+- `base` (Number) Base of the logarithm for the log function
+- `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
 - `window` (String)
 
@@ -1624,7 +2154,7 @@ Required:
 
 Optional:
 
-- `unit` (String)
+- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
 
 
 <a id="nestedatt--graphs--visualization--timeseries--y_axis_settings"></a>
@@ -1767,7 +2297,6 @@ Optional:
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
 - `visible_series` (List of Boolean)
-- `y_axis_settings` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--y_axis_settings))
 
 Read-Only:
 
@@ -1861,6 +2390,8 @@ Required:
 
 Optional:
 
+- `base` (Number) Base of the logarithm for the log function
+- `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
 - `window` (String)
 
@@ -1903,55 +2434,21 @@ Required:
 
 Optional:
 
-- `unit` (String)
+- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
 
 
-<a id="nestedatt--graphs--visualization--top_list--y_axis_settings"></a>
-### Nested Schema for `graphs.visualization.top_list.y_axis_settings`
 
-Required:
-
-- `always_include_zero` (Boolean)
-- `max` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--y_axis_settings--max))
-- `min` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--y_axis_settings--min))
-- `scale` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--y_axis_settings--scale))
-
-<a id="nestedatt--graphs--visualization--top_list--y_axis_settings--max"></a>
-### Nested Schema for `graphs.visualization.top_list.y_axis_settings.max`
+<a id="nestedatt--graphs--visualization--top_list_connection"></a>
+### Nested Schema for `graphs.visualization.top_list_connection`
 
 Required:
+
+- `connection_id` (String) The ID of the connection to use to query the datastore
+- `queries` (List of String) Read-only SQL queries to execute against the connection
+
+Read-Only:
 
 - `type` (String)
-
-Optional:
-
-- `value` (Number)
-
-
-<a id="nestedatt--graphs--visualization--top_list--y_axis_settings--min"></a>
-### Nested Schema for `graphs.visualization.top_list.y_axis_settings.min`
-
-Required:
-
-- `type` (String)
-
-Optional:
-
-- `value` (Number)
-
-
-<a id="nestedatt--graphs--visualization--top_list--y_axis_settings--scale"></a>
-### Nested Schema for `graphs.visualization.top_list.y_axis_settings.scale`
-
-Required:
-
-- `type` (String)
-
-Optional:
-
-- `exponent` (Number)
-
-
 
 
 

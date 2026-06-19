@@ -513,6 +513,24 @@ func expandCreatorParams(c *resource_route.CreatorModel) (map[string]interface{}
 			"replaceMissingBy0": c.MathFormula.ReplaceMissingBy0.ValueBool(),
 		}, diags
 	}
+	if c.Category != nil {
+		clauses := make([]map[string]interface{}, 0, len(c.Category.Clauses))
+		for _, cl := range c.Category.Clauses {
+			clauses = append(clauses, map[string]interface{}{
+				"query": cl.Query.ValueString(),
+				"value": cl.Value.ValueString(),
+			})
+		}
+		params := map[string]interface{}{
+			"subtype":         "category",
+			"targetAttribute": c.Category.TargetAttribute.ValueString(),
+			"clauses":         clauses,
+		}
+		if !c.Category.DefaultValue.IsNull() && !c.Category.DefaultValue.IsUnknown() {
+			params["defaultValue"] = c.Category.DefaultValue.ValueString()
+		}
+		return params, diags
+	}
 	diags.AddError("Invalid creator", "One creator block must be set.")
 	return nil, diags
 }
@@ -740,6 +758,7 @@ func flattenCreator(params map[string]interface{}) attr.Value {
 	subtype, _ := params["subtype"].(string)
 	formatNull := types.ObjectNull(resource_route.CreatorFormatStringAttrTypes())
 	mathNull := types.ObjectNull(resource_route.CreatorMathFormulaAttrTypes())
+	categoryNull := types.ObjectNull(resource_route.CreatorCategoryAttrTypes())
 
 	if subtype == "format-string" {
 		overrideVal, okO := boolFromMap(params, "overrideTarget")
@@ -762,6 +781,7 @@ func flattenCreator(params map[string]interface{}) attr.Value {
 				}(),
 			}),
 			"math_formula": mathNull,
+			"category":     categoryNull,
 		})
 	}
 	if subtype == "math-formula" {
@@ -785,12 +805,42 @@ func flattenCreator(params map[string]interface{}) attr.Value {
 				}(),
 			}),
 			"format_string": formatNull,
+			"category":      categoryNull,
+		})
+	}
+	if subtype == "category" {
+		clauseType := types.ObjectType{AttrTypes: resource_route.CreatorCategoryClauseAttrTypes()}
+		clausesVal := types.ListNull(clauseType)
+		if clausesRaw, ok := params["clauses"].([]interface{}); ok {
+			vals := make([]attr.Value, 0, len(clausesRaw))
+			for _, cl := range clausesRaw {
+				m, _ := cl.(map[string]interface{})
+				vals = append(vals, types.ObjectValueMust(resource_route.CreatorCategoryClauseAttrTypes(), map[string]attr.Value{
+					"query": types.StringValue(fmt.Sprintf("%v", m["query"])),
+					"value": types.StringValue(fmt.Sprintf("%v", m["value"])),
+				}))
+			}
+			clausesVal, _ = types.ListValue(clauseType, vals)
+		}
+		defaultVal := types.StringNull()
+		if dv, ok := params["defaultValue"]; ok && dv != nil {
+			defaultVal = types.StringValue(fmt.Sprintf("%v", dv))
+		}
+		return types.ObjectValueMust(attrTypes, map[string]attr.Value{
+			"category": types.ObjectValueMust(resource_route.CreatorCategoryAttrTypes(), map[string]attr.Value{
+				"target_attribute": types.StringValue(fmt.Sprintf("%v", params["targetAttribute"])),
+				"clauses":          clausesVal,
+				"default_value":    defaultVal,
+			}),
+			"format_string": formatNull,
+			"math_formula":  mathNull,
 		})
 	}
 
 	return types.ObjectValueMust(attrTypes, map[string]attr.Value{
 		"format_string": formatNull,
 		"math_formula":  mathNull,
+		"category":      categoryNull,
 	})
 }
 

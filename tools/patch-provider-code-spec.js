@@ -8,6 +8,9 @@
  *    look up a team by either field.
  *  - custom_usage_tag resource: adds requires_replace plan modifier to tag_key
  *    so that changing the key forces destroy + recreate (the API has no update).
+ *  - ingestion_api_key resource: keeps team_override_fields computed_optional.
+ *    The OpenAPI spec lists it in `required`, but `anyOf` allows null. We want
+ *    to allow users to omit it in terraform, which will send null to the API.
  */
 const fs = require("fs");
 
@@ -71,5 +74,20 @@ tagKeyAttr.string.plan_modifiers = [
     },
   },
 ];
+
+const ingestionApiKey = spec.resources.find((r) => r.name === "ingestion_api_key");
+if (!ingestionApiKey) {
+  console.error("ingestion_api_key resource not found in spec");
+  process.exit(1);
+}
+const teamOverrideFieldsAttr = findAttr(
+  ingestionApiKey.schema.attributes,
+  "team_override_fields",
+);
+if (!teamOverrideFieldsAttr) {
+  console.error("team_override_fields attribute not found in ingestion_api_key resource");
+  process.exit(1);
+}
+teamOverrideFieldsAttr.list.computed_optional_required = "computed_optional";
 
 fs.writeFileSync(specPath, JSON.stringify(spec, null, 2) + "\n");

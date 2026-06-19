@@ -147,6 +147,27 @@ func DashboardResourceSchema(ctx context.Context) schema.Schema {
 								stringvalidator.LengthAtMost(250),
 							},
 						},
+						"description": schema.StringAttribute{
+							Optional:    true,
+							Description: "Description of the graph widget",
+							Validators: []validator.String{
+								stringvalidator.LengthBetween(1, 800),
+							},
+						},
+						"description_align": schema.StringAttribute{
+							Optional:    true,
+							Description: "Flex alignment keyword used for widget layout",
+							Validators: []validator.String{
+								stringvalidator.OneOf("flex-start", "center", "flex-end"),
+							},
+						},
+						"description_justify_content": schema.StringAttribute{
+							Optional:    true,
+							Description: "Flex alignment keyword used for widget layout",
+							Validators: []validator.String{
+								stringvalidator.OneOf("flex-start", "center", "flex-end"),
+							},
+						},
 						"layout": schema.SingleNestedAttribute{
 							Optional:    true,
 							Description: "Grid layout coordinates for this widget",
@@ -172,16 +193,24 @@ func DashboardResourceSchema(ctx context.Context) schema.Schema {
 						"visualization": schema.SingleNestedAttribute{
 							Required: true,
 							Attributes: map[string]schema.Attribute{
-								"timeseries":            visualizationSeriesSchema(),
-								"top_list":              visualizationTopListSchema(),
-								"pie":                   visualizationSeriesSchema(),
-								"query_value":           visualizationQueryValueSchema(),
-								"bar":                   visualizationBarSchema(),
-								"list":                  visualizationListSchema(),
-								"note":                  visualizationNoteSchema(),
-								"table":                 visualizationTableSchema(),
-								"timeseries_connection": visualizationTimeseriesConnectionSchema(),
-								"list_connection":       visualizationListConnectionSchema(),
+								"timeseries":             visualizationTimeseriesSchema(),
+								"top_list":               visualizationTopListSchema(),
+								"pie":                    visualizationPieSchema(),
+								"query_value":            visualizationQueryValueSchema(),
+								"bar":                    visualizationBarSchema(),
+								"gauge":                  visualizationGaugeSchema(),
+								"distribution":           visualizationDistributionSchema(),
+								"heatmap":                visualizationHeatmapSchema(),
+								"list":                   visualizationListSchema(),
+								"list_log_patterns":      visualizationListLogPatternsSchema(),
+								"note":                   visualizationNoteSchema(),
+								"table":                  visualizationTableSchema(),
+								"timeseries_connection":  visualizationTimeseriesConnectionSchema(),
+								"list_connection":        visualizationListConnectionSchema(),
+								"top_list_connection":    visualizationTopListConnectionSchema(),
+								"pie_connection":         visualizationPieConnectionSchema(),
+								"bar_connection":         visualizationBarConnectionSchema(),
+								"query_value_connection": visualizationQueryValueConnectionSchema(),
 							},
 						},
 					},
@@ -217,6 +246,15 @@ func visualizationSeriesSchema() schema.Attribute {
 			"y_axis_settings": yAxisSettingsSchema(),
 		},
 	}
+}
+
+func visualizationTimeseriesSchema() schema.Attribute {
+	attr := visualizationSeriesSchema().(schema.SingleNestedAttribute)
+	attr.Attributes["smoothing"] = schema.BoolAttribute{
+		Optional:    true,
+		Description: "Whether to apply automatic smoothing to the rendered timeseries",
+	}
+	return attr
 }
 
 func yAxisSettingsSchema() schema.Attribute {
@@ -336,7 +374,7 @@ func queriesSchema() schema.Attribute {
 							"type": schema.StringAttribute{
 								Required: true,
 								Validators: []validator.String{
-									stringvalidator.OneOf("per-second", "per-minute", "per-hour", "rate", "rolling", "last", "time-offset"),
+									stringvalidator.OneOf("per-second", "per-minute", "per-hour", "rate", "increase", "rolling", "log", "power", "sqrt", "last", "time-offset"),
 								},
 							},
 							"window": schema.StringAttribute{
@@ -348,6 +386,17 @@ func queriesSchema() schema.Attribute {
 								Validators: []validator.Int64{
 									int64validator.AtLeast(1),
 								},
+							},
+							"base": schema.Int64Attribute{
+								Optional:    true,
+								Description: "Base of the logarithm for the log function",
+								Validators: []validator.Int64{
+									int64validator.AtLeast(2),
+								},
+							},
+							"exponent": schema.Int64Attribute{
+								Optional:    true,
+								Description: "Exponent to raise values to for the power function",
 							},
 						},
 					},
@@ -439,14 +488,23 @@ func conditionsSchema() schema.Attribute {
 	}
 }
 
+func visualizationPieSchema() schema.Attribute {
+	attr := visualizationSeriesSchema().(schema.SingleNestedAttribute)
+	delete(attr.Attributes, "y_axis_settings")
+	return attr
+}
+
 func visualizationTopListSchema() schema.Attribute {
 	attr := visualizationSeriesSchema().(schema.SingleNestedAttribute)
+	delete(attr.Attributes, "y_axis_settings")
 	attr.Attributes["conditions"] = conditionsSchema()
 	return attr
 }
 
 func visualizationQueryValueSchema() schema.Attribute {
 	attr := visualizationSeriesSchema().(schema.SingleNestedAttribute)
+	delete(attr.Attributes, "group_by")
+	delete(attr.Attributes, "y_axis_settings")
 	attr.Attributes["background_mode"] = schema.StringAttribute{
 		Optional: true,
 		Validators: []validator.String{
@@ -472,6 +530,201 @@ func visualizationBarSchema() schema.Attribute {
 		},
 	}
 	return attr
+}
+
+func visualizationGaugeSchema() schema.Attribute {
+	attr := visualizationSeriesSchema().(schema.SingleNestedAttribute)
+	attr.Description = "Displays the aggregation as a gauge"
+	delete(attr.Attributes, "group_by")
+	delete(attr.Attributes, "y_axis_settings")
+	attr.Attributes["max"] = schema.Float64Attribute{
+		Optional:    true,
+		Description: "Gauge maximum value",
+	}
+	attr.Attributes["color_thresholds"] = schema.ListNestedAttribute{
+		Optional:    true,
+		Description: "Color thresholds inside the gauge range",
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"from": schema.Float64Attribute{
+					Required:    true,
+					Description: "Lower bound of the gauge color threshold; runs up to the next threshold or the max",
+				},
+				"color": schema.StringAttribute{
+					Required:    true,
+					Description: "Color applied to the band starting at this value",
+					Validators: []validator.String{
+						stringvalidator.OneOf("red", "pink", "violet", "blue", "cyan", "green", "yellow", "orange"),
+					},
+				},
+			},
+		},
+	}
+	return attr
+}
+
+func visualizationDistributionSchema() schema.Attribute {
+	attr := visualizationSeriesSchema().(schema.SingleNestedAttribute)
+	attr.Description = "Displays the aggregation as a distribution chart"
+	delete(attr.Attributes, "y_axis_settings")
+	attr.Attributes["bounds_scale"] = schema.StringAttribute{
+		Optional: true,
+		Validators: []validator.String{
+			stringvalidator.OneOf("linear", "log"),
+		},
+	}
+	attr.Attributes["percentile_markers"] = schema.ListAttribute{
+		Optional:    true,
+		ElementType: types.Int64Type,
+		Description: "Percentile markers (0-100) displayed on top of the distribution chart",
+		Validators: []validator.List{
+			listvalidator.ValueInt64sAre(
+				int64validator.Between(0, 100),
+			),
+		},
+	}
+	return attr
+}
+
+func visualizationHeatmapSchema() schema.Attribute {
+	attr := visualizationSeriesSchema().(schema.SingleNestedAttribute)
+	attr.Description = "Displays the aggregation as a heatmap chart"
+	delete(attr.Attributes, "y_axis_settings")
+	attr.Attributes["palette"] = schema.StringAttribute{
+		Optional:    true,
+		Description: "Color palette used to render the heatmap intensity gradient",
+		Validators: []validator.String{
+			stringvalidator.OneOf("red", "pink", "violet", "blue", "cyan", "green", "yellow", "orange"),
+		},
+	}
+	return attr
+}
+
+func visualizationListLogPatternsSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Optional:    true,
+		Description: "Displays log patterns clustered from logs matching the query",
+		Attributes: map[string]schema.Attribute{
+			"type": schema.StringAttribute{
+				Computed: true,
+			},
+			"query": schema.StringAttribute{
+				Required:    true,
+				Description: "Tsuga query that selects logs to cluster into patterns",
+				Validators: []validator.String{
+					stringvalidator.LengthAtMost(10000),
+				},
+			},
+			"layout": schema.StringAttribute{
+				Optional:    true,
+				Description: "Layout used to render log patterns",
+				Validators: []validator.String{
+					stringvalidator.OneOf("horizontal", "vertical"),
+				},
+			},
+		},
+	}
+}
+
+// connectionSqlQueriesSchema returns the required list of read-only SQL query
+// strings shared by connection-based visualizations.
+func connectionSqlQueriesSchema() schema.Attribute {
+	return schema.ListAttribute{
+		Required:    true,
+		ElementType: types.StringType,
+		Description: "Read-only SQL queries to execute against the connection",
+		Validators: []validator.List{
+			listvalidator.SizeAtLeast(1),
+			listvalidator.ValueStringsAre(
+				stringvalidator.LengthBetween(1, 50000),
+			),
+		},
+	}
+}
+
+func connectionIdSchema() schema.Attribute {
+	return schema.StringAttribute{
+		Required:    true,
+		Description: "The ID of the connection to use to query the datastore",
+		Validators: []validator.String{
+			stringvalidator.LengthBetween(1, 250),
+		},
+	}
+}
+
+func legendModeSchema() schema.Attribute {
+	return schema.StringAttribute{
+		Optional:    true,
+		Description: "Controls whether and how the widget displays legend or series details",
+		Validators: []validator.String{
+			stringvalidator.OneOf("table", "legend-only", "no-legend"),
+		},
+	}
+}
+
+func visualizationTopListConnectionSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Optional:    true,
+		Description: "Displays the database rows-based aggregation as a ranked top list",
+		Attributes: map[string]schema.Attribute{
+			"type":          schema.StringAttribute{Computed: true},
+			"connection_id": connectionIdSchema(),
+			"queries":       connectionSqlQueriesSchema(),
+		},
+	}
+}
+
+func visualizationPieConnectionSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Optional:    true,
+		Description: "Displays the database rows-based aggregation as a pie chart",
+		Attributes: map[string]schema.Attribute{
+			"type":          schema.StringAttribute{Computed: true},
+			"connection_id": connectionIdSchema(),
+			"queries":       connectionSqlQueriesSchema(),
+			"legend_mode":   legendModeSchema(),
+		},
+	}
+}
+
+func visualizationBarConnectionSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Optional:    true,
+		Description: "Displays the database rows-based aggregation as a bar chart",
+		Attributes: map[string]schema.Attribute{
+			"type":            schema.StringAttribute{Computed: true},
+			"connection_id":   connectionIdSchema(),
+			"queries":         connectionSqlQueriesSchema(),
+			"legend_mode":     legendModeSchema(),
+			"thresholds":      thresholdsSchema(),
+			"y_axis_settings": yAxisSettingsSchema(),
+		},
+	}
+}
+
+func visualizationQueryValueConnectionSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Optional:    true,
+		Description: "Displays a single value computed by a SQL query against a database connection",
+		Attributes: map[string]schema.Attribute{
+			"type":          schema.StringAttribute{Computed: true},
+			"connection_id": connectionIdSchema(),
+			"queries":       connectionSqlQueriesSchema(),
+			"legend_mode":   legendModeSchema(),
+			"background_mode": schema.StringAttribute{
+				Optional: true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("background", "no-background"),
+				},
+			},
+			"conditions": conditionsSchema(),
+			"normalizer": normalizer.Schema(),
+			"precision": schema.Float64Attribute{
+				Optional:    true,
+				Description: "Number of decimal places to display in the value",
+			},
+		},
+	}
 }
 
 func visualizationListSchema() schema.Attribute {
@@ -662,10 +915,13 @@ type DashboardModel struct {
 }
 
 type GraphModel struct {
-	Id            types.String       `tfsdk:"id"`
-	Name          types.String       `tfsdk:"name"`
-	Layout        *GraphLayoutModel  `tfsdk:"layout"`
-	Visualization VisualizationModel `tfsdk:"visualization"`
+	Id                        types.String       `tfsdk:"id"`
+	Name                      types.String       `tfsdk:"name"`
+	Description               types.String       `tfsdk:"description"`
+	DescriptionAlign          types.String       `tfsdk:"description_align"`
+	DescriptionJustifyContent types.String       `tfsdk:"description_justify_content"`
+	Layout                    *GraphLayoutModel  `tfsdk:"layout"`
+	Visualization             VisualizationModel `tfsdk:"visualization"`
 }
 
 type GraphLayoutModel struct {
@@ -676,29 +932,46 @@ type GraphLayoutModel struct {
 }
 
 type VisualizationModel struct {
-	Timeseries           *SeriesVisualizationModel          `tfsdk:"timeseries"`
+	Timeseries           *TimeseriesVisualization           `tfsdk:"timeseries"`
 	TopList              *TopListVisualization              `tfsdk:"top_list"`
-	Pie                  *SeriesVisualizationModel          `tfsdk:"pie"`
+	Pie                  *PieVisualization                  `tfsdk:"pie"`
 	QueryValue           *QueryValueVisualization           `tfsdk:"query_value"`
 	Bar                  *BarVisualization                  `tfsdk:"bar"`
+	Gauge                *GaugeVisualization                `tfsdk:"gauge"`
+	Distribution         *DistributionVisualization         `tfsdk:"distribution"`
+	Heatmap              *HeatmapVisualization              `tfsdk:"heatmap"`
 	List                 *ListVisualization                 `tfsdk:"list"`
+	ListLogPatterns      *ListLogPatternsVisualization      `tfsdk:"list_log_patterns"`
 	Note                 *NoteVisualizationModel            `tfsdk:"note"`
 	Table                *TableVisualizationModel           `tfsdk:"table"`
 	TimeseriesConnection *TimeseriesConnectionVisualization `tfsdk:"timeseries_connection"`
 	ListConnection       *ListConnectionVisualization       `tfsdk:"list_connection"`
+	TopListConnection    *TopListConnectionVisualization    `tfsdk:"top_list_connection"`
+	PieConnection        *PieConnectionVisualization        `tfsdk:"pie_connection"`
+	BarConnection        *BarConnectionVisualization        `tfsdk:"bar_connection"`
+	QueryValueConnection *QueryValueConnectionVisualization `tfsdk:"query_value_connection"`
+}
+
+type SeriesBase struct {
+	Type          types.String      `tfsdk:"type"`
+	Source        types.String      `tfsdk:"source"`
+	Queries       types.List        `tfsdk:"queries"`
+	Formula       types.String      `tfsdk:"formula"`
+	Aliases       *AliasesModel     `tfsdk:"aliases"`
+	VisibleSeries types.List        `tfsdk:"visible_series"`
+	Normalizer    *normalizer.Model `tfsdk:"normalizer"`
+	Precision     types.Float64     `tfsdk:"precision"`
 }
 
 type SeriesVisualizationModel struct {
-	Type          types.String        `tfsdk:"type"`
-	Source        types.String        `tfsdk:"source"`
-	Queries       types.List          `tfsdk:"queries"`
-	Formula       types.String        `tfsdk:"formula"`
-	Aliases       *AliasesModel       `tfsdk:"aliases"`
-	VisibleSeries types.List          `tfsdk:"visible_series"`
+	SeriesBase
 	GroupBy       types.List          `tfsdk:"group_by"`
-	Normalizer    *normalizer.Model   `tfsdk:"normalizer"`
-	Precision     types.Float64       `tfsdk:"precision"`
 	YAxisSettings *YAxisSettingsModel `tfsdk:"y_axis_settings"`
+}
+
+type TimeseriesVisualization struct {
+	SeriesVisualizationModel
+	Smoothing types.Bool `tfsdk:"smoothing"`
 }
 
 type AliasesModel struct {
@@ -741,19 +1014,88 @@ type TableColumnModel struct {
 }
 
 type QueryValueVisualization struct {
-	SeriesVisualizationModel
+	SeriesBase
 	BackgroundMode types.String `tfsdk:"background_mode"`
 	Conditions     types.List   `tfsdk:"conditions"`
 }
 
+type PieVisualization struct {
+	SeriesBase
+	GroupBy types.List `tfsdk:"group_by"`
+}
+
 type TopListVisualization struct {
-	SeriesVisualizationModel
+	SeriesBase
+	GroupBy    types.List `tfsdk:"group_by"`
 	Conditions types.List `tfsdk:"conditions"`
 }
 
 type BarVisualization struct {
 	SeriesVisualizationModel
 	TimeBucket *TimeBucketModel `tfsdk:"time_bucket"`
+}
+
+type GaugeVisualization struct {
+	SeriesBase
+	Max             types.Float64 `tfsdk:"max"`
+	ColorThresholds types.List    `tfsdk:"color_thresholds"`
+}
+
+type GaugeColorThresholdModel struct {
+	From  types.Float64 `tfsdk:"from"`
+	Color types.String  `tfsdk:"color"`
+}
+
+type DistributionVisualization struct {
+	SeriesBase
+	GroupBy           types.List   `tfsdk:"group_by"`
+	BoundsScale       types.String `tfsdk:"bounds_scale"`
+	PercentileMarkers types.List   `tfsdk:"percentile_markers"`
+}
+
+type HeatmapVisualization struct {
+	SeriesBase
+	GroupBy types.List   `tfsdk:"group_by"`
+	Palette types.String `tfsdk:"palette"`
+}
+
+type ListLogPatternsVisualization struct {
+	Type   types.String `tfsdk:"type"`
+	Query  types.String `tfsdk:"query"`
+	Layout types.String `tfsdk:"layout"`
+}
+
+type TopListConnectionVisualization struct {
+	Type         types.String `tfsdk:"type"`
+	ConnectionId types.String `tfsdk:"connection_id"`
+	Queries      types.List   `tfsdk:"queries"`
+}
+
+type PieConnectionVisualization struct {
+	Type         types.String `tfsdk:"type"`
+	ConnectionId types.String `tfsdk:"connection_id"`
+	Queries      types.List   `tfsdk:"queries"`
+	LegendMode   types.String `tfsdk:"legend_mode"`
+}
+
+type BarConnectionVisualization struct {
+	Type          types.String        `tfsdk:"type"`
+	ConnectionId  types.String        `tfsdk:"connection_id"`
+	Queries       types.List          `tfsdk:"queries"`
+	LegendMode    types.String        `tfsdk:"legend_mode"`
+	Thresholds    types.List          `tfsdk:"thresholds"`
+	YAxisSettings *YAxisSettingsModel `tfsdk:"y_axis_settings"`
+}
+
+type QueryValueConnectionVisualization struct {
+	Type           types.String      `tfsdk:"type"`
+	ConnectionId   types.String      `tfsdk:"connection_id"`
+	Queries        types.List        `tfsdk:"queries"`
+	LegendMode     types.String      `tfsdk:"legend_mode"`
+	BackgroundMode types.String      `tfsdk:"background_mode"`
+	Conditions     types.List        `tfsdk:"conditions"`
+	Normalizer     *normalizer.Model `tfsdk:"normalizer"`
+	Precision      types.Float64     `tfsdk:"precision"`
 }
 
 type ListVisualization struct {
@@ -810,9 +1152,11 @@ type AggregateModel struct {
 }
 
 type FunctionModel struct {
-	Type    types.String `tfsdk:"type"`
-	Window  types.String `tfsdk:"window"`
-	Seconds types.Int64  `tfsdk:"seconds"`
+	Type     types.String `tfsdk:"type"`
+	Window   types.String `tfsdk:"window"`
+	Seconds  types.Int64  `tfsdk:"seconds"`
+	Base     types.Int64  `tfsdk:"base"`
+	Exponent types.Int64  `tfsdk:"exponent"`
 }
 
 type ConditionModel struct {
@@ -845,10 +1189,13 @@ func FilterAttrTypes() map[string]attr.Type {
 
 func GraphAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"id":            types.StringType,
-		"name":          types.StringType,
-		"layout":        types.ObjectType{AttrTypes: GraphLayoutAttrTypes()},
-		"visualization": types.ObjectType{AttrTypes: VisualizationAttrTypes()},
+		"id":                          types.StringType,
+		"name":                        types.StringType,
+		"description":                 types.StringType,
+		"description_align":           types.StringType,
+		"description_justify_content": types.StringType,
+		"layout":                      types.ObjectType{AttrTypes: GraphLayoutAttrTypes()},
+		"visualization":               types.ObjectType{AttrTypes: VisualizationAttrTypes()},
 	}
 }
 
@@ -863,16 +1210,24 @@ func GraphLayoutAttrTypes() map[string]attr.Type {
 
 func VisualizationAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"timeseries":            types.ObjectType{AttrTypes: SeriesVisualizationAttrTypes()},
-		"top_list":              types.ObjectType{AttrTypes: TopListVisualizationAttrTypes()},
-		"pie":                   types.ObjectType{AttrTypes: SeriesVisualizationAttrTypes()},
-		"query_value":           types.ObjectType{AttrTypes: QueryValueVisualizationAttrTypes()},
-		"bar":                   types.ObjectType{AttrTypes: BarVisualizationAttrTypes()},
-		"list":                  types.ObjectType{AttrTypes: ListVisualizationAttrTypes()},
-		"note":                  types.ObjectType{AttrTypes: NoteVisualizationAttrTypes()},
-		"table":                 types.ObjectType{AttrTypes: TableVisualizationAttrTypes()},
-		"timeseries_connection": types.ObjectType{AttrTypes: TimeseriesConnectionVisualizationAttrTypes()},
-		"list_connection":       types.ObjectType{AttrTypes: ListConnectionVisualizationAttrTypes()},
+		"timeseries":             types.ObjectType{AttrTypes: TimeseriesVisualizationAttrTypes()},
+		"top_list":               types.ObjectType{AttrTypes: TopListVisualizationAttrTypes()},
+		"pie":                    types.ObjectType{AttrTypes: PieVisualizationAttrTypes()},
+		"query_value":            types.ObjectType{AttrTypes: QueryValueVisualizationAttrTypes()},
+		"bar":                    types.ObjectType{AttrTypes: BarVisualizationAttrTypes()},
+		"gauge":                  types.ObjectType{AttrTypes: GaugeVisualizationAttrTypes()},
+		"distribution":           types.ObjectType{AttrTypes: DistributionVisualizationAttrTypes()},
+		"heatmap":                types.ObjectType{AttrTypes: HeatmapVisualizationAttrTypes()},
+		"list":                   types.ObjectType{AttrTypes: ListVisualizationAttrTypes()},
+		"list_log_patterns":      types.ObjectType{AttrTypes: ListLogPatternsVisualizationAttrTypes()},
+		"note":                   types.ObjectType{AttrTypes: NoteVisualizationAttrTypes()},
+		"table":                  types.ObjectType{AttrTypes: TableVisualizationAttrTypes()},
+		"timeseries_connection":  types.ObjectType{AttrTypes: TimeseriesConnectionVisualizationAttrTypes()},
+		"list_connection":        types.ObjectType{AttrTypes: ListConnectionVisualizationAttrTypes()},
+		"top_list_connection":    types.ObjectType{AttrTypes: TopListConnectionVisualizationAttrTypes()},
+		"pie_connection":         types.ObjectType{AttrTypes: PieConnectionVisualizationAttrTypes()},
+		"bar_connection":         types.ObjectType{AttrTypes: BarConnectionVisualizationAttrTypes()},
+		"query_value_connection": types.ObjectType{AttrTypes: QueryValueConnectionVisualizationAttrTypes()},
 	}
 }
 
@@ -889,6 +1244,12 @@ func SeriesVisualizationAttrTypes() map[string]attr.Type {
 		"precision":       types.Float64Type,
 		"y_axis_settings": types.ObjectType{AttrTypes: YAxisSettingsAttrTypes()},
 	}
+}
+
+func TimeseriesVisualizationAttrTypes() map[string]attr.Type {
+	attrs := SeriesVisualizationAttrTypes()
+	attrs["smoothing"] = types.BoolType
+	return attrs
 }
 
 func AliasesAttrTypes() map[string]attr.Type {
@@ -942,8 +1303,16 @@ func TableColumnAttrTypes() map[string]attr.Type {
 	}
 }
 
+func PieVisualizationAttrTypes() map[string]attr.Type {
+	attrs := SeriesVisualizationAttrTypes()
+	delete(attrs, "y_axis_settings")
+	return attrs
+}
+
 func QueryValueVisualizationAttrTypes() map[string]attr.Type {
 	attrs := SeriesVisualizationAttrTypes()
+	delete(attrs, "group_by")
+	delete(attrs, "y_axis_settings")
 	attrs["background_mode"] = types.StringType
 	attrs["conditions"] = types.ListType{ElemType: types.ObjectType{AttrTypes: ConditionAttrTypes()}}
 	return attrs
@@ -951,6 +1320,7 @@ func QueryValueVisualizationAttrTypes() map[string]attr.Type {
 
 func TopListVisualizationAttrTypes() map[string]attr.Type {
 	attrs := SeriesVisualizationAttrTypes()
+	delete(attrs, "y_axis_settings")
 	attrs["conditions"] = types.ListType{ElemType: types.ObjectType{AttrTypes: ConditionAttrTypes()}}
 	return attrs
 }
@@ -959,6 +1329,86 @@ func BarVisualizationAttrTypes() map[string]attr.Type {
 	attrs := SeriesVisualizationAttrTypes()
 	attrs["time_bucket"] = types.ObjectType{AttrTypes: TimeBucketAttrTypes()}
 	return attrs
+}
+
+func GaugeVisualizationAttrTypes() map[string]attr.Type {
+	attrs := SeriesVisualizationAttrTypes()
+	delete(attrs, "group_by")
+	delete(attrs, "y_axis_settings")
+	attrs["max"] = types.Float64Type
+	attrs["color_thresholds"] = types.ListType{ElemType: types.ObjectType{AttrTypes: GaugeColorThresholdAttrTypes()}}
+	return attrs
+}
+
+func GaugeColorThresholdAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"from":  types.Float64Type,
+		"color": types.StringType,
+	}
+}
+
+func DistributionVisualizationAttrTypes() map[string]attr.Type {
+	attrs := SeriesVisualizationAttrTypes()
+	delete(attrs, "y_axis_settings")
+	attrs["bounds_scale"] = types.StringType
+	attrs["percentile_markers"] = types.ListType{ElemType: types.Int64Type}
+	return attrs
+}
+
+func HeatmapVisualizationAttrTypes() map[string]attr.Type {
+	attrs := SeriesVisualizationAttrTypes()
+	delete(attrs, "y_axis_settings")
+	attrs["palette"] = types.StringType
+	return attrs
+}
+
+func ListLogPatternsVisualizationAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"type":   types.StringType,
+		"query":  types.StringType,
+		"layout": types.StringType,
+	}
+}
+
+func TopListConnectionVisualizationAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"type":          types.StringType,
+		"connection_id": types.StringType,
+		"queries":       types.ListType{ElemType: types.StringType},
+	}
+}
+
+func PieConnectionVisualizationAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"type":          types.StringType,
+		"connection_id": types.StringType,
+		"queries":       types.ListType{ElemType: types.StringType},
+		"legend_mode":   types.StringType,
+	}
+}
+
+func BarConnectionVisualizationAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"type":            types.StringType,
+		"connection_id":   types.StringType,
+		"queries":         types.ListType{ElemType: types.StringType},
+		"legend_mode":     types.StringType,
+		"thresholds":      types.ListType{ElemType: types.ObjectType{AttrTypes: ThresholdAttrTypes()}},
+		"y_axis_settings": types.ObjectType{AttrTypes: YAxisSettingsAttrTypes()},
+	}
+}
+
+func QueryValueConnectionVisualizationAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"type":            types.StringType,
+		"connection_id":   types.StringType,
+		"queries":         types.ListType{ElemType: types.StringType},
+		"legend_mode":     types.StringType,
+		"background_mode": types.StringType,
+		"conditions":      types.ListType{ElemType: types.ObjectType{AttrTypes: ConditionAttrTypes()}},
+		"normalizer":      types.ObjectType{AttrTypes: normalizer.AttrTypes()},
+		"precision":       types.Float64Type,
+	}
 }
 
 func ListVisualizationAttrTypes() map[string]attr.Type {
@@ -1018,9 +1468,11 @@ func QueryAttrTypes() map[string]attr.Type {
 
 func FunctionAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"type":    types.StringType,
-		"window":  types.StringType,
-		"seconds": types.Int64Type,
+		"type":     types.StringType,
+		"window":   types.StringType,
+		"seconds":  types.Int64Type,
+		"base":     types.Int64Type,
+		"exponent": types.Int64Type,
 	}
 }
 

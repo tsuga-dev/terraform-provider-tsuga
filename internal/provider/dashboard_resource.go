@@ -98,7 +98,19 @@ func (r *dashboardResource) validateVisualization(ctx context.Context, vis resou
 	if vis.Bar != nil {
 		setCount++
 	}
+	if vis.Gauge != nil {
+		setCount++
+	}
+	if vis.Distribution != nil {
+		setCount++
+	}
+	if vis.Heatmap != nil {
+		setCount++
+	}
 	if vis.List != nil {
+		setCount++
+	}
+	if vis.ListLogPatterns != nil {
 		setCount++
 	}
 	if vis.Note != nil {
@@ -113,32 +125,84 @@ func (r *dashboardResource) validateVisualization(ctx context.Context, vis resou
 	if vis.ListConnection != nil {
 		setCount++
 	}
+	if vis.TopListConnection != nil {
+		setCount++
+	}
+	if vis.PieConnection != nil {
+		setCount++
+	}
+	if vis.BarConnection != nil {
+		setCount++
+	}
+	if vis.QueryValueConnection != nil {
+		setCount++
+	}
 
 	if setCount != 1 {
 		diags.AddError(
 			"Invalid visualization configuration",
-			fmt.Sprintf("%s: exactly one of timeseries, top_list, pie, query_value, bar, list, note, table, timeseries_connection, or list_connection must be set.", pathPrefix),
+			fmt.Sprintf("%s: exactly one visualization type must be set.", pathPrefix),
 		)
 	}
 
 	// Validate nested aggregates in queries for series visualizations
 	if vis.Timeseries != nil {
-		diags.Append(r.validateSeriesVisualization(ctx, vis.Timeseries, fmt.Sprintf("%s.timeseries", pathPrefix))...)
+		diags.Append(r.validateSeriesVisualization(ctx, &vis.Timeseries.SeriesBase, fmt.Sprintf("%s.timeseries", pathPrefix))...)
 	}
 	if vis.TopList != nil {
-		diags.Append(r.validateSeriesVisualization(ctx, &vis.TopList.SeriesVisualizationModel, fmt.Sprintf("%s.top_list", pathPrefix))...)
+		diags.Append(r.validateSeriesVisualization(ctx, &vis.TopList.SeriesBase, fmt.Sprintf("%s.top_list", pathPrefix))...)
 	}
 	if vis.Pie != nil {
-		diags.Append(r.validateSeriesVisualization(ctx, vis.Pie, fmt.Sprintf("%s.pie", pathPrefix))...)
+		diags.Append(r.validateSeriesVisualization(ctx, &vis.Pie.SeriesBase, fmt.Sprintf("%s.pie", pathPrefix))...)
 	}
 	if vis.QueryValue != nil {
-		diags.Append(r.validateSeriesVisualization(ctx, &vis.QueryValue.SeriesVisualizationModel, fmt.Sprintf("%s.query_value", pathPrefix))...)
+		diags.Append(r.validateSeriesVisualization(ctx, &vis.QueryValue.SeriesBase, fmt.Sprintf("%s.query_value", pathPrefix))...)
 	}
 	if vis.Bar != nil {
-		diags.Append(r.validateSeriesVisualization(ctx, &vis.Bar.SeriesVisualizationModel, fmt.Sprintf("%s.bar", pathPrefix))...)
+		diags.Append(r.validateSeriesVisualization(ctx, &vis.Bar.SeriesBase, fmt.Sprintf("%s.bar", pathPrefix))...)
+	}
+	if vis.Gauge != nil {
+		diags.Append(r.validateSeriesVisualization(ctx, &vis.Gauge.SeriesBase, fmt.Sprintf("%s.gauge", pathPrefix))...)
+	}
+	if vis.Distribution != nil {
+		diags.Append(r.validateSeriesVisualization(ctx, &vis.Distribution.SeriesBase, fmt.Sprintf("%s.distribution", pathPrefix))...)
+	}
+	if vis.Heatmap != nil {
+		diags.Append(r.validateSeriesVisualization(ctx, &vis.Heatmap.SeriesBase, fmt.Sprintf("%s.heatmap", pathPrefix))...)
 	}
 	if vis.Table != nil {
 		diags.Append(r.validateTableVisualization(ctx, vis.Table, fmt.Sprintf("%s.table", pathPrefix))...)
+	}
+	if vis.QueryValueConnection != nil {
+		diags.Append(normalizer.Validate(vis.QueryValueConnection.Normalizer, fmt.Sprintf("%s.query_value_connection", pathPrefix))...)
+	}
+	if vis.List != nil {
+		diags.Append(r.validateListColumns(ctx, vis.List.ListColumns, fmt.Sprintf("%s.list", pathPrefix))...)
+	}
+	if vis.ListConnection != nil {
+		diags.Append(r.validateListColumns(ctx, vis.ListConnection.ListColumns, fmt.Sprintf("%s.list_connection", pathPrefix))...)
+	}
+
+	return diags
+}
+
+// validateListColumns validates the normalizers configured on list-style
+// visualization columns.
+func (r *dashboardResource) validateListColumns(ctx context.Context, listColumns types.List, pathPrefix string) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if listColumns.IsNull() || listColumns.IsUnknown() {
+		return diags
+	}
+
+	var columns []resource_dashboard.ListColumnModel
+	diags.Append(listColumns.ElementsAs(ctx, &columns, false)...)
+	if diags.HasError() {
+		return diags
+	}
+
+	for i, col := range columns {
+		diags.Append(normalizer.Validate(col.Normalizer, fmt.Sprintf("%s.list_columns[%d]", pathPrefix, i))...)
 	}
 
 	return diags
@@ -167,14 +231,16 @@ func (r *dashboardResource) validateTableVisualization(ctx context.Context, tabl
 			for j, query := range queries {
 				aggDiags := r.validateAggregate(query.Aggregate, fmt.Sprintf("%s.columns[%d].queries[%d].aggregate", pathPrefix, i, j))
 				diags.Append(aggDiags...)
+				diags.Append(r.validateQueryFunctions(ctx, query.Functions, fmt.Sprintf("%s.columns[%d].queries[%d]", pathPrefix, i, j))...)
 			}
 		}
+		diags.Append(normalizer.Validate(col.Normalizer, fmt.Sprintf("%s.columns[%d]", pathPrefix, i))...)
 	}
 
 	return diags
 }
 
-func (r *dashboardResource) validateSeriesVisualization(ctx context.Context, sv *resource_dashboard.SeriesVisualizationModel, pathPrefix string) diag.Diagnostics {
+func (r *dashboardResource) validateSeriesVisualization(ctx context.Context, sv *resource_dashboard.SeriesBase, pathPrefix string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	// Validate queries if present
@@ -188,6 +254,47 @@ func (r *dashboardResource) validateSeriesVisualization(ctx context.Context, sv 
 		for i, query := range queries {
 			aggDiags := r.validateAggregate(query.Aggregate, fmt.Sprintf("%s.queries[%d].aggregate", pathPrefix, i))
 			diags.Append(aggDiags...)
+			diags.Append(r.validateQueryFunctions(ctx, query.Functions, fmt.Sprintf("%s.queries[%d]", pathPrefix, i))...)
+		}
+	}
+
+	diags.Append(normalizer.Validate(sv.Normalizer, pathPrefix)...)
+
+	return diags
+}
+
+// validateQueryFunctions enforces the function-specific required parameters
+// that the API mandates but the schema cannot express on its own: `log`
+// requires `base` and `power` requires `exponent`.
+func (r *dashboardResource) validateQueryFunctions(ctx context.Context, functions types.List, pathPrefix string) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if functions.IsNull() || functions.IsUnknown() {
+		return diags
+	}
+
+	var fns []resource_dashboard.FunctionModel
+	diags.Append(functions.ElementsAs(ctx, &fns, false)...)
+	if diags.HasError() {
+		return diags
+	}
+
+	for i, fn := range fns {
+		switch fn.Type.ValueString() {
+		case "log":
+			if fn.Base.IsNull() || fn.Base.IsUnknown() {
+				diags.AddError(
+					"Invalid query function configuration",
+					fmt.Sprintf("%s.functions[%d]: the \"log\" function requires \"base\".", pathPrefix, i),
+				)
+			}
+		case "power":
+			if fn.Exponent.IsNull() || fn.Exponent.IsUnknown() {
+				diags.AddError(
+					"Invalid query function configuration",
+					fmt.Sprintf("%s.functions[%d]: the \"power\" function requires \"exponent\".", pathPrefix, i),
+				)
+			}
 		}
 	}
 
@@ -441,10 +548,13 @@ type dashboardAPIFilter struct {
 }
 
 type dashboardAPIGraph struct {
-	ID            string                 `json:"id"`
-	Name          string                 `json:"name"`
-	Layout        *dashboardGraphLayout  `json:"layout,omitempty"`
-	Visualization dashboardVisualization `json:"visualization"`
+	ID                        string                 `json:"id"`
+	Name                      string                 `json:"name"`
+	Description               string                 `json:"description,omitempty"`
+	DescriptionAlign          string                 `json:"descriptionAlign,omitempty"`
+	DescriptionJustifyContent string                 `json:"descriptionJustifyContent,omitempty"`
+	Layout                    *dashboardGraphLayout  `json:"layout,omitempty"`
+	Visualization             dashboardVisualization `json:"visualization"`
 }
 
 type dashboardGraphLayout struct {
@@ -480,6 +590,18 @@ type dashboardVisualization struct {
 	ConnectionId    string                  `json:"connectionId,omitempty"`
 	LegendMode      string                  `json:"legendMode,omitempty"`
 	Thresholds      []dashboardThreshold    `json:"thresholds,omitempty"`
+	Smoothing       *bool                   `json:"smoothing,omitempty"`
+	Max             *float64                `json:"max,omitempty"`
+	ColorThresholds []dashboardGaugeColor   `json:"colorThresholds,omitempty"`
+	BoundsScale     string                  `json:"boundsScale,omitempty"`
+	Markers         []int64                 `json:"percentileMarkers,omitempty"`
+	Palette         string                  `json:"palette,omitempty"`
+	Layout          string                  `json:"layout,omitempty"`
+}
+
+type dashboardGaugeColor struct {
+	From  float64 `json:"from"`
+	Color string  `json:"color"`
 }
 
 // MarshalJSON handles the polymorphic "queries" field: []dashboardQuery for
@@ -510,7 +632,7 @@ func (v *dashboardVisualization) UnmarshalJSON(data []byte) error {
 	}
 	if len(aux.Queries) > 0 {
 		switch v.Type {
-		case "timeseries-connection":
+		case "timeseries-connection", "top-list-connection", "pie-connection", "bar-connection", "query-value-connection":
 			return json.Unmarshal(aux.Queries, &v.SqlQueries)
 		default:
 			return json.Unmarshal(aux.Queries, &v.Queries)
@@ -570,9 +692,11 @@ type dashboardAggregate struct {
 }
 
 type dashboardFunction struct {
-	Type    string `json:"type"`
-	Window  string `json:"window,omitempty"`
-	Seconds *int64 `json:"seconds,omitempty"`
+	Type     string `json:"type"`
+	Window   string `json:"window,omitempty"`
+	Seconds  *int64 `json:"seconds,omitempty"`
+	Base     *int64 `json:"base,omitempty"`
+	Exponent *int64 `json:"exponent,omitempty"`
 }
 
 type dashboardGroupBy struct {
@@ -675,8 +799,11 @@ func expandDashboardsGraphs(ctx context.Context, graphs types.List) ([]dashboard
 	result := make([]dashboardAPIGraph, 0, len(graphModels))
 	for _, g := range graphModels {
 		apiGraph := dashboardAPIGraph{
-			ID:   g.Id.ValueString(),
-			Name: g.Name.ValueString(),
+			ID:                        g.Id.ValueString(),
+			Name:                      g.Name.ValueString(),
+			Description:               g.Description.ValueString(),
+			DescriptionAlign:          g.DescriptionAlign.ValueString(),
+			DescriptionJustifyContent: g.DescriptionJustifyContent.ValueString(),
 		}
 		if g.Layout != nil {
 			apiGraph.Layout = &dashboardGraphLayout{
@@ -705,50 +832,54 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 	setCount := 0
 	var vis dashboardVisualization
 
-	buildSeries := func(sv *resource_dashboard.SeriesVisualizationModel, visType string) (dashboardVisualization, diag.Diagnostics) {
+	buildSeries := func(b *resource_dashboard.SeriesBase, groupBy types.List, yAxis *resource_dashboard.YAxisSettingsModel, visType string) (dashboardVisualization, diag.Diagnostics) {
 		var d diag.Diagnostics
-		queries, qDiags := expandQueries(ctx, sv.Queries)
+		queries, qDiags := expandQueries(ctx, b.Queries)
 		d.Append(qDiags...)
-		groupBy, gDiags := expandGroupBy(ctx, sv.GroupBy)
+		groupByExpanded, gDiags := expandGroupBy(ctx, groupBy)
 		d.Append(gDiags...)
-		normalizer := expandNormalizer(sv.Normalizer)
+		normalizer := expandNormalizer(b.Normalizer)
 
 		var visible []bool
-		if !sv.VisibleSeries.IsNull() && !sv.VisibleSeries.IsUnknown() {
+		if !b.VisibleSeries.IsNull() && !b.VisibleSeries.IsUnknown() {
 			var boolDiags diag.Diagnostics
-			visible, boolDiags = expandBoolList(ctx, sv.VisibleSeries)
+			visible, boolDiags = expandBoolList(ctx, b.VisibleSeries)
 			d.Append(boolDiags...)
 		}
 
 		result := dashboardVisualization{
 			Type:          visType,
-			Source:        sv.Source.ValueString(),
+			Source:        b.Source.ValueString(),
 			Queries:       queries,
-			Formula:       sv.Formula.ValueString(),
+			Formula:       b.Formula.ValueString(),
 			VisibleSeries: visible,
-			GroupBy:       groupBy,
+			GroupBy:       groupByExpanded,
 			Normalizer:    normalizer,
 		}
-		if !sv.Precision.IsNull() && !sv.Precision.IsUnknown() {
-			precision := sv.Precision.ValueFloat64()
+		if !b.Precision.IsNull() && !b.Precision.IsUnknown() {
+			precision := b.Precision.ValueFloat64()
 			result.Precision = &precision
 		}
-		result.Aliases = expandAliases(sv.Aliases)
-		if sv.YAxisSettings != nil {
-			result.YAxisSettings = expandYAxisSettings(sv.YAxisSettings)
+		result.Aliases = expandAliases(b.Aliases)
+		if yAxis != nil {
+			result.YAxisSettings = expandYAxisSettings(yAxis)
 		}
 		return result, d
 	}
 
 	if v.Timeseries != nil {
 		setCount++
-		vz, d := buildSeries(v.Timeseries, "timeseries")
+		vz, d := buildSeries(&v.Timeseries.SeriesBase, v.Timeseries.GroupBy, v.Timeseries.YAxisSettings, "timeseries")
 		diags.Append(d...)
+		if !v.Timeseries.Smoothing.IsNull() && !v.Timeseries.Smoothing.IsUnknown() {
+			smoothing := v.Timeseries.Smoothing.ValueBool()
+			vz.Smoothing = &smoothing
+		}
 		vis = vz
 	}
 	if v.TopList != nil {
 		setCount++
-		vz, d := buildSeries(&v.TopList.SeriesVisualizationModel, "top-list")
+		vz, d := buildSeries(&v.TopList.SeriesBase, v.TopList.GroupBy, nil, "top-list")
 		diags.Append(d...)
 		if !v.TopList.Conditions.IsNull() && !v.TopList.Conditions.IsUnknown() {
 			conds, cDiags := expandConditions(ctx, v.TopList.Conditions)
@@ -759,13 +890,13 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 	}
 	if v.Pie != nil {
 		setCount++
-		vz, d := buildSeries(v.Pie, "pie")
+		vz, d := buildSeries(&v.Pie.SeriesBase, v.Pie.GroupBy, nil, "pie")
 		diags.Append(d...)
 		vis = vz
 	}
 	if v.QueryValue != nil {
 		setCount++
-		vz, d := buildSeries(&v.QueryValue.SeriesVisualizationModel, "query-value")
+		vz, d := buildSeries(&v.QueryValue.SeriesBase, types.List{}, nil, "query-value")
 		diags.Append(d...)
 		if !v.QueryValue.BackgroundMode.IsNull() && !v.QueryValue.BackgroundMode.IsUnknown() {
 			vz.BackgroundMode = v.QueryValue.BackgroundMode.ValueString()
@@ -779,13 +910,120 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 	}
 	if v.Bar != nil {
 		setCount++
-		vz, d := buildSeries(&v.Bar.SeriesVisualizationModel, "bar")
+		vz, d := buildSeries(&v.Bar.SeriesBase, v.Bar.GroupBy, v.Bar.YAxisSettings, "bar")
 		diags.Append(d...)
 		if v.Bar.TimeBucket != nil {
 			vz.TimeBucket = &dashboardTimeBucket{
 				Time:   v.Bar.TimeBucket.Time.ValueFloat64(),
 				Metric: v.Bar.TimeBucket.Metric.ValueString(),
 			}
+		}
+		vis = vz
+	}
+	if v.Gauge != nil {
+		setCount++
+		vz, d := buildSeries(&v.Gauge.SeriesBase, types.List{}, nil, "gauge")
+		diags.Append(d...)
+		if !v.Gauge.Max.IsNull() && !v.Gauge.Max.IsUnknown() {
+			m := v.Gauge.Max.ValueFloat64()
+			vz.Max = &m
+		}
+		if !v.Gauge.ColorThresholds.IsNull() && !v.Gauge.ColorThresholds.IsUnknown() {
+			cts, ctDiags := expandGaugeColorThresholds(ctx, v.Gauge.ColorThresholds)
+			diags.Append(ctDiags...)
+			vz.ColorThresholds = cts
+		}
+		vis = vz
+	}
+	if v.Distribution != nil {
+		setCount++
+		vz, d := buildSeries(&v.Distribution.SeriesBase, v.Distribution.GroupBy, nil, "distribution")
+		diags.Append(d...)
+		vz.BoundsScale = stringValue(v.Distribution.BoundsScale)
+		if !v.Distribution.PercentileMarkers.IsNull() && !v.Distribution.PercentileMarkers.IsUnknown() {
+			markers, mDiags := expandIntList(ctx, v.Distribution.PercentileMarkers)
+			diags.Append(mDiags...)
+			vz.Markers = markers
+		}
+		vis = vz
+	}
+	if v.Heatmap != nil {
+		setCount++
+		vz, d := buildSeries(&v.Heatmap.SeriesBase, v.Heatmap.GroupBy, nil, "heatmap")
+		diags.Append(d...)
+		vz.Palette = stringValue(v.Heatmap.Palette)
+		vis = vz
+	}
+	if v.ListLogPatterns != nil {
+		setCount++
+		vz := dashboardVisualization{
+			Type:   "list-log-patterns",
+			Query:  v.ListLogPatterns.Query.ValueString(),
+			Layout: stringValue(v.ListLogPatterns.Layout),
+		}
+		vis = vz
+	}
+	if v.TopListConnection != nil {
+		setCount++
+		sqlQueries, sqDiags := expandStringList(ctx, v.TopListConnection.Queries)
+		diags.Append(sqDiags...)
+		vis = dashboardVisualization{
+			Type:         "top-list-connection",
+			ConnectionId: v.TopListConnection.ConnectionId.ValueString(),
+			SqlQueries:   sqlQueries,
+		}
+	}
+	if v.PieConnection != nil {
+		setCount++
+		sqlQueries, sqDiags := expandStringList(ctx, v.PieConnection.Queries)
+		diags.Append(sqDiags...)
+		vis = dashboardVisualization{
+			Type:         "pie-connection",
+			ConnectionId: v.PieConnection.ConnectionId.ValueString(),
+			SqlQueries:   sqlQueries,
+			LegendMode:   stringValue(v.PieConnection.LegendMode),
+		}
+	}
+	if v.BarConnection != nil {
+		setCount++
+		sqlQueries, sqDiags := expandStringList(ctx, v.BarConnection.Queries)
+		diags.Append(sqDiags...)
+		vz := dashboardVisualization{
+			Type:         "bar-connection",
+			ConnectionId: v.BarConnection.ConnectionId.ValueString(),
+			SqlQueries:   sqlQueries,
+			LegendMode:   stringValue(v.BarConnection.LegendMode),
+		}
+		if !v.BarConnection.Thresholds.IsNull() && !v.BarConnection.Thresholds.IsUnknown() {
+			thresholds, tDiags := expandThresholds(ctx, v.BarConnection.Thresholds)
+			diags.Append(tDiags...)
+			vz.Thresholds = thresholds
+		}
+		if v.BarConnection.YAxisSettings != nil {
+			vz.YAxisSettings = expandYAxisSettings(v.BarConnection.YAxisSettings)
+		}
+		vis = vz
+	}
+	if v.QueryValueConnection != nil {
+		setCount++
+		sqlQueries, sqDiags := expandStringList(ctx, v.QueryValueConnection.Queries)
+		diags.Append(sqDiags...)
+		vz := dashboardVisualization{
+			Type:           "query-value-connection",
+			ConnectionId:   v.QueryValueConnection.ConnectionId.ValueString(),
+			SqlQueries:     sqlQueries,
+			LegendMode:     stringValue(v.QueryValueConnection.LegendMode),
+			BackgroundMode: stringValue(v.QueryValueConnection.BackgroundMode),
+			Normalizer:     expandNormalizer(v.QueryValueConnection.Normalizer),
+		}
+		if !v.QueryValueConnection.Conditions.IsNull() && !v.QueryValueConnection.Conditions.IsUnknown() {
+			conds, cDiags := expandConditions(ctx, v.QueryValueConnection.Conditions)
+			diags.Append(cDiags...)
+			vz.Conditions = conds
+		}
+		if !v.QueryValueConnection.Precision.IsNull() && !v.QueryValueConnection.Precision.IsUnknown() {
+			p := v.QueryValueConnection.Precision.ValueFloat64()
+			vz.Precision = &p
 		}
 		vis = vz
 	}
@@ -920,10 +1158,13 @@ func flattenDashboardGraphs(ctx context.Context, graphs []dashboardAPIGraph) (ty
 		}
 
 		values = append(values, types.ObjectValueMust(resource_dashboard.GraphAttrTypes(), map[string]attr.Value{
-			"id":            types.StringValue(g.ID),
-			"name":          stringValueOrNull(g.Name),
-			"layout":        layoutVal,
-			"visualization": visVal,
+			"id":                          types.StringValue(g.ID),
+			"name":                        stringValueOrNull(g.Name),
+			"description":                 stringValueOrNull(g.Description),
+			"description_align":           stringValueOrNull(g.DescriptionAlign),
+			"description_justify_content": stringValueOrNull(g.DescriptionJustifyContent),
+			"layout":                      layoutVal,
+			"visualization":               visVal,
 		}))
 	}
 
@@ -933,16 +1174,24 @@ func flattenDashboardGraphs(ctx context.Context, graphs []dashboardAPIGraph) (ty
 func flattenVisualization(ctx context.Context, vis dashboardVisualization) (attr.Value, diag.Diagnostics) {
 	nullVizBase := func() map[string]attr.Value {
 		return map[string]attr.Value{
-			"timeseries":            types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes()),
-			"top_list":              types.ObjectNull(resource_dashboard.TopListVisualizationAttrTypes()),
-			"pie":                   types.ObjectNull(resource_dashboard.SeriesVisualizationAttrTypes()),
-			"query_value":           types.ObjectNull(resource_dashboard.QueryValueVisualizationAttrTypes()),
-			"bar":                   types.ObjectNull(resource_dashboard.BarVisualizationAttrTypes()),
-			"list":                  types.ObjectNull(resource_dashboard.ListVisualizationAttrTypes()),
-			"note":                  types.ObjectNull(resource_dashboard.NoteVisualizationAttrTypes()),
-			"table":                 types.ObjectNull(resource_dashboard.TableVisualizationAttrTypes()),
-			"timeseries_connection": types.ObjectNull(resource_dashboard.TimeseriesConnectionVisualizationAttrTypes()),
-			"list_connection":       types.ObjectNull(resource_dashboard.ListConnectionVisualizationAttrTypes()),
+			"timeseries":             types.ObjectNull(resource_dashboard.TimeseriesVisualizationAttrTypes()),
+			"top_list":               types.ObjectNull(resource_dashboard.TopListVisualizationAttrTypes()),
+			"pie":                    types.ObjectNull(resource_dashboard.PieVisualizationAttrTypes()),
+			"query_value":            types.ObjectNull(resource_dashboard.QueryValueVisualizationAttrTypes()),
+			"bar":                    types.ObjectNull(resource_dashboard.BarVisualizationAttrTypes()),
+			"gauge":                  types.ObjectNull(resource_dashboard.GaugeVisualizationAttrTypes()),
+			"distribution":           types.ObjectNull(resource_dashboard.DistributionVisualizationAttrTypes()),
+			"heatmap":                types.ObjectNull(resource_dashboard.HeatmapVisualizationAttrTypes()),
+			"list":                   types.ObjectNull(resource_dashboard.ListVisualizationAttrTypes()),
+			"list_log_patterns":      types.ObjectNull(resource_dashboard.ListLogPatternsVisualizationAttrTypes()),
+			"note":                   types.ObjectNull(resource_dashboard.NoteVisualizationAttrTypes()),
+			"table":                  types.ObjectNull(resource_dashboard.TableVisualizationAttrTypes()),
+			"timeseries_connection":  types.ObjectNull(resource_dashboard.TimeseriesConnectionVisualizationAttrTypes()),
+			"list_connection":        types.ObjectNull(resource_dashboard.ListConnectionVisualizationAttrTypes()),
+			"top_list_connection":    types.ObjectNull(resource_dashboard.TopListConnectionVisualizationAttrTypes()),
+			"pie_connection":         types.ObjectNull(resource_dashboard.PieConnectionVisualizationAttrTypes()),
+			"bar_connection":         types.ObjectNull(resource_dashboard.BarConnectionVisualizationAttrTypes()),
+			"query_value_connection": types.ObjectNull(resource_dashboard.QueryValueConnectionVisualizationAttrTypes()),
 		}
 	}
 
@@ -986,7 +1235,7 @@ func flattenVisualization(ctx context.Context, vis dashboardVisualization) (attr
 			"group_by": groupBy,
 		})
 		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(), obj), nil
-	case "bar", "query-value", "timeseries", "top-list", "pie":
+	case "bar", "query-value", "timeseries", "top-list", "pie", "gauge", "distribution", "heatmap":
 		seriesVal, diags := flattenSeriesVisualization(ctx, vis)
 		if diags.HasError() {
 			return types.ObjectNull(resource_dashboard.VisualizationAttrTypes()), diags
@@ -1003,8 +1252,87 @@ func flattenVisualization(ctx context.Context, vis dashboardVisualization) (attr
 			obj["query_value"] = seriesVal
 		case "bar":
 			obj["bar"] = seriesVal
+		case "gauge":
+			obj["gauge"] = seriesVal
+		case "distribution":
+			obj["distribution"] = seriesVal
+		case "heatmap":
+			obj["heatmap"] = seriesVal
 		}
 		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(), obj), nil
+	case "list-log-patterns":
+		obj := nullVizBase()
+		obj["list_log_patterns"] = types.ObjectValueMust(resource_dashboard.ListLogPatternsVisualizationAttrTypes(), map[string]attr.Value{
+			"type":   types.StringValue("list-log-patterns"),
+			"query":  types.StringValue(vis.Query),
+			"layout": stringValueOrNull(vis.Layout),
+		})
+		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(), obj), nil
+	case "top-list-connection":
+		obj := nullVizBase()
+		sqlQueries, diags := flattenStringList(vis.SqlQueries)
+		if diags.HasError() {
+			return types.ObjectNull(resource_dashboard.VisualizationAttrTypes()), diags
+		}
+		obj["top_list_connection"] = types.ObjectValueMust(resource_dashboard.TopListConnectionVisualizationAttrTypes(), map[string]attr.Value{
+			"type":          types.StringValue("top-list-connection"),
+			"connection_id": types.StringValue(vis.ConnectionId),
+			"queries":       sqlQueries,
+		})
+		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(), obj), nil
+	case "pie-connection":
+		obj := nullVizBase()
+		sqlQueries, diags := flattenStringList(vis.SqlQueries)
+		if diags.HasError() {
+			return types.ObjectNull(resource_dashboard.VisualizationAttrTypes()), diags
+		}
+		obj["pie_connection"] = types.ObjectValueMust(resource_dashboard.PieConnectionVisualizationAttrTypes(), map[string]attr.Value{
+			"type":          types.StringValue("pie-connection"),
+			"connection_id": types.StringValue(vis.ConnectionId),
+			"queries":       sqlQueries,
+			"legend_mode":   stringValueOrNull(vis.LegendMode),
+		})
+		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(), obj), nil
+	case "bar-connection":
+		obj := nullVizBase()
+		sqlQueries, diags := flattenStringList(vis.SqlQueries)
+		if diags.HasError() {
+			return types.ObjectNull(resource_dashboard.VisualizationAttrTypes()), diags
+		}
+		thresholds, tDiags := flattenThresholds(vis.Thresholds)
+		diags.Append(tDiags...)
+		obj["bar_connection"] = types.ObjectValueMust(resource_dashboard.BarConnectionVisualizationAttrTypes(), map[string]attr.Value{
+			"type":            types.StringValue("bar-connection"),
+			"connection_id":   types.StringValue(vis.ConnectionId),
+			"queries":         sqlQueries,
+			"legend_mode":     stringValueOrNull(vis.LegendMode),
+			"thresholds":      thresholds,
+			"y_axis_settings": flattenYAxisSettings(vis.YAxisSettings),
+		})
+		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(), obj), diags
+	case "query-value-connection":
+		obj := nullVizBase()
+		sqlQueries, diags := flattenStringList(vis.SqlQueries)
+		if diags.HasError() {
+			return types.ObjectNull(resource_dashboard.VisualizationAttrTypes()), diags
+		}
+		condVal, cDiags := flattenConditions(vis.Conditions)
+		diags.Append(cDiags...)
+		precisionVal := types.Float64Null()
+		if vis.Precision != nil {
+			precisionVal = types.Float64Value(*vis.Precision)
+		}
+		obj["query_value_connection"] = types.ObjectValueMust(resource_dashboard.QueryValueConnectionVisualizationAttrTypes(), map[string]attr.Value{
+			"type":            types.StringValue("query-value-connection"),
+			"connection_id":   types.StringValue(vis.ConnectionId),
+			"queries":         sqlQueries,
+			"legend_mode":     stringValueOrNull(vis.LegendMode),
+			"background_mode": stringValueOrNull(vis.BackgroundMode),
+			"conditions":      condVal,
+			"normalizer":      flattenNormalizer(vis.Normalizer),
+			"precision":       precisionVal,
+		})
+		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(), obj), diags
 	case "timeseries-connection":
 		obj := nullVizBase()
 		sqlQueries, diags := flattenStringList(vis.SqlQueries)
@@ -1078,6 +1406,8 @@ func flattenSeriesVisualization(ctx context.Context, vis dashboardVisualization)
 	}
 
 	if vis.Type == "query-value" {
+		delete(obj, "group_by")
+		delete(obj, "y_axis_settings")
 		condVal, cDiags := flattenConditions(vis.Conditions)
 		diags.Append(cDiags...)
 		obj["background_mode"] = stringValueOrNull(vis.BackgroundMode)
@@ -1086,6 +1416,7 @@ func flattenSeriesVisualization(ctx context.Context, vis dashboardVisualization)
 	}
 
 	if vis.Type == "top-list" {
+		delete(obj, "y_axis_settings")
 		condVal, cDiags := flattenConditions(vis.Conditions)
 		diags.Append(cDiags...)
 		obj["conditions"] = condVal
@@ -1104,7 +1435,47 @@ func flattenSeriesVisualization(ctx context.Context, vis dashboardVisualization)
 		return types.ObjectValueMust(resource_dashboard.BarVisualizationAttrTypes(), obj), diags
 	}
 
-	return types.ObjectValueMust(resource_dashboard.SeriesVisualizationAttrTypes(), obj), diags
+	if vis.Type == "gauge" {
+		delete(obj, "group_by")
+		delete(obj, "y_axis_settings")
+		maxVal := types.Float64Null()
+		if vis.Max != nil {
+			maxVal = types.Float64Value(*vis.Max)
+		}
+		obj["max"] = maxVal
+		cts, ctDiags := flattenGaugeColorThresholds(vis.ColorThresholds)
+		diags.Append(ctDiags...)
+		obj["color_thresholds"] = cts
+		return types.ObjectValueMust(resource_dashboard.GaugeVisualizationAttrTypes(), obj), diags
+	}
+
+	if vis.Type == "distribution" {
+		delete(obj, "y_axis_settings")
+		obj["bounds_scale"] = stringValueOrNull(vis.BoundsScale)
+		markers, mDiags := flattenIntList(vis.Markers)
+		diags.Append(mDiags...)
+		obj["percentile_markers"] = markers
+		return types.ObjectValueMust(resource_dashboard.DistributionVisualizationAttrTypes(), obj), diags
+	}
+
+	if vis.Type == "heatmap" {
+		delete(obj, "y_axis_settings")
+		obj["palette"] = stringValueOrNull(vis.Palette)
+		return types.ObjectValueMust(resource_dashboard.HeatmapVisualizationAttrTypes(), obj), diags
+	}
+
+	if vis.Type == "timeseries" {
+		smoothingVal := types.BoolNull()
+		if vis.Smoothing != nil {
+			smoothingVal = types.BoolValue(*vis.Smoothing)
+		}
+		obj["smoothing"] = smoothingVal
+		return types.ObjectValueMust(resource_dashboard.TimeseriesVisualizationAttrTypes(), obj), diags
+	}
+
+	// The only remaining series type is pie, which does not accept y_axis_settings.
+	delete(obj, "y_axis_settings")
+	return types.ObjectValueMust(resource_dashboard.PieVisualizationAttrTypes(), obj), diags
 }
 
 func flattenQueries(queries []dashboardQuery) (types.List, diag.Diagnostics) {
@@ -1186,10 +1557,20 @@ func flattenFunctions(funcs []dashboardFunction) (types.List, diag.Diagnostics) 
 		if f.Seconds != nil {
 			secondsVal = types.Int64Value(*f.Seconds)
 		}
+		baseVal := types.Int64Null()
+		if f.Base != nil {
+			baseVal = types.Int64Value(*f.Base)
+		}
+		exponentVal := types.Int64Null()
+		if f.Exponent != nil {
+			exponentVal = types.Int64Value(*f.Exponent)
+		}
 		values = append(values, types.ObjectValueMust(resource_dashboard.FunctionAttrTypes(), map[string]attr.Value{
-			"type":    types.StringValue(f.Type),
-			"window":  stringValueOrNull(f.Window),
-			"seconds": secondsVal,
+			"type":     types.StringValue(f.Type),
+			"window":   stringValueOrNull(f.Window),
+			"seconds":  secondsVal,
+			"base":     baseVal,
+			"exponent": exponentVal,
 		}))
 	}
 	return types.ListValue(elemType, values)
@@ -1340,6 +1721,14 @@ func expandFunctions(ctx context.Context, funcs types.List) ([]dashboardFunction
 		if !f.Seconds.IsNull() && !f.Seconds.IsUnknown() {
 			s := f.Seconds.ValueInt64()
 			fn.Seconds = &s
+		}
+		if !f.Base.IsNull() && !f.Base.IsUnknown() {
+			b := f.Base.ValueInt64()
+			fn.Base = &b
+		}
+		if !f.Exponent.IsNull() && !f.Exponent.IsUnknown() {
+			e := f.Exponent.ValueInt64()
+			fn.Exponent = &e
 		}
 		result = append(result, fn)
 	}
@@ -1640,6 +2029,52 @@ func expandThresholds(ctx context.Context, thresholds types.List) ([]dashboardTh
 		})
 	}
 	return result, diags
+}
+
+func expandGaugeColorThresholds(ctx context.Context, list types.List) ([]dashboardGaugeColor, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	if list.IsNull() || list.IsUnknown() {
+		return nil, diags
+	}
+	var models []resource_dashboard.GaugeColorThresholdModel
+	diags.Append(list.ElementsAs(ctx, &models, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+	result := make([]dashboardGaugeColor, 0, len(models))
+	for _, m := range models {
+		result = append(result, dashboardGaugeColor{
+			From:  m.From.ValueFloat64(),
+			Color: m.Color.ValueString(),
+		})
+	}
+	return result, diags
+}
+
+func flattenGaugeColorThresholds(cts []dashboardGaugeColor) (types.List, diag.Diagnostics) {
+	elemType := types.ObjectType{AttrTypes: resource_dashboard.GaugeColorThresholdAttrTypes()}
+	if len(cts) == 0 {
+		return types.ListNull(elemType), nil
+	}
+	values := make([]attr.Value, 0, len(cts))
+	for _, c := range cts {
+		values = append(values, types.ObjectValueMust(resource_dashboard.GaugeColorThresholdAttrTypes(), map[string]attr.Value{
+			"from":  types.Float64Value(c.From),
+			"color": types.StringValue(c.Color),
+		}))
+	}
+	return types.ListValue(elemType, values)
+}
+
+func flattenIntList(s []int64) (types.List, diag.Diagnostics) {
+	if len(s) == 0 {
+		return types.ListNull(types.Int64Type), nil
+	}
+	values := make([]attr.Value, 0, len(s))
+	for _, v := range s {
+		values = append(values, types.Int64Value(v))
+	}
+	return types.ListValue(types.Int64Type, values)
 }
 
 func flattenThresholds(thresholds []dashboardThreshold) (types.List, diag.Diagnostics) {
