@@ -711,6 +711,10 @@ Required:
 <a id="nestedatt--graphs--visualization--bar--queries--aggregate--count"></a>
 ### Nested Schema for `graphs.visualization.bar.queries.aggregate.count`
 
+Optional:
+
+- `field` (String)
+
 
 <a id="nestedatt--graphs--visualization--bar--queries--aggregate--max"></a>
 ### Nested Schema for `graphs.visualization.bar.queries.aggregate.max`
@@ -991,6 +995,10 @@ Required:
 <a id="nestedatt--graphs--visualization--distribution--queries--aggregate--count"></a>
 ### Nested Schema for `graphs.visualization.distribution.queries.aggregate.count`
 
+Optional:
+
+- `field` (String)
+
 
 <a id="nestedatt--graphs--visualization--distribution--queries--aggregate--max"></a>
 ### Nested Schema for `graphs.visualization.distribution.queries.aggregate.max`
@@ -1139,6 +1147,10 @@ Required:
 <a id="nestedatt--graphs--visualization--gauge--queries--aggregate--count"></a>
 ### Nested Schema for `graphs.visualization.gauge.queries.aggregate.count`
 
+Optional:
+
+- `field` (String)
+
 
 <a id="nestedatt--graphs--visualization--gauge--queries--aggregate--max"></a>
 ### Nested Schema for `graphs.visualization.gauge.queries.aggregate.max`
@@ -1286,6 +1298,10 @@ Required:
 
 <a id="nestedatt--graphs--visualization--heatmap--queries--aggregate--count"></a>
 ### Nested Schema for `graphs.visualization.heatmap.queries.aggregate.count`
+
+Optional:
+
+- `field` (String)
 
 
 <a id="nestedatt--graphs--visualization--heatmap--queries--aggregate--max"></a>
@@ -1551,6 +1567,10 @@ Required:
 <a id="nestedatt--graphs--visualization--pie--queries--aggregate--count"></a>
 ### Nested Schema for `graphs.visualization.pie.queries.aggregate.count`
 
+Optional:
+
+- `field` (String)
+
 
 <a id="nestedatt--graphs--visualization--pie--queries--aggregate--max"></a>
 ### Nested Schema for `graphs.visualization.pie.queries.aggregate.max`
@@ -1715,6 +1735,10 @@ Required:
 
 <a id="nestedatt--graphs--visualization--query_value--queries--aggregate--count"></a>
 ### Nested Schema for `graphs.visualization.query_value.queries.aggregate.count`
+
+Optional:
+
+- `field` (String)
 
 
 <a id="nestedatt--graphs--visualization--query_value--queries--aggregate--max"></a>
@@ -1918,6 +1942,10 @@ Required:
 <a id="nestedatt--graphs--visualization--table--columns--queries--aggregate--count"></a>
 ### Nested Schema for `graphs.visualization.table.columns.queries.aggregate.count`
 
+Optional:
+
+- `field` (String)
+
 
 <a id="nestedatt--graphs--visualization--table--columns--queries--aggregate--max"></a>
 ### Nested Schema for `graphs.visualization.table.columns.queries.aggregate.max`
@@ -2067,6 +2095,10 @@ Required:
 
 <a id="nestedatt--graphs--visualization--timeseries--queries--aggregate--count"></a>
 ### Nested Schema for `graphs.visualization.timeseries.queries.aggregate.count`
+
+Optional:
+
+- `field` (String)
 
 
 <a id="nestedatt--graphs--visualization--timeseries--queries--aggregate--max"></a>
@@ -2337,6 +2369,10 @@ Required:
 
 <a id="nestedatt--graphs--visualization--top_list--queries--aggregate--count"></a>
 ### Nested Schema for `graphs.visualization.top_list.queries.aggregate.count`
+
+Optional:
+
+- `field` (String)
 
 
 <a id="nestedatt--graphs--visualization--top_list--queries--aggregate--max"></a>
