@@ -1523,7 +1523,13 @@ func flattenAggregate(agg dashboardAggregate) (attr.Value, diag.Diagnostics) {
 
 	switch agg.Type {
 	case "count":
-		vals["count"] = types.ObjectValueMust(aggregate.CountAttrTypes(), map[string]attr.Value{})
+		countField := types.StringNull()
+		if agg.Field != "" {
+			countField = types.StringValue(agg.Field)
+		}
+		vals["count"] = types.ObjectValueMust(aggregate.CountAttrTypes(), map[string]attr.Value{
+			"field": countField,
+		})
 	case "sum", "average", "min", "max", "unique-count":
 		key := map[string]string{
 			"sum":          "sum",
@@ -1678,6 +1684,9 @@ func expandAggregate(agg resource_dashboard.AggregateModel) (dashboardAggregate,
 	if agg.Count != nil {
 		setCount++
 		res = dashboardAggregate{Type: "count"}
+		if !agg.Count.Field.IsNull() && !agg.Count.Field.IsUnknown() {
+			res.Field = agg.Count.Field.ValueString()
+		}
 	}
 	checkField(agg.Sum, "sum")
 	checkField(agg.Average, "average")

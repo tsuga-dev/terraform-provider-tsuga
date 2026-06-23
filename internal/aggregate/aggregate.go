@@ -31,10 +31,22 @@ func Attributes() map[string]schema.Attribute {
 }
 
 // CountSchema returns the schema for the count aggregate type.
+//
+// Unlike the other field-based aggregates, `field` is optional for count: on
+// the logs and traces data sources count works without a field, while on the
+// metrics data source a field is required (enforced server-side by the query
+// engine). Keeping it optional lets one schema serve both cases.
 func CountSchema() schema.Attribute {
 	return schema.SingleNestedAttribute{
-		Optional:   true,
-		Attributes: map[string]schema.Attribute{},
+		Optional: true,
+		Attributes: map[string]schema.Attribute{
+			"field": schema.StringAttribute{
+				Optional: true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtMost(250),
+				},
+			},
+		},
 	}
 }
 
@@ -86,7 +98,9 @@ func AttrTypes() map[string]attr.Type {
 
 // CountAttrTypes returns attr types for the count aggregate.
 func CountAttrTypes() map[string]attr.Type {
-	return map[string]attr.Type{}
+	return map[string]attr.Type{
+		"field": types.StringType,
+	}
 }
 
 // FieldAttrTypes returns attr types for field-based aggregates.
@@ -117,5 +131,8 @@ type PercentileModel struct {
 	Percentile types.Float64 `tfsdk:"percentile"`
 }
 
-// CountModel represents a count aggregate.
-type CountModel struct{}
+// CountModel represents a count aggregate. `field` is optional; it is required
+// only on the metrics data source, which the query engine validates server-side.
+type CountModel struct {
+	Field types.String `tfsdk:"field"`
+}

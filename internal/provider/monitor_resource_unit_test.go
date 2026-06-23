@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"terraform-provider-tsuga/internal/aggregate"
 	"terraform-provider-tsuga/internal/resource_monitor"
 	"testing"
 
@@ -174,5 +175,67 @@ func TestFlattenAggregationFunctions_SupportsLastAndTimeOffset(t *testing.T) {
 	}
 	if models[1].TimeOffset.Seconds.IsNull() || models[1].TimeOffset.Seconds.ValueInt64() != 1800 {
 		t.Fatalf("expected second function time_offset.seconds to be 1800, got %v", models[1].TimeOffset.Seconds)
+	}
+}
+
+func TestExpandMonitorAggregate_CountForwardsField(t *testing.T) {
+	agg := resource_monitor.MonitorAggregateModel{
+		Count: &aggregate.CountModel{Field: types.StringValue("batch_process_duration_milliseconds")},
+	}
+
+	expanded, diags := expandMonitorAggregate(agg)
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+
+	if expanded["type"] != "count" {
+		t.Fatalf("expected aggregate type count, got %v", expanded["type"])
+	}
+	if expanded["field"] != "batch_process_duration_milliseconds" {
+		t.Fatalf("expected count.field to be forwarded to the API, got %#v", expanded["field"])
+	}
+}
+
+func TestExpandMonitorAggregate_CountWithoutFieldOmitsField(t *testing.T) {
+	agg := resource_monitor.MonitorAggregateModel{
+		Count: &aggregate.CountModel{Field: types.StringNull()},
+	}
+
+	expanded, diags := expandMonitorAggregate(agg)
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+
+	if expanded["type"] != "count" {
+		t.Fatalf("expected aggregate type count, got %v", expanded["type"])
+	}
+	if _, exists := expanded["field"]; exists {
+		t.Fatalf("expected count.field to be omitted when unset, got %#v", expanded["field"])
+	}
+}
+
+func TestFlattenMonitorAggregate_CountFieldRoundTrips(t *testing.T) {
+	aggVal, diags := flattenMonitorAggregate(monitorAPIAggregate{Type: "count", Field: "batch_process_duration_milliseconds"})
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+
+	countObj := aggVal.(types.Object).Attributes()["count"].(types.Object)
+	field := countObj.Attributes()["field"].(types.String)
+	if field.IsNull() || field.ValueString() != "batch_process_duration_milliseconds" {
+		t.Fatalf("expected count.field to round-trip from the API, got %v", field)
+	}
+}
+
+func TestFlattenMonitorAggregate_CountWithoutFieldIsNull(t *testing.T) {
+	aggVal, diags := flattenMonitorAggregate(monitorAPIAggregate{Type: "count"})
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+
+	countObj := aggVal.(types.Object).Attributes()["count"].(types.Object)
+	field := countObj.Attributes()["field"].(types.String)
+	if !field.IsNull() {
+		t.Fatalf("expected count.field to be null when the API omits it, got %v", field)
 	}
 }

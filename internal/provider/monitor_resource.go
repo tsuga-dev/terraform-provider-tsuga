@@ -913,7 +913,11 @@ func expandMonitorAggregate(agg resource_monitor.MonitorAggregateModel) (map[str
 	var diags diag.Diagnostics
 
 	if agg.Count != nil {
-		return map[string]interface{}{"type": "count"}, diags
+		result := map[string]interface{}{"type": "count"}
+		if !agg.Count.Field.IsNull() && !agg.Count.Field.IsUnknown() {
+			result["field"] = agg.Count.Field.ValueString()
+		}
+		return result, diags
 	}
 	if agg.UniqueCount != nil && !agg.UniqueCount.Field.IsNull() && !agg.UniqueCount.Field.IsUnknown() {
 		return map[string]interface{}{
@@ -1350,7 +1354,13 @@ func flattenMonitorAggregate(agg monitorAPIAggregate) (attr.Value, diag.Diagnost
 
 	switch agg.Type {
 	case "count":
-		vals["count"] = types.ObjectValueMust(aggregate.CountAttrTypes(), map[string]attr.Value{})
+		countField := types.StringNull()
+		if agg.Field != "" {
+			countField = types.StringValue(agg.Field)
+		}
+		vals["count"] = types.ObjectValueMust(aggregate.CountAttrTypes(), map[string]attr.Value{
+			"field": countField,
+		})
 	case "unique-count":
 		vals["unique_count"] = types.ObjectValueMust(aggregate.FieldAttrTypes(), map[string]attr.Value{
 			"field": types.StringValue(agg.Field),

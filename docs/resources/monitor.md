@@ -186,6 +186,10 @@ Required:
 <a id="nestedatt--configuration--anomaly_log--queries--aggregate--count"></a>
 ### Nested Schema for `configuration.anomaly_log.queries.aggregate.count`
 
+Optional:
+
+- `field` (String)
+
 
 <a id="nestedatt--configuration--anomaly_log--queries--aggregate--max"></a>
 ### Nested Schema for `configuration.anomaly_log.queries.aggregate.max`
@@ -371,6 +375,10 @@ Required:
 
 <a id="nestedatt--configuration--anomaly_metric--queries--aggregate--count"></a>
 ### Nested Schema for `configuration.anomaly_metric.queries.aggregate.count`
+
+Optional:
+
+- `field` (String)
 
 
 <a id="nestedatt--configuration--anomaly_metric--queries--aggregate--max"></a>
@@ -574,6 +582,10 @@ Required:
 
 <a id="nestedatt--configuration--log--queries--aggregate--count"></a>
 ### Nested Schema for `configuration.log.queries.aggregate.count`
+
+Optional:
+
+- `field` (String)
 
 
 <a id="nestedatt--configuration--log--queries--aggregate--max"></a>
@@ -797,6 +809,10 @@ Required:
 <a id="nestedatt--configuration--metric--queries--aggregate--count"></a>
 ### Nested Schema for `configuration.metric.queries.aggregate.count`
 
+Optional:
+
+- `field` (String)
+
 
 <a id="nestedatt--configuration--metric--queries--aggregate--max"></a>
 ### Nested Schema for `configuration.metric.queries.aggregate.max`
@@ -995,6 +1011,10 @@ Required:
 
 <a id="nestedatt--configuration--trace--queries--aggregate--count"></a>
 ### Nested Schema for `configuration.trace.queries.aggregate.count`
+
+Optional:
+
+- `field` (String)
 
 
 <a id="nestedatt--configuration--trace--queries--aggregate--max"></a>
