@@ -21,13 +21,15 @@ func TeamDataSourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"description": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
+				Description:         "Optional team description supplied by a user.",
+				MarkdownDescription: "Optional team description supplied by a user.",
 			},
 			"id": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Identifier of the team",
-				MarkdownDescription: "Identifier of the team",
+				Description:         "Identifier of the team to retrieve. Use the `id` returned by team list or create responses.",
+				MarkdownDescription: "Identifier of the team to retrieve. Use the `id` returned by team list or create responses.",
 				Validators: []validator.String{
 					stringvalidator.LengthBetween(1, 250),
 				},
@@ -35,17 +37,21 @@ func TeamDataSourceSchema(ctx context.Context) schema.Schema {
 			"name": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Human readable team name displayed throughout the app",
-				MarkdownDescription: "Human readable team name displayed throughout the app",
+				Description:         "Human-readable team name displayed throughout Tsuga and used in team search.",
+				MarkdownDescription: "Human-readable team name displayed throughout Tsuga and used in team search.",
 			},
 			"tags": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"key": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "Tag key attached to the resource. Consumers can use key/value tags for filtering, ownership context, and policy checks.",
+							MarkdownDescription: "Tag key attached to the resource. Consumers can use key/value tags for filtering, ownership context, and policy checks.",
 						},
 						"value": schema.StringAttribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "Tag value attached to the resource for this key. Tsuga returns the value exactly as stored.",
+							MarkdownDescription: "Tag value attached to the resource for this key. Tsuga returns the value exactly as stored.",
 						},
 					},
 					CustomType: TagsType{
@@ -55,13 +61,13 @@ func TeamDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Computed:            true,
-				Description:         "List of key/value tags applied to the resource",
-				MarkdownDescription: "List of key/value tags applied to the resource",
+				Description:         "Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies.",
+				MarkdownDescription: "Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies.",
 			},
 			"visibility": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Controls whether the resources of the team are discoverable by users",
-				MarkdownDescription: "Controls whether the resources of the team are discoverable by users",
+				Description:         "`public` makes team-owned resources discoverable according to access controls. `private` restricts discovery to team members and authorized users.",
+				MarkdownDescription: "`public` makes team-owned resources discoverable according to access controls. `private` restricts discovery to team members and authorized users.",
 			},
 		},
 	}

@@ -207,7 +207,10 @@ func monitorNoDataBehaviorSchema(includeConsiderZero bool) schema.Attribute {
 	}
 }
 
-func queriesSchema() schema.Attribute {
+// QueriesSchema returns the schema for the monitor aggregation-query list
+// (filter + aggregate + functions + fill). It is exported because SLOs reuse the
+// exact same query shape (INPUT_MONITOR_AGGREGATION_QUERIES) for their good/total/query formulas.
+func QueriesSchema() schema.Attribute {
 	return schema.ListNestedAttribute{
 		Required: true,
 		Validators: []validator.List{
@@ -308,7 +311,7 @@ func thresholdMonitorConfigurationSchema() schema.Attribute {
 	attrs := baseMonitorConfigurationAttributes()
 	attrs["conditions"] = monitorConditionSchema()
 	attrs["no_data_behavior"] = monitorNoDataBehaviorSchema(true)
-	attrs["queries"] = queriesSchema()
+	attrs["queries"] = QueriesSchema()
 	// The Pulumi terraform-provider bridge singularizes list attributes, inferring
 	// a "condition" field from "conditions". Adding it as Optional
 	// prevents null/unknown deserialization errors during refresh and apply.
@@ -338,7 +341,7 @@ func anomalyMonitorConfigurationSchema() schema.Attribute {
 	attrs := baseMonitorConfigurationAttributes()
 	attrs["condition"] = anomalyConditionSchema()
 	attrs["no_data_behavior"] = monitorNoDataBehaviorSchema(false) // anomaly monitors don't support consider_zero
-	attrs["queries"] = queriesSchema()
+	attrs["queries"] = QueriesSchema()
 	return schema.SingleNestedAttribute{
 		Optional:   true,
 		Attributes: attrs,
