@@ -15,19 +15,27 @@ func UserDataSourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"email": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
+				Description:         "Lowercase email address for the user. Use this for display and invitation matching, not as a stable identifier.",
+				MarkdownDescription: "Lowercase email address for the user. Use this for display and invitation matching, not as a stable identifier.",
 			},
 			"id": schema.StringAttribute{
-				Required: true,
+				Required:            true,
+				Description:         "Identifier of the organization user to retrieve. Use the `id` returned by list users responses.",
+				MarkdownDescription: "Identifier of the organization user to retrieve. Use the `id` returned by list users responses.",
 				Validators: []validator.String{
 					stringvalidator.LengthBetween(1, 250),
 				},
 			},
 			"name": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
+				Description:         "Display name of the user.",
+				MarkdownDescription: "Display name of the user.",
 			},
 			"role": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
+				Description:         "Organization role for the user: `admin`, `public_editor`, `public_viewer`, or `teams_only`.",
+				MarkdownDescription: "Organization role for the user: `admin`, `public_editor`, `public_viewer`, or `teams_only`.",
 			},
 		},
 	}
