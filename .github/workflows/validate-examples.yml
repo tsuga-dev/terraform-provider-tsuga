@@ -29,6 +29,7 @@ jobs:
           - tsuga_notification_silence
           - tsuga_retention_policy
           - tsuga_route
+          - tsuga_slo
           - tsuga_tag_policy
           - tsuga_team
           - tsuga_team_membership

@@ -23,19 +23,19 @@ data "tsuga_team" "test" {
 
 ### Optional
 
-- `id` (String) Identifier of the team
-- `name` (String) Human readable team name displayed throughout the app
+- `id` (String) Identifier of the team to retrieve. Use the `id` returned by team list or create responses.
+- `name` (String) Human-readable team name displayed throughout Tsuga and used in team search.
 
 ### Read-Only
 
-- `description` (String)
-- `tags` (Attributes List) List of key/value tags applied to the resource (see [below for nested schema](#nestedatt--tags))
-- `visibility` (String) Controls whether the resources of the team are discoverable by users
+- `description` (String) Optional team description supplied by a user.
+- `tags` (Attributes List) Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies. (see [below for nested schema](#nestedatt--tags))
+- `visibility` (String) `public` makes team-owned resources discoverable according to access controls. `private` restricts discovery to team members and authorized users.
 
 <a id="nestedatt--tags"></a>
 ### Nested Schema for `tags`
 
 Read-Only:
 
-- `key` (String)
-- `value` (String)
+- `key` (String) Tag key attached to the resource. Consumers can use key/value tags for filtering, ownership context, and policy checks.
+- `value` (String) Tag value attached to the resource for this key. Tsuga returns the value exactly as stored.
