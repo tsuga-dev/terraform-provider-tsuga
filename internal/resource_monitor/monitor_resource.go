@@ -135,6 +135,20 @@ func baseMonitorConfigurationAttributes() map[string]schema.Attribute {
 					"limit": schema.Int64Attribute{
 						Required: true,
 					},
+					"sort_order": schema.StringAttribute{
+						Optional: true,
+						Validators: []validator.String{
+							stringvalidator.OneOf("asc", "desc"),
+						},
+						Description: "Sort direction applied to groups: 'asc' or 'desc'.",
+					},
+					"replace_null_with": schema.StringAttribute{
+						Optional: true,
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(1),
+						},
+						Description: "Value used to group documents that have no value for a grouped field.",
+					},
 				},
 			},
 		},

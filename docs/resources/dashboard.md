@@ -791,6 +791,11 @@ Required:
 - `fields` (List of String)
 - `limit` (Number)
 
+Optional:
+
+- `replace_null_with` (String) Value used to group documents that have no value for a grouped field.
+- `sort_order` (String) Sort direction applied to groups: 'asc' or 'desc'.
+
 
 <a id="nestedatt--graphs--visualization--bar--normalizer"></a>
 ### Nested Schema for `graphs.visualization.bar.normalizer`
@@ -1074,6 +1079,11 @@ Required:
 
 - `fields` (List of String)
 - `limit` (Number)
+
+Optional:
+
+- `replace_null_with` (String) Value used to group documents that have no value for a grouped field.
+- `sort_order` (String) Sort direction applied to groups: 'asc' or 'desc'.
 
 
 <a id="nestedatt--graphs--visualization--distribution--normalizer"></a>
@@ -1379,6 +1389,11 @@ Required:
 - `fields` (List of String)
 - `limit` (Number)
 
+Optional:
+
+- `replace_null_with` (String) Value used to group documents that have no value for a grouped field.
+- `sort_order` (String) Sort direction applied to groups: 'asc' or 'desc'.
+
 
 <a id="nestedatt--graphs--visualization--heatmap--normalizer"></a>
 ### Nested Schema for `graphs.visualization.heatmap.normalizer`
@@ -1646,6 +1661,11 @@ Required:
 
 - `fields` (List of String)
 - `limit` (Number)
+
+Optional:
+
+- `replace_null_with` (String) Value used to group documents that have no value for a grouped field.
+- `sort_order` (String) Sort direction applied to groups: 'asc' or 'desc'.
 
 
 <a id="nestedatt--graphs--visualization--pie--normalizer"></a>
@@ -2035,6 +2055,11 @@ Required:
 - `fields` (List of String)
 - `limit` (Number)
 
+Optional:
+
+- `replace_null_with` (String) Value used to group documents that have no value for a grouped field.
+- `sort_order` (String) Sort direction applied to groups: 'asc' or 'desc'.
+
 
 
 <a id="nestedatt--graphs--visualization--timeseries"></a>
@@ -2175,6 +2200,11 @@ Required:
 
 - `fields` (List of String)
 - `limit` (Number)
+
+Optional:
+
+- `replace_null_with` (String) Value used to group documents that have no value for a grouped field.
+- `sort_order` (String) Sort direction applied to groups: 'asc' or 'desc'.
 
 
 <a id="nestedatt--graphs--visualization--timeseries--normalizer"></a>
@@ -2459,6 +2489,11 @@ Required:
 
 - `fields` (List of String)
 - `limit` (Number)
+
+Optional:
+
+- `replace_null_with` (String) Value used to group documents that have no value for a grouped field.
+- `sort_order` (String) Sort direction applied to groups: 'asc' or 'desc'.
 
 
 <a id="nestedatt--graphs--visualization--top_list--normalizer"></a>

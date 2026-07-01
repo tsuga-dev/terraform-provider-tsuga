@@ -495,8 +495,10 @@ type monitorAPICondition struct {
 }
 
 type monitorAPIAggregationGroupBy struct {
-	Fields []string `json:"fields"`
-	Limit  float64  `json:"limit"`
+	Fields          []string `json:"fields"`
+	Limit           float64  `json:"limit"`
+	SortOrder       string   `json:"sortOrder,omitempty"`
+	ReplaceNullWith string   `json:"replaceNullWith,omitempty"`
 }
 
 type monitorAPIQuery struct {
@@ -763,8 +765,10 @@ func expandAggregationGroupBy(ctx context.Context, groupByList types.List) ([]mo
 		}
 
 		result = append(result, monitorAPIAggregationGroupBy{
-			Fields: fields,
-			Limit:  float64(groupBy.Limit.ValueInt64()),
+			Fields:          fields,
+			Limit:           float64(groupBy.Limit.ValueInt64()),
+			SortOrder:       groupBy.SortOrder.ValueString(),
+			ReplaceNullWith: groupBy.ReplaceNullWith.ValueString(),
 		})
 	}
 
@@ -1210,9 +1214,21 @@ func flattenAggregationGroupBy(ctx context.Context, groupBy []monitorAPIAggregat
 			return types.ListNull(elemType), diags
 		}
 
+		sortOrder := types.StringNull()
+		if gb.SortOrder != "" {
+			sortOrder = types.StringValue(gb.SortOrder)
+		}
+
+		replaceNullWith := types.StringNull()
+		if gb.ReplaceNullWith != "" {
+			replaceNullWith = types.StringValue(gb.ReplaceNullWith)
+		}
+
 		obj := map[string]attr.Value{
-			"fields": fields,
-			"limit":  types.Int64Value(int64(gb.Limit)),
+			"fields":            fields,
+			"limit":             types.Int64Value(int64(gb.Limit)),
+			"sort_order":        sortOrder,
+			"replace_null_with": replaceNullWith,
 		}
 
 		values = append(values, types.ObjectValueMust(groupby.AttrTypes(), obj))

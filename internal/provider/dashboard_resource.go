@@ -700,8 +700,10 @@ type dashboardFunction struct {
 }
 
 type dashboardGroupBy struct {
-	Fields []string `json:"fields"`
-	Limit  int64    `json:"limit"`
+	Fields          []string `json:"fields"`
+	Limit           int64    `json:"limit"`
+	SortOrder       string   `json:"sortOrder,omitempty"`
+	ReplaceNullWith string   `json:"replaceNullWith,omitempty"`
 }
 
 type dashboardNormalizer struct {
@@ -1594,9 +1596,19 @@ func flattenGroupBy(ctx context.Context, groupBy []dashboardGroupBy) (types.List
 		if diags.HasError() {
 			return types.ListNull(elemType), diags
 		}
+		sortOrder := types.StringNull()
+		if gb.SortOrder != "" {
+			sortOrder = types.StringValue(gb.SortOrder)
+		}
+		replaceNullWith := types.StringNull()
+		if gb.ReplaceNullWith != "" {
+			replaceNullWith = types.StringValue(gb.ReplaceNullWith)
+		}
 		values = append(values, types.ObjectValueMust(groupby.AttrTypes(), map[string]attr.Value{
-			"fields": fields,
-			"limit":  types.Int64Value(gb.Limit),
+			"fields":            fields,
+			"limit":             types.Int64Value(gb.Limit),
+			"sort_order":        sortOrder,
+			"replace_null_with": replaceNullWith,
 		}))
 	}
 	return types.ListValue(elemType, values)
@@ -1762,8 +1774,10 @@ func expandGroupBy(ctx context.Context, groupBy types.List) ([]dashboardGroupBy,
 			return nil, diags
 		}
 		result = append(result, dashboardGroupBy{
-			Fields: fields,
-			Limit:  g.Limit.ValueInt64(),
+			Fields:          fields,
+			Limit:           g.Limit.ValueInt64(),
+			SortOrder:       g.SortOrder.ValueString(),
+			ReplaceNullWith: g.ReplaceNullWith.ValueString(),
 		})
 	}
 	return result, diags
