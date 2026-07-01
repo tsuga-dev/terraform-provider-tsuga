@@ -511,6 +511,11 @@ Required:
 - `fields` (List of String)
 - `limit` (Number)
 
+Optional:
+
+- `replace_null_with` (String) Value used to group documents that have no value for a grouped field.
+- `sort_order` (String) Sort direction applied to groups: 'asc' or 'desc'.
+
 
 
 <a id="nestedatt--configuration--time"></a>
@@ -709,6 +714,11 @@ Required:
 
 - `fields` (List of String)
 - `limit` (Number)
+
+Optional:
+
+- `replace_null_with` (String) Value used to group documents that have no value for a grouped field.
+- `sort_order` (String) Sort direction applied to groups: 'asc' or 'desc'.
 
 
 

@@ -148,6 +148,11 @@ Required:
 - `fields` (List of String)
 - `limit` (Number)
 
+Optional:
+
+- `replace_null_with` (String) Value used to group documents that have no value for a grouped field.
+- `sort_order` (String) Sort direction applied to groups: 'asc' or 'desc'.
+
 
 <a id="nestedatt--configuration--anomaly_log--queries"></a>
 ### Nested Schema for `configuration.anomaly_log.queries`
@@ -337,6 +342,11 @@ Required:
 
 - `fields` (List of String)
 - `limit` (Number)
+
+Optional:
+
+- `replace_null_with` (String) Value used to group documents that have no value for a grouped field.
+- `sort_order` (String) Sort direction applied to groups: 'asc' or 'desc'.
 
 
 <a id="nestedatt--configuration--anomaly_metric--queries"></a>
@@ -544,6 +554,11 @@ Required:
 
 - `fields` (List of String)
 - `limit` (Number)
+
+Optional:
+
+- `replace_null_with` (String) Value used to group documents that have no value for a grouped field.
+- `sort_order` (String) Sort direction applied to groups: 'asc' or 'desc'.
 
 
 <a id="nestedatt--configuration--log--queries"></a>
@@ -771,6 +786,11 @@ Required:
 - `fields` (List of String)
 - `limit` (Number)
 
+Optional:
+
+- `replace_null_with` (String) Value used to group documents that have no value for a grouped field.
+- `sort_order` (String) Sort direction applied to groups: 'asc' or 'desc'.
+
 
 <a id="nestedatt--configuration--metric--queries"></a>
 ### Nested Schema for `configuration.metric.queries`
@@ -973,6 +993,11 @@ Required:
 
 - `fields` (List of String)
 - `limit` (Number)
+
+Optional:
+
+- `replace_null_with` (String) Value used to group documents that have no value for a grouped field.
+- `sort_order` (String) Sort direction applied to groups: 'asc' or 'desc'.
 
 
 <a id="nestedatt--configuration--trace--queries"></a>

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Support SLOs.
+- Support the `sort_order` (`asc` / `desc`) and `replace_null_with` attributes on `group_by_fields` for monitor and dashboard group-by.
 
 ## [2.1.4] - 2026-06-23
 
