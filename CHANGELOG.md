@@ -5,7 +5,7 @@ All notable changes to the Tsuga Terraform provider are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.1.5] - 2026-07-01
 
 ### Added
 - Support SLOs.
@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.4] - 2026-06-23
 
-# Added
+### Added
 - Support the `field` attribute on the `count` aggregate for monitor and dashboard queries. The `count` block previously had no `field`, so it was silently dropped before being sent to the API. Counting a field on the metrics data source (where the query engine requires a field) is now reachable. `count` without a field stays valid on the logs and traces data sources.
 
 ## [2.1.3] - 2026-06-18
