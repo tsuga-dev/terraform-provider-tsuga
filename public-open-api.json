@@ -8781,7 +8781,6 @@
           "timeframeDays": {
             "enum": [
               7,
-              28,
               30,
               90
             ],
@@ -8896,7 +8895,7 @@
         "example": {
           "id": "123-456-abc",
           "name": "API availability 99.9%",
-          "description": "Overall API gateway availability over the last 28 days",
+          "description": "Overall API gateway availability over the last 30 days",
           "tags": [
             {
               "key": "team",
@@ -8931,7 +8930,7 @@
             "noDataBehavior": "good"
           },
           "target": 99.9,
-          "timeframeDays": 28,
+          "timeframeDays": 30,
           "owner": "abc-123-def",
           "permissions": "all",
           "clusterIds": [],
@@ -35114,7 +35113,6 @@
                   "timeframeDays": {
                     "enum": [
                       7,
-                      28,
                       30,
                       90
                     ],
@@ -35232,7 +35230,7 @@
               },
               "example": {
                 "name": "API availability 99.9%",
-                "description": "Overall API gateway availability over the last 28 days",
+                "description": "Overall API gateway availability over the last 30 days",
                 "tags": [
                   {
                     "key": "team",
@@ -35267,7 +35265,7 @@
                   "noDataBehavior": "good"
                 },
                 "target": 99.9,
-                "timeframeDays": 28,
+                "timeframeDays": 30,
                 "owner": "abc-123-def",
                 "permissions": "all",
                 "clusterIds": [],
@@ -36181,7 +36179,6 @@
                   "timeframeDays": {
                     "enum": [
                       7,
-                      28,
                       30,
                       90
                     ],
@@ -36293,7 +36290,7 @@
               },
               "example": {
                 "name": "API availability 99.9%",
-                "description": "Overall API gateway availability over the last 28 days",
+                "description": "Overall API gateway availability over the last 30 days",
                 "tags": [
                   {
                     "key": "team",
@@ -36328,7 +36325,7 @@
                   "noDataBehavior": "good"
                 },
                 "target": 99.9,
-                "timeframeDays": 28,
+                "timeframeDays": 30,
                 "owner": "abc-123-def",
                 "permissions": "all",
                 "clusterIds": [],

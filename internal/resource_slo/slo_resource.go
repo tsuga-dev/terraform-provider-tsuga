@@ -93,9 +93,9 @@ func SloResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"timeframe_days": schema.Int64Attribute{
 				Required:    true,
-				Description: "Rolling SLO window in days (7, 28, 30, or 90)",
+				Description: "Rolling SLO window in days (7, 30, or 90)",
 				Validators: []validator.Int64{
-					int64validator.OneOf(7, 28, 30, 90),
+					int64validator.OneOf(7, 30, 90),
 				},
 			},
 			"owner": schema.StringAttribute{

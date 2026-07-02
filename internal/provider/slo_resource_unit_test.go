@@ -565,7 +565,7 @@ func TestFlattenSlo_EmptyDescriptionPreservedAsEmptyString(t *testing.T) {
 			NoDataBehavior: "good",
 		},
 		Target:        99.0,
-		TimeframeDays: 28,
+		TimeframeDays: 30,
 		Owner:         "team-1",
 		Permissions:   "all",
 		ClusterIds:    []string{},

@@ -1,10 +1,10 @@
 resource "tsuga_slo" "api_availability" {
   name           = "API availability 99.9%"
-  description    = "Overall API gateway availability over the last 28 days"
+  description    = "Overall API gateway availability over the last 30 days"
   owner          = "abc-123-def"
   permissions    = "all"
   target         = 99.9
-  timeframe_days = 28
+  timeframe_days = 30
   cluster_ids    = []
 
   configuration = {

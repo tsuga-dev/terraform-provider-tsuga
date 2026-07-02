@@ -88,7 +88,7 @@ resource "tsuga_slo" "test" {
   owner          = tsuga_team.test-team.id
   permissions    = "all"
   target         = 99.0
-  timeframe_days = 28
+  timeframe_days = 30
 
   configuration = {
     event = {
@@ -169,7 +169,7 @@ resource "tsuga_slo" "test" {
   owner          = tsuga_team.test-team.id
   permissions    = "all"
   target         = %s
-  timeframe_days = 28
+  timeframe_days = 30
 
   configuration = {
     event = {
@@ -264,11 +264,11 @@ resource "tsuga_team" "test-team" {
 
 resource "tsuga_slo" "test" {
   name           = "test-event-slo"
-  description    = "Availability over the last 28 days"
+  description    = "Availability over the last 7 days"
   owner          = tsuga_team.test-team.id
   permissions    = "all"
   target         = 99.9
-  timeframe_days = 28
+  timeframe_days = 7
 
   configuration = {
     event = {
@@ -310,7 +310,7 @@ resource "tsuga_slo" "test" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("tsuga_slo.test", "name", "test-event-slo"),
 					resource.TestCheckResourceAttr("tsuga_slo.test", "target", "99.9"),
-					resource.TestCheckResourceAttr("tsuga_slo.test", "timeframe_days", "28"),
+					resource.TestCheckResourceAttr("tsuga_slo.test", "timeframe_days", "7"),
 					resource.TestCheckResourceAttr("tsuga_slo.test", "permissions", "all"),
 					resource.TestCheckResourceAttr("tsuga_slo.test", "configuration.event.data_source", "logs"),
 					resource.TestCheckResourceAttr("tsuga_slo.test", "configuration.event.good_query.formula", "q1"),
@@ -583,7 +583,7 @@ resource "tsuga_slo" "test" {
   owner          = tsuga_team.test-team.id
   permissions    = "all"
   target         = 99.9
-  timeframe_days = 28
+  timeframe_days = 30
 
   configuration = {
     event = {
@@ -633,7 +633,7 @@ resource "tsuga_slo" "test" {
   owner          = tsuga_team.test-team.id
   permissions    = "all"
   target         = 99.9
-  timeframe_days = 28
+  timeframe_days = 30
 
   configuration = {
     time = {
