@@ -15,11 +15,11 @@ Service Level Objective: its SLI configuration, target percentage, rolling timef
 ```terraform
 resource "tsuga_slo" "api_availability" {
   name           = "API availability 99.9%"
-  description    = "Overall API gateway availability over the last 28 days"
+  description    = "Overall API gateway availability over the last 30 days"
   owner          = "abc-123-def"
   permissions    = "all"
   target         = 99.9
-  timeframe_days = 28
+  timeframe_days = 30
   cluster_ids    = []
 
   configuration = {
@@ -117,7 +117,7 @@ resource "tsuga_slo" "api_latency" {
 - `owner` (String) Team ID that owns and manages the SLO
 - `permissions` (String) This controls which data the SLO can see
 - `target` (Number) Target percentage (0 < target < 100, e.g. 99.9)
-- `timeframe_days` (Number) Rolling SLO window in days (7, 28, 30, or 90)
+- `timeframe_days` (Number) Rolling SLO window in days (7, 30, or 90)
 
 ### Optional
 
