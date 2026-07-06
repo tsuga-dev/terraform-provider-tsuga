@@ -401,7 +401,7 @@ func TestFlattenSloConfiguration_Event(t *testing.T) {
 
 func TestFlattenSloConfiguration_Time(t *testing.T) {
 	ctx := context.Background()
-	sliceSize := 5.0
+	sliceSize := 30.0
 	config := sloAPIConfiguration{
 		Type:       "time",
 		DataSource: "traces",
@@ -422,8 +422,8 @@ func TestFlattenSloConfiguration_Time(t *testing.T) {
 	if model.Time == nil {
 		t.Fatal("expected time configuration to be set")
 	}
-	if model.Time.SliceSizeMinutes.ValueInt64() != 5 {
-		t.Fatalf("expected slice_size_minutes 5, got %v", model.Time.SliceSizeMinutes)
+	if model.Time.SliceSizeMinutes.ValueInt64() != 30 {
+		t.Fatalf("expected slice_size_minutes 30, got %v", model.Time.SliceSizeMinutes)
 	}
 	if model.Time.Threshold.Operator.ValueString() != "less_than" {
 		t.Fatalf("expected threshold operator less_than, got %v", model.Time.Threshold.Operator)
