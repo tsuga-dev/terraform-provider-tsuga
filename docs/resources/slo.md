@@ -82,7 +82,7 @@ resource "tsuga_slo" "api_latency" {
           }
         }]
       }
-      slice_size_minutes = 5
+      slice_size_minutes = 30
       threshold = {
         operator = "less_than"
         value    = 300
@@ -526,7 +526,7 @@ Required:
 - `data_source` (String) Telemetry source queried by this SLO: logs, metrics, or traces
 - `no_data_behavior` (String) How to treat time slices with no data: good (meets the SLO), bad (breaches it), or ignore (exclude from the error budget)
 - `query` (Attributes) Aggregation queries combined by a formula to produce the SLO signal (see [below for nested schema](#nestedatt--configuration--time--query))
-- `slice_size_minutes` (Number) Size of each evaluation slice in minutes (1-1440)
+- `slice_size_minutes` (Number) Size of each evaluation slice in minutes (30-1440)
 - `threshold` (Attributes) Comparison between the query signal and a threshold value that determines whether a slice is good (see [below for nested schema](#nestedatt--configuration--time--threshold))
 
 Optional:

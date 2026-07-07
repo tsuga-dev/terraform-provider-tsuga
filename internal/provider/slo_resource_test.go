@@ -438,7 +438,7 @@ resource "tsuga_slo" "test" {
           }
         }]
       }
-      slice_size_minutes = 5
+      slice_size_minutes = 30
       threshold = {
         operator = "less_than"
         value    = 300
@@ -478,7 +478,7 @@ resource "tsuga_slo" "test" {
 					resource.TestCheckResourceAttr("tsuga_slo.test", "target", "99"),
 					resource.TestCheckResourceAttr("tsuga_slo.test", "timeframe_days", "7"),
 					resource.TestCheckResourceAttr("tsuga_slo.test", "configuration.time.data_source", "traces"),
-					resource.TestCheckResourceAttr("tsuga_slo.test", "configuration.time.slice_size_minutes", "5"),
+					resource.TestCheckResourceAttr("tsuga_slo.test", "configuration.time.slice_size_minutes", "30"),
 					resource.TestCheckResourceAttr("tsuga_slo.test", "configuration.time.threshold.operator", "less_than"),
 					resource.TestCheckResourceAttr("tsuga_slo.test", "configuration.time.threshold.value", "300"),
 					resource.TestCheckResourceAttr("tsuga_slo.test", "configuration.time.no_data_behavior", "ignore"),
@@ -520,7 +520,7 @@ resource "tsuga_slo" "test" {
           }
         }]
       }
-      slice_size_minutes = 10
+      slice_size_minutes = 30
       threshold = {
         operator = "less_than_or_equal"
         value    = 500
@@ -543,7 +543,7 @@ resource "tsuga_slo" "test" {
 					resource.TestCheckResourceAttr("tsuga_slo.test", "name", "test-time-slo-updated"),
 					resource.TestCheckResourceAttr("tsuga_slo.test", "target", "98"),
 					resource.TestCheckResourceAttr("tsuga_slo.test", "timeframe_days", "90"),
-					resource.TestCheckResourceAttr("tsuga_slo.test", "configuration.time.slice_size_minutes", "10"),
+					resource.TestCheckResourceAttr("tsuga_slo.test", "configuration.time.slice_size_minutes", "30"),
 					resource.TestCheckResourceAttr("tsuga_slo.test", "configuration.time.threshold.operator", "less_than_or_equal"),
 					resource.TestCheckResourceAttr("tsuga_slo.test", "configuration.time.threshold.value", "500"),
 					resource.TestCheckResourceAttr("tsuga_slo.test", "configuration.time.no_data_behavior", "bad"),
@@ -649,7 +649,7 @@ resource "tsuga_slo" "test" {
           }
         }]
       }
-      slice_size_minutes = 1
+      slice_size_minutes = 30
       threshold = {
         operator = "less_than"
         value    = 250

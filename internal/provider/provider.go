@@ -133,5 +133,6 @@ func (p *tsugaProvider) Resources(_ context.Context) []func() resource.Resource 
 		NewCustomUsageTagResource,
 		NewRetentionPolicyResource,
 		NewTagPolicyResource,
+		NewCloudAccountResource,
 	}
 }

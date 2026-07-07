@@ -38,8 +38,8 @@ func TeamResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				Description:         "Name to assign to the team",
-				MarkdownDescription: "Name to assign to the team",
+				Description:         "Name to assign to the team. Must be kebab-case (lowercase letters, numbers, and dashes only) and unique in the organization. Maximum length is 100 characters.",
+				MarkdownDescription: "Name to assign to the team. Must be kebab-case (lowercase letters, numbers, and dashes only) and unique in the organization. Maximum length is 100 characters.",
 				Validators: []validator.String{
 					stringvalidator.LengthBetween(1, 100),
 				},
