@@ -262,9 +262,9 @@ func sloTimeConfigurationSchema() schema.Attribute {
 			"query":       sloQueryFormulaSchema(),
 			"slice_size_minutes": schema.Int64Attribute{
 				Required:    true,
-				Description: "Size of each evaluation slice in minutes (1-1440)",
+				Description: "Size of each evaluation slice in minutes (30-1440)",
 				Validators: []validator.Int64{
-					int64validator.Between(1, 1440),
+					int64validator.Between(3, 1440),
 				},
 			},
 			"threshold": schema.SingleNestedAttribute{

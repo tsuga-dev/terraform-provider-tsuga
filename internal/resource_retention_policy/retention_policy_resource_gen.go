@@ -17,13 +17,14 @@ func RetentionPolicyResourceSchema(ctx context.Context) schema.Schema {
 		Attributes: map[string]schema.Attribute{
 			"data_source": schema.StringAttribute{
 				Required:            true,
-				Description:         "Telemetry signal retained by this policy: logs, metrics, or traces.",
-				MarkdownDescription: "Telemetry signal retained by this policy: logs, metrics, or traces.",
+				Description:         "Telemetry signal retained by this policy: logs, metrics, traces or rum.",
+				MarkdownDescription: "Telemetry signal retained by this policy: logs, metrics, traces or rum.",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"logs",
 						"metrics",
 						"traces",
+						"rum",
 					),
 				},
 			},

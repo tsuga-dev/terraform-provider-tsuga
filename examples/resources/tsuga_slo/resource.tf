@@ -67,7 +67,7 @@ resource "tsuga_slo" "api_latency" {
           }
         }]
       }
-      slice_size_minutes = 5
+      slice_size_minutes = 30
       threshold = {
         operator = "less_than"
         value    = 300

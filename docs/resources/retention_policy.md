@@ -27,7 +27,7 @@ resource "tsuga_retention_policy" "retention_policy" {
 
 ### Required
 
-- `data_source` (String) Telemetry signal retained by this policy: logs, metrics, or traces.
+- `data_source` (String) Telemetry signal retained by this policy: logs, metrics, traces or rum.
 - `duration_days` (Number) Number of days Tsuga should retain matching telemetry. Valid values are 1 through 3650.
 - `is_enabled` (Boolean) Set to true for the policy to participate in retention resolution.
 
