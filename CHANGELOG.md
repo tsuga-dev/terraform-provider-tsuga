@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added the `tsuga_cloud_account` resource to connect AWS and GCP cloud accounts for inventory scanning.
 
+### Fixed
+
+- `tsuga_team` no longer shows `id -> (known after apply)` on an in-place update (e.g. editing the description). The team `id` is now held stable in the plan, so resources referencing it (team memberships, tag policies) no longer show spurious diffs.
+
 ## [2.1.6] - 2026-07-02
 
 ### Removed
