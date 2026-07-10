@@ -2,240 +2,382 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 
 	"terraform-provider-tsuga/internal/aggregate"
 	"terraform-provider-tsuga/internal/groupby"
-	"terraform-provider-tsuga/internal/normalizer"
 	"terraform-provider-tsuga/internal/resource_dashboard"
 )
 
-// buildMinimalSeriesBase returns a SeriesBase with required fields populated
-// and all optional fields null, suitable for unit-testing expand/flatten paths.
-func buildMinimalSeriesBase(legendMode string) resource_dashboard.SeriesBase {
-	// Construct a minimal queries list with one count aggregate.
-	countNull := types.ObjectNull(aggregate.CountAttrTypes())
-	fieldNull := types.ObjectNull(aggregate.FieldAttrTypes())
-	percNull := types.ObjectNull(aggregate.PercentileAttrTypes())
-
+// minimalQueriesList builds a one-element queries list using a count aggregate,
+// the minimum required to produce a valid expand input.
+func minimalQueriesList() types.List {
 	aggVal := types.ObjectValueMust(aggregate.AttrTypes(), map[string]attr.Value{
-		"count":        types.ObjectValueMust(aggregate.CountAttrTypes(), map[string]attr.Value{
+		"count": types.ObjectValueMust(aggregate.CountAttrTypes(), map[string]attr.Value{
 			"field": types.StringNull(),
 		}),
-		"sum":          fieldNull,
-		"average":      fieldNull,
-		"min":          fieldNull,
-		"max":          fieldNull,
-		"unique_count": fieldNull,
-		"percentile":   percNull,
+		"sum":          types.ObjectNull(aggregate.FieldAttrTypes()),
+		"average":      types.ObjectNull(aggregate.FieldAttrTypes()),
+		"min":          types.ObjectNull(aggregate.FieldAttrTypes()),
+		"max":          types.ObjectNull(aggregate.FieldAttrTypes()),
+		"unique_count": types.ObjectNull(aggregate.FieldAttrTypes()),
+		"percentile":   types.ObjectNull(aggregate.PercentileAttrTypes()),
 	})
-	_ = countNull
-
 	queryVal := types.ObjectValueMust(resource_dashboard.QueryAttrTypes(), map[string]attr.Value{
 		"aggregate": aggVal,
 		"filter":    types.StringNull(),
 		"functions": types.ListNull(types.ObjectType{AttrTypes: resource_dashboard.FunctionAttrTypes()}),
 	})
-
-	queriesList := types.ListValueMust(
+	return types.ListValueMust(
 		types.ObjectType{AttrTypes: resource_dashboard.QueryAttrTypes()},
 		[]attr.Value{queryVal},
 	)
+}
 
-	groupByList := types.ListNull(types.ObjectType{AttrTypes: groupby.AttrTypes()})
-	normalizerObj := types.ObjectNull(normalizer.AttrTypes())
-
-	base := resource_dashboard.SeriesBase{
+func minimalSeriesBase() resource_dashboard.SeriesBase {
+	return resource_dashboard.SeriesBase{
 		Type:          types.StringNull(),
 		Source:        types.StringValue("metrics"),
-		Queries:       queriesList,
+		Queries:       minimalQueriesList(),
 		Formula:       types.StringNull(),
 		Aliases:       nil,
 		VisibleSeries: types.ListNull(types.BoolType),
 		Normalizer:    nil,
 		Precision:     types.Float64Null(),
 	}
-	_ = groupByList
-	_ = normalizerObj
-
-	if legendMode != "" {
-		base.LegendMode = types.StringValue(legendMode)
-	} else {
-		base.LegendMode = types.StringNull()
-	}
-	return base
 }
 
-// buildMinimalTimeseriesVisualization wraps SeriesBase in a full VisualizationModel
-// with a timeseries block and all other visualization fields null.
-func buildMinimalTimeseriesVisualization(legendMode string) resource_dashboard.VisualizationModel {
-	base := buildMinimalSeriesBase(legendMode)
+// visByType builds a VisualizationModel with exactly one series type populated.
+// legendMode is the value to set ("" means null/unset).
+type buildVisFunc func(legendMode string) resource_dashboard.VisualizationModel
 
-	groupByList := types.ListNull(types.ObjectType{AttrTypes: groupby.AttrTypes()})
-	yAxisNull := (*resource_dashboard.YAxisSettingsModel)(nil)
-
-	ts := &resource_dashboard.TimeseriesVisualization{
-		SeriesVisualizationModel: resource_dashboard.SeriesVisualizationModel{
-			SeriesBase:    base,
-			GroupBy:       groupByList,
-			YAxisSettings: yAxisNull,
-		},
-		Smoothing: types.BoolNull(),
-	}
-
-	return resource_dashboard.VisualizationModel{
-		Timeseries:           ts,
-		TopList:              nil,
-		Pie:                  nil,
-		QueryValue:           nil,
-		Bar:                  nil,
-		Gauge:                nil,
-		Distribution:         nil,
-		Heatmap:              nil,
-		List:                 nil,
-		ListLogPatterns:      nil,
-		Note:                 nil,
-		Table:                nil,
-		TimeseriesConnection: nil,
-		ListConnection:       nil,
-		TopListConnection:    nil,
-		PieConnection:        nil,
-		BarConnection:        nil,
-		QueryValueConnection: nil,
-	}
+var legendModeVisBuilders = map[string]buildVisFunc{
+	"timeseries": func(legendMode string) resource_dashboard.VisualizationModel {
+		lm := types.StringNull()
+		if legendMode != "" {
+			lm = types.StringValue(legendMode)
+		}
+		return resource_dashboard.VisualizationModel{
+			Timeseries: &resource_dashboard.TimeseriesVisualization{
+				SeriesVisualizationModel: resource_dashboard.SeriesVisualizationModel{
+					SeriesBase:    minimalSeriesBase(),
+					GroupBy:       types.ListNull(types.ObjectType{AttrTypes: groupby.AttrTypes()}),
+					YAxisSettings: nil,
+					LegendMode:    lm,
+				},
+				Smoothing: types.BoolNull(),
+			},
+		}
+	},
+	"pie": func(legendMode string) resource_dashboard.VisualizationModel {
+		lm := types.StringNull()
+		if legendMode != "" {
+			lm = types.StringValue(legendMode)
+		}
+		return resource_dashboard.VisualizationModel{
+			Pie: &resource_dashboard.PieVisualization{
+				SeriesBase: minimalSeriesBase(),
+				GroupBy:    types.ListNull(types.ObjectType{AttrTypes: groupby.AttrTypes()}),
+				LegendMode: lm,
+			},
+		}
+	},
+	"query_value": func(legendMode string) resource_dashboard.VisualizationModel {
+		lm := types.StringNull()
+		if legendMode != "" {
+			lm = types.StringValue(legendMode)
+		}
+		return resource_dashboard.VisualizationModel{
+			QueryValue: &resource_dashboard.QueryValueVisualization{
+				SeriesBase:     minimalSeriesBase(),
+				BackgroundMode: types.StringNull(),
+				Conditions:     types.ListNull(types.ObjectType{AttrTypes: resource_dashboard.ConditionAttrTypes()}),
+				LegendMode:     lm,
+			},
+		}
+	},
+	"bar": func(legendMode string) resource_dashboard.VisualizationModel {
+		lm := types.StringNull()
+		if legendMode != "" {
+			lm = types.StringValue(legendMode)
+		}
+		return resource_dashboard.VisualizationModel{
+			Bar: &resource_dashboard.BarVisualization{
+				SeriesVisualizationModel: resource_dashboard.SeriesVisualizationModel{
+					SeriesBase:    minimalSeriesBase(),
+					GroupBy:       types.ListNull(types.ObjectType{AttrTypes: groupby.AttrTypes()}),
+					YAxisSettings: nil,
+					LegendMode:    lm,
+				},
+				TimeBucket: nil,
+			},
+		}
+	},
 }
 
-// TestExpandTimeseries_LegendModeConfigured verifies that when legend_mode is set
-// on an ordinary timeseries visualization, expandVisualization propagates the value
-// to the dashboardVisualization payload (which is later JSON-marshaled to the API).
-func TestExpandTimeseries_LegendModeConfigured(t *testing.T) {
-	vis := buildMinimalTimeseriesVisualization("legend-only")
-	got, diags := expandVisualization(context.Background(), vis)
-	if diags.HasError() {
-		t.Fatalf("unexpected diagnostics: %v", diags)
-	}
-	if got.Type != "timeseries" {
-		t.Fatalf("expected type 'timeseries', got %q", got.Type)
-	}
-	if got.LegendMode != "legend-only" {
-		t.Fatalf("expected LegendMode 'legend-only', got %q", got.LegendMode)
-	}
+// apiTypeByTFType maps Terraform attribute names to the API type string used
+// in dashboardVisualization.
+var apiTypeByTFType = map[string]string{
+	"timeseries":  "timeseries",
+	"pie":         "pie",
+	"query_value": "query-value",
+	"bar":         "bar",
 }
 
-// TestExpandTimeseries_LegendModeAbsent verifies that when legend_mode is null (not
-// configured), expandVisualization leaves LegendMode as the empty string so the field
-// is omitted from the JSON payload (json:"legendMode,omitempty").
-func TestExpandTimeseries_LegendModeAbsent(t *testing.T) {
-	vis := buildMinimalTimeseriesVisualization("")
-	got, diags := expandVisualization(context.Background(), vis)
-	if diags.HasError() {
-		t.Fatalf("unexpected diagnostics: %v", diags)
-	}
-	if got.LegendMode != "" {
-		t.Fatalf("expected empty LegendMode for null input, got %q", got.LegendMode)
-	}
-}
-
-// TestFlattenTimeseries_LegendModeSet verifies that when the API response carries
-// legendMode, flattenSeriesVisualization surfaces it as a non-null string in state.
-func TestFlattenTimeseries_LegendModeSet(t *testing.T) {
-	apiVis := dashboardVisualization{
-		Type:       "timeseries",
-		Source:     "metrics",
-		LegendMode: "no-legend",
-	}
-
-	val, diags := flattenSeriesVisualization(context.Background(), apiVis)
-	if diags.HasError() {
-		t.Fatalf("unexpected diagnostics: %v", diags)
-	}
-
-	obj, ok := val.(types.Object)
-	if !ok {
-		t.Fatalf("expected types.Object, got %T", val)
-	}
-
-	legendModeAttr, exists := obj.Attributes()["legend_mode"]
-	if !exists {
-		t.Fatal("legend_mode key missing from flattened timeseries object")
-	}
-
-	legendModeStr, ok := legendModeAttr.(types.String)
-	if !ok {
-		t.Fatalf("expected types.String for legend_mode, got %T", legendModeAttr)
-	}
-
-	if legendModeStr.IsNull() {
-		t.Fatal("expected legend_mode to be non-null, got null")
-	}
-	if legendModeStr.ValueString() != "no-legend" {
-		t.Fatalf("expected legend_mode 'no-legend', got %q", legendModeStr.ValueString())
-	}
-}
-
-// TestFlattenTimeseries_LegendModeAbsent verifies backward compatibility: when the
-// API response omits legendMode (empty string), flattenSeriesVisualization stores
-// types.StringNull() so existing configurations without legend_mode remain stable.
-func TestFlattenTimeseries_LegendModeAbsent(t *testing.T) {
-	apiVis := dashboardVisualization{
-		Type:   "timeseries",
-		Source: "metrics",
-		// LegendMode intentionally omitted (zero value "").
-	}
-
-	val, diags := flattenSeriesVisualization(context.Background(), apiVis)
-	if diags.HasError() {
-		t.Fatalf("unexpected diagnostics: %v", diags)
-	}
-
-	obj, ok := val.(types.Object)
-	if !ok {
-		t.Fatalf("expected types.Object, got %T", val)
-	}
-
-	legendModeAttr, exists := obj.Attributes()["legend_mode"]
-	if !exists {
-		t.Fatal("legend_mode key missing from flattened timeseries object")
-	}
-
-	legendModeStr, ok := legendModeAttr.(types.String)
-	if !ok {
-		t.Fatalf("expected types.String for legend_mode, got %T", legendModeAttr)
-	}
-
-	if !legendModeStr.IsNull() {
-		t.Fatalf("expected legend_mode null for absent API field, got %q", legendModeStr.ValueString())
-	}
-}
-
-// TestFlattenTimeseries_LegendModeRoundTrip verifies the full round-trip: a configured
-// legend_mode expands to the correct API payload, and flattening that payload
-// restores the original string value.
-func TestFlattenTimeseries_LegendModeRoundTrip(t *testing.T) {
+// TestExpandSeriesLegendMode_Configured verifies that a non-null legend_mode on
+// any of the four supported series types reaches the API payload as LegendMode.
+func TestExpandSeriesLegendMode_Configured(t *testing.T) {
 	for _, mode := range []string{"table", "legend-only", "no-legend"} {
-		t.Run(mode, func(t *testing.T) {
-			vis := buildMinimalTimeseriesVisualization(mode)
-			expanded, diags := expandVisualization(context.Background(), vis)
-			if diags.HasError() {
-				t.Fatalf("expand failed: %v", diags)
-			}
-			if expanded.LegendMode != mode {
-				t.Fatalf("expand: expected %q, got %q", mode, expanded.LegendMode)
-			}
+		for tfType, buildVis := range legendModeVisBuilders {
+			t.Run(fmt.Sprintf("%s/%s", tfType, mode), func(t *testing.T) {
+				vis := buildVis(mode)
+				got, diags := expandVisualization(context.Background(), vis)
+				if diags.HasError() {
+					t.Fatalf("expandVisualization failed: %v", diags)
+				}
+				if got.LegendMode != mode {
+					t.Fatalf("expected LegendMode %q, got %q", mode, got.LegendMode)
+				}
+			})
+		}
+	}
+}
 
-			flatVal, diags := flattenSeriesVisualization(context.Background(), expanded)
+// TestExpandSeriesLegendMode_Absent verifies that a null legend_mode produces
+// an empty LegendMode string, so the json:"legendMode,omitempty" tag omits the
+// field from the serialized API payload.
+func TestExpandSeriesLegendMode_Absent(t *testing.T) {
+	for tfType, buildVis := range legendModeVisBuilders {
+		t.Run(tfType, func(t *testing.T) {
+			vis := buildVis("")
+			got, diags := expandVisualization(context.Background(), vis)
 			if diags.HasError() {
-				t.Fatalf("flatten failed: %v", diags)
+				t.Fatalf("expandVisualization failed: %v", diags)
 			}
-
-			obj := flatVal.(types.Object)
-			legendModeStr := obj.Attributes()["legend_mode"].(types.String)
-			if legendModeStr.IsNull() || legendModeStr.ValueString() != mode {
-				t.Fatalf("round-trip: expected %q, got %q (null=%v)", mode, legendModeStr.ValueString(), legendModeStr.IsNull())
+			if got.LegendMode != "" {
+				t.Fatalf("expected empty LegendMode for null input, got %q", got.LegendMode)
 			}
 		})
 	}
+}
+
+// TestFlattenSeriesLegendMode_Set verifies that a LegendMode present in the API
+// response is surfaced as a non-null types.String in each supported type's state.
+func TestFlattenSeriesLegendMode_Set(t *testing.T) {
+	for tfType, apiType := range apiTypeByTFType {
+		t.Run(tfType, func(t *testing.T) {
+			apiVis := dashboardVisualization{
+				Type:       apiType,
+				Source:     "metrics",
+				LegendMode: "legend-only",
+			}
+			val, diags := flattenSeriesVisualization(context.Background(), apiVis)
+			if diags.HasError() {
+				t.Fatalf("flattenSeriesVisualization failed: %v", diags)
+			}
+			obj := val.(types.Object)
+			lm := obj.Attributes()["legend_mode"].(types.String)
+			if lm.IsNull() || lm.ValueString() != "legend-only" {
+				t.Fatalf("expected legend_mode='legend-only', got null=%v value=%q", lm.IsNull(), lm.ValueString())
+			}
+		})
+	}
+}
+
+// TestFlattenSeriesLegendMode_Absent verifies backward compatibility: an API
+// response that omits legendMode produces types.StringNull() in state, so
+// existing configurations without legend_mode produce no plan diff.
+func TestFlattenSeriesLegendMode_Absent(t *testing.T) {
+	for tfType, apiType := range apiTypeByTFType {
+		t.Run(tfType, func(t *testing.T) {
+			apiVis := dashboardVisualization{
+				Type:   apiType,
+				Source: "metrics",
+				// LegendMode intentionally zero-valued.
+			}
+			val, diags := flattenSeriesVisualization(context.Background(), apiVis)
+			if diags.HasError() {
+				t.Fatalf("flattenSeriesVisualization failed: %v", diags)
+			}
+			obj := val.(types.Object)
+			lm := obj.Attributes()["legend_mode"].(types.String)
+			if !lm.IsNull() {
+				t.Fatalf("expected legend_mode null for absent API field, got %q", lm.ValueString())
+			}
+		})
+	}
+}
+
+// TestSeriesLegendMode_JSONWireRoundTrip crosses the JSON boundary to verify
+// that the legendMode key is correctly included in (or excluded from) the
+// marshaled payload, and that the full expand->marshal->unmarshal->flatten
+// chain preserves the value end-to-end.
+func TestSeriesLegendMode_JSONWireRoundTrip(t *testing.T) {
+	for _, mode := range []string{"table", "legend-only", "no-legend"} {
+		for tfType, buildVis := range legendModeVisBuilders {
+			t.Run(fmt.Sprintf("%s/%s", tfType, mode), func(t *testing.T) {
+				// Expand Terraform model → API struct.
+				expanded, diags := expandVisualization(context.Background(), buildVis(mode))
+				if diags.HasError() {
+					t.Fatalf("expand: %v", diags)
+				}
+
+				// Marshal to JSON (exercises the MarshalJSON / omitempty logic).
+				raw, err := json.Marshal(expanded)
+				if err != nil {
+					t.Fatalf("marshal: %v", err)
+				}
+
+				// Verify the key is present in the JSON payload.
+				var m map[string]interface{}
+				if err := json.Unmarshal(raw, &m); err != nil {
+					t.Fatalf("unmarshal to map: %v", err)
+				}
+				v, ok := m["legendMode"]
+				if !ok {
+					t.Fatalf("legendMode missing from JSON payload: %s", raw)
+				}
+				if v != mode {
+					t.Fatalf("legendMode in JSON: want %q, got %q", mode, v)
+				}
+
+				// Unmarshal back and flatten to confirm the value round-trips.
+				var recovered dashboardVisualization
+				if err := json.Unmarshal(raw, &recovered); err != nil {
+					t.Fatalf("unmarshal to struct: %v", err)
+				}
+				flatVal, diags := flattenSeriesVisualization(context.Background(), recovered)
+				if diags.HasError() {
+					t.Fatalf("flatten: %v", diags)
+				}
+				obj := flatVal.(types.Object)
+				lm := obj.Attributes()["legend_mode"].(types.String)
+				if lm.IsNull() || lm.ValueString() != mode {
+					t.Fatalf("round-trip: want %q, got null=%v value=%q", mode, lm.IsNull(), lm.ValueString())
+				}
+			})
+		}
+	}
+}
+
+// TestSeriesLegendMode_JSONWire_Absent verifies that a null legend_mode (empty
+// string after expand) is omitted from the JSON payload entirely.
+func TestSeriesLegendMode_JSONWire_Absent(t *testing.T) {
+	for tfType, buildVis := range legendModeVisBuilders {
+		t.Run(tfType, func(t *testing.T) {
+			expanded, diags := expandVisualization(context.Background(), buildVis(""))
+			if diags.HasError() {
+				t.Fatalf("expand: %v", diags)
+			}
+			raw, err := json.Marshal(expanded)
+			if err != nil {
+				t.Fatalf("marshal: %v", err)
+			}
+			var m map[string]interface{}
+			if err := json.Unmarshal(raw, &m); err != nil {
+				t.Fatalf("unmarshal: %v", err)
+			}
+			if _, present := m["legendMode"]; present {
+				t.Fatalf("legendMode must be absent from JSON when null, but found it in: %s", raw)
+			}
+		})
+	}
+}
+
+// TestAccDashboardResource_SeriesLegendMode exercises the legend_mode attribute
+// on standard timeseries and bar series visualizations through a live create +
+// read round trip, mirroring the existing timeseries_connection.legend_mode
+// acceptance step (dashboard_resource_test.go line 174/215).
+//
+// The test is gated on TF_ACC so it compiles and validates config even when
+// live API credentials are unavailable.
+func TestAccDashboardResource_SeriesLegendMode(t *testing.T) {
+	teamName := fmt.Sprintf("test-legend-mode-%s", randomString(10))
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: providerConfig + fmt.Sprintf(`
+resource "tsuga_team" "test" {
+  name       = %q
+  visibility = "public"
+}
+
+resource "tsuga_dashboard" "test" {
+  name  = "legend-mode-test"
+  owner = tsuga_team.test.id
+
+  graphs = [
+    {
+      id   = "ts-1"
+      name = "Timeseries with legend_mode"
+      visualization = {
+        timeseries = {
+          source      = "metrics"
+          legend_mode = "legend-only"
+          queries = [{
+            aggregate = { count = {} }
+          }]
+        }
+      }
+    },
+    {
+      id   = "bar-1"
+      name = "Bar with legend_mode"
+      visualization = {
+        bar = {
+          source      = "metrics"
+          legend_mode = "no-legend"
+          queries = [{
+            aggregate = { count = {} }
+          }]
+        }
+      }
+    },
+    {
+      id   = "pie-1"
+      name = "Pie with legend_mode"
+      visualization = {
+        pie = {
+          source      = "metrics"
+          legend_mode = "table"
+          queries = [{
+            aggregate = { count = {} }
+          }]
+        }
+      }
+    },
+    {
+      id   = "qv-1"
+      name = "QueryValue with legend_mode"
+      visualization = {
+        query_value = {
+          source      = "metrics"
+          legend_mode = "legend-only"
+          queries = [{
+            aggregate = { count = {} }
+          }]
+        }
+      }
+    },
+  ]
+}
+`, teamName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.#", "4"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.0.visualization.timeseries.legend_mode", "legend-only"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.1.visualization.bar.legend_mode", "no-legend"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.2.visualization.pie.legend_mode", "table"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.3.visualization.query_value.legend_mode", "legend-only"),
+				),
+			},
+		},
+	})
 }

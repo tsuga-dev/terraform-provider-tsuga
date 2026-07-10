@@ -857,7 +857,6 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 			VisibleSeries: visible,
 			GroupBy:       groupByExpanded,
 			Normalizer:    normalizer,
-			LegendMode:    stringValue(b.LegendMode),
 		}
 		if !b.Precision.IsNull() && !b.Precision.IsUnknown() {
 			precision := b.Precision.ValueFloat64()
@@ -878,6 +877,7 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 			smoothing := v.Timeseries.Smoothing.ValueBool()
 			vz.Smoothing = &smoothing
 		}
+		vz.LegendMode = stringValue(v.Timeseries.LegendMode)
 		vis = vz
 	}
 	if v.TopList != nil {
@@ -895,6 +895,7 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 		setCount++
 		vz, d := buildSeries(&v.Pie.SeriesBase, v.Pie.GroupBy, nil, "pie")
 		diags.Append(d...)
+		vz.LegendMode = stringValue(v.Pie.LegendMode)
 		vis = vz
 	}
 	if v.QueryValue != nil {
@@ -909,6 +910,7 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 			diags.Append(cDiags...)
 			vz.Conditions = conds
 		}
+		vz.LegendMode = stringValue(v.QueryValue.LegendMode)
 		vis = vz
 	}
 	if v.Bar != nil {
@@ -921,6 +923,7 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 				Metric: v.Bar.TimeBucket.Metric.ValueString(),
 			}
 		}
+		vz.LegendMode = stringValue(v.Bar.LegendMode)
 		vis = vz
 	}
 	if v.Gauge != nil {
@@ -1405,7 +1408,6 @@ func flattenSeriesVisualization(ctx context.Context, vis dashboardVisualization)
 		"group_by":        groupBy,
 		"normalizer":      normalizerVal,
 		"precision":       precisionVal,
-		"legend_mode":     stringValueOrNull(vis.LegendMode),
 		"y_axis_settings": flattenYAxisSettings(vis.YAxisSettings),
 	}
 
@@ -1416,6 +1418,7 @@ func flattenSeriesVisualization(ctx context.Context, vis dashboardVisualization)
 		diags.Append(cDiags...)
 		obj["background_mode"] = stringValueOrNull(vis.BackgroundMode)
 		obj["conditions"] = condVal
+		obj["legend_mode"] = stringValueOrNull(vis.LegendMode)
 		return types.ObjectValueMust(resource_dashboard.QueryValueVisualizationAttrTypes(), obj), diags
 	}
 
@@ -1436,6 +1439,7 @@ func flattenSeriesVisualization(ctx context.Context, vis dashboardVisualization)
 			})
 		}
 		obj["time_bucket"] = tbVal
+		obj["legend_mode"] = stringValueOrNull(vis.LegendMode)
 		return types.ObjectValueMust(resource_dashboard.BarVisualizationAttrTypes(), obj), diags
 	}
 
@@ -1474,11 +1478,13 @@ func flattenSeriesVisualization(ctx context.Context, vis dashboardVisualization)
 			smoothingVal = types.BoolValue(*vis.Smoothing)
 		}
 		obj["smoothing"] = smoothingVal
+		obj["legend_mode"] = stringValueOrNull(vis.LegendMode)
 		return types.ObjectValueMust(resource_dashboard.TimeseriesVisualizationAttrTypes(), obj), diags
 	}
 
 	// The only remaining series type is pie, which does not accept y_axis_settings.
 	delete(obj, "y_axis_settings")
+	obj["legend_mode"] = stringValueOrNull(vis.LegendMode)
 	return types.ObjectValueMust(resource_dashboard.PieVisualizationAttrTypes(), obj), diags
 }
 

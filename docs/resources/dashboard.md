@@ -665,6 +665,7 @@ Optional:
 - `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar--aliases))
 - `formula` (String)
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--bar--group_by))
+- `legend_mode` (String) Controls whether and how the widget displays legend or series details
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
 - `time_bucket` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar--time_bucket))
@@ -1538,6 +1539,7 @@ Optional:
 - `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie--aliases))
 - `formula` (String)
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--pie--group_by))
+- `legend_mode` (String) Controls whether and how the widget displays legend or series details
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
 - `visible_series` (List of Boolean)
@@ -1712,6 +1714,7 @@ Optional:
 - `background_mode` (String)
 - `conditions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--conditions))
 - `formula` (String)
+- `legend_mode` (String) Controls whether and how the widget displays legend or series details
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
 - `visible_series` (List of Boolean)
@@ -2075,6 +2078,7 @@ Optional:
 - `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--aliases))
 - `formula` (String)
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--group_by))
+- `legend_mode` (String) Controls whether and how the widget displays legend or series details
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
 - `smoothing` (Boolean) Whether to apply automatic smoothing to the rendered timeseries

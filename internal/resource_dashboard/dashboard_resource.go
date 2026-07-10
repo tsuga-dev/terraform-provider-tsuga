@@ -243,7 +243,6 @@ func visualizationSeriesSchema() schema.Attribute {
 				Optional:    true,
 				Description: "Number of decimal places to display in the value",
 			},
-			"legend_mode":     legendModeSchema(),
 			"y_axis_settings": yAxisSettingsSchema(),
 		},
 	}
@@ -255,6 +254,7 @@ func visualizationTimeseriesSchema() schema.Attribute {
 		Optional:    true,
 		Description: "Whether to apply automatic smoothing to the rendered timeseries",
 	}
+	attr.Attributes["legend_mode"] = legendModeSchema()
 	return attr
 }
 
@@ -506,6 +506,7 @@ func conditionsSchema() schema.Attribute {
 func visualizationPieSchema() schema.Attribute {
 	attr := visualizationSeriesSchema().(schema.SingleNestedAttribute)
 	delete(attr.Attributes, "y_axis_settings")
+	attr.Attributes["legend_mode"] = legendModeSchema()
 	return attr
 }
 
@@ -527,6 +528,7 @@ func visualizationQueryValueSchema() schema.Attribute {
 		},
 	}
 	attr.Attributes["conditions"] = conditionsSchema()
+	attr.Attributes["legend_mode"] = legendModeSchema()
 	return attr
 }
 
@@ -544,6 +546,7 @@ func visualizationBarSchema() schema.Attribute {
 			},
 		},
 	}
+	attr.Attributes["legend_mode"] = legendModeSchema()
 	return attr
 }
 
@@ -976,13 +979,13 @@ type SeriesBase struct {
 	VisibleSeries types.List        `tfsdk:"visible_series"`
 	Normalizer    *normalizer.Model `tfsdk:"normalizer"`
 	Precision     types.Float64     `tfsdk:"precision"`
-	LegendMode    types.String      `tfsdk:"legend_mode"`
 }
 
 type SeriesVisualizationModel struct {
 	SeriesBase
 	GroupBy       types.List          `tfsdk:"group_by"`
 	YAxisSettings *YAxisSettingsModel `tfsdk:"y_axis_settings"`
+	LegendMode    types.String        `tfsdk:"legend_mode"`
 }
 
 type TimeseriesVisualization struct {
@@ -1033,11 +1036,13 @@ type QueryValueVisualization struct {
 	SeriesBase
 	BackgroundMode types.String `tfsdk:"background_mode"`
 	Conditions     types.List   `tfsdk:"conditions"`
+	LegendMode     types.String `tfsdk:"legend_mode"`
 }
 
 type PieVisualization struct {
 	SeriesBase
-	GroupBy types.List `tfsdk:"group_by"`
+	GroupBy    types.List   `tfsdk:"group_by"`
+	LegendMode types.String `tfsdk:"legend_mode"`
 }
 
 type TopListVisualization struct {
@@ -1258,7 +1263,6 @@ func SeriesVisualizationAttrTypes() map[string]attr.Type {
 		"group_by":        types.ListType{ElemType: types.ObjectType{AttrTypes: groupby.AttrTypes()}},
 		"normalizer":      types.ObjectType{AttrTypes: normalizer.AttrTypes()},
 		"precision":       types.Float64Type,
-		"legend_mode":     types.StringType,
 		"y_axis_settings": types.ObjectType{AttrTypes: YAxisSettingsAttrTypes()},
 	}
 }
@@ -1266,6 +1270,7 @@ func SeriesVisualizationAttrTypes() map[string]attr.Type {
 func TimeseriesVisualizationAttrTypes() map[string]attr.Type {
 	attrs := SeriesVisualizationAttrTypes()
 	attrs["smoothing"] = types.BoolType
+	attrs["legend_mode"] = types.StringType
 	return attrs
 }
 
@@ -1323,6 +1328,7 @@ func TableColumnAttrTypes() map[string]attr.Type {
 func PieVisualizationAttrTypes() map[string]attr.Type {
 	attrs := SeriesVisualizationAttrTypes()
 	delete(attrs, "y_axis_settings")
+	attrs["legend_mode"] = types.StringType
 	return attrs
 }
 
@@ -1332,6 +1338,7 @@ func QueryValueVisualizationAttrTypes() map[string]attr.Type {
 	delete(attrs, "y_axis_settings")
 	attrs["background_mode"] = types.StringType
 	attrs["conditions"] = types.ListType{ElemType: types.ObjectType{AttrTypes: ConditionAttrTypes()}}
+	attrs["legend_mode"] = types.StringType
 	return attrs
 }
 
@@ -1345,6 +1352,7 @@ func TopListVisualizationAttrTypes() map[string]attr.Type {
 func BarVisualizationAttrTypes() map[string]attr.Type {
 	attrs := SeriesVisualizationAttrTypes()
 	attrs["time_bucket"] = types.ObjectType{AttrTypes: TimeBucketAttrTypes()}
+	attrs["legend_mode"] = types.StringType
 	return attrs
 }
 
