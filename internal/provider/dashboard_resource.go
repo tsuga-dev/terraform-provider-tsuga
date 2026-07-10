@@ -857,6 +857,7 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 			VisibleSeries: visible,
 			GroupBy:       groupByExpanded,
 			Normalizer:    normalizer,
+			LegendMode:    stringValue(b.LegendMode),
 		}
 		if !b.Precision.IsNull() && !b.Precision.IsUnknown() {
 			precision := b.Precision.ValueFloat64()
@@ -1404,6 +1405,7 @@ func flattenSeriesVisualization(ctx context.Context, vis dashboardVisualization)
 		"group_by":        groupBy,
 		"normalizer":      normalizerVal,
 		"precision":       precisionVal,
+		"legend_mode":     stringValueOrNull(vis.LegendMode),
 		"y_axis_settings": flattenYAxisSettings(vis.YAxisSettings),
 	}
 

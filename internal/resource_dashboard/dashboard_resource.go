@@ -243,6 +243,7 @@ func visualizationSeriesSchema() schema.Attribute {
 				Optional:    true,
 				Description: "Number of decimal places to display in the value",
 			},
+			"legend_mode":     legendModeSchema(),
 			"y_axis_settings": yAxisSettingsSchema(),
 		},
 	}
@@ -975,6 +976,7 @@ type SeriesBase struct {
 	VisibleSeries types.List        `tfsdk:"visible_series"`
 	Normalizer    *normalizer.Model `tfsdk:"normalizer"`
 	Precision     types.Float64     `tfsdk:"precision"`
+	LegendMode    types.String      `tfsdk:"legend_mode"`
 }
 
 type SeriesVisualizationModel struct {
@@ -1256,6 +1258,7 @@ func SeriesVisualizationAttrTypes() map[string]attr.Type {
 		"group_by":        types.ListType{ElemType: types.ObjectType{AttrTypes: groupby.AttrTypes()}},
 		"normalizer":      types.ObjectType{AttrTypes: normalizer.AttrTypes()},
 		"precision":       types.Float64Type,
+		"legend_mode":     types.StringType,
 		"y_axis_settings": types.ObjectType{AttrTypes: YAxisSettingsAttrTypes()},
 	}
 }
