@@ -1,5 +1,6 @@
 resource "tsuga_notification_rule" "notification-rule" {
   name              = "notification-rule"
+  query_string      = "env:prod service:api"
   owner             = "abc-123-def"
   priorities_filter = [1, 2, 3]
   teams_filter = {

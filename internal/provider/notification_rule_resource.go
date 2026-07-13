@@ -261,6 +261,13 @@ func (r *notificationRuleResource) buildNotificationRuleRequestBody(ctx context.
 		"targets":               targets,
 	}
 
+	// Send an explicit empty string when the value is absent: the API keeps
+	// omitted optional fields on update, so omitting it would leave a previously
+	// set query_string in place instead of clearing it.
+	if !plan.QueryString.IsUnknown() {
+		requestBody["queryString"] = plan.QueryString.ValueString()
+	}
+
 	if tags, tagDiags := expandTags(ctx, plan.Tags); tagDiags.HasError() {
 		diags.Append(tagDiags...)
 		return nil, diags
@@ -337,6 +344,7 @@ type notificationRuleAPIResponse struct {
 type notificationRuleAPIData struct {
 	ID                    string                      `json:"id"`
 	Name                  string                      `json:"name"`
+	QueryString           string                      `json:"queryString,omitempty"`
 	TeamsFilter           teamsfilter.APITeamsFilter  `json:"teamsFilter"`
 	PrioritiesFilter      []int64                     `json:"prioritiesFilter"`
 	TransitionTypesFilter []string                    `json:"transitionTypesFilter"`
@@ -446,6 +454,7 @@ func flattenNotificationRule(ctx context.Context, data notificationRuleAPIData) 
 	state := resource_notification_rule.NotificationRuleModel{
 		Id:                    types.StringValue(data.ID),
 		Name:                  types.StringValue(data.Name),
+		QueryString:           stringValueOrNull(data.QueryString),
 		TeamsFilter:           teamsFilter,
 		PrioritiesFilter:      prioritiesFilter,
 		TransitionTypesFilter: transitionTypesFilter,

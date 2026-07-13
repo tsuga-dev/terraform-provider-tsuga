@@ -31,6 +31,13 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 					stringvalidator.LengthAtMost(250),
 				},
 			},
+			"query_string": schema.StringAttribute{
+				Optional:    true,
+				Description: "Optional query that narrows which alert transitions trigger the rule. Matches on the monitor transition group key and the monitor tags, e.g. `env:prod service:api`. Omit or leave empty to match regardless of tags.",
+				Validators: []validator.String{
+					stringvalidator.LengthAtMost(10000),
+				},
+			},
 			"teams_filter": teamsfilter.Schema("Team filter that narrows down the teams that can receive notifications from this rule"),
 			"priorities_filter": schema.ListAttribute{
 				Required:    true,
@@ -297,6 +304,7 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 type NotificationRuleModel struct {
 	Id                    types.String       `tfsdk:"id"`
 	Name                  types.String       `tfsdk:"name"`
+	QueryString           types.String       `tfsdk:"query_string"`
 	TeamsFilter           *teamsfilter.Model `tfsdk:"teams_filter"`
 	PrioritiesFilter      types.List         `tfsdk:"priorities_filter"`
 	TransitionTypesFilter types.List         `tfsdk:"transition_types_filter"`
