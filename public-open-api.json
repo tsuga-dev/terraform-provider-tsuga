@@ -1875,6 +1875,10 @@
                     "description": "Filter value."
                   },
                   "description": "Allowed values for this dashboard-wide filter. Set by the dashboard author and returned as stored."
+                },
+                "exclude": {
+                  "type": "boolean",
+                  "description": "If true, widgets exclude telemetry whose value matches this filter instead of including it (is-not)."
                 }
               }
             },
@@ -6448,7 +6452,7 @@
                   "properties": {
                     "podName": {
                       "type": "string",
-                      "description": "Name of a pod instance associated with the Deployment. Resolved from recent pod usage telemetry and workload attributes."
+                      "description": "Name of a pod instance associated with the workload. Resolved from recent pod usage telemetry and workload attributes."
                     },
                     "podUid": {
                       "type": "string",
@@ -6462,7 +6466,8 @@
                       "type": "number",
                       "description": "Recent memory usage for the pod replica, in bytes. Present when memory usage telemetry is observed."
                     }
-                  }
+                  },
+                  "description": "A single pod instance with recent CPU or memory telemetry for the workload, resolved from pod usage telemetry and workload attributes."
                 },
                 "description": "Pod instances with recent CPU or memory telemetry for the Deployment. Tsuga builds this list from pod usage telemetry and workload attributes. Empty when no matching pod usage telemetry is observed."
               },
@@ -7713,7 +7718,8 @@
                       "webhook": "#/components/schemas/RuleTargetConfigWebhook",
                       "servicenow": "#/components/schemas/RuleTargetConfigServiceNow",
                       "google-chat": "#/components/schemas/RuleTargetConfigGoogleChat",
-                      "squadcast": "#/components/schemas/RuleTargetConfigSquadcast"
+                      "squadcast": "#/components/schemas/RuleTargetConfigSquadcast",
+                      "jira": "#/components/schemas/RuleTargetConfigJira"
                     }
                   },
                   "required": [
@@ -7749,6 +7755,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/RuleTargetConfigSquadcast"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RuleTargetConfigJira"
                     }
                   ]
                 }
@@ -11441,6 +11450,206 @@
           "traceId": "78c99c5bb1e4a30297fa134b9dbec64f"
         }
       },
+      "SummarizeTraceResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "spans"
+            ],
+            "properties": {
+              "spans": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "resourceAttributes",
+                    "spanAttributes",
+                    "duration",
+                    "startTime",
+                    "endTime",
+                    "spanId",
+                    "span",
+                    "traceId"
+                  ],
+                  "properties": {
+                    "context": {
+                      "type": "object",
+                      "properties": {
+                        "service": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "Service name associated with the span."
+                            },
+                            "version": {
+                              "type": "string",
+                              "description": "Service version associated with the span."
+                            }
+                          },
+                          "additionalProperties": true
+                        }
+                      },
+                      "additionalProperties": true
+                    },
+                    "parentSpanId": {
+                      "type": "string",
+                      "description": "`spanId` of this span's parent within the same trace. Absent for the root span."
+                    },
+                    "resourceAttributes": {
+                      "type": "object",
+                      "properties": {},
+                      "additionalProperties": true,
+                      "description": "OpenTelemetry resource attributes describing the process/host that emitted the span (e.g. `host.name`, `k8s.pod.name`), as a flat key-value map set by the instrumented service or its SDK."
+                    },
+                    "spanAttributes": {
+                      "type": "object",
+                      "properties": {},
+                      "additionalProperties": true,
+                      "description": "OpenTelemetry span attributes describing this operation (e.g. HTTP method, DB statement), as a flat key-value map set by the instrumented code or auto-instrumentation."
+                    },
+                    "duration": {
+                      "type": "number",
+                      "description": "Span duration in milliseconds, derived from the nanosecond `startTime` and `endTime` values."
+                    },
+                    "startTime": {
+                      "type": "string",
+                      "description": "Span start time as a Unix epoch timestamp in nanoseconds, encoded as a string to preserve precision."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "description": "Span end time as a Unix epoch timestamp in nanoseconds, encoded as a string to preserve precision."
+                    },
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "message"
+                      ],
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "description": "Error message associated with the span."
+                        }
+                      }
+                    },
+                    "events": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "event_attributes",
+                          "event_name",
+                          "event_timestamp_nanos"
+                        ],
+                        "properties": {
+                          "event_attributes": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": true,
+                            "description": "Key-value attributes recorded with this event, set by the instrumented code when the event was added to the span (e.g. exception details)."
+                          },
+                          "event_name": {
+                            "type": "string",
+                            "description": "Name of the span event."
+                          },
+                          "event_timestamp_nanos": {
+                            "type": "string",
+                            "description": "Event timestamp in nanoseconds, transmitted as a string for precision."
+                          }
+                        }
+                      },
+                      "description": "Events recorded on the span."
+                    },
+                    "spanId": {
+                      "type": "string",
+                      "description": "Unique span ID within the trace."
+                    },
+                    "span": {
+                      "type": "object",
+                      "required": [
+                        "kind",
+                        "name"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "description": "OpenTelemetry span kind describing the relationship to remote calls: `unspecified`, `internal`, `server`, `client`, `producer`, or `consumer`."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Operation name recorded on the span."
+                        }
+                      }
+                    },
+                    "statusCode": {
+                      "type": "string",
+                      "description": "OpenTelemetry span status set by the instrumented code: `unset` (default, no explicit status), `ok`, or `error`. Absent if the source span never set a status."
+                    },
+                    "traceId": {
+                      "type": "string",
+                      "description": "Trace ID shared by all spans in the trace."
+                    }
+                  },
+                  "additionalProperties": true,
+                  "description": "Distributed tracing span including timing, identifiers, OpenTelemetry attributes, events, and status metadata.",
+                  "example": {
+                    "context": {
+                      "service": {
+                        "name": "my-service",
+                        "version": "1.0.0"
+                      }
+                    },
+                    "parentSpanId": "187a47da1b2560f8",
+                    "resourceAttributes": {},
+                    "spanAttributes": {
+                      "busyNs": 374640,
+                      "code": {
+                        "file": {
+                          "path": "src/queue/sqs.rs"
+                        },
+                        "line": {
+                          "number": 162
+                        },
+                        "module": {
+                          "name": "queue::sqs"
+                        }
+                      },
+                      "idleNs": 23621445,
+                      "maxMessages": "1",
+                      "target": "queue::sqs",
+                      "thread": {
+                        "id": 2,
+                        "name": "tokio-runtime-worker"
+                      }
+                    },
+                    "duration": 23,
+                    "startTime": "1770923469995353600",
+                    "endTime": "1770923470019349500",
+                    "spanId": "3df8cc3449378f66",
+                    "span": {
+                      "kind": "internal",
+                      "name": "receive_messages"
+                    },
+                    "statusCode": "ok",
+                    "traceId": "78c99c5bb1e4a30297fa134b9dbec64f"
+                  }
+                },
+                "description": "Summarized trace spans, sorted by start time unless `sortSpans` is false. Aggregated groups are replaced by synthetic summary spans marked with `spanAttributes.aggregation.is_summary`."
+              }
+            }
+          }
+        }
+      },
       "User": {
         "type": "object",
         "required": [
@@ -12159,6 +12368,141 @@
           }
         },
         "title": "TimeOffset"
+      },
+      "AwsConnectionSettings": {
+        "type": "object",
+        "required": [
+          "type",
+          "accountId",
+          "externalId",
+          "roleArn"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Discriminator identifying AWS connection settings.",
+            "enum": [
+              "aws"
+            ]
+          },
+          "accountId": {
+            "type": "string",
+            "pattern": "^[0-9]{12}$",
+            "description": "AWS account ID that Tsuga scans.",
+            "errorMessage": {
+              "pattern": "Must be a 12-digit AWS account ID."
+            }
+          },
+          "externalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250,
+            "description": "External ID Tsuga passes when assuming the cross-account IAM role."
+          },
+          "roleArn": {
+            "type": "string",
+            "pattern": "^arn:aws[a-z-]*:iam::[0-9]{12}:role/.+$",
+            "minLength": 1,
+            "maxLength": 2048,
+            "description": "ARN of the IAM role Tsuga assumes to read inventory in the account.",
+            "errorMessage": {
+              "pattern": "Must be an IAM role ARN, e.g. arn:aws:iam::123456789012:role/MyRole."
+            }
+          }
+        }
+      },
+      "GcpConnectionSettings": {
+        "type": "object",
+        "required": [
+          "type",
+          "projectId",
+          "serviceAccountId",
+          "workloadIdentityProvider"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Discriminator identifying GCP connection settings.",
+            "enum": [
+              "gcp"
+            ]
+          },
+          "projectId": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{4,28}[a-z0-9]$",
+            "minLength": 6,
+            "maxLength": 30,
+            "description": "GCP project ID that Tsuga scans.",
+            "errorMessage": {
+              "pattern": "Must be a GCP project ID (6-30 chars: lowercase letters, digits, hyphens)."
+            }
+          },
+          "serviceAccountId": {
+            "type": "string",
+            "pattern": "^[^@\\s]+@[^@\\s]+\\.iam\\.gserviceaccount\\.com$",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "Service account Tsuga impersonates to read inventory.",
+            "errorMessage": {
+              "pattern": "Must be a service account email, e.g. name@project.iam.gserviceaccount.com."
+            }
+          },
+          "workloadIdentityProvider": {
+            "type": "string",
+            "pattern": "^//iam\\.googleapis\\.com/projects/[0-9]+/locations/global/workloadIdentityPools/[^/]+/providers/[^/]+$",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "Full resource name of the workload identity provider used for federated authentication, e.g. //iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider.",
+            "errorMessage": {
+              "pattern": "Must be the full provider resource name: //iam.googleapis.com/projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/<POOL_ID>/providers/<PROVIDER_ID>."
+            }
+          }
+        }
+      },
+      "AzureConnectionSettings": {
+        "type": "object",
+        "required": [
+          "type",
+          "clientId",
+          "subscriptionId",
+          "tenantId"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Discriminator identifying Azure connection settings.",
+            "enum": [
+              "azure"
+            ]
+          },
+          "clientId": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$",
+            "minLength": 1,
+            "description": "Client ID of the Azure application Tsuga authenticates as (GUID).",
+            "errorMessage": {
+              "pattern": "Must be a GUID."
+            }
+          },
+          "subscriptionId": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$",
+            "minLength": 1,
+            "description": "Azure subscription ID that Tsuga scans (GUID).",
+            "errorMessage": {
+              "pattern": "Must be a GUID."
+            }
+          },
+          "tenantId": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$",
+            "minLength": 1,
+            "description": "Azure tenant ID that owns the subscription (GUID).",
+            "errorMessage": {
+              "pattern": "Must be a GUID."
+            }
+          }
+        }
       },
       "MonitorConfigurationMetric": {
         "type": "object",
@@ -15314,6 +15658,41 @@
           }
         }
       },
+      "RuleTargetConfigJira": {
+        "type": "object",
+        "required": [
+          "type",
+          "integrationId",
+          "integrationName",
+          "projectKey",
+          "issueType"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Jira target backed by a configured Jira integration.",
+            "enum": [
+              "jira"
+            ]
+          },
+          "integrationId": {
+            "type": "string",
+            "description": "Identifier of the Jira integration to use"
+          },
+          "integrationName": {
+            "type": "string",
+            "description": "Human readable name of the Jira integration"
+          },
+          "projectKey": {
+            "type": "string",
+            "description": "Key of the Jira project that alert issues are filed into, like \"OPS\"."
+          },
+          "issueType": {
+            "type": "string",
+            "description": "Name of the Jira issue type created for alerts, like \"Bug\" or \"Task\"."
+          }
+        }
+      },
       "RuleTargetInputSlack": {
         "type": "object",
         "required": [
@@ -15547,6 +15926,42 @@
             "minLength": 1,
             "maxLength": 250,
             "description": "Identifier of the Squadcast integration to use"
+          }
+        }
+      },
+      "RuleTargetInputJira": {
+        "type": "object",
+        "required": [
+          "type",
+          "integrationId",
+          "projectKey",
+          "issueType"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Jira target backed by a configured Jira integration.",
+            "enum": [
+              "jira"
+            ]
+          },
+          "integrationId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250,
+            "description": "Identifier of the Jira integration to use"
+          },
+          "projectKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250,
+            "description": "Key of the Jira project that alert issues are filed into, like \"OPS\"."
+          },
+          "issueType": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250,
+            "description": "Name of the Jira issue type created for alerts, like \"Bug\" or \"Task\"."
           }
         }
       },
@@ -29311,6 +29726,10 @@
                             "description": "Filter value."
                           },
                           "description": "Allowed values for this dashboard-wide filter. Set by the dashboard author."
+                        },
+                        "exclude": {
+                          "type": "boolean",
+                          "description": "If true, widgets exclude telemetry whose value matches this filter instead of including it (is-not)."
                         }
                       }
                     },
@@ -29774,6 +30193,10 @@
                             "description": "Filter value."
                           },
                           "description": "Allowed values for this dashboard-wide filter. Set by the dashboard author."
+                        },
+                        "exclude": {
+                          "type": "boolean",
+                          "description": "If true, widgets exclude telemetry whose value matches this filter instead of including it (is-not)."
                         }
                       }
                     },
@@ -30233,7 +30656,7 @@
         "tags": [
           "dashboard-folders"
         ],
-        "description": "Queries dashboard folders visible to the authenticated operation key. Results are ordered by most recently updated folder first and include the number of readable dashboards directly assigned to each folder. Use filters to narrow by owning team, name or ID substring, tags, or parent folder.",
+        "description": "Queries dashboard folders visible to the authenticated operation key. Returns all folders unless the `parentFolderId` filter is set: pass a folder ID to select the children of that folder, or null to return only top-level folders. Results are ordered by most recently updated folder first unless `sort` is set, and include the number of readable dashboards directly assigned to each folder. Use filters to narrow by owning team, name or ID substring, or tags.",
         "requestBody": {
           "required": true,
           "content": {
@@ -30337,15 +30760,49 @@
                         "description": "Restrict results to dashboard folders that have at least one of the listed key/value tags"
                       },
                       "parentFolderId": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 250,
-                        "description": "When set, returns only the child folders nested directly under the folder with this ID. Omit to return folders at every level."
+                        "anyOf": [
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 250
+                          }
+                        ],
+                        "description": "Parent folder filter for dashboard folder query results. Optional; pass a folder ID to return the child folders nested directly under it, or null to return only top-level folders. Omit to return all folders."
                       }
                     }
+                  },
+                  "sort": {
+                    "type": "object",
+                    "required": [
+                      "by",
+                      "direction"
+                    ],
+                    "properties": {
+                      "by": {
+                        "enum": [
+                          "owner",
+                          "tags",
+                          "dashboardCount",
+                          "updatedAt",
+                          "name"
+                        ],
+                        "description": "Field to sort the returned dashboard folders by: `owner` sorts by owning team name, `tags` sorts by tag key/value pairs, `dashboardCount` sorts by the number of readable dashboards directly in the folder, `updatedAt` sorts by last-updated timestamp, and `name` sorts alphabetically by folder name."
+                      },
+                      "direction": {
+                        "enum": [
+                          "asc",
+                          "desc"
+                        ],
+                        "description": "Sort direction: ascending or descending"
+                      }
+                    },
+                    "description": "Optional sorting applied to the returned dashboard folders"
                   }
                 },
-                "description": "Dashboard folder query request. Use filters, limit, and offset to page through visible dashboard folders."
+                "description": "Dashboard folder query request. Use filters, sorting, limit, and offset to page through visible dashboard folders."
               },
               "example": {
                 "filters": {
@@ -30366,12 +30823,16 @@
                     ]
                   }
                 },
+                "sort": {
+                  "by": "name",
+                  "direction": "asc"
+                },
                 "limit": 10,
                 "offset": 0
               }
             }
           },
-          "description": "Dashboard folder query request. Use filters, limit, and offset to page through visible dashboard folders."
+          "description": "Dashboard folder query request. Use filters, sorting, limit, and offset to page through visible dashboard folders."
         },
         "responses": {
           "200": {
@@ -31506,7 +31967,7 @@
                   },
                   "cloudAccountId": {
                     "type": "string",
-                    "minLength": 0,
+                    "minLength": 1,
                     "maxLength": 250,
                     "description": "Cloud-native account identifier: an AWS account ID, GCP project ID, or Azure subscription ID."
                   },
@@ -31519,119 +31980,25 @@
                   "connectionSettings": {
                     "type": "object",
                     "discriminator": {
-                      "propertyName": "type"
+                      "propertyName": "type",
+                      "mapping": {
+                        "aws": "#/components/schemas/AwsConnectionSettings",
+                        "gcp": "#/components/schemas/GcpConnectionSettings",
+                        "azure": "#/components/schemas/AzureConnectionSettings"
+                      }
                     },
                     "required": [
                       "type"
                     ],
                     "oneOf": [
                       {
-                        "type": "object",
-                        "required": [
-                          "type",
-                          "accountId",
-                          "externalId",
-                          "roleArn"
-                        ],
-                        "properties": {
-                          "type": {
-                            "type": "string",
-                            "description": "Discriminator identifying AWS connection settings.",
-                            "enum": [
-                              "aws"
-                            ]
-                          },
-                          "accountId": {
-                            "type": "string",
-                            "minLength": 0,
-                            "maxLength": 250,
-                            "description": "AWS account ID that Tsuga scans."
-                          },
-                          "externalId": {
-                            "type": "string",
-                            "minLength": 0,
-                            "maxLength": 250,
-                            "description": "External ID Tsuga passes when assuming the cross-account IAM role."
-                          },
-                          "roleArn": {
-                            "type": "string",
-                            "minLength": 0,
-                            "maxLength": 250,
-                            "description": "ARN of the IAM role Tsuga assumes to read inventory in the account."
-                          }
-                        }
+                        "$ref": "#/components/schemas/AwsConnectionSettings"
                       },
                       {
-                        "type": "object",
-                        "required": [
-                          "type",
-                          "projectId",
-                          "serviceAccountId",
-                          "workloadIdentityProvider"
-                        ],
-                        "properties": {
-                          "type": {
-                            "type": "string",
-                            "description": "Discriminator identifying GCP connection settings.",
-                            "enum": [
-                              "gcp"
-                            ]
-                          },
-                          "projectId": {
-                            "type": "string",
-                            "minLength": 0,
-                            "maxLength": 250,
-                            "description": "GCP project ID that Tsuga scans."
-                          },
-                          "serviceAccountId": {
-                            "type": "string",
-                            "minLength": 0,
-                            "maxLength": 250,
-                            "description": "Service account Tsuga impersonates to read inventory."
-                          },
-                          "workloadIdentityProvider": {
-                            "type": "string",
-                            "minLength": 0,
-                            "maxLength": 250,
-                            "description": "Workload identity provider resource name used for federated authentication."
-                          }
-                        }
+                        "$ref": "#/components/schemas/GcpConnectionSettings"
                       },
                       {
-                        "type": "object",
-                        "required": [
-                          "type",
-                          "clientId",
-                          "subscriptionId",
-                          "tenantId"
-                        ],
-                        "properties": {
-                          "type": {
-                            "type": "string",
-                            "description": "Discriminator identifying Azure connection settings.",
-                            "enum": [
-                              "azure"
-                            ]
-                          },
-                          "clientId": {
-                            "type": "string",
-                            "minLength": 0,
-                            "maxLength": 250,
-                            "description": "Client ID of the Azure application Tsuga authenticates as."
-                          },
-                          "subscriptionId": {
-                            "type": "string",
-                            "minLength": 0,
-                            "maxLength": 250,
-                            "description": "Azure subscription ID that Tsuga scans."
-                          },
-                          "tenantId": {
-                            "type": "string",
-                            "minLength": 0,
-                            "maxLength": 250,
-                            "description": "Azure tenant ID that owns the subscription."
-                          }
-                        }
+                        "$ref": "#/components/schemas/AzureConnectionSettings"
                       }
                     ]
                   }
@@ -34973,7 +35340,8 @@
                               "webhook": "#/components/schemas/RuleTargetInputWebhook",
                               "servicenow": "#/components/schemas/RuleTargetInputServiceNow",
                               "google-chat": "#/components/schemas/RuleTargetInputGoogleChat",
-                              "squadcast": "#/components/schemas/RuleTargetInputSquadcast"
+                              "squadcast": "#/components/schemas/RuleTargetInputSquadcast",
+                              "jira": "#/components/schemas/RuleTargetInputJira"
                             }
                           },
                           "required": [
@@ -35009,6 +35377,9 @@
                             },
                             {
                               "$ref": "#/components/schemas/RuleTargetInputSquadcast"
+                            },
+                            {
+                              "$ref": "#/components/schemas/RuleTargetInputJira"
                             }
                           ]
                         },
@@ -35459,7 +35830,8 @@
                               "webhook": "#/components/schemas/RuleTargetInputWebhook",
                               "servicenow": "#/components/schemas/RuleTargetInputServiceNow",
                               "google-chat": "#/components/schemas/RuleTargetInputGoogleChat",
-                              "squadcast": "#/components/schemas/RuleTargetInputSquadcast"
+                              "squadcast": "#/components/schemas/RuleTargetInputSquadcast",
+                              "jira": "#/components/schemas/RuleTargetInputJira"
                             }
                           },
                           "required": [
@@ -35495,6 +35867,9 @@
                             },
                             {
                               "$ref": "#/components/schemas/RuleTargetInputSquadcast"
+                            },
+                            {
+                              "$ref": "#/components/schemas/RuleTargetInputJira"
                             }
                           ]
                         },
@@ -43157,6 +43532,180 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SearchSpansResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/traces/summarize": {
+      "get": {
+        "operationId": "summarizeTrace",
+        "tags": [
+          "traces"
+        ],
+        "description": "Summarizes a trace by aggregating groups of similar spans into synthetic summary spans, producing a compact view of large traces. Summary spans are marked with `spanAttributes.aggregation.is_summary` and carry span counts, duration statistics, and an optional latency histogram. See [Traces](/documentation/explore/traces).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1456444800,
+              "maximum": 4927737600,
+              "format": "int64"
+            },
+            "example": 1704067200,
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "description": "Start of the query window as a Unix timestamp in seconds"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1456444800,
+              "maximum": 4927737600,
+              "format": "int64"
+            },
+            "example": 1704067200,
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "description": "End of the query window as a Unix timestamp in seconds"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "traceId",
+            "required": true,
+            "description": "Trace ID to summarize. Use the `traceId` returned by span search, the trace details page, or your tracing instrumentation. Required; the requested time range must include the trace."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "clusterId",
+            "required": false,
+            "description": "Telemetry cluster to target. Required when the organization has multiple clusters; omit only for single-cluster organizations."
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 250
+              }
+            },
+            "in": "query",
+            "name": "groupByAttributes",
+            "required": false,
+            "description": "Glob patterns of span attribute keys to use as additional grouping dimensions. Use this when spans should be summarized separately for matching attributes, such as `db.*`. Matches flattened dotted span attribute keys; omitted by default."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 2,
+              "default": 5
+            },
+            "in": "query",
+            "name": "minLeafSpansToAggregate",
+            "required": false,
+            "description": "Minimum number of similar leaf spans in a group before Tsuga replaces them with one synthetic summary span. Use higher values for less aggressive summarization. Optional; defaults to 5 and must be at least 2."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": -1,
+              "default": -1
+            },
+            "in": "query",
+            "name": "maxParentDepth",
+            "required": false,
+            "description": "Maximum depth of recursive parent aggregation after leaf spans are summarized. Use this to limit parent-level aggregation. Use `0` to aggregate leaf spans only or `-1` for unlimited depth; defaults to `-1`."
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "in": "query",
+            "name": "aggregationHistogramBucketsSeconds",
+            "required": false,
+            "description": "Upper-bound bucket values, in seconds, for the latency histogram recorded on synthetic summary spans. Provide custom buckets when the default latency buckets are not suitable. Pass an empty array to omit histogram attributes; omitted values use Tsuga defaults from 5 ms through 10 s."
+          },
+          {
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "in": "query",
+            "name": "sortSpans",
+            "required": false,
+            "description": "Whether Tsuga sorts returned spans by start time, using span ID as the tie-breaker for identical start times. Defaults to `true`; set to `false` only when reconstructing the trace tree yourself, in which case summary spans are appended after surviving spans."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummarizeTraceResponse"
                 }
               }
             }

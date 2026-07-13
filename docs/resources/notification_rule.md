@@ -15,6 +15,7 @@ Rules to trigger notifications to targets based on alert events
 ```terraform
 resource "tsuga_notification_rule" "notification-rule" {
   name              = "notification-rule"
+  query_string      = "env:prod service:api"
   owner             = "abc-123-def"
   priorities_filter = [1, 2, 3]
   teams_filter = {
@@ -59,6 +60,7 @@ resource "tsuga_notification_rule" "notification-rule" {
 
 ### Optional
 
+- `query_string` (String) Optional query that narrows which alert transitions trigger the rule. Matches on the monitor transition group key and the monitor tags, e.g. `env:prod service:api`. Omit or leave empty to match regardless of tags.
 - `tags` (Attributes List) List of key/value tags applied to the resource (see [below for nested schema](#nestedatt--tags))
 
 ### Read-Only
