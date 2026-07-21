@@ -457,12 +457,15 @@ func expandParseAttributeParams(ctx context.Context, p *resource_route.ParseAttr
 		diags.Append(rd...)
 		samples, sd := expandStringList(ctx, p.Grok.Samples)
 		diags.Append(sd...)
-		return map[string]interface{}{
+		params := map[string]interface{}{
 			"subtype":       "grok",
 			"attributeName": p.Grok.AttributeName.ValueString(),
 			"rules":         rules,
-			"samples":       samples,
-		}, diags
+		}
+		if samples != nil {
+			params["samples"] = samples
+		}
+		return params, diags
 	}
 	if p.URL != nil {
 		return map[string]interface{}{
