@@ -29,7 +29,7 @@ func TestValidate_UnitRequiredTypes(t *testing.T) {
 }
 
 func TestValidate_UnitOptionalTypes(t *testing.T) {
-	for _, normType := range []string{"percent", "date", "level", "cpu"} {
+	for _, normType := range []string{"percent", "percent-fraction", "date", "level", "cpu", "none"} {
 		m := &Model{Type: types.StringValue(normType), Unit: types.StringNull()}
 		if diags := Validate(m, "v"); diags.HasError() {
 			t.Errorf("unexpected error for %q normalizer without unit: %v", normType, diags)

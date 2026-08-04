@@ -19,7 +19,7 @@ func Schema() schema.Attribute {
 			"type": schema.StringAttribute{
 				Required: true,
 				Validators: []validator.String{
-					stringvalidator.OneOf("duration", "data", "percent", "date", "level", "cpu", "custom"),
+					stringvalidator.OneOf("duration", "data", "percent", "percent-fraction", "date", "level", "cpu", "none", "custom"),
 				},
 			},
 			"unit": schema.StringAttribute{
