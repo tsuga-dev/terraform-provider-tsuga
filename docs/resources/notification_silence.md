@@ -268,8 +268,8 @@ Optional:
 
 Required:
 
-- `end_time` (String) End time as a date-time string
-- `start_time` (String) Start time as a date-time string
+- `end_time` (String) Local end date and time in `YYYY-MM-DDTHH:MM:SS` format. It must be after `start_time` and in the future.
+- `start_time` (String) Local start date and time in `YYYY-MM-DDTHH:MM:SS` format (e.g. 2035-03-15T02:00:00), interpreted in `time_zone` when provided. A UTC offset or `Z` suffix is rejected.
 
 Optional:
 
@@ -295,8 +295,8 @@ Optional:
 
 Required:
 
-- `end_time` (String) End time in HH:MM:SS format (e.g., 17:00:00)
-- `start_time` (String) Start time in HH:MM:SS format (e.g., 09:00:00)
+- `end_time` (String) Local end time for this window in `HH:MM:SS` format (e.g. 17:00:00). It must be after `start_time`.
+- `start_time` (String) Local start time for this window in `HH:MM:SS` format (e.g. 09:00:00), using the schedule time zone
 
 
 <a id="nestedatt--schedule--recurring--monday"></a>
@@ -304,8 +304,8 @@ Required:
 
 Required:
 
-- `end_time` (String) End time in HH:MM:SS format (e.g., 17:00:00)
-- `start_time` (String) Start time in HH:MM:SS format (e.g., 09:00:00)
+- `end_time` (String) Local end time for this window in `HH:MM:SS` format (e.g. 17:00:00). It must be after `start_time`.
+- `start_time` (String) Local start time for this window in `HH:MM:SS` format (e.g. 09:00:00), using the schedule time zone
 
 
 <a id="nestedatt--schedule--recurring--saturday"></a>
@@ -313,8 +313,8 @@ Required:
 
 Required:
 
-- `end_time` (String) End time in HH:MM:SS format (e.g., 17:00:00)
-- `start_time` (String) Start time in HH:MM:SS format (e.g., 09:00:00)
+- `end_time` (String) Local end time for this window in `HH:MM:SS` format (e.g. 17:00:00). It must be after `start_time`.
+- `start_time` (String) Local start time for this window in `HH:MM:SS` format (e.g. 09:00:00), using the schedule time zone
 
 
 <a id="nestedatt--schedule--recurring--sunday"></a>
@@ -322,8 +322,8 @@ Required:
 
 Required:
 
-- `end_time` (String) End time in HH:MM:SS format (e.g., 17:00:00)
-- `start_time` (String) Start time in HH:MM:SS format (e.g., 09:00:00)
+- `end_time` (String) Local end time for this window in `HH:MM:SS` format (e.g. 17:00:00). It must be after `start_time`.
+- `start_time` (String) Local start time for this window in `HH:MM:SS` format (e.g. 09:00:00), using the schedule time zone
 
 
 <a id="nestedatt--schedule--recurring--thursday"></a>
@@ -331,8 +331,8 @@ Required:
 
 Required:
 
-- `end_time` (String) End time in HH:MM:SS format (e.g., 17:00:00)
-- `start_time` (String) Start time in HH:MM:SS format (e.g., 09:00:00)
+- `end_time` (String) Local end time for this window in `HH:MM:SS` format (e.g. 17:00:00). It must be after `start_time`.
+- `start_time` (String) Local start time for this window in `HH:MM:SS` format (e.g. 09:00:00), using the schedule time zone
 
 
 <a id="nestedatt--schedule--recurring--tuesday"></a>
@@ -340,8 +340,8 @@ Required:
 
 Required:
 
-- `end_time` (String) End time in HH:MM:SS format (e.g., 17:00:00)
-- `start_time` (String) Start time in HH:MM:SS format (e.g., 09:00:00)
+- `end_time` (String) Local end time for this window in `HH:MM:SS` format (e.g. 17:00:00). It must be after `start_time`.
+- `start_time` (String) Local start time for this window in `HH:MM:SS` format (e.g. 09:00:00), using the schedule time zone
 
 
 <a id="nestedatt--schedule--recurring--wednesday"></a>
@@ -349,8 +349,8 @@ Required:
 
 Required:
 
-- `end_time` (String) End time in HH:MM:SS format (e.g., 17:00:00)
-- `start_time` (String) Start time in HH:MM:SS format (e.g., 09:00:00)
+- `end_time` (String) Local end time for this window in `HH:MM:SS` format (e.g. 17:00:00). It must be after `start_time`.
+- `start_time` (String) Local start time for this window in `HH:MM:SS` format (e.g. 09:00:00), using the schedule time zone
 
 
 
