@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `tsuga_notification_silence`: schedule times are now validated at plan time instead of failing on apply.
+
 ### Fixed
 
 - `tsuga_dashboard`: the `normalizer.type` validator now accepts `none` and `percent-fraction`.

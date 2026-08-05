@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"terraform-provider-tsuga/internal/resource_notification_silence"
 	"terraform-provider-tsuga/internal/teamsfilter"
@@ -78,6 +79,18 @@ func (r *notificationSilenceResource) ValidateConfig(ctx context.Context, req re
 				"Exactly one of 'recurring' or 'one_time' must be set in schedule.",
 			)
 		}
+
+		if config.Schedule.OneTime != nil {
+			resp.Diagnostics.Append(validateTimeWindow(
+				config.Schedule.OneTime.StartTime,
+				config.Schedule.OneTime.EndTime,
+				simpleDateTimeLayout,
+				path.Root("schedule").AtName("one_time"),
+			)...)
+		}
+		if config.Schedule.Recurring != nil {
+			resp.Diagnostics.Append(validateRecurringTimeOrder(ctx, config.Schedule.Recurring)...)
+		}
 	}
 
 	// Validate teams_filter: teams is required when type is "specific-teams"
@@ -100,6 +113,92 @@ func (r *notificationSilenceResource) ValidateConfig(ctx context.Context, req re
 		}
 	}
 
+}
+
+// Layouts for the API's `simple-date-time` and `simple-time` formats.
+const (
+	simpleDateTimeLayout = "2006-01-02T15:04:05"
+	simpleTimeLayout     = "15:04:05"
+)
+
+func validateTimeWindow(start, end types.String, layout string, p path.Path) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	parse := func(value types.String, name string) (time.Time, bool) {
+		if value.IsNull() || value.IsUnknown() {
+			return time.Time{}, false
+		}
+		// time.Parse accepts a non-padded hour ("9:00:00"), which the API rejects;
+		// the layout is fixed-width, so an exact length pins the padding.
+		parsed, err := time.Parse(layout, value.ValueString())
+		if err != nil || len(value.ValueString()) != len(layout) {
+			diags.AddAttributeError(
+				p.AtName(name),
+				"Invalid schedule configuration",
+				fmt.Sprintf("%s (%s) is not a valid time.", name, value.ValueString()),
+			)
+			return time.Time{}, false
+		}
+		return parsed, true
+	}
+
+	startTime, startOk := parse(start, "start_time")
+	endTime, endOk := parse(end, "end_time")
+	if !startOk || !endOk {
+		return diags
+	}
+
+	if !endTime.After(startTime) {
+		diags.AddAttributeError(
+			p.AtName("end_time"),
+			"Invalid schedule configuration",
+			fmt.Sprintf("end_time (%s) must be after start_time (%s).", end.ValueString(), start.ValueString()),
+		)
+	}
+
+	return diags
+}
+
+func validateRecurringTimeOrder(ctx context.Context, recurring *resource_notification_silence.RecurringScheduleModel) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	days := []struct {
+		name   string
+		ranges types.List
+	}{
+		{"monday", recurring.Monday},
+		{"tuesday", recurring.Tuesday},
+		{"wednesday", recurring.Wednesday},
+		{"thursday", recurring.Thursday},
+		{"friday", recurring.Friday},
+		{"saturday", recurring.Saturday},
+		{"sunday", recurring.Sunday},
+	}
+
+	for _, day := range days {
+		if day.ranges.IsNull() || day.ranges.IsUnknown() {
+			continue
+		}
+
+		// A config can hold an unknown element (e.g. a window built from a
+		// computed value), so decode leniently and let the nil checks below skip it.
+		var ranges []resource_notification_silence.TimeRangeModel
+		diags.Append(day.ranges.ElementsAs(ctx, &ranges, true)...)
+		if diags.HasError() {
+			return diags
+		}
+
+		for i, timeRange := range ranges {
+			diags.Append(validateTimeWindow(
+				timeRange.StartTime,
+				timeRange.EndTime,
+				simpleTimeLayout,
+				path.Root("schedule").AtName("recurring").AtName(day.name).AtListIndex(i),
+			)...)
+		}
+	}
+
+	return diags
 }
 
 func (r *notificationSilenceResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

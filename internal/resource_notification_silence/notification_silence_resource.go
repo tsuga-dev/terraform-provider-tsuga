@@ -147,11 +147,11 @@ func NotificationSilenceResourceSchema(ctx context.Context) schema.Schema {
 						Attributes: map[string]schema.Attribute{
 							"start_time": schema.StringAttribute{
 								Required:    true,
-								Description: "Start time as a date-time string",
+								Description: "Local start date and time in `YYYY-MM-DDTHH:MM:SS` format (e.g. 2035-03-15T02:00:00), interpreted in `time_zone` when provided. A UTC offset or `Z` suffix is rejected.",
 							},
 							"end_time": schema.StringAttribute{
 								Required:    true,
-								Description: "End time as a date-time string",
+								Description: "Local end date and time in `YYYY-MM-DDTHH:MM:SS` format. It must be after `start_time` and in the future.",
 							},
 							"time_zone": schema.StringAttribute{
 								Optional:    true,
@@ -207,11 +207,11 @@ func timeRangeAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"start_time": schema.StringAttribute{
 			Required:    true,
-			Description: "Start time in HH:MM:SS format (e.g., 09:00:00)",
+			Description: "Local start time for this window in `HH:MM:SS` format (e.g. 09:00:00), using the schedule time zone",
 		},
 		"end_time": schema.StringAttribute{
 			Required:    true,
-			Description: "End time in HH:MM:SS format (e.g., 17:00:00)",
+			Description: "Local end time for this window in `HH:MM:SS` format (e.g. 17:00:00). It must be after `start_time`.",
 		},
 	}
 }
