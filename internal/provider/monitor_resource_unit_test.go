@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"terraform-provider-tsuga/internal/aggregate"
+	"terraform-provider-tsuga/internal/groupby"
 	"terraform-provider-tsuga/internal/resource_monitor"
 	"testing"
 
@@ -237,5 +238,69 @@ func TestFlattenMonitorAggregate_CountWithoutFieldIsNull(t *testing.T) {
 	field := countObj.Attributes()["field"].(types.String)
 	if !field.IsNull() {
 		t.Fatalf("expected count.field to be null when the API omits it, got %v", field)
+	}
+}
+
+func TestExpandFlattenAnomalyTraceMonitor_RoundTrips(t *testing.T) {
+	ctx := context.Background()
+
+	queries, diags := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: resource_monitor.QueryAttrTypes()},
+		[]resource_monitor.MonitorQueryModel{{
+			Filter:        types.StringValue("service:api"),
+			Aggregate:     resource_monitor.MonitorAggregateModel{Count: &aggregate.CountModel{Field: types.StringNull()}},
+			Functions:     types.ListNull(types.ObjectType{AttrTypes: resource_monitor.AggregationFunctionAttrTypes()}),
+			TimeAggregate: types.StringValue("max"),
+		}})
+	if diags.HasError() {
+		t.Fatalf("failed to build queries: %v", diags)
+	}
+
+	groupBy := types.ListNull(types.ObjectType{AttrTypes: groupby.AttrTypes()})
+	config := resource_monitor.MonitorConfigurationModel{
+		AnomalyTrace: &resource_monitor.AnomalyMonitorConfigurationDetailsModel{
+			Condition:             resource_monitor.AnomalyConditionModel{Formula: types.StringValue("q1")},
+			NoDataBehavior:        types.StringValue("resolve"),
+			Timeframe:             types.Int64Value(15),
+			GroupByFields:         groupBy,
+			AggregationAlertLogic: types.StringValue("no_aggregation"),
+			Queries:               queries,
+		},
+	}
+
+	expanded, expandDiags := expandMonitorConfiguration(ctx, config)
+	if expandDiags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", expandDiags)
+	}
+	if expanded["type"] != "anomaly-trace" {
+		t.Fatalf("expected type anomaly-trace, got %#v", expanded["type"])
+	}
+	expandedQueries := expanded["queries"].([]map[string]interface{})
+	if expandedQueries[0]["timeAggregate"] != "max" {
+		t.Fatalf("expected timeAggregate to be sent, got %#v", expandedQueries[0]["timeAggregate"])
+	}
+
+	flattened, flattenDiags := flattenMonitorConfiguration(ctx, monitorAPIConfiguration{
+		Type:                  "anomaly-trace",
+		Condition:             monitorAPICondition{Formula: "q1", ConditionType: "general"},
+		NoDataBehavior:        "resolve",
+		Timeframe:             15,
+		AggregationAlertLogic: "no_aggregation",
+		Queries: []monitorAPIQuery{
+			{Filter: "service:api", Aggregate: monitorAPIAggregate{Type: "count"}, TimeAggregate: "max"},
+		},
+	})
+	if flattenDiags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", flattenDiags)
+	}
+	if flattened.AnomalyTrace == nil {
+		t.Fatal("expected anomaly_trace configuration to be set")
+	}
+
+	var back []resource_monitor.MonitorQueryModel
+	if d := flattened.AnomalyTrace.Queries.ElementsAs(ctx, &back, false); d.HasError() {
+		t.Fatalf("failed to decode flattened queries: %v", d)
+	}
+	if back[0].TimeAggregate.ValueString() != "max" {
+		t.Fatalf("expected time_aggregate to round-trip, got %v", back[0].TimeAggregate)
 	}
 }

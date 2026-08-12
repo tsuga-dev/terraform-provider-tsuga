@@ -28,7 +28,7 @@ data "tsuga_team" "test" {
 
 ### Read-Only
 
-- `description` (String) Optional team description supplied by a user.
+- `description` (String) Optional free-text description of the team.
 - `tags` (Attributes List) Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies. (see [below for nested schema](#nestedatt--tags))
 - `visibility` (String) `public` makes team-owned resources discoverable according to access controls. `private` restricts discovery to team members and authorized users.
 

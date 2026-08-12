@@ -641,6 +641,7 @@ Optional:
 - `list` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--list))
 - `list_connection` (Attributes) Displays database rows as a tabular list (see [below for nested schema](#nestedatt--graphs--visualization--list_connection))
 - `list_log_patterns` (Attributes) Displays log patterns clustered from logs matching the query (see [below for nested schema](#nestedatt--graphs--visualization--list_log_patterns))
+- `list_spans` (Attributes) Displays individual spans as a tabular list (see [below for nested schema](#nestedatt--graphs--visualization--list_spans))
 - `note` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--note))
 - `pie` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie))
 - `pie_connection` (Attributes) Displays the database rows-based aggregation as a pie chart (see [below for nested schema](#nestedatt--graphs--visualization--pie_connection))
@@ -686,6 +687,7 @@ Optional:
 
 - `filter` (String)
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--bar--queries--functions))
+- `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
 <a id="nestedatt--graphs--visualization--bar--queries--aggregate"></a>
 ### Nested Schema for `graphs.visualization.bar.queries.aggregate`
@@ -975,6 +977,7 @@ Optional:
 
 - `filter` (String)
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--distribution--queries--functions))
+- `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
 <a id="nestedatt--graphs--visualization--distribution--queries--aggregate"></a>
 ### Nested Schema for `graphs.visualization.distribution.queries.aggregate`
@@ -1132,6 +1135,7 @@ Optional:
 
 - `filter` (String)
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--gauge--queries--functions))
+- `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
 <a id="nestedatt--graphs--visualization--gauge--queries--aggregate"></a>
 ### Nested Schema for `graphs.visualization.gauge.queries.aggregate`
@@ -1284,6 +1288,7 @@ Optional:
 
 - `filter` (String)
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--queries--functions))
+- `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
 <a id="nestedatt--graphs--visualization--heatmap--queries--aggregate"></a>
 ### Nested Schema for `graphs.visualization.heatmap.queries.aggregate`
@@ -1417,12 +1422,23 @@ Required:
 
 Optional:
 
+- `default_sorting` (Attributes List) Default sorting applied to the list widget (see [below for nested schema](#nestedatt--graphs--visualization--list--default_sorting))
+- `is_cell_wrapped` (Boolean) Whether cell contents wrap instead of being truncated
 - `list_columns` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--list--list_columns))
 - `list_columns_size` (Map of Number) Column widths keyed by column id
 
 Read-Only:
 
 - `type` (String)
+
+<a id="nestedatt--graphs--visualization--list--default_sorting"></a>
+### Nested Schema for `graphs.visualization.list.default_sorting`
+
+Required:
+
+- `desc` (Boolean) Sort direction: true for descending order, false for ascending
+- `id` (String) Column attribute used for the default list sort
+
 
 <a id="nestedatt--graphs--visualization--list--list_columns"></a>
 ### Nested Schema for `graphs.visualization.list.list_columns`
@@ -1459,12 +1475,23 @@ Required:
 
 Optional:
 
+- `default_sorting` (Attributes List) Default sorting applied to the list widget (see [below for nested schema](#nestedatt--graphs--visualization--list_connection--default_sorting))
+- `is_cell_wrapped` (Boolean) Whether cell contents wrap instead of being truncated
 - `list_columns` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--list_connection--list_columns))
 - `list_columns_size` (Map of Number) Column widths keyed by column id
 
 Read-Only:
 
 - `type` (String)
+
+<a id="nestedatt--graphs--visualization--list_connection--default_sorting"></a>
+### Nested Schema for `graphs.visualization.list_connection.default_sorting`
+
+Required:
+
+- `desc` (Boolean) Sort direction: true for descending order, false for ascending
+- `id` (String) Column attribute used for the default list sort
+
 
 <a id="nestedatt--graphs--visualization--list_connection--list_columns"></a>
 ### Nested Schema for `graphs.visualization.list_connection.list_columns`
@@ -1505,6 +1532,58 @@ Optional:
 Read-Only:
 
 - `type` (String)
+
+
+<a id="nestedatt--graphs--visualization--list_spans"></a>
+### Nested Schema for `graphs.visualization.list_spans`
+
+Required:
+
+- `query` (String)
+
+Optional:
+
+- `default_sorting` (Attributes List) Default sorting applied to the list widget (see [below for nested schema](#nestedatt--graphs--visualization--list_spans--default_sorting))
+- `is_cell_wrapped` (Boolean) Whether cell contents wrap instead of being truncated
+- `list_columns` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--list_spans--list_columns))
+- `list_columns_size` (Map of Number) Column widths keyed by column id
+
+Read-Only:
+
+- `type` (String)
+
+<a id="nestedatt--graphs--visualization--list_spans--default_sorting"></a>
+### Nested Schema for `graphs.visualization.list_spans.default_sorting`
+
+Required:
+
+- `desc` (Boolean) Sort direction: true for descending order, false for ascending
+- `id` (String) Column attribute used for the default list sort
+
+
+<a id="nestedatt--graphs--visualization--list_spans--list_columns"></a>
+### Nested Schema for `graphs.visualization.list_spans.list_columns`
+
+Required:
+
+- `attribute` (String)
+
+Optional:
+
+- `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--list_spans--list_columns--normalizer))
+
+<a id="nestedatt--graphs--visualization--list_spans--list_columns--normalizer"></a>
+### Nested Schema for `graphs.visualization.list_spans.list_columns.normalizer`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+
+
 
 
 <a id="nestedatt--graphs--visualization--note"></a>
@@ -1557,6 +1636,7 @@ Optional:
 
 - `filter` (String)
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--pie--queries--functions))
+- `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
 <a id="nestedatt--graphs--visualization--pie--queries--aggregate"></a>
 ### Nested Schema for `graphs.visualization.pie.queries.aggregate`
@@ -1731,6 +1811,7 @@ Optional:
 
 - `filter` (String)
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--queries--functions))
+- `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
 <a id="nestedatt--graphs--visualization--query_value--queries--aggregate"></a>
 ### Nested Schema for `graphs.visualization.query_value.queries.aggregate`
@@ -1937,6 +2018,7 @@ Optional:
 
 - `filter` (String)
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--table--columns--queries--functions))
+- `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
 <a id="nestedatt--graphs--visualization--table--columns--queries--aggregate"></a>
 ### Nested Schema for `graphs.visualization.table.columns.queries.aggregate`
@@ -2096,6 +2178,7 @@ Optional:
 
 - `filter` (String)
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--queries--functions))
+- `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
 <a id="nestedatt--graphs--visualization--timeseries--queries--aggregate"></a>
 ### Nested Schema for `graphs.visualization.timeseries.queries.aggregate`
@@ -2375,6 +2458,7 @@ Optional:
 
 - `filter` (String)
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--queries--functions))
+- `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
 <a id="nestedatt--graphs--visualization--top_list--queries--aggregate"></a>
 ### Nested Schema for `graphs.visualization.top_list.queries.aggregate`

@@ -2,11 +2,13 @@ package provider
 
 import (
 	"context"
+	"terraform-provider-tsuga/internal/aggregate"
 	"terraform-provider-tsuga/internal/resource_dashboard"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 // functionValue builds a single query-function object value, leaving every
@@ -158,5 +160,99 @@ func TestFlattenFunctions_RoundTripsBaseAndExponent(t *testing.T) {
 	}
 	if models[1].Exponent.IsNull() || models[1].Exponent.ValueInt64() != 3 {
 		t.Fatalf("expected power exponent to be 3, got %#v", models[1].Exponent)
+	}
+}
+
+func TestExpandFlattenVisualization_ListSpansRoundTrips(t *testing.T) {
+	ctx := context.Background()
+
+	sortingType := types.ObjectType{AttrTypes: resource_dashboard.ListDefaultSortingAttrTypes()}
+	sorting := types.ListValueMust(sortingType, []attr.Value{
+		types.ObjectValueMust(resource_dashboard.ListDefaultSortingAttrTypes(), map[string]attr.Value{
+			"id":   types.StringValue("duration"),
+			"desc": types.BoolValue(true),
+		}),
+	})
+
+	vis := resource_dashboard.VisualizationModel{
+		ListSpans: &resource_dashboard.ListVisualization{
+			Query:           types.StringValue("service:api"),
+			ListColumns:     types.ListNull(types.ObjectType{AttrTypes: resource_dashboard.ListColumnAttrTypes()}),
+			ListColumnsSize: types.MapNull(types.Float64Type),
+			DefaultSorting:  sorting,
+			IsCellWrapped:   types.BoolValue(true),
+		},
+	}
+
+	expanded, diags := expandVisualization(ctx, vis)
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if expanded.Type != "list-spans" {
+		t.Fatalf("expected type list-spans, got %q", expanded.Type)
+	}
+	if expanded.IsCellWrapped == nil || !*expanded.IsCellWrapped {
+		t.Fatalf("expected isCellWrapped to be sent as true, got %#v", expanded.IsCellWrapped)
+	}
+	if len(expanded.DefaultSorting) != 1 || expanded.DefaultSorting[0].Id != "duration" || !expanded.DefaultSorting[0].Desc {
+		t.Fatalf("expected defaultSorting to be sent, got %#v", expanded.DefaultSorting)
+	}
+
+	flattened, flattenDiags := flattenVisualization(ctx, expanded)
+	if flattenDiags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", flattenDiags)
+	}
+
+	var back resource_dashboard.VisualizationModel
+	if d := flattened.(types.Object).As(ctx, &back, basetypes.ObjectAsOptions{}); d.HasError() {
+		t.Fatalf("failed to decode flattened visualization: %v", d)
+	}
+	if back.ListSpans == nil {
+		t.Fatal("expected list_spans visualization to be set")
+	}
+	if back.ListSpans.Query.ValueString() != "service:api" {
+		t.Fatalf("expected query to round-trip, got %v", back.ListSpans.Query)
+	}
+	var sortBack []resource_dashboard.ListDefaultSortingModel
+	if d := back.ListSpans.DefaultSorting.ElementsAs(ctx, &sortBack, false); d.HasError() {
+		t.Fatalf("failed to decode default_sorting: %v", d)
+	}
+	if len(sortBack) != 1 || sortBack[0].Id.ValueString() != "duration" || !sortBack[0].Desc.ValueBool() {
+		t.Fatalf("expected default_sorting to round-trip, got %#v", sortBack)
+	}
+}
+
+func TestExpandFlattenQueries_TimeAggregateRoundTrips(t *testing.T) {
+	ctx := context.Background()
+
+	queries, diags := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: resource_dashboard.QueryAttrTypes()},
+		[]resource_dashboard.QueryModel{{
+			Aggregate:     resource_dashboard.AggregateModel{Count: &aggregate.CountModel{Field: types.StringNull()}},
+			Filter:        types.StringValue("service:api"),
+			Functions:     types.ListNull(types.ObjectType{AttrTypes: resource_dashboard.FunctionAttrTypes()}),
+			TimeAggregate: types.StringValue("last"),
+		}})
+	if diags.HasError() {
+		t.Fatalf("failed to build queries: %v", diags)
+	}
+
+	expanded, expandDiags := expandQueries(ctx, queries)
+	if expandDiags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", expandDiags)
+	}
+	if expanded[0].TimeAggregate != "last" {
+		t.Fatalf("expected timeAggregate to be sent, got %q", expanded[0].TimeAggregate)
+	}
+
+	flattened, flattenDiags := flattenQueries(expanded)
+	if flattenDiags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", flattenDiags)
+	}
+	var back []resource_dashboard.QueryModel
+	if d := flattened.ElementsAs(ctx, &back, false); d.HasError() {
+		t.Fatalf("failed to decode flattened queries: %v", d)
+	}
+	if back[0].TimeAggregate.ValueString() != "last" {
+		t.Fatalf("expected time_aggregate to round-trip, got %v", back[0].TimeAggregate)
 	}
 }

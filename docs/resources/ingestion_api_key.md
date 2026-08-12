@@ -33,7 +33,7 @@ resource "tsuga_ingestion_api_key" "example" {
 
 - `name` (String) Kebab-case name for the ingestion API key. Maximum length is 100 characters.
 - `owner` (String) Team ID that will own and manage the ingestion API key.
-- `tags` (Attributes List) Key/value tags to apply to the resource. Up to 50 tags are accepted and tag policies may require specific keys or values. (see [below for nested schema](#nestedatt--tags))
+- `tags` (Attributes List) Key/value tags to apply to the resource. Tag policies may require specific keys or values. (see [below for nested schema](#nestedatt--tags))
 
 ### Optional
 
@@ -50,5 +50,5 @@ resource "tsuga_ingestion_api_key" "example" {
 
 Required:
 
-- `key` (String) Tag key to attach to the resource. Maximum length is 128 characters.
-- `value` (String) Tag value to attach to the resource. Maximum length is 256 characters and leading or trailing whitespace is rejected.
+- `key` (String) Tag key to attach to the resource.
+- `value` (String) Tag value to attach to the resource. Leading or trailing whitespace is rejected.

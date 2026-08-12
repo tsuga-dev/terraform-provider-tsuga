@@ -7,8 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `tsuga_monitor`: new `configuration.anomaly_trace` block for anomaly monitors over trace aggregations.
+- `tsuga_monitor` and `tsuga_slo`: `time_aggregate` (`avg`, `sum`, `min`, `max`, `last`) on aggregation queries, the per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, the API derives a default from the metric type.
+- `tsuga_dashboard`: `time_aggregate` on widget queries.
+- `tsuga_dashboard`: new `visualization.list_spans` widget listing individual spans, with `query`, `list_columns`, `list_columns_size` and `default_sorting`.
+- `tsuga_dashboard`: `default_sorting` on the `list` and `list_connection` widgets. It requires at least one entry — omit the attribute rather than setting it to an empty list.
+- `tsuga_dashboard`: `is_cell_wrapped` on the `list`, `list_spans` and `list_connection` widgets, controlling whether cell contents wrap instead of being truncated.
+- `tsuga_tag_policy`: `metric-route` asset type.
+
 ### Changed
 
+- `tsuga_monitor`: `timeframe` is now validated at plan time (at least 1 minute, and between 5 and 1440 minutes for anomaly monitors), and `dashboard_id` must be between 1 and 250 characters, matching the API.
 - `tsuga_notification_silence`: schedule times are now validated at plan time instead of failing on apply.
 
 ### Fixed

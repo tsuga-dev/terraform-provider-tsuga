@@ -110,6 +110,9 @@ func (r *dashboardResource) validateVisualization(ctx context.Context, vis resou
 	if vis.List != nil {
 		setCount++
 	}
+	if vis.ListSpans != nil {
+		setCount++
+	}
 	if vis.ListLogPatterns != nil {
 		setCount++
 	}
@@ -178,6 +181,9 @@ func (r *dashboardResource) validateVisualization(ctx context.Context, vis resou
 	}
 	if vis.List != nil {
 		diags.Append(r.validateListColumns(ctx, vis.List.ListColumns, fmt.Sprintf("%s.list", pathPrefix))...)
+	}
+	if vis.ListSpans != nil {
+		diags.Append(r.validateListColumns(ctx, vis.ListSpans.ListColumns, fmt.Sprintf("%s.list_spans", pathPrefix))...)
 	}
 	if vis.ListConnection != nil {
 		diags.Append(r.validateListColumns(ctx, vis.ListConnection.ListColumns, fmt.Sprintf("%s.list_connection", pathPrefix))...)
@@ -582,6 +588,8 @@ type dashboardVisualization struct {
 	Query           string                  `json:"query,omitempty"`
 	ListColumns     []dashboardListColumn   `json:"listColumns,omitempty"`
 	ListColumnsSize map[string]float64      `json:"listColumnsSize,omitempty"`
+	DefaultSorting  []dashboardListSorting  `json:"defaultSorting,omitempty"`
+	IsCellWrapped   *bool                   `json:"isCellWrapped,omitempty"`
 	Note            string                  `json:"note,omitempty"`
 	NoteAlign       string                  `json:"noteAlign,omitempty"`
 	NoteJustify     string                  `json:"noteJustifyContent,omitempty"`
@@ -680,9 +688,10 @@ type dashboardTableColumn struct {
 }
 
 type dashboardQuery struct {
-	Aggregate dashboardAggregate  `json:"aggregate"`
-	Filter    string              `json:"filter,omitempty"`
-	Functions []dashboardFunction `json:"functions,omitempty"`
+	Aggregate     dashboardAggregate  `json:"aggregate"`
+	Filter        string              `json:"filter,omitempty"`
+	Functions     []dashboardFunction `json:"functions,omitempty"`
+	TimeAggregate string              `json:"timeAggregate,omitempty"`
 }
 
 type dashboardAggregate struct {
@@ -725,6 +734,11 @@ type dashboardTimeBucket struct {
 type dashboardListColumn struct {
 	Attribute  string               `json:"attribute"`
 	Normalizer *dashboardNormalizer `json:"normalizer,omitempty"`
+}
+
+type dashboardListSorting struct {
+	Id   string `json:"id"`
+	Desc bool   `json:"desc"`
 }
 
 func expandDashboardFilters(ctx context.Context, filters types.List) ([]dashboardAPIFilter, diag.Diagnostics) {
@@ -867,6 +881,28 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 			result.YAxisSettings = expandYAxisSettings(yAxis)
 		}
 		return result, d
+	}
+
+	buildList := func(l *resource_dashboard.ListVisualization, visType string) (dashboardVisualization, diag.Diagnostics) {
+		var d diag.Diagnostics
+		vz := dashboardVisualization{
+			Type:  visType,
+			Query: l.Query.ValueString(),
+		}
+		if !l.ListColumns.IsNull() && !l.ListColumns.IsUnknown() {
+			cols, cDiags := expandListColumns(ctx, l.ListColumns)
+			d.Append(cDiags...)
+			vz.ListColumns = cols
+		}
+		vz.ListColumnsSize = expandListColumnsSize(l.ListColumnsSize)
+		sorting, sDiags := expandListDefaultSorting(ctx, l.DefaultSorting)
+		d.Append(sDiags...)
+		vz.DefaultSorting = sorting
+		if !l.IsCellWrapped.IsNull() && !l.IsCellWrapped.IsUnknown() {
+			wrapped := l.IsCellWrapped.ValueBool()
+			vz.IsCellWrapped = &wrapped
+		}
+		return vz, d
 	}
 
 	if v.Timeseries != nil {
@@ -1031,16 +1067,14 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 	}
 	if v.List != nil {
 		setCount++
-		vz := dashboardVisualization{
-			Type:  "list",
-			Query: v.List.Query.ValueString(),
-		}
-		if !v.List.ListColumns.IsNull() && !v.List.ListColumns.IsUnknown() {
-			cols, cDiags := expandListColumns(ctx, v.List.ListColumns)
-			diags.Append(cDiags...)
-			vz.ListColumns = cols
-		}
-		vz.ListColumnsSize = expandListColumnsSize(v.List.ListColumnsSize)
+		vz, d := buildList(v.List, "list")
+		diags.Append(d...)
+		vis = vz
+	}
+	if v.ListSpans != nil {
+		setCount++
+		vz, d := buildList(v.ListSpans, "list-spans")
+		diags.Append(d...)
 		vis = vz
 	}
 	if v.Note != nil {
@@ -1100,6 +1134,13 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 			vz.ListColumns = cols
 		}
 		vz.ListColumnsSize = expandListColumnsSize(v.ListConnection.ListColumnsSize)
+		sorting, sDiags := expandListDefaultSorting(ctx, v.ListConnection.DefaultSorting)
+		diags.Append(sDiags...)
+		vz.DefaultSorting = sorting
+		if !v.ListConnection.IsCellWrapped.IsNull() && !v.ListConnection.IsCellWrapped.IsUnknown() {
+			wrapped := v.ListConnection.IsCellWrapped.ValueBool()
+			vz.IsCellWrapped = &wrapped
+		}
 		vis = vz
 	}
 
@@ -1185,6 +1226,7 @@ func flattenVisualization(ctx context.Context, vis dashboardVisualization) (attr
 			"distribution":           types.ObjectNull(resource_dashboard.DistributionVisualizationAttrTypes()),
 			"heatmap":                types.ObjectNull(resource_dashboard.HeatmapVisualizationAttrTypes()),
 			"list":                   types.ObjectNull(resource_dashboard.ListVisualizationAttrTypes()),
+			"list_spans":             types.ObjectNull(resource_dashboard.ListVisualizationAttrTypes()),
 			"list_log_patterns":      types.ObjectNull(resource_dashboard.ListLogPatternsVisualizationAttrTypes()),
 			"note":                   types.ObjectNull(resource_dashboard.NoteVisualizationAttrTypes()),
 			"table":                  types.ObjectNull(resource_dashboard.TableVisualizationAttrTypes()),
@@ -1208,19 +1250,31 @@ func flattenVisualization(ctx context.Context, vis dashboardVisualization) (attr
 			"note_color":           stringValueOrNull(vis.NoteColor),
 		})
 		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(), obj), nil
-	case "list":
+	case "list", "list-spans":
 		listCols, diags := flattenListColumns(vis.ListColumns)
 		if diags.HasError() {
 			return types.ObjectNull(resource_dashboard.VisualizationAttrTypes()), diags
 		}
-		obj := nullVizBase()
-		obj["list"] = types.ObjectValueMust(resource_dashboard.ListVisualizationAttrTypes(), map[string]attr.Value{
-			"type":              types.StringValue("list"),
+		sorting, sDiags := flattenListDefaultSorting(vis.DefaultSorting)
+		diags.Append(sDiags...)
+		if diags.HasError() {
+			return types.ObjectNull(resource_dashboard.VisualizationAttrTypes()), diags
+		}
+		listVal := types.ObjectValueMust(resource_dashboard.ListVisualizationAttrTypes(), map[string]attr.Value{
+			"type":              types.StringValue(vis.Type),
 			"query":             types.StringValue(vis.Query),
 			"list_columns":      listCols,
 			"list_columns_size": flattenListColumnsSize(vis.ListColumnsSize),
+			"default_sorting":   sorting,
+			"is_cell_wrapped":   types.BoolPointerValue(vis.IsCellWrapped),
 		})
-		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(), obj), nil
+		obj := nullVizBase()
+		if vis.Type == "list-spans" {
+			obj["list_spans"] = listVal
+		} else {
+			obj["list"] = listVal
+		}
+		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(), obj), diags
 	case "table":
 		cols, colDiags := flattenTableColumns(ctx, vis.Columns)
 		if colDiags.HasError() {
@@ -1357,6 +1411,11 @@ func flattenVisualization(ctx context.Context, vis dashboardVisualization) (attr
 		if diags.HasError() {
 			return types.ObjectNull(resource_dashboard.VisualizationAttrTypes()), diags
 		}
+		sorting, sDiags := flattenListDefaultSorting(vis.DefaultSorting)
+		diags.Append(sDiags...)
+		if diags.HasError() {
+			return types.ObjectNull(resource_dashboard.VisualizationAttrTypes()), diags
+		}
 		obj := nullVizBase()
 		obj["list_connection"] = types.ObjectValueMust(resource_dashboard.ListConnectionVisualizationAttrTypes(), map[string]attr.Value{
 			"type":              types.StringValue("list-connection"),
@@ -1364,8 +1423,10 @@ func flattenVisualization(ctx context.Context, vis dashboardVisualization) (attr
 			"query":             types.StringValue(vis.Query),
 			"list_columns":      listCols,
 			"list_columns_size": flattenListColumnsSize(vis.ListColumnsSize),
+			"default_sorting":   sorting,
+			"is_cell_wrapped":   types.BoolPointerValue(vis.IsCellWrapped),
 		})
-		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(), obj), nil
+		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(), obj), diags
 	default:
 		var diags diag.Diagnostics
 		diags.AddError("Unsupported visualization type", vis.Type)
@@ -1499,9 +1560,10 @@ func flattenQueries(queries []dashboardQuery) (types.List, diag.Diagnostics) {
 		}
 
 		values = append(values, types.ObjectValueMust(resource_dashboard.QueryAttrTypes(), map[string]attr.Value{
-			"aggregate": aggVal,
-			"filter":    stringValueOrNull(q.Filter),
-			"functions": funcVal,
+			"aggregate":      aggVal,
+			"filter":         stringValueOrNull(q.Filter),
+			"functions":      funcVal,
+			"time_aggregate": stringValueOrNull(q.TimeAggregate),
 		}))
 	}
 
@@ -1646,6 +1708,43 @@ func flattenListColumns(cols []dashboardListColumn) (types.List, diag.Diagnostic
 	return types.ListValue(elemType, values)
 }
 
+func expandListDefaultSorting(ctx context.Context, sorting types.List) ([]dashboardListSorting, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	if sorting.IsNull() || sorting.IsUnknown() {
+		return nil, diags
+	}
+
+	var models []resource_dashboard.ListDefaultSortingModel
+	diags.Append(sorting.ElementsAs(ctx, &models, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	result := make([]dashboardListSorting, 0, len(models))
+	for _, s := range models {
+		result = append(result, dashboardListSorting{
+			Id:   s.Id.ValueString(),
+			Desc: s.Desc.ValueBool(),
+		})
+	}
+	return result, diags
+}
+
+func flattenListDefaultSorting(sorting []dashboardListSorting) (types.List, diag.Diagnostics) {
+	elemType := types.ObjectType{AttrTypes: resource_dashboard.ListDefaultSortingAttrTypes()}
+	if len(sorting) == 0 {
+		return types.ListNull(elemType), nil
+	}
+	values := make([]attr.Value, 0, len(sorting))
+	for _, s := range sorting {
+		values = append(values, types.ObjectValueMust(resource_dashboard.ListDefaultSortingAttrTypes(), map[string]attr.Value{
+			"id":   types.StringValue(s.Id),
+			"desc": types.BoolValue(s.Desc),
+		}))
+	}
+	return types.ListValue(elemType, values)
+}
+
 func expandQueries(ctx context.Context, queries types.List) ([]dashboardQuery, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	if queries.IsNull() || queries.IsUnknown() {
@@ -1670,9 +1769,10 @@ func expandQueries(ctx context.Context, queries types.List) ([]dashboardQuery, d
 			return nil, diags
 		}
 		result = append(result, dashboardQuery{
-			Aggregate: agg,
-			Filter:    q.Filter.ValueString(),
-			Functions: fns,
+			Aggregate:     agg,
+			Filter:        q.Filter.ValueString(),
+			Functions:     fns,
+			TimeAggregate: q.TimeAggregate.ValueString(),
 		})
 	}
 	return result, diags

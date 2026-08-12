@@ -53,16 +53,16 @@ func IngestionApiKeyResourceSchema(ctx context.Context) schema.Schema {
 					Attributes: map[string]schema.Attribute{
 						"key": schema.StringAttribute{
 							Required:            true,
-							Description:         "Tag key to attach to the resource. Maximum length is 128 characters.",
-							MarkdownDescription: "Tag key to attach to the resource. Maximum length is 128 characters.",
+							Description:         "Tag key to attach to the resource.",
+							MarkdownDescription: "Tag key to attach to the resource.",
 							Validators: []validator.String{
 								stringvalidator.LengthAtMost(128),
 							},
 						},
 						"value": schema.StringAttribute{
 							Required:            true,
-							Description:         "Tag value to attach to the resource. Maximum length is 256 characters and leading or trailing whitespace is rejected.",
-							MarkdownDescription: "Tag value to attach to the resource. Maximum length is 256 characters and leading or trailing whitespace is rejected.",
+							Description:         "Tag value to attach to the resource. Leading or trailing whitespace is rejected.",
+							MarkdownDescription: "Tag value to attach to the resource. Leading or trailing whitespace is rejected.",
 							Validators: []validator.String{
 								stringvalidator.LengthAtMost(256),
 								stringvalidator.RegexMatches(regexp.MustCompile("^\\S(.*\\S)?$"), ""),
@@ -76,8 +76,8 @@ func IngestionApiKeyResourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Required:            true,
-				Description:         "Key/value tags to apply to the resource. Up to 50 tags are accepted and tag policies may require specific keys or values.",
-				MarkdownDescription: "Key/value tags to apply to the resource. Up to 50 tags are accepted and tag policies may require specific keys or values.",
+				Description:         "Key/value tags to apply to the resource. Tag policies may require specific keys or values.",
+				MarkdownDescription: "Key/value tags to apply to the resource. Tag policies may require specific keys or values.",
 				Validators: []validator.List{
 					listvalidator.SizeAtMost(50),
 				},

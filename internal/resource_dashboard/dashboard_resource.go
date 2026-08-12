@@ -202,6 +202,7 @@ func DashboardResourceSchema(ctx context.Context) schema.Schema {
 								"distribution":           visualizationDistributionSchema(),
 								"heatmap":                visualizationHeatmapSchema(),
 								"list":                   visualizationListSchema(),
+								"list_spans":             visualizationListSpansSchema(),
 								"list_log_patterns":      visualizationListLogPatternsSchema(),
 								"note":                   visualizationNoteSchema(),
 								"table":                  visualizationTableSchema(),
@@ -362,6 +363,13 @@ func queriesSchema() schema.Attribute {
 					Optional: true,
 					Validators: []validator.String{
 						stringvalidator.LengthAtMost(10000),
+					},
+				},
+				"time_aggregate": schema.StringAttribute{
+					Optional:    true,
+					Description: "Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.",
+					Validators: []validator.String{
+						stringvalidator.OneOf("avg", "sum", "min", "max", "last"),
 					},
 				},
 				"functions": schema.ListNestedAttribute{
@@ -760,6 +768,65 @@ func visualizationListSchema() schema.Attribute {
 				ElementType: types.Float64Type,
 				Description: "Column widths keyed by column id",
 			},
+			"is_cell_wrapped": schema.BoolAttribute{
+				Optional:    true,
+				Description: "Whether cell contents wrap instead of being truncated",
+			},
+			"default_sorting": listDefaultSortingSchema(),
+		},
+	}
+}
+
+func visualizationListSpansSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Optional:    true,
+		Description: "Displays individual spans as a tabular list",
+		Attributes: map[string]schema.Attribute{
+			"type": schema.StringAttribute{
+				Computed: true,
+			},
+			"query": schema.StringAttribute{
+				Required: true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtMost(10000),
+				},
+			},
+			"list_columns": listColumnsSchema(),
+			"list_columns_size": schema.MapAttribute{
+				Optional:    true,
+				ElementType: types.Float64Type,
+				Description: "Column widths keyed by column id",
+			},
+			"is_cell_wrapped": schema.BoolAttribute{
+				Optional:    true,
+				Description: "Whether cell contents wrap instead of being truncated",
+			},
+			"default_sorting": listDefaultSortingSchema(),
+		},
+	}
+}
+
+func listDefaultSortingSchema() schema.Attribute {
+	return schema.ListNestedAttribute{
+		Optional:    true,
+		Description: "Default sorting applied to the list widget",
+		Validators: []validator.List{
+			listvalidator.SizeAtLeast(1),
+		},
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"id": schema.StringAttribute{
+					Required:    true,
+					Description: "Column attribute used for the default list sort",
+					Validators: []validator.String{
+						stringvalidator.LengthAtMost(250),
+					},
+				},
+				"desc": schema.BoolAttribute{
+					Required:    true,
+					Description: "Sort direction: true for descending order, false for ascending",
+				},
+			},
 		},
 	}
 }
@@ -867,6 +934,11 @@ func visualizationListConnectionSchema() schema.Attribute {
 				ElementType: types.Float64Type,
 				Description: "Column widths keyed by column id",
 			},
+			"is_cell_wrapped": schema.BoolAttribute{
+				Optional:    true,
+				Description: "Whether cell contents wrap instead of being truncated",
+			},
+			"default_sorting": listDefaultSortingSchema(),
 		},
 	}
 }
@@ -955,6 +1027,7 @@ type VisualizationModel struct {
 	Distribution         *DistributionVisualization         `tfsdk:"distribution"`
 	Heatmap              *HeatmapVisualization              `tfsdk:"heatmap"`
 	List                 *ListVisualization                 `tfsdk:"list"`
+	ListSpans            *ListVisualization                 `tfsdk:"list_spans"`
 	ListLogPatterns      *ListLogPatternsVisualization      `tfsdk:"list_log_patterns"`
 	Note                 *NoteVisualizationModel            `tfsdk:"note"`
 	Table                *TableVisualizationModel           `tfsdk:"table"`
@@ -1117,6 +1190,13 @@ type ListVisualization struct {
 	Query           types.String `tfsdk:"query"`
 	ListColumns     types.List   `tfsdk:"list_columns"`
 	ListColumnsSize types.Map    `tfsdk:"list_columns_size"`
+	DefaultSorting  types.List   `tfsdk:"default_sorting"`
+	IsCellWrapped   types.Bool   `tfsdk:"is_cell_wrapped"`
+}
+
+type ListDefaultSortingModel struct {
+	Id   types.String `tfsdk:"id"`
+	Desc types.Bool   `tfsdk:"desc"`
 }
 
 type TimeseriesConnectionVisualization struct {
@@ -1139,6 +1219,8 @@ type ListConnectionVisualization struct {
 	Query           types.String `tfsdk:"query"`
 	ListColumns     types.List   `tfsdk:"list_columns"`
 	ListColumnsSize types.Map    `tfsdk:"list_columns_size"`
+	DefaultSorting  types.List   `tfsdk:"default_sorting"`
+	IsCellWrapped   types.Bool   `tfsdk:"is_cell_wrapped"`
 }
 
 type NoteVisualizationModel struct {
@@ -1150,9 +1232,10 @@ type NoteVisualizationModel struct {
 }
 
 type QueryModel struct {
-	Aggregate AggregateModel `tfsdk:"aggregate"`
-	Filter    types.String   `tfsdk:"filter"`
-	Functions types.List     `tfsdk:"functions"`
+	Aggregate     AggregateModel `tfsdk:"aggregate"`
+	Filter        types.String   `tfsdk:"filter"`
+	Functions     types.List     `tfsdk:"functions"`
+	TimeAggregate types.String   `tfsdk:"time_aggregate"`
 }
 
 type AggregateModel struct {
@@ -1233,6 +1316,7 @@ func VisualizationAttrTypes() map[string]attr.Type {
 		"distribution":           types.ObjectType{AttrTypes: DistributionVisualizationAttrTypes()},
 		"heatmap":                types.ObjectType{AttrTypes: HeatmapVisualizationAttrTypes()},
 		"list":                   types.ObjectType{AttrTypes: ListVisualizationAttrTypes()},
+		"list_spans":             types.ObjectType{AttrTypes: ListVisualizationAttrTypes()},
 		"list_log_patterns":      types.ObjectType{AttrTypes: ListLogPatternsVisualizationAttrTypes()},
 		"note":                   types.ObjectType{AttrTypes: NoteVisualizationAttrTypes()},
 		"table":                  types.ObjectType{AttrTypes: TableVisualizationAttrTypes()},
@@ -1431,6 +1515,15 @@ func ListVisualizationAttrTypes() map[string]attr.Type {
 		"query":             types.StringType,
 		"list_columns":      types.ListType{ElemType: types.ObjectType{AttrTypes: ListColumnAttrTypes()}},
 		"list_columns_size": types.MapType{ElemType: types.Float64Type},
+		"default_sorting":   types.ListType{ElemType: types.ObjectType{AttrTypes: ListDefaultSortingAttrTypes()}},
+		"is_cell_wrapped":   types.BoolType,
+	}
+}
+
+func ListDefaultSortingAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"id":   types.StringType,
+		"desc": types.BoolType,
 	}
 }
 
@@ -1459,6 +1552,8 @@ func ListConnectionVisualizationAttrTypes() map[string]attr.Type {
 		"query":             types.StringType,
 		"list_columns":      types.ListType{ElemType: types.ObjectType{AttrTypes: ListColumnAttrTypes()}},
 		"list_columns_size": types.MapType{ElemType: types.Float64Type},
+		"default_sorting":   types.ListType{ElemType: types.ObjectType{AttrTypes: ListDefaultSortingAttrTypes()}},
+		"is_cell_wrapped":   types.BoolType,
 	}
 }
 
@@ -1474,9 +1569,10 @@ func NoteVisualizationAttrTypes() map[string]attr.Type {
 
 func QueryAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"aggregate": types.ObjectType{AttrTypes: aggregate.AttrTypes()},
-		"filter":    types.StringType,
-		"functions": types.ListType{ElemType: types.ObjectType{AttrTypes: FunctionAttrTypes()}},
+		"aggregate":      types.ObjectType{AttrTypes: aggregate.AttrTypes()},
+		"filter":         types.StringType,
+		"functions":      types.ListType{ElemType: types.ObjectType{AttrTypes: FunctionAttrTypes()}},
+		"time_aggregate": types.StringType,
 	}
 }
 

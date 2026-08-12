@@ -22,8 +22,8 @@ func TeamDataSourceSchema(ctx context.Context) schema.Schema {
 		Attributes: map[string]schema.Attribute{
 			"description": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Optional team description supplied by a user.",
-				MarkdownDescription: "Optional team description supplied by a user.",
+				Description:         "Optional free-text description of the team.",
+				MarkdownDescription: "Optional free-text description of the team.",
 			},
 			"id": schema.StringAttribute{
 				Optional:            true,

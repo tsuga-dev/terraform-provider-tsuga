@@ -131,6 +131,7 @@ func TagPolicyResourceSchema() schema.Schema {
 											"rum-public-token",
 											"dashboard",
 											"log-route",
+											"metric-route",
 											"monitor",
 											"notification-rule",
 											"notification-silence",
