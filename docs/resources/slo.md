@@ -193,6 +193,7 @@ Optional:
 
 - `fill` (Attributes) (see [below for nested schema](#nestedatt--configuration--event--good_query--queries--fill))
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--configuration--event--good_query--queries--functions))
+- `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
 <a id="nestedatt--configuration--event--good_query--queries--aggregate"></a>
 ### Nested Schema for `configuration.event.good_query.queries.aggregate`
@@ -358,6 +359,7 @@ Optional:
 
 - `fill` (Attributes) (see [below for nested schema](#nestedatt--configuration--event--total_query--queries--fill))
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--configuration--event--total_query--queries--functions))
+- `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
 <a id="nestedatt--configuration--event--total_query--queries--aggregate"></a>
 ### Nested Schema for `configuration.event.total_query.queries.aggregate`
@@ -553,6 +555,7 @@ Optional:
 
 - `fill` (Attributes) (see [below for nested schema](#nestedatt--configuration--time--query--queries--fill))
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--configuration--time--query--queries--functions))
+- `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
 <a id="nestedatt--configuration--time--query--queries--aggregate"></a>
 ### Nested Schema for `configuration.time.query.queries.aggregate`

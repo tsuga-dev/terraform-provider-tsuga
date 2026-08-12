@@ -71,6 +71,7 @@ func MonitorResourceSchema(ctx context.Context) schema.Schema {
 					"trace":              thresholdMonitorConfigurationSchema(),
 					"anomaly_metric":     anomalyMonitorConfigurationSchema(),
 					"anomaly_log":        anomalyMonitorConfigurationSchema(),
+					"anomaly_trace":      anomalyMonitorConfigurationSchema(),
 					"certificate_expiry": certificateExpiryMonitorConfigurationSchema(),
 					"log_error_pattern":  logErrorPatternMonitorConfigurationSchema(),
 				},
@@ -92,6 +93,9 @@ func MonitorResourceSchema(ctx context.Context) schema.Schema {
 			"dashboard_id": schema.StringAttribute{
 				Optional:    true,
 				Description: "Identifier of a dashboard related to the monitor",
+				Validators: []validator.String{
+					stringvalidator.LengthBetween(1, 250),
+				},
 			},
 			"permissions": schema.StringAttribute{
 				Required:    true,
@@ -117,6 +121,9 @@ func baseMonitorConfigurationAttributes() map[string]schema.Attribute {
 		"timeframe": schema.Int64Attribute{
 			Required:    true,
 			Description: "Timeframe of the monitor in minutes",
+			Validators: []validator.Int64{
+				int64validator.AtLeast(1),
+			},
 		},
 		"group_by_fields": schema.ListNestedAttribute{
 			Required: true,
@@ -241,6 +248,13 @@ func QueriesSchema() schema.Attribute {
 				"aggregate": aggregate.Schema(),
 				"functions": aggregationFunctionsSchema(),
 				"fill":      aggregationFillSchema(),
+				"time_aggregate": schema.StringAttribute{
+					Optional:    true,
+					Description: "Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.",
+					Validators: []validator.String{
+						stringvalidator.OneOf("avg", "sum", "min", "max", "last"),
+					},
+				},
 			},
 		},
 	}
@@ -353,6 +367,13 @@ func thresholdMonitorConfigurationSchema() schema.Attribute {
 
 func anomalyMonitorConfigurationSchema() schema.Attribute {
 	attrs := baseMonitorConfigurationAttributes()
+	attrs["timeframe"] = schema.Int64Attribute{
+		Required:    true,
+		Description: "Timeframe of the monitor in minutes (between 5 and 1440)",
+		Validators: []validator.Int64{
+			int64validator.Between(5, 1440),
+		},
+	}
 	attrs["condition"] = anomalyConditionSchema()
 	attrs["no_data_behavior"] = monitorNoDataBehaviorSchema(false) // anomaly monitors don't support consider_zero
 	attrs["queries"] = QueriesSchema()
@@ -459,6 +480,7 @@ type MonitorConfigurationModel struct {
 	Trace             *MonitorConfigurationDetailsModel           `tfsdk:"trace"`
 	AnomalyMetric     *AnomalyMonitorConfigurationDetailsModel    `tfsdk:"anomaly_metric"`
 	AnomalyLog        *AnomalyMonitorConfigurationDetailsModel    `tfsdk:"anomaly_log"`
+	AnomalyTrace      *AnomalyMonitorConfigurationDetailsModel    `tfsdk:"anomaly_trace"`
 	CertificateExpiry *CertificateExpiryMonitorConfigurationModel `tfsdk:"certificate_expiry"`
 	LogErrorPattern   *LogErrorPatternMonitorConfigurationModel   `tfsdk:"log_error_pattern"`
 }
@@ -514,10 +536,11 @@ type CertificateExpiryMonitorConfigurationModel struct {
 }
 
 type MonitorQueryModel struct {
-	Filter    types.String          `tfsdk:"filter"`
-	Aggregate MonitorAggregateModel `tfsdk:"aggregate"`
-	Functions types.List            `tfsdk:"functions"`
-	Fill      *AggregationFillModel `tfsdk:"fill"`
+	Filter        types.String          `tfsdk:"filter"`
+	Aggregate     MonitorAggregateModel `tfsdk:"aggregate"`
+	Functions     types.List            `tfsdk:"functions"`
+	Fill          *AggregationFillModel `tfsdk:"fill"`
+	TimeAggregate types.String          `tfsdk:"time_aggregate"`
 }
 
 type MonitorAggregateModel struct {
@@ -569,10 +592,11 @@ func MonitorConditionAttrTypes() map[string]attr.Type {
 
 func QueryAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"filter":    types.StringType,
-		"aggregate": types.ObjectType{AttrTypes: aggregate.AttrTypes()},
-		"functions": types.ListType{ElemType: types.ObjectType{AttrTypes: AggregationFunctionAttrTypes()}},
-		"fill":      types.ObjectType{AttrTypes: AggregationFillAttrTypes()},
+		"filter":         types.StringType,
+		"aggregate":      types.ObjectType{AttrTypes: aggregate.AttrTypes()},
+		"functions":      types.ListType{ElemType: types.ObjectType{AttrTypes: AggregationFunctionAttrTypes()}},
+		"fill":           types.ObjectType{AttrTypes: AggregationFillAttrTypes()},
+		"time_aggregate": types.StringType,
 	}
 }
 

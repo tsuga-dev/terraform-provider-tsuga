@@ -27,7 +27,7 @@
             "name": "description",
             "string": {
               "computed_optional_required": "computed",
-              "description": "Optional team description supplied by a user."
+              "description": "Optional free-text description of the team."
             }
           },
           {
@@ -221,7 +221,7 @@
                     "name": "key",
                     "string": {
                       "computed_optional_required": "required",
-                      "description": "Tag key to attach to the resource. Maximum length is 128 characters.",
+                      "description": "Tag key to attach to the resource.",
                       "validators": [
                         {
                           "custom": {
@@ -240,7 +240,7 @@
                     "name": "value",
                     "string": {
                       "computed_optional_required": "required",
-                      "description": "Tag value to attach to the resource. Maximum length is 256 characters and leading or trailing whitespace is rejected.",
+                      "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected.",
                       "validators": [
                         {
                           "custom": {
@@ -270,7 +270,7 @@
                   }
                 ]
               },
-              "description": "Key/value tags to apply to the resource. Up to 50 tags are accepted and tag policies may require specific keys or values.",
+              "description": "Key/value tags to apply to the resource. Tag policies may require specific keys or values.",
               "validators": [
                 {
                   "custom": {
@@ -473,7 +473,7 @@
                     "name": "key",
                     "string": {
                       "computed_optional_required": "required",
-                      "description": "Tag key to attach to the resource. Maximum length is 128 characters.",
+                      "description": "Tag key to attach to the resource.",
                       "validators": [
                         {
                           "custom": {
@@ -492,7 +492,7 @@
                     "name": "value",
                     "string": {
                       "computed_optional_required": "required",
-                      "description": "Tag value to attach to the resource. Maximum length is 256 characters and leading or trailing whitespace is rejected.",
+                      "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected.",
                       "validators": [
                         {
                           "custom": {
@@ -522,7 +522,7 @@
                   }
                 ]
               },
-              "description": "Key/value tags to apply to the resource. Up to 50 tags are accepted and tag policies may require specific keys or values.",
+              "description": "Key/value tags to apply to the resource. Tag policies may require specific keys or values.",
               "validators": [
                 {
                   "custom": {
