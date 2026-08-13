@@ -23,6 +23,7 @@ jobs:
         resource_example:
           - tsuga_custom_usage_tag
           - tsuga_dashboard
+          - tsuga_dashboard_folder
           - tsuga_ingestion_api_key
           - tsuga_monitor
           - tsuga_notification_rule

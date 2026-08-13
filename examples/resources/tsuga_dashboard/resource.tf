@@ -1,6 +1,12 @@
+resource "tsuga_dashboard_folder" "kubernetes" {
+  name  = "Kubernetes"
+  owner = "abc-123-def"
+}
+
 resource "tsuga_dashboard" "dashboard" {
   name        = "Kubernetes Dashboard"
   owner       = "abc-123-def"
+  folder_id   = tsuga_dashboard_folder.kubernetes.id
   time_preset = "past-15-minutes"
   filters = [
     {

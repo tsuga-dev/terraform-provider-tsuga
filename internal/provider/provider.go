@@ -127,6 +127,7 @@ func (p *tsugaProvider) Resources(_ context.Context) []func() resource.Resource 
 		NewNotificationRuleResource,
 		NewNotificationSilenceResource,
 		NewDashboardResource,
+		NewDashboardFolderResource,
 		NewRouteResource,
 		NewMonitorResource,
 		NewSloResource,
