@@ -170,6 +170,175 @@
       }
     },
     {
+      "name": "dashboard_folder",
+      "schema": {
+        "attributes": [
+          {
+            "name": "name",
+            "string": {
+              "computed_optional_required": "required",
+              "description": "Display name of the dashboard folder. Required and non-empty.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "owner",
+            "string": {
+              "computed_optional_required": "required",
+              "description": "ID of the team that owns the dashboard folder. Required and used for folder access control.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "parent_folder_id",
+            "string": {
+              "computed_optional_required": "optional",
+              "description": "ID of the top-level parent folder when this folder is nested. Set by the caller on create or update. Returned only for child folders; omitted for top-level folders.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "tags",
+            "list_nested": {
+              "computed_optional_required": "computed_optional",
+              "nested_object": {
+                "attributes": [
+                  {
+                    "name": "key",
+                    "string": {
+                      "computed_optional_required": "required",
+                      "description": "Tag key to attach to the resource.",
+                      "validators": [
+                        {
+                          "custom": {
+                            "imports": [
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                              }
+                            ],
+                            "schema_definition": "stringvalidator.LengthAtMost(128)"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "value",
+                    "string": {
+                      "computed_optional_required": "required",
+                      "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected.",
+                      "validators": [
+                        {
+                          "custom": {
+                            "imports": [
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                              }
+                            ],
+                            "schema_definition": "stringvalidator.LengthAtMost(256)"
+                          }
+                        },
+                        {
+                          "custom": {
+                            "imports": [
+                              {
+                                "path": "regexp"
+                              },
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                              }
+                            ],
+                            "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^\\\\S(.*\\\\S)?$\"), \"\")"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "description": "Key/value tags to apply to the resource. Tag policies may require specific keys or values.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.SizeAtMost(50)"
+                  }
+                }
+              ],
+              "plan_modifiers": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+                      }
+                    ],
+                    "schema_definition": "listplanmodifier.UseStateForUnknown()"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "id",
+            "string": {
+              "computed_optional_required": "computed",
+              "description": "Tsuga-generated dashboard folder ID assigned when the folder is created. Use it as dashboard `folderId` or child-folder `parentFolderId`.",
+              "plan_modifiers": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+                      }
+                    ],
+                    "schema_definition": "stringplanmodifier.UseStateForUnknown()"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "ingestion_api_key",
       "schema": {
         "attributes": [

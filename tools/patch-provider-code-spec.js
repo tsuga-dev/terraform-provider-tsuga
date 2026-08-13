@@ -12,6 +12,14 @@
  *    (e.g. editing the description) keeps the id known in the plan instead of
  *    showing `id -> (known after apply)`, which otherwise cascades spurious
  *    diffs onto resources that reference it (team memberships, tag policies).
+ *  - dashboard_folder resource: makes parent_folder_id plain optional. The API
+ *    returns it only for nested folders, so codegen marks it computed_optional,
+ *    and terraform then carries the prior parent into the plan when the
+ *    attribute is dropped, making a move back to top level unplannable.
+ *    Also adds use_state_for_unknown to `id` (same reason as the team resource,
+ *    and folders reference each other through parent_folder_id) and to `tags`,
+ *    so a config that omits tags keeps the stored ones instead of planning
+ *    `(known after apply)` on every update.
  *  - ingestion_api_key resource: keeps team_override_fields computed_optional.
  *    The OpenAPI spec lists it in `required`, but `anyOf` allows null. We want
  *    to allow users to omit it in terraform, which will send null to the API.
@@ -101,6 +109,47 @@ teamIdAttr.string.plan_modifiers = [
     },
   },
 ];
+
+const dashboardFolder = spec.resources.find((r) => r.name === "dashboard_folder");
+if (!dashboardFolder) {
+  console.error("dashboard_folder resource not found in spec");
+  process.exit(1);
+}
+const parentFolderIdAttr = findAttr(dashboardFolder.schema.attributes, "parent_folder_id");
+if (!parentFolderIdAttr) {
+  console.error("parent_folder_id attribute not found in dashboard_folder resource");
+  process.exit(1);
+}
+parentFolderIdAttr.string.computed_optional_required = "optional";
+
+const useStateForUnknown = (importPath, modifier) => [
+  {
+    custom: {
+      imports: [{path: importPath}],
+      schema_definition: modifier,
+    },
+  },
+];
+
+const dashboardFolderIdAttr = findAttr(dashboardFolder.schema.attributes, "id");
+if (!dashboardFolderIdAttr) {
+  console.error("id attribute not found in dashboard_folder resource");
+  process.exit(1);
+}
+dashboardFolderIdAttr.string.plan_modifiers = useStateForUnknown(
+  "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier",
+  "stringplanmodifier.UseStateForUnknown()",
+);
+
+const dashboardFolderTagsAttr = findAttr(dashboardFolder.schema.attributes, "tags");
+if (!dashboardFolderTagsAttr) {
+  console.error("tags attribute not found in dashboard_folder resource");
+  process.exit(1);
+}
+dashboardFolderTagsAttr.list_nested.plan_modifiers = useStateForUnknown(
+  "github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier",
+  "listplanmodifier.UseStateForUnknown()",
+);
 
 const ingestionApiKey = spec.resources.find((r) => r.name === "ingestion_api_key");
 if (!ingestionApiKey) {

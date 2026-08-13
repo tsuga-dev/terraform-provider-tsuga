@@ -464,6 +464,12 @@ func (r *dashboardResource) buildDashboardRequestBody(ctx context.Context, plan 
 	if !plan.TimePreset.IsNull() && !plan.TimePreset.IsUnknown() {
 		body["timePreset"] = plan.TimePreset.ValueString()
 	}
+	// Sent even when null so dropping the attribute moves the dashboard out of its folder.
+	if plan.FolderId.IsNull() {
+		body["folderId"] = nil
+	} else if !plan.FolderId.IsUnknown() {
+		body["folderId"] = plan.FolderId.ValueString()
+	}
 
 	if tags, tagDiags := expandTags(ctx, plan.Tags); tagDiags.HasError() {
 		diags.Append(tagDiags...)
@@ -542,6 +548,7 @@ type dashboardAPIData struct {
 	ID         string               `json:"id"`
 	Name       string               `json:"name"`
 	Owner      string               `json:"owner"`
+	FolderId   string               `json:"folderId,omitempty"`
 	Filters    []dashboardAPIFilter `json:"filters"`
 	Tags       []apiTag             `json:"tags"`
 	TimePreset string               `json:"timePreset,omitempty"`
@@ -1166,6 +1173,7 @@ func flattenDashboard(ctx context.Context, data dashboardAPIData) (resource_dash
 		Id:         types.StringValue(data.ID),
 		Name:       types.StringValue(data.Name),
 		Owner:      types.StringValue(data.Owner),
+		FolderId:   stringValueOrNull(data.FolderId),
 		Filters:    filters,
 		Tags:       tags,
 		TimePreset: stringValueOrNull(data.TimePreset),

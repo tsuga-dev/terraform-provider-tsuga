@@ -13,9 +13,15 @@ Visualization of telemetry data with customizable graphs and filters
 ## Example Usage
 
 ```terraform
+resource "tsuga_dashboard_folder" "kubernetes" {
+  name  = "Kubernetes"
+  owner = "abc-123-def"
+}
+
 resource "tsuga_dashboard" "dashboard" {
   name        = "Kubernetes Dashboard"
   owner       = "abc-123-def"
+  folder_id   = tsuga_dashboard_folder.kubernetes.id
   time_preset = "past-15-minutes"
   filters = [
     {
@@ -605,6 +611,7 @@ resource "tsuga_dashboard" "dashboard" {
 ### Optional
 
 - `filters` (Attributes List) Filters applied to every widget on the dashboard (see [below for nested schema](#nestedatt--filters))
+- `folder_id` (String) ID of the dashboard folder holding the dashboard. Omit to leave the dashboard outside any folder.
 - `tags` (Attributes List) List of key/value tags applied to the resource (see [below for nested schema](#nestedatt--tags))
 - `time_preset` (String) Preset time range for dashboard queries
 

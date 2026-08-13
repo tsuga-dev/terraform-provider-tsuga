@@ -39,6 +39,13 @@ func DashboardResourceSchema(ctx context.Context) schema.Schema {
 					stringvalidator.LengthAtMost(250),
 				},
 			},
+			"folder_id": schema.StringAttribute{
+				Optional:    true,
+				Description: "ID of the dashboard folder holding the dashboard. Omit to leave the dashboard outside any folder.",
+				Validators: []validator.String{
+					stringvalidator.LengthAtMost(250),
+				},
+			},
 			"filters": schema.ListNestedAttribute{
 				Optional:    true,
 				Description: "Filters applied to every widget on the dashboard",
@@ -994,6 +1001,7 @@ type DashboardModel struct {
 	Id         types.String `tfsdk:"id"`
 	Name       types.String `tfsdk:"name"`
 	Owner      types.String `tfsdk:"owner"`
+	FolderId   types.String `tfsdk:"folder_id"`
 	Filters    types.List   `tfsdk:"filters"`
 	Tags       types.List   `tfsdk:"tags"`
 	TimePreset types.String `tfsdk:"time_preset"`
