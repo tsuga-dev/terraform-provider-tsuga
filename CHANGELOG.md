@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.4] - 2026-08-13
+
 ### Added
 
 - `tsuga_dashboard_folder`: new resource managing dashboard folders. Supports `name`, `owner`, `parent_folder_id` (folders nest one level deep) and `tags`.
