@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- `tsuga_slo`: removed `fill` from aggregation queries. The API derives it from the SLO type (`zero` for event SLOs, `null` for time SLOs).
+
 ## [2.2.4] - 2026-08-13
 
 ### Added

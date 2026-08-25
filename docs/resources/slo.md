@@ -191,7 +191,6 @@ Required:
 
 Optional:
 
-- `fill` (Attributes) (see [below for nested schema](#nestedatt--configuration--event--good_query--queries--fill))
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--configuration--event--good_query--queries--functions))
 - `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
@@ -263,22 +262,6 @@ Required:
 Required:
 
 - `field` (String)
-
-
-
-<a id="nestedatt--configuration--event--good_query--queries--fill"></a>
-### Nested Schema for `configuration.event.good_query.queries.fill`
-
-Required:
-
-- `mode` (Attributes) (see [below for nested schema](#nestedatt--configuration--event--good_query--queries--fill--mode))
-
-<a id="nestedatt--configuration--event--good_query--queries--fill--mode"></a>
-### Nested Schema for `configuration.event.good_query.queries.fill.mode`
-
-Required:
-
-- `type` (String)
 
 
 
@@ -357,7 +340,6 @@ Required:
 
 Optional:
 
-- `fill` (Attributes) (see [below for nested schema](#nestedatt--configuration--event--total_query--queries--fill))
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--configuration--event--total_query--queries--functions))
 - `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
@@ -429,22 +411,6 @@ Required:
 Required:
 
 - `field` (String)
-
-
-
-<a id="nestedatt--configuration--event--total_query--queries--fill"></a>
-### Nested Schema for `configuration.event.total_query.queries.fill`
-
-Required:
-
-- `mode` (Attributes) (see [below for nested schema](#nestedatt--configuration--event--total_query--queries--fill--mode))
-
-<a id="nestedatt--configuration--event--total_query--queries--fill--mode"></a>
-### Nested Schema for `configuration.event.total_query.queries.fill.mode`
-
-Required:
-
-- `type` (String)
 
 
 
@@ -553,7 +519,6 @@ Required:
 
 Optional:
 
-- `fill` (Attributes) (see [below for nested schema](#nestedatt--configuration--time--query--queries--fill))
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--configuration--time--query--queries--functions))
 - `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
@@ -625,22 +590,6 @@ Required:
 Required:
 
 - `field` (String)
-
-
-
-<a id="nestedatt--configuration--time--query--queries--fill"></a>
-### Nested Schema for `configuration.time.query.queries.fill`
-
-Required:
-
-- `mode` (Attributes) (see [below for nested schema](#nestedatt--configuration--time--query--queries--fill--mode))
-
-<a id="nestedatt--configuration--time--query--queries--fill--mode"></a>
-### Nested Schema for `configuration.time.query.queries.fill.mode`
-
-Required:
-
-- `type` (String)
 
 
 

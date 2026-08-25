@@ -111,7 +111,7 @@ func (r *sloResource) validateSloQueryFormula(ctx context.Context, qf resource_s
 		return diags
 	}
 
-	var queryModels []resource_monitor.MonitorQueryModel
+	var queryModels []resource_slo.SloQueryModel
 	diags.Append(qf.Queries.ElementsAs(ctx, &queryModels, false)...)
 	if diags.HasError() {
 		return diags
@@ -553,8 +553,54 @@ func (r *sloResource) expandSloTimeConfiguration(ctx context.Context, config *re
 	return result, diags
 }
 
+func expandSloQueries(ctx context.Context, queries types.List) ([]map[string]interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if queries.IsNull() || queries.IsUnknown() {
+		return nil, diags
+	}
+
+	var queryModels []resource_slo.SloQueryModel
+	diags.Append(queries.ElementsAs(ctx, &queryModels, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	result := make([]map[string]interface{}, 0, len(queryModels))
+	for _, q := range queryModels {
+		query, qDiags := expandQueryFields(ctx, q.Filter, q.Aggregate, q.Functions, q.TimeAggregate)
+		diags.Append(qDiags...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		result = append(result, query)
+	}
+
+	return result, diags
+}
+
+func flattenSloQueries(queries []monitorAPIQuery) (types.List, diag.Diagnostics) {
+	elemType := types.ObjectType{AttrTypes: resource_slo.SloQueryAttrTypes()}
+	if len(queries) == 0 {
+		return types.ListNull(elemType), nil
+	}
+
+	values := make([]attr.Value, 0, len(queries))
+	for _, q := range queries {
+		obj, diags := flattenQueryFields(q)
+		if diags.HasError() {
+			return types.ListNull(elemType), diags
+		}
+
+		values = append(values, types.ObjectValueMust(resource_slo.SloQueryAttrTypes(), obj))
+	}
+
+	return types.ListValue(elemType, values)
+}
+
 func (r *sloResource) expandSloQueryFormula(ctx context.Context, qf resource_slo.SloQueryFormulaModel) (map[string]interface{}, diag.Diagnostics) {
-	queries, diags := expandMonitorQueries(ctx, qf.Queries)
+	queries, diags := expandSloQueries(ctx, qf.Queries)
 	if diags.HasError() {
 		return nil, diags
 	}
@@ -769,7 +815,7 @@ func flattenSloQueryFormula(qf *sloAPIQueryFormula) (resource_slo.SloQueryFormul
 		return resource_slo.SloQueryFormulaModel{}, diags
 	}
 
-	queries, qDiags := flattenMonitorQueries(qf.Queries)
+	queries, qDiags := flattenSloQueries(qf.Queries)
 	diags.Append(qDiags...)
 
 	return resource_slo.SloQueryFormulaModel{

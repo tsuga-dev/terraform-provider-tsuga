@@ -11,13 +11,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// sloCountQueries builds a minimal queries list with a single count aggregate, matching the
-// monitor aggregation-query shape that SLOs reuse.
 func sloCountQueries(t *testing.T, filter string) types.List {
 	t.Helper()
 
-	elemType := types.ObjectType{AttrTypes: resource_monitor.QueryAttrTypes()}
-	list, diags := types.ListValueFrom(context.Background(), elemType, []resource_monitor.MonitorQueryModel{
+	elemType := types.ObjectType{AttrTypes: resource_slo.SloQueryAttrTypes()}
+	list, diags := types.ListValueFrom(context.Background(), elemType, []resource_slo.SloQueryModel{
 		{
 			Filter: types.StringValue(filter),
 			Aggregate: resource_monitor.MonitorAggregateModel{

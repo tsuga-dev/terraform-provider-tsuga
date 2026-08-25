@@ -860,38 +860,50 @@ func expandMonitorQueries(ctx context.Context, queries types.List) ([]map[string
 
 	result := make([]map[string]interface{}, 0, len(queryModels))
 	for _, q := range queryModels {
-		agg, aggDiags := expandMonitorAggregate(q.Aggregate)
-		diags.Append(aggDiags...)
+		query, qDiags := expandQueryFields(ctx, q.Filter, q.Aggregate, q.Functions, q.TimeAggregate)
+		diags.Append(qDiags...)
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		functions, fDiags := expandAggregationFunctions(ctx, q.Functions)
-		diags.Append(fDiags...)
 		fill, fillDiags := expandAggregationFill(q.Fill)
 		diags.Append(fillDiags...)
-
-		query := map[string]interface{}{
-			"filter":    q.Filter.ValueString(),
-			"aggregate": agg,
-		}
-
-		if len(functions) > 0 {
-			query["functions"] = functions
-		}
-
 		if fill != nil {
 			query["fill"] = fill
-		}
-
-		if !q.TimeAggregate.IsNull() && !q.TimeAggregate.IsUnknown() {
-			query["timeAggregate"] = q.TimeAggregate.ValueString()
 		}
 
 		result = append(result, query)
 	}
 
 	return result, diags
+}
+
+func expandQueryFields(ctx context.Context, filter types.String, agg resource_monitor.MonitorAggregateModel, functions types.List, timeAggregate types.String) (map[string]interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	expandedAgg, aggDiags := expandMonitorAggregate(agg)
+	diags.Append(aggDiags...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	expandedFunctions, fDiags := expandAggregationFunctions(ctx, functions)
+	diags.Append(fDiags...)
+
+	query := map[string]interface{}{
+		"filter":    filter.ValueString(),
+		"aggregate": expandedAgg,
+	}
+
+	if len(expandedFunctions) > 0 {
+		query["functions"] = expandedFunctions
+	}
+
+	if !timeAggregate.IsNull() && !timeAggregate.IsUnknown() {
+		query["timeAggregate"] = timeAggregate.ValueString()
+	}
+
+	return query, diags
 }
 
 func expandMonitorAggregate(agg resource_monitor.MonitorAggregateModel) (map[string]interface{}, diag.Diagnostics) {
@@ -1280,33 +1292,41 @@ func flattenMonitorQueries(queries []monitorAPIQuery) (types.List, diag.Diagnost
 
 	values := make([]attr.Value, 0, len(queries))
 	for _, q := range queries {
-		aggVal, diags := flattenMonitorAggregate(q.Aggregate)
+		obj, diags := flattenQueryFields(q)
 		if diags.HasError() {
 			return types.ListNull(elemType), diags
-		}
-
-		functionsVal, funcDiags := flattenAggregationFunctions(q.Functions)
-		if funcDiags.HasError() {
-			return types.ListNull(elemType), funcDiags
 		}
 
 		fillVal, fillDiags := flattenAggregationFill(q.Fill)
 		if fillDiags.HasError() {
 			return types.ListNull(elemType), fillDiags
 		}
-
-		obj := map[string]attr.Value{
-			"filter":         types.StringValue(q.Filter),
-			"aggregate":      aggVal,
-			"functions":      functionsVal,
-			"fill":           fillVal,
-			"time_aggregate": stringValueOrNull(q.TimeAggregate),
-		}
+		obj["fill"] = fillVal
 
 		values = append(values, types.ObjectValueMust(resource_monitor.QueryAttrTypes(), obj))
 	}
 
 	return types.ListValue(elemType, values)
+}
+
+func flattenQueryFields(q monitorAPIQuery) (map[string]attr.Value, diag.Diagnostics) {
+	aggVal, diags := flattenMonitorAggregate(q.Aggregate)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	functionsVal, funcDiags := flattenAggregationFunctions(q.Functions)
+	diags.Append(funcDiags...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return map[string]attr.Value{
+		"filter":         types.StringValue(q.Filter),
+		"aggregate":      aggVal,
+		"functions":      functionsVal,
+		"time_aggregate": stringValueOrNull(q.TimeAggregate),
+	}, diags
 }
 
 func flattenMonitorAggregate(agg monitorAPIAggregate) (attr.Value, diag.Diagnostics) {

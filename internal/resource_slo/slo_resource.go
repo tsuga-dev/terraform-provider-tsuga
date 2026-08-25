@@ -19,7 +19,7 @@ import (
 
 // SloResourceSchema describes the tsuga_slo resource. The SLI configuration is a
 // discriminated union (event vs time); both variants reuse the monitor aggregation-query
-// shape (see resource_monitor.QueriesSchema) for their good/total/query formulas.
+// shape minus fill (see sloQueriesSchema) for their good/total/query formulas.
 func SloResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Description: "Service Level Objective: its SLI configuration, target percentage, rolling timeframe, cluster scope, and attached alerts",
@@ -172,15 +172,26 @@ func sloDataSourceSchema() schema.Attribute {
 	}
 }
 
-// sloQueryFormulaSchema returns the schema for an SLO query formula: a list of monitor
-// aggregation queries combined by a formula. Reuses resource_monitor.QueriesSchema so the
-// wire format matches a monitor query exactly.
+func sloQueriesSchema() schema.Attribute {
+	queries := resource_monitor.QueriesSchema().(schema.ListNestedAttribute)
+	delete(queries.NestedObject.Attributes, "fill") // API derives fill from the SLO type
+
+	return queries
+}
+
+func SloQueryAttrTypes() map[string]attr.Type {
+	attrTypes := resource_monitor.QueryAttrTypes()
+	delete(attrTypes, "fill") // API derives fill from the SLO type
+
+	return attrTypes
+}
+
 func sloQueryFormulaSchema() schema.Attribute {
 	return schema.SingleNestedAttribute{
 		Required:    true,
 		Description: "Aggregation queries combined by a formula to produce the SLO signal",
 		Attributes: map[string]schema.Attribute{
-			"queries": resource_monitor.QueriesSchema(),
+			"queries": sloQueriesSchema(),
 			"formula": schema.StringAttribute{
 				Required:    true,
 				Description: "Formula referencing query outputs (e.g. q1+q2)",
@@ -337,6 +348,13 @@ type SloTimeConfigurationModel struct {
 type SloQueryFormulaModel struct {
 	Queries types.List   `tfsdk:"queries"`
 	Formula types.String `tfsdk:"formula"`
+}
+
+type SloQueryModel struct {
+	Filter        types.String                           `tfsdk:"filter"`
+	Aggregate     resource_monitor.MonitorAggregateModel `tfsdk:"aggregate"`
+	Functions     types.List                             `tfsdk:"functions"`
+	TimeAggregate types.String                           `tfsdk:"time_aggregate"`
 }
 
 type SloTimeThresholdModel struct {
