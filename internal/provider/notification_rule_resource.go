@@ -91,14 +91,16 @@ func (r *notificationRuleResource) ValidateConfig(ctx context.Context, req resou
 		}
 
 		for i, target := range targets {
-			diags := r.validateTargetConfig(target.Config, fmt.Sprintf("targets[%d].config", i))
+			diags := r.validateTargetConfig(target.Config, i)
 			resp.Diagnostics.Append(diags...)
 		}
 	}
 }
 
-func (r *notificationRuleResource) validateTargetConfig(cfg resource_notification_rule.TargetConfigModel, pathPrefix string) diag.Diagnostics {
+func (r *notificationRuleResource) validateTargetConfig(cfg resource_notification_rule.TargetConfigModel, index int) diag.Diagnostics {
 	var diags diag.Diagnostics
+
+	pathPrefix := fmt.Sprintf("targets[%d].config", index)
 
 	setCount := 0
 	if cfg.Slack != nil {
@@ -125,11 +127,29 @@ func (r *notificationRuleResource) validateTargetConfig(cfg resource_notificatio
 	if cfg.Squadcast != nil {
 		setCount++
 	}
+	if cfg.ServiceNow != nil {
+		setCount++
+	}
+	if cfg.GoogleChat != nil {
+		setCount++
+	}
+	if cfg.Jira != nil {
+		setCount++
+	}
 
 	if setCount != 1 {
 		diags.AddError(
 			"Invalid target config configuration",
-			fmt.Sprintf("%s: exactly one of slack, incident_io, pagerduty, email, grafana_irm, microsoft_teams, webhook, or squadcast must be set.", pathPrefix),
+			fmt.Sprintf("%s: exactly one of slack, incident_io, pagerduty, email, grafana_irm, microsoft_teams, webhook, squadcast, servicenow, google_chat, or jira must be set.", pathPrefix),
+		)
+	}
+
+	// Jira files one issue per notification, so the API rejects renotify on it.
+	if cfg.Jira != nil && cfg.Renotify != nil {
+		diags.AddAttributeError(
+			path.Root("targets").AtListIndex(index).AtName("config").AtName("renotify"),
+			"Unsupported attribute combination",
+			"renotify is not supported on a jira destination.",
 		)
 	}
 
@@ -355,20 +375,24 @@ type notificationRuleAPIData struct {
 }
 
 type notificationRuleAPITarget struct {
-	ID             string                              `json:"id"`
-	Config         notificationRuleAPITargetConfig     `json:"config"`
-	RateLimit      *notificationRuleAPITargetRateLimit `json:"rateLimit,omitempty"`
-	RenotifyConfig *notificationRuleAPITargetRenotify  `json:"renotifyConfig,omitempty"`
+	ID        string                              `json:"id"`
+	Config    notificationRuleAPITargetConfig     `json:"config"`
+	RateLimit *notificationRuleAPITargetRateLimit `json:"rateLimit,omitempty"`
 }
 
 type notificationRuleAPITargetConfig struct {
-	Type            string   `json:"type"`
-	Channel         string   `json:"channel,omitempty"`
-	Addresses       []string `json:"addresses,omitempty"`
-	IntegrationID   string   `json:"integrationId,omitempty"`
-	IntegrationName string   `json:"integrationName,omitempty"`
-	HideTime        *bool    `json:"hideTime,omitempty"`
-	HideTransition  *bool    `json:"hideTransition,omitempty"`
+	Type            string                             `json:"type"`
+	Channel         string                             `json:"channel,omitempty"`
+	Addresses       []string                           `json:"addresses,omitempty"`
+	IntegrationID   string                             `json:"integrationId,omitempty"`
+	IntegrationName string                             `json:"integrationName,omitempty"`
+	ProjectKey      string                             `json:"projectKey,omitempty"`
+	IssueType       string                             `json:"issueType,omitempty"`
+	OpenStatus      string                             `json:"openStatus,omitempty"`
+	ClosedStatus    string                             `json:"closedStatus,omitempty"`
+	HideTime        *bool                              `json:"hideTime,omitempty"`
+	HideTransition  *bool                              `json:"hideTransition,omitempty"`
+	RenotifyConfig  *notificationRuleAPITargetRenotify `json:"renotifyConfig,omitempty"`
 }
 
 type notificationRuleAPITargetRateLimit struct {
@@ -411,21 +435,6 @@ func expandNotificationRuleTargets(ctx context.Context, targets types.List) ([]n
 			apiTarget.RateLimit = &notificationRuleAPITargetRateLimit{
 				MaxMessages: t.RateLimit.MaxMessages.ValueInt64(),
 				Minutes:     t.RateLimit.Minutes.ValueInt64(),
-			}
-		}
-
-		if t.RenotifyConfig != nil {
-			if !t.RenotifyConfig.RenotificationStates.IsNull() && !t.RenotifyConfig.RenotificationStates.IsUnknown() {
-				renotifyStates, renotifyDiags := expandStringList(ctx, t.RenotifyConfig.RenotificationStates)
-				diags.Append(renotifyDiags...)
-				if diags.HasError() {
-					return nil, diags
-				}
-				apiTarget.RenotifyConfig = &notificationRuleAPITargetRenotify{
-					Mode:                    t.RenotifyConfig.Mode.ValueString(),
-					RenotificationStates:    renotifyStates,
-					RenotifyIntervalMinutes: t.RenotifyConfig.RenotifyIntervalMinutes.ValueInt64(),
-				}
 			}
 		}
 
@@ -488,6 +497,22 @@ func flattenNotificationRuleTargets(ctx context.Context, targets []notificationR
 			"microsoft_teams": types.ObjectNull(resource_notification_rule.IntegrationConfigAttrTypes(ctx)),
 			"webhook":         types.ObjectNull(resource_notification_rule.IntegrationConfigAttrTypes(ctx)),
 			"squadcast":       types.ObjectNull(resource_notification_rule.IntegrationConfigAttrTypes(ctx)),
+			"servicenow":      types.ObjectNull(resource_notification_rule.IntegrationConfigAttrTypes(ctx)),
+			"google_chat":     types.ObjectNull(resource_notification_rule.IntegrationConfigAttrTypes(ctx)),
+			"jira":            types.ObjectNull(resource_notification_rule.JiraAttrTypes(ctx)),
+			"renotify":        types.ObjectNull(renotifyType.AttrTypes),
+		}
+
+		if t.Config.RenotifyConfig != nil {
+			renotifyStates, diags := types.ListValueFrom(ctx, types.StringType, t.Config.RenotifyConfig.RenotificationStates)
+			if diags.HasError() {
+				return types.ListNull(elemType), diags
+			}
+			configValues["renotify"] = types.ObjectValueMust(renotifyType.AttrTypes, map[string]attr.Value{
+				"mode":                      types.StringValue(t.Config.RenotifyConfig.Mode),
+				"renotification_states":     renotifyStates,
+				"renotify_interval_minutes": types.Int64Value(t.Config.RenotifyConfig.RenotifyIntervalMinutes),
+			})
 		}
 
 		switch t.Config.Type {
@@ -553,6 +578,28 @@ func flattenNotificationRuleTargets(ctx context.Context, targets []notificationR
 				"integration_id":   types.StringValue(t.Config.IntegrationID),
 				"integration_name": stringValueOrNull(t.Config.IntegrationName),
 			})
+		case "servicenow":
+			configValues["servicenow"] = types.ObjectValueMust(resource_notification_rule.IntegrationConfigAttrTypes(ctx), map[string]attr.Value{
+				"type":             types.StringValue("servicenow"),
+				"integration_id":   types.StringValue(t.Config.IntegrationID),
+				"integration_name": stringValueOrNull(t.Config.IntegrationName),
+			})
+		case "google-chat":
+			configValues["google_chat"] = types.ObjectValueMust(resource_notification_rule.IntegrationConfigAttrTypes(ctx), map[string]attr.Value{
+				"type":             types.StringValue("google-chat"),
+				"integration_id":   types.StringValue(t.Config.IntegrationID),
+				"integration_name": stringValueOrNull(t.Config.IntegrationName),
+			})
+		case "jira":
+			configValues["jira"] = types.ObjectValueMust(resource_notification_rule.JiraAttrTypes(ctx), map[string]attr.Value{
+				"type":             types.StringValue("jira"),
+				"integration_id":   types.StringValue(t.Config.IntegrationID),
+				"integration_name": stringValueOrNull(t.Config.IntegrationName),
+				"project_key":      types.StringValue(t.Config.ProjectKey),
+				"issue_type":       types.StringValue(t.Config.IssueType),
+				"open_status":      stringValueOrNull(t.Config.OpenStatus),
+				"closed_status":    stringValueOrNull(t.Config.ClosedStatus),
+			})
 		}
 
 		rateLimitValue := types.ObjectNull(rateLimitType.AttrTypes)
@@ -563,24 +610,10 @@ func flattenNotificationRuleTargets(ctx context.Context, targets []notificationR
 			})
 		}
 
-		renotifyValue := types.ObjectNull(renotifyType.AttrTypes)
-		if t.RenotifyConfig != nil {
-			renotifyStates, diags := types.ListValueFrom(ctx, types.StringType, t.RenotifyConfig.RenotificationStates)
-			if diags.HasError() {
-				return types.ListNull(elemType), diags
-			}
-			renotifyValue = types.ObjectValueMust(renotifyType.AttrTypes, map[string]attr.Value{
-				"mode":                      types.StringValue(t.RenotifyConfig.Mode),
-				"renotification_states":     renotifyStates,
-				"renotify_interval_minutes": types.Int64Value(t.RenotifyConfig.RenotifyIntervalMinutes),
-			})
-		}
-
 		values = append(values, types.ObjectValueMust(resource_notification_rule.TargetAttrTypes(ctx), map[string]attr.Value{
-			"id":              types.StringValue(t.ID),
-			"config":          types.ObjectValueMust(configTypes, configValues),
-			"rate_limit":      rateLimitValue,
-			"renotify_config": renotifyValue,
+			"id":         types.StringValue(t.ID),
+			"config":     types.ObjectValueMust(configTypes, configValues),
+			"rate_limit": rateLimitValue,
 		}))
 	}
 
@@ -588,6 +621,28 @@ func flattenNotificationRuleTargets(ctx context.Context, targets []notificationR
 }
 
 func expandTargetConfig(ctx context.Context, cfg resource_notification_rule.TargetConfigModel) (notificationRuleAPITargetConfig, diag.Diagnostics) {
+	conf, diags := expandTargetDestinationConfig(ctx, cfg)
+	if diags.HasError() {
+		return notificationRuleAPITargetConfig{}, diags
+	}
+
+	if cfg.Renotify != nil {
+		renotifyStates, renotifyDiags := expandStringList(ctx, cfg.Renotify.RenotificationStates)
+		diags.Append(renotifyDiags...)
+		if diags.HasError() {
+			return notificationRuleAPITargetConfig{}, diags
+		}
+		conf.RenotifyConfig = &notificationRuleAPITargetRenotify{
+			Mode:                    cfg.Renotify.Mode.ValueString(),
+			RenotificationStates:    renotifyStates,
+			RenotifyIntervalMinutes: cfg.Renotify.RenotifyIntervalMinutes.ValueInt64(),
+		}
+	}
+
+	return conf, diags
+}
+
+func expandTargetDestinationConfig(ctx context.Context, cfg resource_notification_rule.TargetConfigModel) (notificationRuleAPITargetConfig, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	setCount := 0
@@ -615,9 +670,18 @@ func expandTargetConfig(ctx context.Context, cfg resource_notification_rule.Targ
 	if cfg.Squadcast != nil {
 		setCount++
 	}
+	if cfg.ServiceNow != nil {
+		setCount++
+	}
+	if cfg.GoogleChat != nil {
+		setCount++
+	}
+	if cfg.Jira != nil {
+		setCount++
+	}
 
 	if setCount != 1 {
-		diags.AddError("Invalid target config", "Exactly one of slack, incident_io, pagerduty, email, grafana_irm, microsoft_teams, webhook, squadcast must be set in config.")
+		diags.AddError("Invalid target config", "Exactly one of slack, incident_io, pagerduty, email, grafana_irm, microsoft_teams, webhook, squadcast, servicenow, google_chat, jira must be set in config.")
 		return notificationRuleAPITargetConfig{}, diags
 	}
 
@@ -699,6 +763,41 @@ func expandTargetConfig(ctx context.Context, cfg resource_notification_rule.Targ
 		}
 		if !cfg.Squadcast.IntegrationName.IsNull() && !cfg.Squadcast.IntegrationName.IsUnknown() {
 			conf.IntegrationName = cfg.Squadcast.IntegrationName.ValueString()
+		}
+		return conf, diags
+	case cfg.ServiceNow != nil:
+		conf := notificationRuleAPITargetConfig{
+			Type:          "servicenow",
+			IntegrationID: cfg.ServiceNow.IntegrationID.ValueString(),
+		}
+		if !cfg.ServiceNow.IntegrationName.IsNull() && !cfg.ServiceNow.IntegrationName.IsUnknown() {
+			conf.IntegrationName = cfg.ServiceNow.IntegrationName.ValueString()
+		}
+		return conf, diags
+	case cfg.GoogleChat != nil:
+		conf := notificationRuleAPITargetConfig{
+			Type:          "google-chat",
+			IntegrationID: cfg.GoogleChat.IntegrationID.ValueString(),
+		}
+		if !cfg.GoogleChat.IntegrationName.IsNull() && !cfg.GoogleChat.IntegrationName.IsUnknown() {
+			conf.IntegrationName = cfg.GoogleChat.IntegrationName.ValueString()
+		}
+		return conf, diags
+	case cfg.Jira != nil:
+		conf := notificationRuleAPITargetConfig{
+			Type:          "jira",
+			IntegrationID: cfg.Jira.IntegrationID.ValueString(),
+			ProjectKey:    cfg.Jira.ProjectKey.ValueString(),
+			IssueType:     cfg.Jira.IssueType.ValueString(),
+		}
+		if !cfg.Jira.IntegrationName.IsNull() && !cfg.Jira.IntegrationName.IsUnknown() {
+			conf.IntegrationName = cfg.Jira.IntegrationName.ValueString()
+		}
+		if !cfg.Jira.OpenStatus.IsNull() && !cfg.Jira.OpenStatus.IsUnknown() {
+			conf.OpenStatus = cfg.Jira.OpenStatus.ValueString()
+		}
+		if !cfg.Jira.ClosedStatus.IsNull() && !cfg.Jira.ClosedStatus.IsUnknown() {
+			conf.ClosedStatus = cfg.Jira.ClosedStatus.ValueString()
 		}
 		return conf, diags
 	default:
