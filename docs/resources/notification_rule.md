@@ -78,7 +78,6 @@ Required:
 Optional:
 
 - `rate_limit` (Attributes) (see [below for nested schema](#nestedatt--targets--rate_limit))
-- `renotify_config` (Attributes) (see [below for nested schema](#nestedatt--targets--renotify_config))
 
 <a id="nestedatt--targets--config"></a>
 ### Nested Schema for `targets.config`
@@ -86,10 +85,14 @@ Optional:
 Optional:
 
 - `email` (Attributes) (see [below for nested schema](#nestedatt--targets--config--email))
+- `google_chat` (Attributes) (see [below for nested schema](#nestedatt--targets--config--google_chat))
 - `grafana_irm` (Attributes) (see [below for nested schema](#nestedatt--targets--config--grafana_irm))
 - `incident_io` (Attributes) (see [below for nested schema](#nestedatt--targets--config--incident_io))
+- `jira` (Attributes) Files one Jira issue per notification. Cannot be combined with renotify. (see [below for nested schema](#nestedatt--targets--config--jira))
 - `microsoft_teams` (Attributes) (see [below for nested schema](#nestedatt--targets--config--microsoft_teams))
 - `pagerduty` (Attributes) (see [below for nested schema](#nestedatt--targets--config--pagerduty))
+- `renotify` (Attributes) (see [below for nested schema](#nestedatt--targets--config--renotify))
+- `servicenow` (Attributes) (see [below for nested schema](#nestedatt--targets--config--servicenow))
 - `slack` (Attributes) (see [below for nested schema](#nestedatt--targets--config--slack))
 - `squadcast` (Attributes) (see [below for nested schema](#nestedatt--targets--config--squadcast))
 - `webhook` (Attributes) (see [below for nested schema](#nestedatt--targets--config--webhook))
@@ -103,6 +106,19 @@ Required:
 
 Read-Only:
 
+- `type` (String)
+
+
+<a id="nestedatt--targets--config--google_chat"></a>
+### Nested Schema for `targets.config.google_chat`
+
+Required:
+
+- `integration_id` (String)
+
+Read-Only:
+
+- `integration_name` (String)
 - `type` (String)
 
 
@@ -132,6 +148,26 @@ Read-Only:
 - `type` (String)
 
 
+<a id="nestedatt--targets--config--jira"></a>
+### Nested Schema for `targets.config.jira`
+
+Required:
+
+- `integration_id` (String)
+- `issue_type` (String) Jira issue type used when creating issues
+- `project_key` (String) Key of the Jira project the issues are created in
+
+Optional:
+
+- `closed_status` (String) Jira status applied when the alert resolves
+- `open_status` (String) Jira status applied when the alert triggers
+
+Read-Only:
+
+- `integration_name` (String)
+- `type` (String)
+
+
 <a id="nestedatt--targets--config--microsoft_teams"></a>
 ### Nested Schema for `targets.config.microsoft_teams`
 
@@ -147,6 +183,29 @@ Read-Only:
 
 <a id="nestedatt--targets--config--pagerduty"></a>
 ### Nested Schema for `targets.config.pagerduty`
+
+Required:
+
+- `integration_id` (String)
+
+Read-Only:
+
+- `integration_name` (String)
+- `type` (String)
+
+
+<a id="nestedatt--targets--config--renotify"></a>
+### Nested Schema for `targets.config.renotify`
+
+Required:
+
+- `mode` (String)
+- `renotification_states` (List of String)
+- `renotify_interval_minutes` (Number)
+
+
+<a id="nestedatt--targets--config--servicenow"></a>
+### Nested Schema for `targets.config.servicenow`
 
 Required:
 
@@ -211,16 +270,6 @@ Required:
 
 - `max_messages` (Number)
 - `minutes` (Number)
-
-
-<a id="nestedatt--targets--renotify_config"></a>
-### Nested Schema for `targets.renotify_config`
-
-Required:
-
-- `mode` (String)
-- `renotification_states` (List of String)
-- `renotify_interval_minutes` (Number)
 
 
 

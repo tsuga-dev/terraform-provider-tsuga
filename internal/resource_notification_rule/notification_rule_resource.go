@@ -258,6 +258,109 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 										},
 									},
 								},
+								"servicenow": schema.SingleNestedAttribute{
+									Optional: true,
+									Attributes: map[string]schema.Attribute{
+										"type": schema.StringAttribute{
+											Computed: true,
+										},
+										"integration_id": schema.StringAttribute{
+											Required: true,
+											Validators: []validator.String{
+												stringvalidator.LengthAtMost(250),
+											},
+										},
+										"integration_name": schema.StringAttribute{
+											Computed: true,
+										},
+									},
+								},
+								"google_chat": schema.SingleNestedAttribute{
+									Optional: true,
+									Attributes: map[string]schema.Attribute{
+										"type": schema.StringAttribute{
+											Computed: true,
+										},
+										"integration_id": schema.StringAttribute{
+											Required: true,
+											Validators: []validator.String{
+												stringvalidator.LengthAtMost(250),
+											},
+										},
+										"integration_name": schema.StringAttribute{
+											Computed: true,
+										},
+									},
+								},
+								"jira": schema.SingleNestedAttribute{
+									Optional:    true,
+									Description: "Files one Jira issue per notification. Cannot be combined with renotify.",
+									Attributes: map[string]schema.Attribute{
+										"type": schema.StringAttribute{
+											Computed: true,
+										},
+										"integration_id": schema.StringAttribute{
+											Required: true,
+											Validators: []validator.String{
+												stringvalidator.LengthAtMost(250),
+											},
+										},
+										"integration_name": schema.StringAttribute{
+											Computed: true,
+										},
+										"project_key": schema.StringAttribute{
+											Required:    true,
+											Description: "Key of the Jira project the issues are created in",
+											Validators: []validator.String{
+												stringvalidator.LengthAtMost(250),
+											},
+										},
+										"issue_type": schema.StringAttribute{
+											Required:    true,
+											Description: "Jira issue type used when creating issues",
+											Validators: []validator.String{
+												stringvalidator.LengthAtMost(250),
+											},
+										},
+										"open_status": schema.StringAttribute{
+											Optional:    true,
+											Description: "Jira status applied when the alert triggers",
+											Validators: []validator.String{
+												stringvalidator.LengthAtMost(250),
+											},
+										},
+										"closed_status": schema.StringAttribute{
+											Optional:    true,
+											Description: "Jira status applied when the alert resolves",
+											Validators: []validator.String{
+												stringvalidator.LengthAtMost(250),
+											},
+										},
+									},
+								},
+								"renotify": schema.SingleNestedAttribute{
+									Optional: true,
+									Attributes: map[string]schema.Attribute{
+										"mode": schema.StringAttribute{
+											Required: true,
+											Validators: []validator.String{
+												stringvalidator.OneOf("each"),
+											},
+										},
+										"renotification_states": schema.ListAttribute{
+											Required:    true,
+											ElementType: types.StringType,
+											Validators: []validator.List{
+												listvalidator.ValueStringsAre(
+													stringvalidator.OneOf("alert", "alert_no_data"),
+												),
+											},
+										},
+										"renotify_interval_minutes": schema.Int64Attribute{
+											Required: true,
+										},
+									},
+								},
 							},
 						},
 						"rate_limit": schema.SingleNestedAttribute{
@@ -267,29 +370,6 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 									Required: true,
 								},
 								"minutes": schema.Int64Attribute{
-									Required: true,
-								},
-							},
-						},
-						"renotify_config": schema.SingleNestedAttribute{
-							Optional: true,
-							Attributes: map[string]schema.Attribute{
-								"mode": schema.StringAttribute{
-									Required: true,
-									Validators: []validator.String{
-										stringvalidator.OneOf("each"),
-									},
-								},
-								"renotification_states": schema.ListAttribute{
-									Required:    true,
-									ElementType: types.StringType,
-									Validators: []validator.List{
-										listvalidator.ValueStringsAre(
-											stringvalidator.OneOf("alert", "alert_no_data"),
-										),
-									},
-								},
-								"renotify_interval_minutes": schema.Int64Attribute{
 									Required: true,
 								},
 							},
@@ -315,10 +395,9 @@ type NotificationRuleModel struct {
 }
 
 type TargetModel struct {
-	Id             types.String          `tfsdk:"id"`
-	Config         TargetConfigModel     `tfsdk:"config"`
-	RateLimit      *TargetRateLimitModel `tfsdk:"rate_limit"`
-	RenotifyConfig *TargetRenotifyModel  `tfsdk:"renotify_config"`
+	Id        types.String          `tfsdk:"id"`
+	Config    TargetConfigModel     `tfsdk:"config"`
+	RateLimit *TargetRateLimitModel `tfsdk:"rate_limit"`
 }
 
 type TargetConfigModel struct {
@@ -330,6 +409,10 @@ type TargetConfigModel struct {
 	MicrosoftTeams *IntegrationOnlyConfigModel `tfsdk:"microsoft_teams"`
 	Webhook        *IntegrationOnlyConfigModel `tfsdk:"webhook"`
 	Squadcast      *IntegrationOnlyConfigModel `tfsdk:"squadcast"`
+	ServiceNow     *IntegrationOnlyConfigModel `tfsdk:"servicenow"`
+	GoogleChat     *IntegrationOnlyConfigModel `tfsdk:"google_chat"`
+	Jira           *JiraConfigModel            `tfsdk:"jira"`
+	Renotify       *TargetRenotifyModel        `tfsdk:"renotify"`
 }
 
 type TargetRateLimitModel struct {
@@ -358,6 +441,16 @@ type IntegrationOnlyConfigModel struct {
 	IntegrationName types.String `tfsdk:"integration_name"`
 }
 
+type JiraConfigModel struct {
+	Type            types.String `tfsdk:"type"`
+	IntegrationID   types.String `tfsdk:"integration_id"`
+	IntegrationName types.String `tfsdk:"integration_name"`
+	ProjectKey      types.String `tfsdk:"project_key"`
+	IssueType       types.String `tfsdk:"issue_type"`
+	OpenStatus      types.String `tfsdk:"open_status"`
+	ClosedStatus    types.String `tfsdk:"closed_status"`
+}
+
 type EmailConfigModel struct {
 	Type      types.String `tfsdk:"type"`
 	Addresses types.List   `tfsdk:"addresses"`
@@ -373,6 +466,10 @@ func TargetConfigAttrTypes(ctx context.Context) map[string]attr.Type {
 		"microsoft_teams": types.ObjectType{AttrTypes: IntegrationConfigAttrTypes(ctx)},
 		"webhook":         types.ObjectType{AttrTypes: IntegrationConfigAttrTypes(ctx)},
 		"squadcast":       types.ObjectType{AttrTypes: IntegrationConfigAttrTypes(ctx)},
+		"servicenow":      types.ObjectType{AttrTypes: IntegrationConfigAttrTypes(ctx)},
+		"google_chat":     types.ObjectType{AttrTypes: IntegrationConfigAttrTypes(ctx)},
+		"jira":            types.ObjectType{AttrTypes: JiraAttrTypes(ctx)},
+		"renotify":        types.ObjectType{AttrTypes: TargetRenotifyAttrTypes(ctx)},
 	}
 }
 
@@ -392,6 +489,18 @@ func IntegrationConfigAttrTypes(_ context.Context) map[string]attr.Type {
 		"type":             types.StringType,
 		"integration_id":   types.StringType,
 		"integration_name": types.StringType,
+	}
+}
+
+func JiraAttrTypes(_ context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"type":             types.StringType,
+		"integration_id":   types.StringType,
+		"integration_name": types.StringType,
+		"project_key":      types.StringType,
+		"issue_type":       types.StringType,
+		"open_status":      types.StringType,
+		"closed_status":    types.StringType,
 	}
 }
 
@@ -419,9 +528,8 @@ func TargetRenotifyAttrTypes(_ context.Context) map[string]attr.Type {
 
 func TargetAttrTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"id":              types.StringType,
-		"config":          types.ObjectType{AttrTypes: TargetConfigAttrTypes(ctx)},
-		"rate_limit":      types.ObjectType{AttrTypes: TargetRateLimitAttrTypes(ctx)},
-		"renotify_config": types.ObjectType{AttrTypes: TargetRenotifyAttrTypes(ctx)},
+		"id":         types.StringType,
+		"config":     types.ObjectType{AttrTypes: TargetConfigAttrTypes(ctx)},
+		"rate_limit": types.ObjectType{AttrTypes: TargetRateLimitAttrTypes(ctx)},
 	}
 }
