@@ -37,6 +37,15 @@ resource "tsuga_notification_rule" "test-notification-rule" {
         email = {
           addresses = ["test@example.com"]
         }
+        renotify = {
+          mode                      = "each"
+          renotification_states     = ["alert"]
+          renotify_interval_minutes = 30
+        }
+      }
+      rate_limit = {
+        max_messages = 5
+        minutes      = 10
       }
     },
     {
@@ -95,6 +104,12 @@ resource "tsuga_notification_rule" "test-notification-rule" {
 					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.0.config.email.type", "email"),
 					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.0.config.email.addresses.#", "1"),
 					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.0.config.email.addresses.0", "test@example.com"),
+					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.0.rate_limit.max_messages", "5"),
+					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.0.rate_limit.minutes", "10"),
+					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.0.config.renotify.mode", "each"),
+					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.0.config.renotify.renotification_states.#", "1"),
+					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.0.config.renotify.renotification_states.0", "alert"),
+					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.0.config.renotify.renotify_interval_minutes", "30"),
 					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.1.id", "slack"),
 					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.1.config.slack.type", "slack"),
 					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.1.config.slack.integration_id", "T06T0BAKV35"),
@@ -128,6 +143,15 @@ resource "tsuga_notification_rule" "test-notification-rule" {
         email = {
           addresses = ["test@example.com"]
         }
+        renotify = {
+          mode                      = "each"
+          renotification_states     = ["alert", "alert_no_data"]
+          renotify_interval_minutes = 60
+        }
+      }
+      rate_limit = {
+        max_messages = 3
+        minutes      = 15
       }
     }
   ]
@@ -142,6 +166,13 @@ resource "tsuga_notification_rule" "test-notification-rule" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.#", "1"),
 					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.0.id", "email"),
+					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.0.rate_limit.max_messages", "3"),
+					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.0.rate_limit.minutes", "15"),
+					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.0.config.renotify.mode", "each"),
+					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.0.config.renotify.renotification_states.#", "2"),
+					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.0.config.renotify.renotification_states.0", "alert"),
+					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.0.config.renotify.renotification_states.1", "alert_no_data"),
+					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "targets.0.config.renotify.renotify_interval_minutes", "60"),
 					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "tags.0.key", "test-key-updated"),
 					resource.TestCheckResourceAttr("tsuga_notification_rule.test-notification-rule", "tags.0.value", "test-value-updated"),
 				),
