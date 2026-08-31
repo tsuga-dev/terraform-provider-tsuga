@@ -58,6 +58,7 @@ func (r *cloudAccountResource) ConfigValidators(_ context.Context) []resource.Co
 		resourcevalidator.ExactlyOneOf(
 			path.MatchRoot("aws"),
 			path.MatchRoot("gcp"),
+			path.MatchRoot("azure"),
 		),
 	}
 }
@@ -71,12 +72,20 @@ func expandConnectionSettings(plan resource_cloud_account.CloudAccountModel) (ma
 			"roleArn":    plan.Aws.RoleArn.ValueString(),
 		}, "aws", plan.Aws.AccountId.ValueString()
 	}
+	if plan.Gcp != nil {
+		return map[string]interface{}{
+			"type":                     "gcp",
+			"projectId":                plan.Gcp.ProjectId.ValueString(),
+			"serviceAccountId":         plan.Gcp.ServiceAccountId.ValueString(),
+			"workloadIdentityProvider": plan.Gcp.WorkloadIdentityProvider.ValueString(),
+		}, "gcp", plan.Gcp.ProjectId.ValueString()
+	}
 	return map[string]interface{}{
-		"type":                     "gcp",
-		"projectId":                plan.Gcp.ProjectId.ValueString(),
-		"serviceAccountId":         plan.Gcp.ServiceAccountId.ValueString(),
-		"workloadIdentityProvider": plan.Gcp.WorkloadIdentityProvider.ValueString(),
-	}, "gcp", plan.Gcp.ProjectId.ValueString()
+		"type":           "azure",
+		"clientId":       plan.Azure.ClientId.ValueString(),
+		"subscriptionId": plan.Azure.SubscriptionId.ValueString(),
+		"tenantId":       plan.Azure.TenantId.ValueString(),
+	}, "azure", plan.Azure.SubscriptionId.ValueString()
 }
 
 func flattenAPIResponse(model *resource_cloud_account.CloudAccountModel, data cloudAccountData) {

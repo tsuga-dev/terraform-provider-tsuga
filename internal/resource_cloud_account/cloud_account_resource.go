@@ -13,7 +13,7 @@ func CloudAccountResourceSchema() schema.Schema {
 	requiresReplaceObject := []planmodifier.Object{objectplanmodifier.RequiresReplace()}
 
 	return schema.Schema{
-		Description: "A cloud account (AWS or GCP) connected to Tsuga for inventory scanning. The trust relationship (IAM role or workload identity) must already exist on the cloud side before creating the account.",
+		Description: "A cloud account (AWS, GCP or Azure) connected to Tsuga for inventory scanning. The trust relationship (IAM role, workload identity or federated credential) must already exist on the cloud side before creating the account.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,
@@ -28,7 +28,7 @@ func CloudAccountResourceSchema() schema.Schema {
 			},
 			"cloud_account_id": schema.StringAttribute{
 				Computed:    true,
-				Description: "Cloud-native account identifier (AWS account ID or GCP project ID), derived from the configured connection block.",
+				Description: "Cloud-native account identifier (AWS account ID, GCP project ID or Azure subscription ID), derived from the configured connection block.",
 			},
 			"account_friendly_name": schema.StringAttribute{
 				Optional:    true,
@@ -36,7 +36,7 @@ func CloudAccountResourceSchema() schema.Schema {
 			},
 			"aws": schema.SingleNestedAttribute{
 				Optional:      true,
-				Description:   "AWS connection settings. Mutually exclusive with `gcp`. Immutable.",
+				Description:   "AWS connection settings. Mutually exclusive with `gcp` and `azure`. Immutable.",
 				PlanModifiers: requiresReplaceObject,
 				Attributes: map[string]schema.Attribute{
 					"account_id": schema.StringAttribute{
@@ -55,7 +55,7 @@ func CloudAccountResourceSchema() schema.Schema {
 			},
 			"gcp": schema.SingleNestedAttribute{
 				Optional:      true,
-				Description:   "GCP connection settings. Mutually exclusive with `aws`. Immutable.",
+				Description:   "GCP connection settings. Mutually exclusive with `aws` and `azure`. Immutable.",
 				PlanModifiers: requiresReplaceObject,
 				Attributes: map[string]schema.Attribute{
 					"project_id": schema.StringAttribute{
@@ -72,17 +72,37 @@ func CloudAccountResourceSchema() schema.Schema {
 					},
 				},
 			},
+			"azure": schema.SingleNestedAttribute{
+				Optional:      true,
+				Description:   "Azure connection settings. Mutually exclusive with `aws` and `gcp`. Immutable.",
+				PlanModifiers: requiresReplaceObject,
+				Attributes: map[string]schema.Attribute{
+					"client_id": schema.StringAttribute{
+						Required:    true,
+						Description: "Client ID of the Azure application Tsuga authenticates as (GUID).",
+					},
+					"subscription_id": schema.StringAttribute{
+						Required:    true,
+						Description: "Azure subscription ID that Tsuga scans (GUID).",
+					},
+					"tenant_id": schema.StringAttribute{
+						Required:    true,
+						Description: "Azure tenant ID that owns the subscription (GUID).",
+					},
+				},
+			},
 		},
 	}
 }
 
 type CloudAccountModel struct {
-	Id                  types.String      `tfsdk:"id"`
-	CloudType           types.String      `tfsdk:"cloud_type"`
-	CloudAccountId      types.String      `tfsdk:"cloud_account_id"`
-	AccountFriendlyName types.String      `tfsdk:"account_friendly_name"`
-	Aws                 *AwsSettingsModel `tfsdk:"aws"`
-	Gcp                 *GcpSettingsModel `tfsdk:"gcp"`
+	Id                  types.String        `tfsdk:"id"`
+	CloudType           types.String        `tfsdk:"cloud_type"`
+	CloudAccountId      types.String        `tfsdk:"cloud_account_id"`
+	AccountFriendlyName types.String        `tfsdk:"account_friendly_name"`
+	Aws                 *AwsSettingsModel   `tfsdk:"aws"`
+	Gcp                 *GcpSettingsModel   `tfsdk:"gcp"`
+	Azure               *AzureSettingsModel `tfsdk:"azure"`
 }
 
 type AwsSettingsModel struct {
@@ -95,4 +115,10 @@ type GcpSettingsModel struct {
 	ProjectId                types.String `tfsdk:"project_id"`
 	ServiceAccountId         types.String `tfsdk:"service_account_id"`
 	WorkloadIdentityProvider types.String `tfsdk:"workload_identity_provider"`
+}
+
+type AzureSettingsModel struct {
+	ClientId       types.String `tfsdk:"client_id"`
+	SubscriptionId types.String `tfsdk:"subscription_id"`
+	TenantId       types.String `tfsdk:"tenant_id"`
 }
