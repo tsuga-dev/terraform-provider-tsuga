@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+## [2.3.0] - 2026-08-26
+
 ### Added
 
 - `tsuga_notification_rule`: new `targets.config.servicenow`, `targets.config.google_chat` and `targets.config.jira` destination blocks. `jira` takes `project_key` and `issue_type`, plus the optional `open_status` and `closed_status`.
