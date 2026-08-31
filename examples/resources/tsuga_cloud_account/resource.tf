@@ -21,3 +21,15 @@ resource "tsuga_cloud_account" "gcp_prod" {
     workload_identity_provider = "projects/123/locations/global/workloadIdentityPools/tsuga/providers/tsuga"
   }
 }
+
+# Azure cloud account. The application registration must already carry a federated
+# credential trusting Tsuga, and hold Reader on the subscription, before applying.
+resource "tsuga_cloud_account" "azure_prod" {
+  account_friendly_name = "Production Azure"
+
+  azure = {
+    client_id       = "11111111-1111-1111-1111-111111111111"
+    subscription_id = "22222222-2222-2222-2222-222222222222"
+    tenant_id       = "33333333-3333-3333-3333-333333333333"
+  }
+}
