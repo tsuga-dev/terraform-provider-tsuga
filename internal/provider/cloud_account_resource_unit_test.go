@@ -49,3 +49,22 @@ func TestBuildConnectionSettings_Gcp(t *testing.T) {
 		t.Fatalf("unexpected settings: %#v", settings)
 	}
 }
+
+func TestBuildConnectionSettings_Azure(t *testing.T) {
+	plan := resource_cloud_account.CloudAccountModel{
+		Azure: &resource_cloud_account.AzureSettingsModel{
+			ClientId:       types.StringValue("11111111-1111-1111-1111-111111111111"),
+			SubscriptionId: types.StringValue("22222222-2222-2222-2222-222222222222"),
+			TenantId:       types.StringValue("33333333-3333-3333-3333-333333333333"),
+		},
+	}
+
+	settings, cloudType, cloudAccountId := expandConnectionSettings(plan)
+
+	if cloudType != "azure" || cloudAccountId != "22222222-2222-2222-2222-222222222222" {
+		t.Fatalf("cloudType=%q cloudAccountId=%q", cloudType, cloudAccountId)
+	}
+	if settings["type"] != "azure" || settings["clientId"] != "11111111-1111-1111-1111-111111111111" || settings["tenantId"] != "33333333-3333-3333-3333-333333333333" {
+		t.Fatalf("unexpected settings: %#v", settings)
+	}
+}
