@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-09-01
+
 ### Added
 
 - `tsuga_cloud_account`: new `azure` connection block, taking `client_id`, `subscription_id` and `tenant_id`. Mutually exclusive with `aws` and `gcp`, immutable, and `cloud_account_id` is derived from `subscription_id`.
