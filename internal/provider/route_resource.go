@@ -176,7 +176,11 @@ func (r *routeResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	raw, err := io.ReadAll(httpResp.Body)
+	r.readJSON(ctx, httpResp.Body, resp)
+}
+
+func (r *routeResource) readJSON(ctx context.Context, bodyReader io.Reader, resp *resource.ReadResponse) {
+	raw, err := io.ReadAll(bodyReader)
 	if err != nil {
 		resp.Diagnostics.AddError("Parse Error", fmt.Sprintf("Unable to read response body: %s", err))
 		return

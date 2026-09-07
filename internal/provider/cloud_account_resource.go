@@ -161,7 +161,16 @@ func (r *cloudAccountResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	data, err := parseCloudAccountResponse(httpResp)
+	r.readJSON(ctx, httpResp.Body, resp)
+}
+
+func (r *cloudAccountResource) readJSON(ctx context.Context, bodyReader io.Reader, resp *resource.ReadResponse) {
+	var state resource_cloud_account.CloudAccountModel
+	resp.Diagnostics.Append(resp.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	data, err := parseCloudAccountJSON(bodyReader)
 	if err != nil {
 		resp.Diagnostics.AddError("Parse Error", err.Error())
 		return
@@ -233,7 +242,11 @@ func (r *cloudAccountResource) Delete(ctx context.Context, req resource.DeleteRe
 }
 
 func parseCloudAccountResponse(httpResp *http.Response) (cloudAccountData, error) {
-	body, err := io.ReadAll(httpResp.Body)
+	return parseCloudAccountJSON(httpResp.Body)
+}
+
+func parseCloudAccountJSON(reader io.Reader) (cloudAccountData, error) {
+	body, err := io.ReadAll(reader)
 	if err != nil {
 		return cloudAccountData{}, fmt.Errorf("unable to read response body: %w", err)
 	}

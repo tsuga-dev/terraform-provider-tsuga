@@ -1,0 +1,605 @@
+[
+  {
+    "name": "team",
+    "resourceType": "tsuga_team",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "visibility": "public",
+      "description": "A team"
+    }
+  },
+  {
+    "name": "membership",
+    "resourceType": "tsuga_team_membership",
+    "resource": {
+      "id": "membership-1",
+      "teamId": "team-123",
+      "userId": "user-123",
+      "roleKey": "editor"
+    }
+  },
+  {
+    "name": "custom-usage-tag",
+    "resourceType": "tsuga_custom_usage_tag",
+    "resource": {
+      "id": "usage-1",
+      "tagKey": "service.name"
+    }
+  },
+  {
+    "name": "retention",
+    "resourceType": "tsuga_retention_policy",
+    "resource": {
+      "id": "retention-1",
+      "dataSource": "logs",
+      "durationDays": 30,
+      "isEnabled": true,
+      "env": "production"
+    }
+  },
+  {
+    "name": "ingestion-key",
+    "resourceType": "tsuga_ingestion_api_key",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "key": "never-export-this-secret",
+      "keyLastCharacters": "cret",
+      "teamOverrideFields": []
+    }
+  },
+  {
+    "name": "folder",
+    "resourceType": "tsuga_dashboard_folder",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "parentFolderId": "parent-123"
+    }
+  },
+  {
+    "name": "route",
+    "resourceType": "tsuga_route",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "isEnabled": true,
+      "query": "level:ERROR",
+      "processors": []
+    }
+  },
+  {
+    "name": "tag-policy",
+    "resourceType": "tsuga_tag_policy",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "isActive": true,
+      "tagKey": "env",
+      "allowedTagValues": [
+        "prod",
+        "staging"
+      ],
+      "isRequired": true,
+      "configuration": {
+        "type": "tsuga_asset",
+        "assetTypes": [
+          "dashboard"
+        ]
+      }
+    }
+  },
+  {
+    "name": "notification-rule",
+    "resourceType": "tsuga_notification_rule",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "isActive": true,
+      "teamsFilter": {
+        "type": "all-teams"
+      },
+      "prioritiesFilter": [
+        1,
+        2
+      ],
+      "transitionTypesFilter": [
+        "triggered"
+      ],
+      "targets": [
+        {
+          "id": "target-1",
+          "config": {
+            "type": "email",
+            "addresses": [
+              "oncall@example.com"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "notification-silence",
+    "resourceType": "tsuga_notification_silence",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "isActive": true,
+      "teamsFilter": {
+        "type": "all-teams"
+      },
+      "prioritiesFilter": [],
+      "transitionTypesFilter": [],
+      "schedule": {
+        "type": "one-time",
+        "startTime": "2026-09-06T12:00:00",
+        "endTime": "2026-09-06T13:00:00"
+      }
+    }
+  },
+  {
+    "name": "cloud-aws",
+    "resourceType": "tsuga_cloud_account",
+    "resource": {
+      "id": "cloud-123",
+      "cloudType": "aws",
+      "cloudAccountId": "123456789012",
+      "accountFriendlyName": "Production"
+    }
+  },
+  {
+    "name": "cloud-gcp",
+    "resourceType": "tsuga_cloud_account",
+    "resource": {
+      "id": "cloud-123",
+      "cloudType": "gcp",
+      "cloudAccountId": "example-project",
+      "accountFriendlyName": "Production"
+    }
+  },
+  {
+    "name": "cloud-azure",
+    "resourceType": "tsuga_cloud_account",
+    "resource": {
+      "id": "cloud-123",
+      "cloudType": "azure",
+      "cloudAccountId": "00000000-0000-0000-0000-000000000001",
+      "accountFriendlyName": "Production"
+    }
+  },
+  {
+    "name": "monitor-metric",
+    "resourceType": "tsuga_monitor",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "priority": 1,
+      "permissions": "all",
+      "clusterIds": [],
+      "configuration": {
+        "type": "metric",
+        "timeframe": 5,
+        "groupByFields": [],
+        "aggregationAlertLogic": "no_aggregation",
+        "queries": [
+          {
+            "aggregate": {
+              "type": "count"
+            },
+            "filter": "level:ERROR"
+          }
+        ],
+        "conditions": [
+          {
+            "formula": "q1",
+            "operator": "greater_than",
+            "threshold": 0
+          }
+        ],
+        "noDataBehavior": "resolve"
+      },
+      "message": "Literal ${service} and %{ if x }\n\"quoted\" \\ unicode 🌲"
+    }
+  },
+  {
+    "name": "monitor-log",
+    "resourceType": "tsuga_monitor",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "priority": 1,
+      "permissions": "all",
+      "clusterIds": [],
+      "configuration": {
+        "type": "log",
+        "timeframe": 5,
+        "groupByFields": [],
+        "aggregationAlertLogic": "no_aggregation",
+        "queries": [
+          {
+            "aggregate": {
+              "type": "count"
+            },
+            "filter": "level:ERROR"
+          }
+        ],
+        "conditions": [
+          {
+            "formula": "q1",
+            "operator": "greater_than",
+            "threshold": 0
+          }
+        ],
+        "noDataBehavior": "resolve"
+      },
+      "message": "Literal ${service} and %{ if x }\n\"quoted\" \\ unicode 🌲"
+    }
+  },
+  {
+    "name": "monitor-trace",
+    "resourceType": "tsuga_monitor",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "priority": 1,
+      "permissions": "all",
+      "clusterIds": [],
+      "configuration": {
+        "type": "trace",
+        "timeframe": 5,
+        "groupByFields": [],
+        "aggregationAlertLogic": "no_aggregation",
+        "queries": [
+          {
+            "aggregate": {
+              "type": "count"
+            },
+            "filter": "level:ERROR"
+          }
+        ],
+        "conditions": [
+          {
+            "formula": "q1",
+            "operator": "greater_than",
+            "threshold": 0
+          }
+        ],
+        "noDataBehavior": "resolve"
+      },
+      "message": "Literal ${service} and %{ if x }\n\"quoted\" \\ unicode 🌲"
+    }
+  },
+  {
+    "name": "monitor-anomaly-metric",
+    "resourceType": "tsuga_monitor",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "priority": 1,
+      "permissions": "all",
+      "clusterIds": [],
+      "configuration": {
+        "type": "anomaly-metric",
+        "timeframe": 5,
+        "groupByFields": [],
+        "aggregationAlertLogic": "no_aggregation",
+        "queries": [
+          {
+            "aggregate": {
+              "type": "count"
+            },
+            "filter": "level:ERROR"
+          }
+        ],
+        "conditions": [
+          {
+            "type": "general",
+            "formula": "q1"
+          }
+        ],
+        "noDataBehavior": "resolve"
+      },
+      "message": "Literal ${service} and %{ if x }\n\"quoted\" \\ unicode 🌲"
+    }
+  },
+  {
+    "name": "monitor-anomaly-log",
+    "resourceType": "tsuga_monitor",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "priority": 1,
+      "permissions": "all",
+      "clusterIds": [],
+      "configuration": {
+        "type": "anomaly-log",
+        "timeframe": 5,
+        "groupByFields": [],
+        "aggregationAlertLogic": "no_aggregation",
+        "queries": [
+          {
+            "aggregate": {
+              "type": "count"
+            },
+            "filter": "level:ERROR"
+          }
+        ],
+        "conditions": [
+          {
+            "type": "general",
+            "formula": "q1"
+          }
+        ],
+        "noDataBehavior": "resolve"
+      },
+      "message": "Literal ${service} and %{ if x }\n\"quoted\" \\ unicode 🌲"
+    }
+  },
+  {
+    "name": "monitor-anomaly-trace",
+    "resourceType": "tsuga_monitor",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "priority": 1,
+      "permissions": "all",
+      "clusterIds": [],
+      "configuration": {
+        "type": "anomaly-trace",
+        "timeframe": 5,
+        "groupByFields": [],
+        "aggregationAlertLogic": "no_aggregation",
+        "queries": [
+          {
+            "aggregate": {
+              "type": "count"
+            },
+            "filter": "level:ERROR"
+          }
+        ],
+        "conditions": [
+          {
+            "type": "general",
+            "formula": "q1"
+          }
+        ],
+        "noDataBehavior": "resolve"
+      },
+      "message": "Literal ${service} and %{ if x }\n\"quoted\" \\ unicode 🌲"
+    }
+  },
+  {
+    "name": "monitor-certificate-expiry",
+    "resourceType": "tsuga_monitor",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "priority": 1,
+      "permissions": "all",
+      "clusterIds": [],
+      "configuration": {
+        "type": "certificate-expiry",
+        "warnBeforeInDays": 30,
+        "cloudAccounts": [
+          "cloud-123"
+        ],
+        "aggregationAlertLogic": "each",
+        "noDataBehavior": "resolve"
+      },
+      "message": "Literal ${service} and %{ if x }\n\"quoted\" \\ unicode 🌲"
+    }
+  },
+  {
+    "name": "monitor-log-error-pattern",
+    "resourceType": "tsuga_monitor",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "priority": 1,
+      "permissions": "all",
+      "clusterIds": [],
+      "configuration": {
+        "type": "log-error-pattern",
+        "filter": {
+          "teamIds": [
+            "team-123"
+          ],
+          "env": "prod",
+          "service": "api"
+        },
+        "aggregationAlertLogic": "each",
+        "noDataBehavior": "keep_last_status"
+      },
+      "message": "Literal ${service} and %{ if x }\n\"quoted\" \\ unicode 🌲"
+    }
+  },
+  {
+    "name": "dashboard",
+    "resourceType": "tsuga_dashboard",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "folderId": "folder-123",
+      "timePreset": "past-1-hour",
+      "filters": [
+        {
+          "key": "env",
+          "values": []
+        }
+      ],
+      "graphs": [
+        {
+          "id": "note-1",
+          "name": "Description",
+          "layout": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 3
+          },
+          "visualization": {
+            "type": "note",
+            "note": "${literal} %{ literal }\nhello 🌲"
+          }
+        },
+        {
+          "id": "chart-1",
+          "visualization": {
+            "type": "timeseries",
+            "source": "logs",
+            "queries": [
+              {
+                "aggregate": {
+                  "type": "count"
+                },
+                "filter": "level:ERROR"
+              }
+            ],
+            "groupBy": [],
+            "aliases": {
+              "queries": {
+                "q1": "Error count"
+              },
+              "formula": "Errors"
+            },
+            "visibleSeries": [
+              true
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "slo-event",
+    "resourceType": "tsuga_slo",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "permissions": "all",
+      "target": 99.9,
+      "timeframeDays": 30,
+      "clusterIds": [],
+      "configuration": {
+        "type": "event",
+        "dataSource": "logs",
+        "noDataBehavior": "good",
+        "goodQuery": {
+          "queries": [
+            {
+              "aggregate": {
+                "type": "count"
+              },
+              "filter": "level:ERROR"
+            }
+          ],
+          "formula": "q1"
+        },
+        "totalQuery": {
+          "queries": [
+            {
+              "aggregate": {
+                "type": "count"
+              },
+              "filter": "level:ERROR"
+            }
+          ],
+          "formula": "q1"
+        }
+      },
+      "alerts": [
+        {
+          "id": "alert-1",
+          "sloId": "resource-123",
+          "priority": 1,
+          "configuration": {
+            "type": "burn-rate",
+            "burnRate": 14.4
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "slo-time",
+    "resourceType": "tsuga_slo",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "permissions": "all",
+      "target": 99.9,
+      "timeframeDays": 30,
+      "clusterIds": [],
+      "configuration": {
+        "type": "time",
+        "dataSource": "logs",
+        "noDataBehavior": "good",
+        "query": {
+          "queries": [
+            {
+              "aggregate": {
+                "type": "count"
+              },
+              "filter": "level:ERROR"
+            }
+          ],
+          "formula": "q1"
+        },
+        "sliceSizeMinutes": 5,
+        "threshold": {
+          "operator": "less_than",
+          "value": 10
+        }
+      },
+      "alerts": [
+        {
+          "id": "alert-1",
+          "sloId": "resource-123",
+          "priority": 1,
+          "configuration": {
+            "type": "burn-rate",
+            "burnRate": 14.4
+          }
+        }
+      ]
+    }
+  }
+]
