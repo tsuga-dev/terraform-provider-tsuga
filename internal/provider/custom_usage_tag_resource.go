@@ -125,7 +125,12 @@ func (r *customUsageTagResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
-	body, err := io.ReadAll(httpResp.Body)
+	r.readJSON(ctx, httpResp.Body, resp)
+}
+
+func (r *customUsageTagResource) readJSON(ctx context.Context, bodyReader io.Reader, resp *resource.ReadResponse) {
+	var state resource_custom_usage_tag.CustomUsageTagModel
+	body, err := io.ReadAll(bodyReader)
 	if err != nil {
 		resp.Diagnostics.AddError("Parse Error", fmt.Sprintf("Unable to read response body: %s", err))
 		return
