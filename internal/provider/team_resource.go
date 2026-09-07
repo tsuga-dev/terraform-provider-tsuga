@@ -152,7 +152,12 @@ func (r *teamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	body, err := io.ReadAll(httpResp.Body)
+	r.readJSON(ctx, httpResp.Body, resp)
+}
+
+func (r *teamResource) readJSON(ctx context.Context, bodyReader io.Reader, resp *resource.ReadResponse) {
+	var state resource_team.TeamModel
+	body, err := io.ReadAll(bodyReader)
 	if err != nil {
 		resp.Diagnostics.AddError("Parse Error", fmt.Sprintf("Unable to read response body: %s", err))
 		return

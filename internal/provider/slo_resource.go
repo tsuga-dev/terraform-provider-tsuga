@@ -242,15 +242,6 @@ func (r *sloResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		return
 	}
 
-	// The prior state's alert order (matched by id) is the reference we flatten the API's
-	// unordered alerts back into, so a refresh doesn't churn the order. On import this is null,
-	// so the alerts come back in API order.
-	var priorAlerts types.List
-	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("alerts"), &priorAlerts)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	urlPath := fmt.Sprintf("/v1/slos/%s", id.ValueString())
 	httpResp, err := r.client.doRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
@@ -269,7 +260,16 @@ func (r *sloResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		return
 	}
 
-	raw, err := io.ReadAll(httpResp.Body)
+	r.readJSON(ctx, httpResp.Body, resp)
+}
+
+func (r *sloResource) readJSON(ctx context.Context, bodyReader io.Reader, resp *resource.ReadResponse) {
+	var priorAlerts types.List
+	resp.Diagnostics.Append(resp.State.GetAttribute(ctx, path.Root("alerts"), &priorAlerts)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	raw, err := io.ReadAll(bodyReader)
 	if err != nil {
 		resp.Diagnostics.AddError("Parse Error", fmt.Sprintf("Unable to read response body: %s", err))
 		return
