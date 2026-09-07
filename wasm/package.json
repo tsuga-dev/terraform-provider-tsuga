@@ -1,0 +1,21 @@
+{
+  "name": "@tsuga/terraform-export",
+  "version": "0.0.0",
+  "description": "Export Tsuga API resources as Terraform using the provider's Go mappings in WebAssembly",
+  "type": "module",
+  "license": "UNLICENSED",
+  "files": ["dist", "README.md", "LICENSE"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/browser.js"
+    },
+    "./terraform-export.wasm": "./dist/terraform-export.wasm"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "test:browser": "node --test test/browser.test.mjs",
+    "test:terraform": "node --test test/terraform.test.mjs"
+  },
+  "engines": {"node": ">=22"}
+}

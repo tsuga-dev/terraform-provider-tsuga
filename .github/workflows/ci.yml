@@ -131,7 +131,8 @@ jobs:
       - name: Find deadcode
         run: |
           go install golang.org/x/tools/cmd/deadcode@v0.40.0
-          out="$(deadcode ./...)"
+          # Also cover WASM-only entrypoint (only used in tests)
+          out="$(deadcode -test ./internal/provider/...)"
           if [[ -n "$out" ]] && [[ "$out" != "null" ]]; then
             echo "$out" >&2
             exit 1
@@ -159,3 +160,29 @@ jobs:
 
       - name: Go vet
         run: go vet ./...
+
+  wasm:
+    name: Terraform export bindings
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin@v4
+      - uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # pin@v6.1
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # pin@v4
+        with:
+          node-version: "22.16.0"
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # pin@v3
+        with:
+          terraform_version: "1.13.4"
+          terraform_wrapper: false
+      - name: Build WASM and generate resource bindings
+        run: node wasm/build.mjs
+      - name: Check generated bindings
+        run: git diff --exit-code -- wasm/generated
+      - name: Type-check generated declarations
+        run: npx --yes -p typescript@7.0.2 tsc --noEmit --strict --target ES2022 --module NodeNext --moduleResolution NodeNext --skipLibCheck wasm/test/types.test.ts
+      - name: Test browser bindings
+        run: node --test wasm/test/browser.test.mjs
+      - name: Validate exports with Terraform
+        run: node --test wasm/test/terraform.test.mjs

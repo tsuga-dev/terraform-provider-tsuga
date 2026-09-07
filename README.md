@@ -22,6 +22,13 @@ Remember to update the examples folder too.
 
 Finally run the `docgen.sh` script, so that any examples and documentation that you included in the code be injected in the documentation.
 
+## WebAssembly exports
+
+Every resource can be exported from its public API JSON to Terraform HCL in a
+browser using the generated `@tsuga/terraform-export` package. Run
+`node wasm/build.mjs` to build it. See [the bindings guide](wasm/README.md) for
+packaging, TypeScript usage, missing secret inputs, and verification.
+
 ## Example Validation
 
 This repository includes automated validation of all Terraform examples to ensure they remain valid.

@@ -209,7 +209,11 @@ func (r *notificationRuleResource) Read(ctx context.Context, req resource.ReadRe
 		return
 	}
 
-	body, err := io.ReadAll(httpResp.Body)
+	r.readJSON(ctx, httpResp.Body, resp)
+}
+
+func (r *notificationRuleResource) readJSON(ctx context.Context, bodyReader io.Reader, resp *resource.ReadResponse) {
+	body, err := io.ReadAll(bodyReader)
 	if err != nil {
 		resp.Diagnostics.AddError("Parse Error", fmt.Sprintf("Unable to read response body: %s", err))
 		return

@@ -37,3 +37,8 @@ override.tf.json
 terraform.rc
 
 .gocache/
+
+# WASM package artifacts
+wasm/dist/
+wasm/*.tgz
+wasm/LICENSE
