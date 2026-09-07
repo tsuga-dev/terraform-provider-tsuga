@@ -283,14 +283,17 @@ func (r *monitorResource) Create(ctx context.Context, req resource.CreateRequest
 }
 
 func (r *monitorResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state resource_monitor.MonitorModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	// Read only the id from state. On import the state holds just the id and every other
+	// attribute is null; decoding the whole MonitorModel here would fail because nested
+	// fields such as configuration are non-pointer value structs that cannot represent null.
+	var id types.String
+	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("id"), &id)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	path := fmt.Sprintf("/v1/monitors/%s", state.Id.ValueString())
-	httpResp, err := r.client.doRequest(ctx, http.MethodGet, path, nil)
+	urlPath := fmt.Sprintf("/v1/monitors/%s", id.ValueString())
+	httpResp, err := r.client.doRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read monitor: %s", err))
 		return
@@ -307,7 +310,11 @@ func (r *monitorResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	raw, err := io.ReadAll(httpResp.Body)
+	r.readJSON(ctx, httpResp.Body, resp)
+}
+
+func (r *monitorResource) readJSON(ctx context.Context, bodyReader io.Reader, resp *resource.ReadResponse) {
+	raw, err := io.ReadAll(bodyReader)
 	if err != nil {
 		resp.Diagnostics.AddError("Parse Error", fmt.Sprintf("Unable to read response body: %s", err))
 		return

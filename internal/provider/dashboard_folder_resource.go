@@ -121,7 +121,16 @@ func (r *dashboardFolderResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
-	resp.Diagnostics.Append(applyDashboardFolderResponse(ctx, httpResp.Body, &state)...)
+	r.readJSON(ctx, httpResp.Body, resp)
+}
+
+func (r *dashboardFolderResource) readJSON(ctx context.Context, bodyReader io.Reader, resp *resource.ReadResponse) {
+	var state resource_dashboard_folder.DashboardFolderModel
+	resp.Diagnostics.Append(resp.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(applyDashboardFolderResponse(ctx, bodyReader, &state)...)
 
 	if resp.Diagnostics.HasError() {
 		return
