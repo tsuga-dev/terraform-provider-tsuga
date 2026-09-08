@@ -604,7 +604,7 @@ resource "tsuga_monitor" "test" {
       filter = {
         team_ids = [tsuga_team.test-team.id]
         env      = "production"
-        service  = "api-gateway"
+        services = ["api-gateway"]
       }
     }
   }
@@ -618,7 +618,7 @@ resource "tsuga_monitor" "test" {
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log_error_pattern.aggregation_alert_logic", "each"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log_error_pattern.no_data_behavior", "keep_last_status"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log_error_pattern.filter.env", "production"),
-					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log_error_pattern.filter.service", "api-gateway"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log_error_pattern.filter.services.#", "1"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log_error_pattern.filter.team_ids.#", "1"),
 				),
 			},

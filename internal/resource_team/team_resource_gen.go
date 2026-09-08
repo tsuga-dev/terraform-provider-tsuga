@@ -27,8 +27,8 @@ func TeamResourceSchema(ctx context.Context) schema.Schema {
 			"description": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Optional team description. Maximum length is 250 characters.",
-				MarkdownDescription: "Optional team description. Maximum length is 250 characters.",
+				Description:         "Optional free-text description of the team.",
+				MarkdownDescription: "Optional free-text description of the team.",
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(250),
 				},

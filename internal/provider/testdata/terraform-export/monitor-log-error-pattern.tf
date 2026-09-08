@@ -5,7 +5,7 @@ resource "tsuga_monitor" "monitor_log_error_pattern" {
       aggregation_alert_logic = "each"
       filter = {
         env      = "prod"
-        service  = "api"
+        services = ["api"]
         team_ids = ["team-123"]
       }
       no_data_behavior = "keep_last_status"
