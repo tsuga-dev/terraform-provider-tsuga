@@ -1,0 +1,14 @@
+examples/resources/tsuga_monitor/resource.tf
+  h_2e75caf46d5b57 47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "a063f201061918ab30ae425332af97532a3193f9",
+  "prompts": {},
+  "humans": {
+    "h_2e75caf46d5b57": {
+      "author": "talesmarra <marratales@gmail.com>"
+    }
+  }
+}
