@@ -36,7 +36,7 @@ resource "tsuga_team" "team" {
 
 ### Optional
 
-- `description` (String) Optional team description. Maximum length is 250 characters.
+- `description` (String) Optional free-text description of the team.
 - `tags` (Attributes List) Key/value tags to apply to the resource. Tag policies may require specific keys or values. (see [below for nested schema](#nestedatt--tags))
 
 ### Read-Only

@@ -33,8 +33,8 @@ resource "tsuga_retention_policy" "retention_policy" {
 
 ### Optional
 
-- `env` (String) Environment tag value this policy applies to. Omit for a policy that is not environment-specific.
-- `team_id` (String) Team ID this policy applies to. Omit for a policy that is not team-specific.
+- `env` (String) Environment tag value this policy applies to. Omitted policies apply across environments unless a more specific policy exists.
+- `team_id` (String) Team ID this policy applies to. Omitted policies apply globally unless a team-specific policy exists.
 
 ### Read-Only
 

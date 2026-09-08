@@ -59,7 +59,7 @@ resource "tsuga_monitor" "log_error_pattern" {
       filter = {
         team_ids = ["abc-123-def"]
         env      = "production"
-        service  = "api-gateway"
+        services = ["api-gateway"]
       }
     }
   }
@@ -947,7 +947,7 @@ Required:
 
 Optional:
 
-- `service` (String) Optional service name to scope the monitor to
+- `services` (List of String) Optional service names to scope the monitor to
 
 
 

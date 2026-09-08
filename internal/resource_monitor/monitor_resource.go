@@ -450,9 +450,10 @@ func logErrorPatternMonitorConfigurationSchema() schema.Attribute {
 						Required:    true,
 						Description: "Environment to scope the monitor to",
 					},
-					"service": schema.StringAttribute{
+					"services": schema.ListAttribute{
 						Optional:    true,
-						Description: "Optional service name to scope the monitor to",
+						ElementType: types.StringType,
+						Description: "Optional service names to scope the monitor to",
 					},
 				},
 			},
@@ -492,9 +493,9 @@ type LogErrorPatternMonitorConfigurationModel struct {
 }
 
 type LogErrorPatternFilterModel struct {
-	TeamIds types.List   `tfsdk:"team_ids"`
-	Env     types.String `tfsdk:"env"`
-	Service types.String `tfsdk:"service"`
+	TeamIds  types.List   `tfsdk:"team_ids"`
+	Env      types.String `tfsdk:"env"`
+	Services types.List   `tfsdk:"services"`
 }
 
 type MonitorConfigurationDetailsModel struct {

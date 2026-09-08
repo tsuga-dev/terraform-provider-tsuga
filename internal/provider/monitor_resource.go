@@ -496,9 +496,9 @@ type monitorAPIConfiguration struct {
 }
 
 type monitorAPILogErrorPatternFilter struct {
-	TeamIds []string `json:"teamIds"`
-	Env     string   `json:"env"`
-	Service string   `json:"service,omitempty"`
+	TeamIds  []string `json:"teamIds"`
+	Env      string   `json:"env"`
+	Services []string `json:"services,omitempty"`
 }
 
 type monitorAPICondition struct {
@@ -678,8 +678,13 @@ func expandMonitorConfigurationLogErrorPattern(ctx context.Context, config *reso
 		"env":     config.Filter.Env.ValueString(),
 	}
 
-	if !config.Filter.Service.IsNull() && !config.Filter.Service.IsUnknown() {
-		filter["service"] = config.Filter.Service.ValueString()
+	services, sDiags := expandStringList(ctx, config.Filter.Services)
+	diags.Append(sDiags...)
+	if diags.HasError() {
+		return nil, diags
+	}
+	if len(services) > 0 {
+		filter["services"] = services
 	}
 
 	result := map[string]interface{}{
@@ -1132,18 +1137,23 @@ func flattenMonitorConfigurationLogErrorPattern(ctx context.Context, config moni
 		return resource_monitor.LogErrorPatternMonitorConfigurationModel{}, diags
 	}
 
-	service := types.StringNull()
-	if config.Filter.Service != "" {
-		service = types.StringValue(config.Filter.Service)
+	services := types.ListNull(types.StringType)
+	if len(config.Filter.Services) > 0 {
+		var sDiags diag.Diagnostics
+		services, sDiags = types.ListValueFrom(ctx, types.StringType, config.Filter.Services)
+		diags.Append(sDiags...)
+		if diags.HasError() {
+			return resource_monitor.LogErrorPatternMonitorConfigurationModel{}, diags
+		}
 	}
 
 	return resource_monitor.LogErrorPatternMonitorConfigurationModel{
 		AggregationAlertLogic: types.StringValue(config.AggregationAlertLogic),
 		NoDataBehavior:        types.StringValue(config.NoDataBehavior),
 		Filter: resource_monitor.LogErrorPatternFilterModel{
-			TeamIds: teamIds,
-			Env:     types.StringValue(config.Filter.Env),
-			Service: service,
+			TeamIds:  teamIds,
+			Env:      types.StringValue(config.Filter.Env),
+			Services: services,
 		},
 	}, diags
 }

@@ -39,8 +39,8 @@ func RetentionPolicyResourceSchema(ctx context.Context) schema.Schema {
 			"env": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Environment tag value this policy applies to. Omit for a policy that is not environment-specific.",
-				MarkdownDescription: "Environment tag value this policy applies to. Omit for a policy that is not environment-specific.",
+				Description:         "Environment tag value this policy applies to. Omitted policies apply across environments unless a more specific policy exists.",
+				MarkdownDescription: "Environment tag value this policy applies to. Omitted policies apply across environments unless a more specific policy exists.",
 				Validators: []validator.String{
 					stringvalidator.LengthBetween(0, 250),
 				},
@@ -58,8 +58,8 @@ func RetentionPolicyResourceSchema(ctx context.Context) schema.Schema {
 			"team_id": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Team ID this policy applies to. Omit for a policy that is not team-specific.",
-				MarkdownDescription: "Team ID this policy applies to. Omit for a policy that is not team-specific.",
+				Description:         "Team ID this policy applies to. Omitted policies apply globally unless a team-specific policy exists.",
+				MarkdownDescription: "Team ID this policy applies to. Omitted policies apply globally unless a team-specific policy exists.",
 				Validators: []validator.String{
 					stringvalidator.LengthBetween(0, 250),
 				},

@@ -437,7 +437,7 @@
             "team-123"
           ],
           "env": "prod",
-          "service": "api"
+          "services": ["api"]
         },
         "aggregationAlertLogic": "each",
         "noDataBehavior": "keep_last_status"
