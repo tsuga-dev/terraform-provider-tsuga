@@ -1,0 +1,14 @@
+docs/resources/monitor.md
+  h_2e75caf46d5b57 62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "439e704f65aba9cf1b7f3fc167c6833da0f00217",
+  "prompts": {},
+  "humans": {
+    "h_2e75caf46d5b57": {
+      "author": "talesmarra <marratales@gmail.com>"
+    }
+  }
+}
