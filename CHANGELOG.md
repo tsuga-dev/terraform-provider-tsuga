@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Pulled high-severity transport security issue from https://github.com/grpc/grpc-go/pull/9365
+
 ## [2.5.0] - 2026-09-08
 
 ### Added
