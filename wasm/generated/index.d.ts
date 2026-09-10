@@ -1,5 +1,5 @@
 // Generated from the Terraform provider resource registry.
-export type ResourceType = "tsuga_cloud_account" | "tsuga_custom_usage_tag" | "tsuga_dashboard" | "tsuga_dashboard_folder" | "tsuga_ingestion_api_key" | "tsuga_monitor" | "tsuga_notification_rule" | "tsuga_notification_silence" | "tsuga_retention_policy" | "tsuga_route" | "tsuga_slo" | "tsuga_tag_policy" | "tsuga_team" | "tsuga_team_membership";
+export type ResourceType = "tsuga_cloud_account" | "tsuga_custom_usage_tag" | "tsuga_dashboard" | "tsuga_dashboard_folder" | "tsuga_ingestion_api_key" | "tsuga_monitor" | "tsuga_notification_integration" | "tsuga_notification_rule" | "tsuga_notification_silence" | "tsuga_retention_policy" | "tsuga_route" | "tsuga_slo" | "tsuga_tag_policy" | "tsuga_team" | "tsuga_team_membership";
 export declare const resourceTypes: readonly ResourceType[];
 
 export interface ExportOptions {
@@ -31,6 +31,7 @@ export interface TerraformExporter {
   exportDashboardFolder(resource: object | string, options?: ExportOptions): ExportResult;
   exportIngestionApiKey(resource: object | string, options?: ExportOptions): ExportResult;
   exportMonitor(resource: object | string, options?: ExportOptions): ExportResult;
+  exportNotificationIntegration(resource: object | string, options?: ExportOptions): ExportResult;
   exportNotificationRule(resource: object | string, options?: ExportOptions): ExportResult;
   exportNotificationSilence(resource: object | string, options?: ExportOptions): ExportResult;
   exportRetentionPolicy(resource: object | string, options?: ExportOptions): ExportResult;

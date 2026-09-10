@@ -26,6 +26,7 @@ jobs:
           - tsuga_dashboard_folder
           - tsuga_ingestion_api_key
           - tsuga_monitor
+          - tsuga_notification_integration
           - tsuga_notification_rule
           - tsuga_notification_silence
           - tsuga_retention_policy
