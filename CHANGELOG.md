@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `tsuga_notification_integration`: new resource managing notification destinations.
+
 ## [2.5.1] - 2026-09-09
 
 ### Fixed

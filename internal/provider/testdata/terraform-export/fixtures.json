@@ -601,5 +601,55 @@
         }
       ]
     }
+  },
+  {
+    "name": "notification-integration-pagerduty",
+    "resourceType": "tsuga_notification_integration",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "tags": [
+        {
+          "key": "team",
+          "value": "platform"
+        }
+      ],
+      "setting": {
+        "type": "pagerduty",
+        "integrationKeyLastChars": "cret"
+      }
+    }
+  },
+  {
+    "name": "notification-integration-webhook",
+    "resourceType": "tsuga_notification_integration",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "tags": [],
+      "setting": {
+        "type": "webhook",
+        "urlLastChars": "hook",
+        "method": "POST",
+        "authentication": {
+          "type": "bearer",
+          "tokenLastChars": "cret"
+        },
+        "customHeaders": {
+          "X-Env": "prod"
+        },
+        "payloadTemplate": {
+          "type": "json",
+          "value": {
+            "status": "{{ alert_status }}",
+            "title": "{{ alert_title }}"
+          }
+        },
+        "eventNameMapping": {
+          "ok": "resolved",
+          "alert": "firing"
+        }
+      }
+    }
   }
 ]
