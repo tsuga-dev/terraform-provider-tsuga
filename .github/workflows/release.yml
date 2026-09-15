@@ -100,6 +100,16 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release edit "${GITHUB_REF_NAME}" --notes-file "${{ steps.notes.outputs.file }}"
 
+      - name: Prepare Slack release notes
+        run: |
+          DELIM="EOF_$(openssl rand -hex 16)"
+          {
+            echo "RELEASE_NOTES<<$DELIM"
+            head -c 2500 "${{ steps.notes.outputs.file }}"
+            echo
+            echo "$DELIM"
+          } >> "$GITHUB_ENV"
+
       - name: Send Slack notification
         uses: rtCamp/action-slack-notify@c33737706dea87cd7784c687dadc9adf1be59990 # pin@v2
         continue-on-error: true
@@ -108,6 +118,9 @@ jobs:
           SLACK_COLOR: good
           MSG_MINIMAL: actions url
           SLACK_TITLE: "🚀 Terraform Provider Released"
-          SLACK_MESSAGE: "A new release has been published: ${{ github.ref_name }}"
+          SLACK_MESSAGE: |
+            A new release has been published: ${{ github.ref_name }}
+
+            ${{ env.RELEASE_NOTES }}
           SLACK_FOOTER: "https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
