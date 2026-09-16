@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-09-16
+
 ### Added
 
 - `tsuga_dashboard`: `filters[].exclude` inverts a dashboard-wide filter so widgets exclude matching telemetry.
