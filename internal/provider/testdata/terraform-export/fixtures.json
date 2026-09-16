@@ -458,7 +458,8 @@
       "filters": [
         {
           "key": "env",
-          "values": []
+          "values": [],
+          "exclude": true
         }
       ],
       "graphs": [

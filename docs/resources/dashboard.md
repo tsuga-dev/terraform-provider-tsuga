@@ -2634,6 +2634,10 @@ Required:
 - `key` (String) Filter key
 - `values` (List of String) Filter values
 
+Optional:
+
+- `exclude` (Boolean) If true, widgets exclude telemetry matching this filter instead of including it
+
 
 <a id="nestedatt--tags"></a>
 ### Nested Schema for `tags`
