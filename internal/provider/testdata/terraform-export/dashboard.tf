@@ -1,7 +1,8 @@
 resource "tsuga_dashboard" "dashboard" {
   filters = [{
-    key    = "env"
-    values = []
+    exclude = true
+    key     = "env"
+    values  = []
   }]
   folder_id = "folder-123"
   graphs = [{

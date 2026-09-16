@@ -71,6 +71,10 @@ func DashboardResourceSchema(ctx context.Context) schema.Schema {
 								),
 							},
 						},
+						"exclude": schema.BoolAttribute{
+							Optional:    true,
+							Description: "If true, widgets exclude telemetry matching this filter instead of including it",
+						},
 					},
 				},
 			},
@@ -1271,8 +1275,9 @@ type ConditionModel struct {
 }
 
 type FilterModel struct {
-	Key    types.String `tfsdk:"key"`
-	Values types.List   `tfsdk:"values"`
+	Key     types.String `tfsdk:"key"`
+	Values  types.List   `tfsdk:"values"`
+	Exclude types.Bool   `tfsdk:"exclude"`
 }
 
 type TimeBucketModel struct {
@@ -1287,8 +1292,9 @@ type ListColumnModel struct {
 
 func FilterAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"key":    types.StringType,
-		"values": types.ListType{ElemType: types.StringType},
+		"key":     types.StringType,
+		"values":  types.ListType{ElemType: types.StringType},
+		"exclude": types.BoolType,
 	}
 }
 

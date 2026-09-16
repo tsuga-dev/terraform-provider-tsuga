@@ -560,8 +560,9 @@ type dashboardAPIData struct {
 }
 
 type dashboardAPIFilter struct {
-	Key    string   `json:"key"`
-	Values []string `json:"values"`
+	Key     string   `json:"key"`
+	Values  []string `json:"values"`
+	Exclude *bool    `json:"exclude,omitempty"`
 }
 
 type dashboardAPIGraph struct {
@@ -774,10 +775,15 @@ func expandDashboardFilters(ctx context.Context, filters types.List) ([]dashboar
 		if values == nil {
 			values = []string{}
 		}
-		result = append(result, dashboardAPIFilter{
+		filter := dashboardAPIFilter{
 			Key:    f.Key.ValueString(),
 			Values: values,
-		})
+		}
+		if !f.Exclude.IsNull() && !f.Exclude.IsUnknown() {
+			exclude := f.Exclude.ValueBool()
+			filter.Exclude = &exclude
+		}
+		result = append(result, filter)
 	}
 	return result, diags
 }
@@ -804,8 +810,9 @@ func flattenDashboardFilters(ctx context.Context, filters []dashboardAPIFilter) 
 			return types.ListNull(elemType), diags
 		}
 		values = append(values, types.ObjectValueMust(resource_dashboard.FilterAttrTypes(), map[string]attr.Value{
-			"key":    types.StringValue(f.Key),
-			"values": valsList,
+			"key":     types.StringValue(f.Key),
+			"values":  valsList,
+			"exclude": types.BoolPointerValue(f.Exclude),
 		}))
 	}
 	return types.ListValue(elemType, values)
