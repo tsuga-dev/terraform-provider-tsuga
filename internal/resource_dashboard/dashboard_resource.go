@@ -262,11 +262,29 @@ func visualizationSeriesSchema() schema.Attribute {
 
 func visualizationTimeseriesSchema() schema.Attribute {
 	attr := visualizationSeriesSchema().(schema.SingleNestedAttribute)
+	attr.Attributes["legend_mode"] = legendModeSchema()
+	attr.Attributes["time_bucket"] = timeBucketSchema()
 	attr.Attributes["smoothing"] = schema.BoolAttribute{
 		Optional:    true,
 		Description: "Whether to apply automatic smoothing to the rendered timeseries",
 	}
 	return attr
+}
+
+func timeBucketSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Optional:    true,
+		Description: "Groups time-series data into fixed-size time buckets",
+		Attributes: map[string]schema.Attribute{
+			"time": schema.Float64Attribute{Required: true},
+			"metric": schema.StringAttribute{
+				Required: true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("sec", "min", "hour", "day"),
+				},
+			},
+		},
+	}
 }
 
 func yAxisSettingsSchema() schema.Attribute {
@@ -524,12 +542,17 @@ func conditionsSchema() schema.Attribute {
 func visualizationPieSchema() schema.Attribute {
 	attr := visualizationSeriesSchema().(schema.SingleNestedAttribute)
 	delete(attr.Attributes, "y_axis_settings")
+	attr.Attributes["legend_mode"] = legendModeSchema()
 	return attr
 }
 
 func visualizationTopListSchema() schema.Attribute {
 	attr := visualizationSeriesSchema().(schema.SingleNestedAttribute)
 	delete(attr.Attributes, "y_axis_settings")
+	attr.Attributes["is_stacked"] = schema.BoolAttribute{
+		Optional:    true,
+		Description: "Requests stacked rendering for a top-list widget. Tsuga renders stacked rows only for one count or sum query with exactly two grouped fields, no formula, non-negative values, and a single-cluster context; otherwise the widget renders as a normal top list.",
+	}
 	attr.Attributes["conditions"] = conditionsSchema()
 	return attr
 }
@@ -538,6 +561,7 @@ func visualizationQueryValueSchema() schema.Attribute {
 	attr := visualizationSeriesSchema().(schema.SingleNestedAttribute)
 	delete(attr.Attributes, "group_by")
 	delete(attr.Attributes, "y_axis_settings")
+	attr.Attributes["legend_mode"] = legendModeSchema()
 	attr.Attributes["background_mode"] = schema.StringAttribute{
 		Optional: true,
 		Validators: []validator.String{
@@ -550,18 +574,8 @@ func visualizationQueryValueSchema() schema.Attribute {
 
 func visualizationBarSchema() schema.Attribute {
 	attr := visualizationSeriesSchema().(schema.SingleNestedAttribute)
-	attr.Attributes["time_bucket"] = schema.SingleNestedAttribute{
-		Optional: true,
-		Attributes: map[string]schema.Attribute{
-			"time": schema.Float64Attribute{Required: true},
-			"metric": schema.StringAttribute{
-				Required: true,
-				Validators: []validator.String{
-					stringvalidator.OneOf("sec", "min", "hour", "day"),
-				},
-			},
-		},
-	}
+	attr.Attributes["legend_mode"] = legendModeSchema()
+	attr.Attributes["time_bucket"] = timeBucketSchema()
 	return attr
 }
 
@@ -688,7 +702,7 @@ func connectionIdSchema() schema.Attribute {
 func legendModeSchema() schema.Attribute {
 	return schema.StringAttribute{
 		Optional:    true,
-		Description: "Controls whether and how the widget displays legend or series details",
+		Description: "Controls whether and how the widget displays legend or series details; must be table, legend-only, or no-legend",
 		Validators: []validator.String{
 			stringvalidator.OneOf("table", "legend-only", "no-legend"),
 		},
@@ -904,13 +918,7 @@ func visualizationTimeseriesConnectionSchema() schema.Attribute {
 					),
 				},
 			},
-			"legend_mode": schema.StringAttribute{
-				Optional:    true,
-				Description: "Controls whether and how the widget displays legend or series details",
-				Validators: []validator.String{
-					stringvalidator.OneOf("table", "legend-only", "no-legend"),
-				},
-			},
+			"legend_mode":     legendModeSchema(),
 			"thresholds":      thresholdsSchema(),
 			"y_axis_settings": yAxisSettingsSchema(),
 		},
@@ -1070,7 +1078,9 @@ type SeriesVisualizationModel struct {
 
 type TimeseriesVisualization struct {
 	SeriesVisualizationModel
-	Smoothing types.Bool `tfsdk:"smoothing"`
+	LegendMode types.String     `tfsdk:"legend_mode"`
+	TimeBucket *TimeBucketModel `tfsdk:"time_bucket"`
+	Smoothing  types.Bool       `tfsdk:"smoothing"`
 }
 
 type AliasesModel struct {
@@ -1114,23 +1124,27 @@ type TableColumnModel struct {
 
 type QueryValueVisualization struct {
 	SeriesBase
+	LegendMode     types.String `tfsdk:"legend_mode"`
 	BackgroundMode types.String `tfsdk:"background_mode"`
 	Conditions     types.List   `tfsdk:"conditions"`
 }
 
 type PieVisualization struct {
 	SeriesBase
-	GroupBy types.List `tfsdk:"group_by"`
+	LegendMode types.String `tfsdk:"legend_mode"`
+	GroupBy    types.List   `tfsdk:"group_by"`
 }
 
 type TopListVisualization struct {
 	SeriesBase
 	GroupBy    types.List `tfsdk:"group_by"`
 	Conditions types.List `tfsdk:"conditions"`
+	IsStacked  types.Bool `tfsdk:"is_stacked"`
 }
 
 type BarVisualization struct {
 	SeriesVisualizationModel
+	LegendMode types.String     `tfsdk:"legend_mode"`
 	TimeBucket *TimeBucketModel `tfsdk:"time_bucket"`
 }
 
@@ -1360,6 +1374,8 @@ func SeriesVisualizationAttrTypes() map[string]attr.Type {
 
 func TimeseriesVisualizationAttrTypes() map[string]attr.Type {
 	attrs := SeriesVisualizationAttrTypes()
+	attrs["legend_mode"] = types.StringType
+	attrs["time_bucket"] = types.ObjectType{AttrTypes: TimeBucketAttrTypes()}
 	attrs["smoothing"] = types.BoolType
 	return attrs
 }
@@ -1418,6 +1434,7 @@ func TableColumnAttrTypes() map[string]attr.Type {
 func PieVisualizationAttrTypes() map[string]attr.Type {
 	attrs := SeriesVisualizationAttrTypes()
 	delete(attrs, "y_axis_settings")
+	attrs["legend_mode"] = types.StringType
 	return attrs
 }
 
@@ -1425,6 +1442,7 @@ func QueryValueVisualizationAttrTypes() map[string]attr.Type {
 	attrs := SeriesVisualizationAttrTypes()
 	delete(attrs, "group_by")
 	delete(attrs, "y_axis_settings")
+	attrs["legend_mode"] = types.StringType
 	attrs["background_mode"] = types.StringType
 	attrs["conditions"] = types.ListType{ElemType: types.ObjectType{AttrTypes: ConditionAttrTypes()}}
 	return attrs
@@ -1433,12 +1451,14 @@ func QueryValueVisualizationAttrTypes() map[string]attr.Type {
 func TopListVisualizationAttrTypes() map[string]attr.Type {
 	attrs := SeriesVisualizationAttrTypes()
 	delete(attrs, "y_axis_settings")
+	attrs["is_stacked"] = types.BoolType
 	attrs["conditions"] = types.ListType{ElemType: types.ObjectType{AttrTypes: ConditionAttrTypes()}}
 	return attrs
 }
 
 func BarVisualizationAttrTypes() map[string]attr.Type {
 	attrs := SeriesVisualizationAttrTypes()
+	attrs["legend_mode"] = types.StringType
 	attrs["time_bucket"] = types.ObjectType{AttrTypes: TimeBucketAttrTypes()}
 	return attrs
 }

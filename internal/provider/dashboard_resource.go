@@ -602,6 +602,7 @@ type dashboardVisualization struct {
 	ListColumnsSize map[string]float64      `json:"listColumnsSize,omitempty"`
 	DefaultSorting  []dashboardListSorting  `json:"defaultSorting,omitempty"`
 	IsCellWrapped   *bool                   `json:"isCellWrapped,omitempty"`
+	IsStacked       *bool                   `json:"isStacked,omitempty"`
 	Note            string                  `json:"note,omitempty"`
 	NoteAlign       string                  `json:"noteAlign,omitempty"`
 	NoteJustify     string                  `json:"noteJustifyContent,omitempty"`
@@ -931,6 +932,8 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 			smoothing := v.Timeseries.Smoothing.ValueBool()
 			vz.Smoothing = &smoothing
 		}
+		vz.TimeBucket = expandTimeBucket(v.Timeseries.TimeBucket)
+		vz.LegendMode = stringValue(v.Timeseries.LegendMode)
 		vis = vz
 	}
 	if v.TopList != nil {
@@ -942,18 +945,24 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 			diags.Append(cDiags...)
 			vz.Conditions = conds
 		}
+		if !v.TopList.IsStacked.IsNull() && !v.TopList.IsStacked.IsUnknown() {
+			stacked := v.TopList.IsStacked.ValueBool()
+			vz.IsStacked = &stacked
+		}
 		vis = vz
 	}
 	if v.Pie != nil {
 		setCount++
 		vz, d := buildSeries(&v.Pie.SeriesBase, v.Pie.GroupBy, nil, "pie")
 		diags.Append(d...)
+		vz.LegendMode = stringValue(v.Pie.LegendMode)
 		vis = vz
 	}
 	if v.QueryValue != nil {
 		setCount++
 		vz, d := buildSeries(&v.QueryValue.SeriesBase, types.List{}, nil, "query-value")
 		diags.Append(d...)
+		vz.LegendMode = stringValue(v.QueryValue.LegendMode)
 		if !v.QueryValue.BackgroundMode.IsNull() && !v.QueryValue.BackgroundMode.IsUnknown() {
 			vz.BackgroundMode = v.QueryValue.BackgroundMode.ValueString()
 		}
@@ -968,12 +977,8 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 		setCount++
 		vz, d := buildSeries(&v.Bar.SeriesBase, v.Bar.GroupBy, v.Bar.YAxisSettings, "bar")
 		diags.Append(d...)
-		if v.Bar.TimeBucket != nil {
-			vz.TimeBucket = &dashboardTimeBucket{
-				Time:   v.Bar.TimeBucket.Time.ValueFloat64(),
-				Metric: v.Bar.TimeBucket.Metric.ValueString(),
-			}
-		}
+		vz.TimeBucket = expandTimeBucket(v.Bar.TimeBucket)
+		vz.LegendMode = stringValue(v.Bar.LegendMode)
 		vis = vz
 	}
 	if v.Gauge != nil {
@@ -1168,6 +1173,13 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 	}
 
 	return vis, diags
+}
+
+func expandTimeBucket(tb *resource_dashboard.TimeBucketModel) *dashboardTimeBucket {
+	if tb == nil {
+		return nil
+	}
+	return &dashboardTimeBucket{Time: tb.Time.ValueFloat64(), Metric: tb.Metric.ValueString()}
 }
 
 func flattenDashboard(ctx context.Context, data dashboardAPIData) (resource_dashboard.DashboardModel, diag.Diagnostics) {
@@ -1493,6 +1505,7 @@ func flattenSeriesVisualization(ctx context.Context, vis dashboardVisualization)
 		condVal, cDiags := flattenConditions(vis.Conditions)
 		diags.Append(cDiags...)
 		obj["background_mode"] = stringValueOrNull(vis.BackgroundMode)
+		obj["legend_mode"] = stringValueOrNull(vis.LegendMode)
 		obj["conditions"] = condVal
 		return types.ObjectValueMust(resource_dashboard.QueryValueVisualizationAttrTypes(), obj), diags
 	}
@@ -1502,18 +1515,13 @@ func flattenSeriesVisualization(ctx context.Context, vis dashboardVisualization)
 		condVal, cDiags := flattenConditions(vis.Conditions)
 		diags.Append(cDiags...)
 		obj["conditions"] = condVal
+		obj["is_stacked"] = types.BoolPointerValue(vis.IsStacked)
 		return types.ObjectValueMust(resource_dashboard.TopListVisualizationAttrTypes(), obj), diags
 	}
 
 	if vis.Type == "bar" {
-		tbVal := types.ObjectNull(resource_dashboard.TimeBucketAttrTypes())
-		if vis.TimeBucket != nil {
-			tbVal = types.ObjectValueMust(resource_dashboard.TimeBucketAttrTypes(), map[string]attr.Value{
-				"time":   types.Float64Value(vis.TimeBucket.Time),
-				"metric": types.StringValue(vis.TimeBucket.Metric),
-			})
-		}
-		obj["time_bucket"] = tbVal
+		obj["time_bucket"] = flattenTimeBucket(vis.TimeBucket)
+		obj["legend_mode"] = stringValueOrNull(vis.LegendMode)
 		return types.ObjectValueMust(resource_dashboard.BarVisualizationAttrTypes(), obj), diags
 	}
 
@@ -1547,17 +1555,33 @@ func flattenSeriesVisualization(ctx context.Context, vis dashboardVisualization)
 	}
 
 	if vis.Type == "timeseries" {
+		obj["time_bucket"] = flattenTimeBucket(vis.TimeBucket)
 		smoothingVal := types.BoolNull()
 		if vis.Smoothing != nil {
 			smoothingVal = types.BoolValue(*vis.Smoothing)
 		}
 		obj["smoothing"] = smoothingVal
+		obj["legend_mode"] = stringValueOrNull(vis.LegendMode)
 		return types.ObjectValueMust(resource_dashboard.TimeseriesVisualizationAttrTypes(), obj), diags
 	}
 
-	// The only remaining series type is pie, which does not accept y_axis_settings.
-	delete(obj, "y_axis_settings")
-	return types.ObjectValueMust(resource_dashboard.PieVisualizationAttrTypes(), obj), diags
+	if vis.Type == "pie" {
+		delete(obj, "y_axis_settings")
+		obj["legend_mode"] = stringValueOrNull(vis.LegendMode)
+		return types.ObjectValueMust(resource_dashboard.PieVisualizationAttrTypes(), obj), diags
+	}
+	diags.AddError("Unsupported series visualization type", vis.Type)
+	return types.ObjectNull(resource_dashboard.PieVisualizationAttrTypes()), diags
+}
+
+func flattenTimeBucket(tb *dashboardTimeBucket) attr.Value {
+	if tb == nil {
+		return types.ObjectNull(resource_dashboard.TimeBucketAttrTypes())
+	}
+	return types.ObjectValueMust(resource_dashboard.TimeBucketAttrTypes(), map[string]attr.Value{
+		"time":   types.Float64Value(tb.Time),
+		"metric": types.StringValue(tb.Metric),
+	})
 }
 
 func flattenQueries(queries []dashboardQuery) (types.List, diag.Diagnostics) {

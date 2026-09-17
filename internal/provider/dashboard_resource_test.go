@@ -335,6 +335,10 @@ resource "tsuga_dashboard" "test" {
               }
             }
           }]
+          time_bucket = {
+            time   = 5
+            metric = "min"
+          }
         }
       }
     },
@@ -361,6 +365,8 @@ resource "tsuga_dashboard" "test" {
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.3.visualization.top_list.conditions.0.operator", "less_than"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.3.visualization.top_list.conditions.0.value", "10"),
 					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.3.visualization.top_list.conditions.0.color", "warning"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.5.visualization.timeseries.time_bucket.metric", "min"),
+					resource.TestCheckResourceAttr("tsuga_dashboard.test", "graphs.5.visualization.timeseries.time_bucket.time", "5"),
 				),
 			},
 		},

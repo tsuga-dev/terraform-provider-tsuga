@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `tsuga_dashboard`: `time_bucket` on the `timeseries` widget.
+- `tsuga_dashboard`: `legend_mode` on the `bar`, `pie`, `query_value` and `timeseries` widgets.
+- `tsuga_dashboard`: `is_stacked` on the `top_list` widget, requesting stacked rendering.
+
 ## [2.7.0] - 2026-09-16
 
 ### Added

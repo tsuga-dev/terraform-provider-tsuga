@@ -7,9 +7,64 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
+
+func TestDashboardVisualizationSchemasMatchAttrTypes(t *testing.T) {
+	ctx := context.Background()
+	graphs := resource_dashboard.DashboardResourceSchema(ctx).Attributes["graphs"].(schema.ListNestedAttribute)
+	visualization := graphs.NestedObject.Attributes["visualization"].(schema.SingleNestedAttribute)
+
+	tests := map[string]map[string]attr.Type{
+		"timeseries":   resource_dashboard.TimeseriesVisualizationAttrTypes(),
+		"bar":          resource_dashboard.BarVisualizationAttrTypes(),
+		"pie":          resource_dashboard.PieVisualizationAttrTypes(),
+		"top_list":     resource_dashboard.TopListVisualizationAttrTypes(),
+		"query_value":  resource_dashboard.QueryValueVisualizationAttrTypes(),
+		"gauge":        resource_dashboard.GaugeVisualizationAttrTypes(),
+		"distribution": resource_dashboard.DistributionVisualizationAttrTypes(),
+		"heatmap":      resource_dashboard.HeatmapVisualizationAttrTypes(),
+	}
+	for name, attrTypes := range tests {
+		viz, ok := visualization.Attributes[name].(schema.SingleNestedAttribute)
+		if !ok {
+			t.Fatalf("%s is not a SingleNestedAttribute", name)
+		}
+		if len(viz.Attributes) != len(attrTypes) {
+			t.Errorf("%s schema has %d attributes, attr types has %d", name, len(viz.Attributes), len(attrTypes))
+		}
+		for key := range attrTypes {
+			a, ok := viz.Attributes[key]
+			if !ok {
+				t.Errorf("%s schema is missing %q", name, key)
+				continue
+			}
+			if got := a.GetType(); !got.Equal(attrTypes[key]) {
+				t.Errorf("%s.%s schema type %s does not match attr type %s", name, key, got, attrTypes[key])
+			}
+		}
+		for key := range viz.Attributes {
+			if _, ok := attrTypes[key]; !ok {
+				t.Errorf("%s attr types is missing %q", name, key)
+			}
+		}
+	}
+}
+
+func TestDashboardTimeBucketAllowsSubUnitTime(t *testing.T) {
+	ctx := context.Background()
+	graphs := resource_dashboard.DashboardResourceSchema(ctx).Attributes["graphs"].(schema.ListNestedAttribute)
+	visualization := graphs.NestedObject.Attributes["visualization"].(schema.SingleNestedAttribute)
+	timeseries := visualization.Attributes["timeseries"].(schema.SingleNestedAttribute)
+	timeBucket := timeseries.Attributes["time_bucket"].(schema.SingleNestedAttribute)
+	time := timeBucket.Attributes["time"].(schema.Float64Attribute)
+
+	if len(time.Validators) != 0 {
+		t.Fatalf("time_bucket.time must allow API-supported sub-unit values")
+	}
+}
 
 // functionValue builds a single query-function object value, leaving every
 // optional parameter null unless overridden by extra.
@@ -219,6 +274,140 @@ func TestExpandFlattenVisualization_ListSpansRoundTrips(t *testing.T) {
 	}
 	if len(sortBack) != 1 || sortBack[0].Id.ValueString() != "duration" || !sortBack[0].Desc.ValueBool() {
 		t.Fatalf("expected default_sorting to round-trip, got %#v", sortBack)
+	}
+}
+
+func TestExpandFlattenVisualization_TopListIsStackedRoundTrips(t *testing.T) {
+	ctx := context.Background()
+
+	vis := resource_dashboard.VisualizationModel{
+		TopList: &resource_dashboard.TopListVisualization{
+			IsStacked: types.BoolValue(true),
+		},
+	}
+
+	expanded, diags := expandVisualization(ctx, vis)
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if expanded.IsStacked == nil || !*expanded.IsStacked {
+		t.Fatalf("expected isStacked to be sent as true, got %#v", expanded.IsStacked)
+	}
+
+	flattened, flattenDiags := flattenVisualization(ctx, expanded)
+	if flattenDiags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", flattenDiags)
+	}
+
+	var back resource_dashboard.VisualizationModel
+	if d := flattened.(types.Object).As(ctx, &back, basetypes.ObjectAsOptions{}); d.HasError() {
+		t.Fatalf("failed to decode flattened visualization: %v", d)
+	}
+	if back.TopList == nil || back.TopList.IsStacked.IsNull() || !back.TopList.IsStacked.ValueBool() {
+		t.Fatalf("expected is_stacked to round-trip as true, got %#v", back.TopList)
+	}
+
+	unset, unsetDiags := expandVisualization(ctx, resource_dashboard.VisualizationModel{
+		TopList: &resource_dashboard.TopListVisualization{},
+	})
+	if unsetDiags.HasError() {
+		t.Fatalf("unexpected diagnostics for unset is_stacked: %v", unsetDiags)
+	}
+	if unset.IsStacked != nil {
+		t.Fatalf("expected unset is_stacked to be omitted, got %#v", unset.IsStacked)
+	}
+
+	explicitFalse, falseDiags := expandVisualization(ctx, resource_dashboard.VisualizationModel{
+		TopList: &resource_dashboard.TopListVisualization{IsStacked: types.BoolValue(false)},
+	})
+	if falseDiags.HasError() {
+		t.Fatalf("unexpected diagnostics for explicit false is_stacked: %v", falseDiags)
+	}
+	if explicitFalse.IsStacked == nil || *explicitFalse.IsStacked {
+		t.Fatalf("expected explicit false to be sent, got %#v", explicitFalse.IsStacked)
+	}
+}
+
+func TestExpandFlattenVisualization_TimeseriesTimeBucketRoundTrips(t *testing.T) {
+	ctx := context.Background()
+	vis := resource_dashboard.VisualizationModel{
+		Timeseries: &resource_dashboard.TimeseriesVisualization{
+			SeriesVisualizationModel: resource_dashboard.SeriesVisualizationModel{
+				SeriesBase: resource_dashboard.SeriesBase{Source: types.StringValue("metrics")},
+			},
+			TimeBucket: &resource_dashboard.TimeBucketModel{
+				Time:   types.Float64Value(5),
+				Metric: types.StringValue("min"),
+			},
+		},
+	}
+
+	expanded, diags := expandVisualization(ctx, vis)
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if expanded.TimeBucket == nil || expanded.TimeBucket.Time != 5 || expanded.TimeBucket.Metric != "min" {
+		t.Fatalf("expected timeseries time bucket to be sent, got %#v", expanded.TimeBucket)
+	}
+
+	flattened, flattenDiags := flattenVisualization(ctx, expanded)
+	if flattenDiags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", flattenDiags)
+	}
+	var back resource_dashboard.VisualizationModel
+	if d := flattened.(types.Object).As(ctx, &back, basetypes.ObjectAsOptions{}); d.HasError() {
+		t.Fatalf("failed to decode flattened visualization: %v", d)
+	}
+	if back.Timeseries == nil || back.Timeseries.TimeBucket == nil {
+		t.Fatal("expected timeseries time bucket to round-trip")
+	}
+	if back.Timeseries.TimeBucket.Time.ValueFloat64() != 5 || back.Timeseries.TimeBucket.Metric.ValueString() != "min" {
+		t.Fatalf("unexpected round-tripped time bucket: %#v", back.Timeseries.TimeBucket)
+	}
+}
+
+func TestExpandFlattenVisualization_TimeseriesLegendModeRoundTrips(t *testing.T) {
+	ctx := context.Background()
+	vis := resource_dashboard.VisualizationModel{
+		Timeseries: &resource_dashboard.TimeseriesVisualization{
+			SeriesVisualizationModel: resource_dashboard.SeriesVisualizationModel{
+				SeriesBase: resource_dashboard.SeriesBase{Source: types.StringValue("logs")},
+			},
+			LegendMode: types.StringValue("no-legend"),
+		},
+	}
+
+	expanded, diags := expandVisualization(ctx, vis)
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if expanded.LegendMode != "no-legend" {
+		t.Fatalf("expected legendMode to be sent, got %q", expanded.LegendMode)
+	}
+
+	flattened, flattenDiags := flattenVisualization(ctx, expanded)
+	if flattenDiags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", flattenDiags)
+	}
+	var back resource_dashboard.VisualizationModel
+	if d := flattened.(types.Object).As(ctx, &back, basetypes.ObjectAsOptions{}); d.HasError() {
+		t.Fatalf("failed to decode flattened visualization: %v", d)
+	}
+	if back.Timeseries == nil || back.Timeseries.LegendMode.ValueString() != "no-legend" {
+		t.Fatalf("expected legend_mode to round-trip, got %#v", back.Timeseries)
+	}
+}
+
+func TestFlattenSeriesVisualization_UnsupportedTypeReturnsDiagnostic(t *testing.T) {
+	ctx := context.Background()
+	vis := dashboardVisualization{Type: "unsupported"}
+
+	flattened, diags := flattenSeriesVisualization(ctx, vis)
+	if !diags.HasError() {
+		t.Fatal("expected unsupported visualization type diagnostic")
+	}
+	if !flattened.IsNull() {
+		t.Fatalf("expected null visualization, got %#v", flattened)
 	}
 }
 
