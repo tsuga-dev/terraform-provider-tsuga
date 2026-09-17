@@ -49,8 +49,13 @@ resource "tsuga_dashboard" "dashboard" {
       }
       visualization = {
         timeseries = {
-          source  = "metrics"
-          formula = "(q1 / (q1 + q2)) * 100"
+          source      = "metrics"
+          formula     = "(q1 / (q1 + q2)) * 100"
+          legend_mode = "legend-only"
+          time_bucket = {
+            time   = 5
+            metric = "min"
+          }
 
           group_by = [
             {
@@ -673,9 +678,10 @@ Optional:
 - `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar--aliases))
 - `formula` (String)
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--bar--group_by))
+- `legend_mode` (String) Controls whether and how the widget displays legend or series details; must be table, legend-only, or no-legend
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
-- `time_bucket` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar--time_bucket))
+- `time_bucket` (Attributes) Groups time-series data into fixed-size time buckets (see [below for nested schema](#nestedatt--graphs--visualization--bar--time_bucket))
 - `visible_series` (List of Boolean)
 - `y_axis_settings` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar--y_axis_settings))
 
@@ -885,7 +891,7 @@ Required:
 
 Optional:
 
-- `legend_mode` (String) Controls whether and how the widget displays legend or series details
+- `legend_mode` (String) Controls whether and how the widget displays legend or series details; must be table, legend-only, or no-legend
 - `thresholds` (Attributes List) Threshold markers displayed on the chart (see [below for nested schema](#nestedatt--graphs--visualization--bar_connection--thresholds))
 - `y_axis_settings` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar_connection--y_axis_settings))
 
@@ -1624,6 +1630,7 @@ Optional:
 - `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie--aliases))
 - `formula` (String)
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--pie--group_by))
+- `legend_mode` (String) Controls whether and how the widget displays legend or series details; must be table, legend-only, or no-legend
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
 - `visible_series` (List of Boolean)
@@ -1778,7 +1785,7 @@ Required:
 
 Optional:
 
-- `legend_mode` (String) Controls whether and how the widget displays legend or series details
+- `legend_mode` (String) Controls whether and how the widget displays legend or series details; must be table, legend-only, or no-legend
 
 Read-Only:
 
@@ -1799,6 +1806,7 @@ Optional:
 - `background_mode` (String)
 - `conditions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--conditions))
 - `formula` (String)
+- `legend_mode` (String) Controls whether and how the widget displays legend or series details; must be table, legend-only, or no-legend
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
 - `visible_series` (List of Boolean)
@@ -1951,7 +1959,7 @@ Optional:
 
 - `background_mode` (String)
 - `conditions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--query_value_connection--conditions))
-- `legend_mode` (String) Controls whether and how the widget displays legend or series details
+- `legend_mode` (String) Controls whether and how the widget displays legend or series details; must be table, legend-only, or no-legend
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value_connection--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
 
@@ -2164,9 +2172,11 @@ Optional:
 - `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--aliases))
 - `formula` (String)
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--group_by))
+- `legend_mode` (String) Controls whether and how the widget displays legend or series details; must be table, legend-only, or no-legend
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
 - `smoothing` (Boolean) Whether to apply automatic smoothing to the rendered timeseries
+- `time_bucket` (Attributes) Groups time-series data into fixed-size time buckets (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--time_bucket))
 - `visible_series` (List of Boolean)
 - `y_axis_settings` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--y_axis_settings))
 
@@ -2309,6 +2319,15 @@ Optional:
 - `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
 
 
+<a id="nestedatt--graphs--visualization--timeseries--time_bucket"></a>
+### Nested Schema for `graphs.visualization.timeseries.time_bucket`
+
+Required:
+
+- `metric` (String)
+- `time` (Number)
+
+
 <a id="nestedatt--graphs--visualization--timeseries--y_axis_settings"></a>
 ### Nested Schema for `graphs.visualization.timeseries.y_axis_settings`
 
@@ -2367,7 +2386,7 @@ Required:
 
 Optional:
 
-- `legend_mode` (String) Controls whether and how the widget displays legend or series details
+- `legend_mode` (String) Controls whether and how the widget displays legend or series details; must be table, legend-only, or no-legend
 - `thresholds` (Attributes List) Threshold markers displayed on the chart (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_connection--thresholds))
 - `y_axis_settings` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_connection--y_axis_settings))
 
@@ -2446,6 +2465,7 @@ Optional:
 - `conditions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--conditions))
 - `formula` (String)
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--group_by))
+- `is_stacked` (Boolean) Requests stacked rendering for a top-list widget. Tsuga renders stacked rows only for one count or sum query with exactly two grouped fields, no formula, non-negative values, and a single-cluster context; otherwise the widget renders as a normal top list.
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
 - `visible_series` (List of Boolean)

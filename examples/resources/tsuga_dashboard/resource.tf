@@ -34,8 +34,13 @@ resource "tsuga_dashboard" "dashboard" {
       }
       visualization = {
         timeseries = {
-          source  = "metrics"
-          formula = "(q1 / (q1 + q2)) * 100"
+          source      = "metrics"
+          formula     = "(q1 / (q1 + q2)) * 100"
+          legend_mode = "legend-only"
+          time_bucket = {
+            time   = 5
+            metric = "min"
+          }
 
           group_by = [
             {
