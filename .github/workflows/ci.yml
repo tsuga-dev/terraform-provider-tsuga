@@ -141,7 +141,7 @@ jobs:
       - name: Go lint
         uses: golangci/golangci-lint-action@e7fa5ac41e1cf5b7d48e45e42232ce7ada589601 # pin@v9
         with:
-          version: v2.6
+          version: v2.13
 
       - name: Download dependencies
         run: go mod download
@@ -174,7 +174,7 @@ jobs:
           node-version: "24.21.0"
       - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # pin@v3
         with:
-          terraform_version: "1.13.4"
+          terraform_version: "v1.16.2"
           terraform_wrapper: false
       - name: Build WASM and generate resource bindings
         run: node wasm/build.mjs
