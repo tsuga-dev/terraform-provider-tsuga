@@ -946,6 +946,8 @@
               "CLUSTER_AGGREGATION_STRUCTURE",
               "ABORT_ERROR",
               "BAD_REQUEST",
+              "CUSTOM_ROLE_IN_USE",
+              "CUSTOM_ROLE_NAME_CONFLICT",
               "DUPLICATE_KEY_VIOLATION",
               "FOREIGN_KEY_VIOLATION",
               "FST_ERR_VALIDATION",
@@ -7777,7 +7779,7 @@
           },
           "owner": {
             "type": "string",
-            "description": "ID of the team that owns the metrics route. Determines which team members can view and manage it."
+            "description": "ID of the team that owns the metrics route. Determines which team members can view and manage it. Only an org admin or an admin of this team may change fields other than `processors`, or delete the route."
           },
           "processors": {
             "type": "array",
@@ -10260,7 +10262,7 @@
           },
           "owner": {
             "type": "string",
-            "description": "ID of the team that owns the route. Determines which team members can view and manage it, and which tag policies apply to it. Only an org admin or an admin of this team may change the `query` field or delete the route."
+            "description": "ID of the team that owns the route. Determines which team members can view and manage it, and which tag policies apply to it. Only an org admin or an admin of this team may change fields other than `processors`, or delete the route."
           },
           "processors": {
             "type": "array",
@@ -32936,6 +32938,13 @@
                   "read"
                 ]
               },
+              "rum": {
+                "type": "string",
+                "description": "Ingested RUM events, through aggregation endpoints.",
+                "enum": [
+                  "read"
+                ]
+              },
               "user": {
                 "enum": [
                   "read",
@@ -33046,7 +33055,7 @@
         "tags": [
           "aggregation"
         ],
-        "description": "Runs one or more aggregation queries over logs, metrics, or traces and returns scalar values. Use optional group-by and formula fields to compute grouped or derived results. See [Analytics queries](/documentation/visualize/analytics/queries).",
+        "description": "Runs one or more aggregation queries over logs, metrics, traces, or RUM events and returns scalar values. Use optional group-by and formula fields to compute grouped or derived results. See [Analytics queries](/documentation/visualize/analytics/queries).",
         "requestBody": {
           "required": true,
           "content": {
@@ -33275,9 +33284,10 @@
                     "enum": [
                       "logs",
                       "metrics",
-                      "traces"
+                      "traces",
+                      "rum"
                     ],
-                    "description": "Telemetry source queried by this aggregation: `logs`, `metrics`, or `traces`."
+                    "description": "Telemetry source queried by this aggregation: `logs`, `metrics`, `traces`, or `rum`."
                   },
                   "formula": {
                     "type": "string",
@@ -33396,7 +33406,7 @@
         "tags": [
           "aggregation"
         ],
-        "description": "Runs one or more aggregation queries over logs, metrics, or traces and returns timestamped series. Use `aggregationWindow` to choose the time bucket size. See [Analytics queries](/documentation/visualize/analytics/queries).",
+        "description": "Runs one or more aggregation queries over logs, metrics, traces, or RUM events and returns timestamped series. Use `aggregationWindow` to choose the time bucket size. See [Analytics queries](/documentation/visualize/analytics/queries).",
         "requestBody": {
           "required": true,
           "content": {
@@ -33626,9 +33636,10 @@
                     "enum": [
                       "logs",
                       "metrics",
-                      "traces"
+                      "traces",
+                      "rum"
                     ],
-                    "description": "Telemetry source queried by this aggregation: `logs`, `metrics`, or `traces`."
+                    "description": "Telemetry source queried by this aggregation: `logs`, `metrics`, `traces`, or `rum`."
                   },
                   "formula": {
                     "type": "string",
@@ -40470,7 +40481,7 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 250,
-                    "description": "ID of the team that will own the metrics route, determining which team members can view and manage it and which tag policies apply."
+                    "description": "ID of the team that will own the metrics route, determining which team members can view and manage it and which tag policies apply. Only an org admin or an admin of this team may change fields other than `processors`, or delete the route."
                   },
                   "processors": {
                     "type": "array",
@@ -41118,7 +41129,7 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 250,
-                    "description": "ID of the team that will own the metrics route, determining which team members can view and manage it and which tag policies apply."
+                    "description": "ID of the team that will own the metrics route, determining which team members can view and manage it and which tag policies apply. Only an org admin or an admin of this team may change fields other than `processors`, or delete the route."
                   },
                   "processors": {
                     "type": "array",
@@ -47449,7 +47460,7 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 250,
-                    "description": "ID of the team that will own the log route, determining which team members can view and manage it and which tag policies apply. Only an org admin or an admin of this team may change the `query` field or delete the log route."
+                    "description": "ID of the team that will own the log route, determining which team members can view and manage it and which tag policies apply. Only an org admin or an admin of this team may change fields other than `processors`, or delete the route."
                   },
                   "processors": {
                     "type": "array",
@@ -47759,7 +47770,7 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 250,
-                    "description": "ID of the team that will own the log route, determining which team members can view and manage it and which tag policies apply. Only an org admin or an admin of this team may change the `query` field or delete the log route."
+                    "description": "ID of the team that will own the log route, determining which team members can view and manage it and which tag policies apply. Only an org admin or an admin of this team may change fields other than `processors`, or delete the route."
                   },
                   "processors": {
                     "type": "array",
