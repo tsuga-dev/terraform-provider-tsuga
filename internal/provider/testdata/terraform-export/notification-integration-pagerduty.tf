@@ -1,5 +1,6 @@
 resource "tsuga_notification_integration" "notification_integration_pagerduty" {
-  name = "Example"
+  name  = "Example"
+  owner = "team-123-abc"
   setting = {
     pagerduty = {
       integration_key = var.tsuga_notification_integration_notification_integration_pagerduty_input_1

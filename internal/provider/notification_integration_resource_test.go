@@ -15,8 +15,14 @@ func TestAccNotificationIntegrationResource(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: providerConfig + fmt.Sprintf(`
+resource "tsuga_team" "test-team" {
+  name       = "%[1]s"
+  visibility = "public"
+}
+
 resource "tsuga_notification_integration" "pagerduty" {
-  name = "%[1]s"
+  name  = "%[1]s"
+  owner = tsuga_team.test-team.id
   setting = {
     pagerduty = {
       integration_key = "abcdef1234567890abcdef1234567890"
@@ -26,7 +32,8 @@ resource "tsuga_notification_integration" "pagerduty" {
 }
 
 resource "tsuga_notification_integration" "webhook" {
-  name = "%[1]s-webhook"
+  name  = "%[1]s-webhook"
+  owner = tsuga_team.test-team.id
   setting = {
     webhook = {
       url    = "https://example.com/hooks/tsuga"
@@ -50,6 +57,7 @@ resource "tsuga_notification_integration" "webhook" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("tsuga_notification_integration.pagerduty", "id"),
 					resource.TestCheckResourceAttr("tsuga_notification_integration.pagerduty", "name", name),
+					resource.TestCheckResourceAttrPair("tsuga_notification_integration.pagerduty", "owner", "tsuga_team.test-team", "id"),
 					resource.TestCheckResourceAttr("tsuga_notification_integration.pagerduty", "tags.0.key", "env"),
 					resource.TestCheckResourceAttr("tsuga_notification_integration.webhook", "setting.webhook.method", "POST"),
 					resource.TestCheckNoResourceAttr("tsuga_notification_integration.webhook", "setting.webhook.authentication.bearer.token"),
@@ -65,8 +73,14 @@ resource "tsuga_notification_integration" "webhook" {
 			// Rename, rotate the key through secrets_version, and clear the event name mapping.
 			{
 				Config: providerConfig + fmt.Sprintf(`
+resource "tsuga_team" "test-team" {
+  name       = "%[1]s"
+  visibility = "public"
+}
+
 resource "tsuga_notification_integration" "pagerduty" {
   name            = "%[1]s-updated"
+  owner           = tsuga_team.test-team.id
   secrets_version = "2"
   setting = {
     pagerduty = {
@@ -77,7 +91,8 @@ resource "tsuga_notification_integration" "pagerduty" {
 }
 
 resource "tsuga_notification_integration" "webhook" {
-  name = "%[1]s-webhook"
+  name  = "%[1]s-webhook"
+  owner = tsuga_team.test-team.id
   setting = {
     webhook = {
       url    = "https://example.com/hooks/tsuga"

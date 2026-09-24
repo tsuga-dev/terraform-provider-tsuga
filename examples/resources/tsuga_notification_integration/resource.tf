@@ -3,6 +3,7 @@
 # Bump `secrets_version` after rotating a secret so Terraform sends the new value.
 resource "tsuga_notification_integration" "pagerduty" {
   name            = "primary-on-call"
+  owner           = "abc-123-def"
   secrets_version = "1"
 
   setting = {
@@ -15,6 +16,7 @@ resource "tsuga_notification_integration" "pagerduty" {
 # Example: Webhook integration with bearer auth and a JSON payload template
 resource "tsuga_notification_integration" "webhook" {
   name            = "internal-webhook"
+  owner           = "abc-123-def"
   secrets_version = "1"
 
   setting = {
@@ -47,6 +49,7 @@ resource "tsuga_notification_integration" "webhook" {
 # Example: Jira integration
 resource "tsuga_notification_integration" "jira" {
   name            = "jira-ops"
+  owner           = "abc-123-def"
   secrets_version = "1"
 
   setting = {

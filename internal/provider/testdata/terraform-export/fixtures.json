@@ -609,6 +609,7 @@
     "resource": {
       "id": "resource-123",
       "name": "Example",
+      "owner": "team-123-abc",
       "tags": [
         {
           "key": "team",
@@ -627,6 +628,7 @@
     "resource": {
       "id": "resource-123",
       "name": "Example",
+      "owner": "team-123-abc",
       "tags": [],
       "setting": {
         "type": "webhook",

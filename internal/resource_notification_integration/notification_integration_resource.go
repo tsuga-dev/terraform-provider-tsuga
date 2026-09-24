@@ -27,6 +27,13 @@ func NotificationIntegrationResourceSchema(ctx context.Context) schema.Schema {
 				Required:    true,
 				Description: "Display name of the integration",
 			},
+			"owner": schema.StringAttribute{
+				Required:    true,
+				Description: "ID of the team that owns the integration. Only an org admin or an admin of that team can set it.",
+				Validators: []validator.String{
+					stringvalidator.LengthBetween(1, 250),
+				},
+			},
 			"tags": schema.ListNestedAttribute{
 				Optional:    true,
 				Computed:    true,
@@ -287,6 +294,7 @@ func NotificationIntegrationResourceSchema(ctx context.Context) schema.Schema {
 type NotificationIntegrationModel struct {
 	Id             types.String             `tfsdk:"id"`
 	Name           types.String             `tfsdk:"name"`
+	Owner          types.String             `tfsdk:"owner"`
 	Tags           types.List               `tfsdk:"tags"`
 	SecretsVersion types.String             `tfsdk:"secrets_version"`
 	Setting        *IntegrationSettingModel `tfsdk:"setting"`

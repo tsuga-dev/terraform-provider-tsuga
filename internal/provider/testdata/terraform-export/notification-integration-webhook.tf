@@ -1,5 +1,6 @@
 resource "tsuga_notification_integration" "notification_integration_webhook" {
-  name = "Example"
+  name  = "Example"
+  owner = "team-123-abc"
   setting = {
     webhook = {
       authentication = {

@@ -262,6 +262,7 @@ func (r *notificationIntegrationResource) buildNotificationIntegrationRequestBod
 
 	requestBody := map[string]any{
 		"name":    config.Name.ValueString(),
+		"owner":   config.Owner.ValueString(),
 		"setting": setting,
 	}
 
@@ -312,6 +313,7 @@ type notificationIntegrationAPIResponse struct {
 type notificationIntegrationAPIData struct {
 	ID      string                 `json:"id"`
 	Name    string                 `json:"name"`
+	Owner   string                 `json:"owner"`
 	Setting map[string]interface{} `json:"setting"`
 	Tags    []apiTag               `json:"tags"`
 }
@@ -458,6 +460,7 @@ func flattenNotificationIntegration(ctx context.Context, data notificationIntegr
 	state := resource_notification_integration.NotificationIntegrationModel{
 		Id:             types.StringValue(data.ID),
 		Name:           types.StringValue(data.Name),
+		Owner:          types.StringValue(data.Owner),
 		Tags:           tags,
 		SecretsVersion: secretsVersion,
 		Setting:        setting,

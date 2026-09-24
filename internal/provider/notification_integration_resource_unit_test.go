@@ -29,6 +29,41 @@ func TestExpandIntegrationSetting_Pagerduty(t *testing.T) {
 	}
 }
 
+func TestNotificationIntegrationOwner_RoundTrips(t *testing.T) {
+	ctx := context.Background()
+	config := resource_notification_integration.NotificationIntegrationModel{
+		Name:  types.StringValue("Example"),
+		Owner: types.StringValue("team-123"),
+		Setting: &resource_notification_integration.IntegrationSettingModel{
+			Pagerduty: &resource_notification_integration.PagerdutySettingModel{IntegrationKey: types.StringValue("abc123")},
+		},
+	}
+
+	body, diags := (&notificationIntegrationResource{}).buildNotificationIntegrationRequestBody(ctx, config)
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if body["owner"] != "team-123" {
+		t.Fatalf("got owner %v in the request body, want team-123", body["owner"])
+	}
+
+	prior := config
+	prior.Owner = types.StringValue("different-team")
+
+	state, diags := flattenNotificationIntegration(ctx, notificationIntegrationAPIData{
+		ID:      "resource-123",
+		Name:    "Example",
+		Owner:   "team-123",
+		Setting: map[string]interface{}{"type": "pagerduty", "integrationKeyLastChars": "c123"},
+	}, &prior)
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if state.Owner.ValueString() != "team-123" {
+		t.Fatalf("got owner %q in state, want team-123", state.Owner.ValueString())
+	}
+}
+
 func TestExpandIntegrationSetting_NoneSet(t *testing.T) {
 	_, diags := expandIntegrationSetting(context.Background(), &resource_notification_integration.IntegrationSettingModel{})
 	if !diags.HasError() {

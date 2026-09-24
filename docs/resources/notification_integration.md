@@ -18,6 +18,7 @@ Notification destinations (PagerDuty, webhook, Jira, etc.) used as targets by no
 # Bump `secrets_version` after rotating a secret so Terraform sends the new value.
 resource "tsuga_notification_integration" "pagerduty" {
   name            = "primary-on-call"
+  owner           = "abc-123-def"
   secrets_version = "1"
 
   setting = {
@@ -30,6 +31,7 @@ resource "tsuga_notification_integration" "pagerduty" {
 # Example: Webhook integration with bearer auth and a JSON payload template
 resource "tsuga_notification_integration" "webhook" {
   name            = "internal-webhook"
+  owner           = "abc-123-def"
   secrets_version = "1"
 
   setting = {
@@ -62,6 +64,7 @@ resource "tsuga_notification_integration" "webhook" {
 # Example: Jira integration
 resource "tsuga_notification_integration" "jira" {
   name            = "jira-ops"
+  owner           = "abc-123-def"
   secrets_version = "1"
 
   setting = {
@@ -80,6 +83,7 @@ resource "tsuga_notification_integration" "jira" {
 ### Required
 
 - `name` (String) Display name of the integration
+- `owner` (String) ID of the team that owns the integration. Only an org admin or an admin of that team can set it.
 - `setting` (Attributes) Destination configuration. Exactly one of google_chat, grafana_irm, incident_io, jira, microsoft_teams, pagerduty, servicenow, squadcast, or webhook must be set. The integration type cannot be changed after creation; changing which one is set replaces the resource. (see [below for nested schema](#nestedatt--setting))
 
 ### Optional

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `tsuga_notification_integration`: `owner`, the team that owns the integration.
+
 ## [2.8.0] - 2026-09-17
 
 ### Added
