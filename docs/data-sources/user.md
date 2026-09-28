@@ -29,4 +29,4 @@ data "tsuga_user" "jane" {
 
 - `email` (String) Lowercase email address for the user. Use this for display and invitation matching, not as a stable identifier.
 - `name` (String) Display name of the user.
-- `role` (String) Organization role for the user: `admin`, `public_editor`, `public_viewer`, or `teams_only`.
+- `role` (String) Organization role for the user: `admin`, `public_editor`, `public_viewer`, `teams_only`, or `custom` when the user holds a custom role.

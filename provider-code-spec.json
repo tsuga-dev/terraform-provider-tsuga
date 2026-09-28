@@ -113,7 +113,7 @@
             "name": "role",
             "string": {
               "computed_optional_required": "computed",
-              "description": "Organization role for the user: `admin`, `public_editor`, `public_viewer`, or `teams_only`."
+              "description": "Organization role for the user: `admin`, `public_editor`, `public_viewer`, `teams_only`, or `custom` when the user holds a custom role."
             }
           }
         ]

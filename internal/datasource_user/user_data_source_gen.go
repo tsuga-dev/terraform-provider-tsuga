@@ -34,8 +34,8 @@ func UserDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"role": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Organization role for the user: `admin`, `public_editor`, `public_viewer`, or `teams_only`.",
-				MarkdownDescription: "Organization role for the user: `admin`, `public_editor`, `public_viewer`, or `teams_only`.",
+				Description:         "Organization role for the user: `admin`, `public_editor`, `public_viewer`, `teams_only`, or `custom` when the user holds a custom role.",
+				MarkdownDescription: "Organization role for the user: `admin`, `public_editor`, `public_viewer`, `teams_only`, or `custom` when the user holds a custom role.",
 			},
 		},
 	}
