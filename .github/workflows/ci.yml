@@ -174,7 +174,7 @@ jobs:
           node-version: "24.21.0"
       - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # pin@v3
         with:
-          terraform_version: "v1.16.2"
+          terraform_version: "v1.16.4"
           terraform_wrapper: false
       - name: Build WASM and generate resource bindings
         run: node wasm/build.mjs
