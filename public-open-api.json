@@ -1613,6 +1613,89 @@
           }
         }
       },
+      "SearchRumEventsResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "events"
+            ],
+            "properties": {
+              "events": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "timestamp"
+                  ],
+                  "properties": {
+                    "timestamp": {
+                      "type": "number",
+                      "description": "Event timestamp as a Unix epoch in milliseconds."
+                    }
+                  },
+                  "additionalProperties": true,
+                  "description": "RUM event recorded by the browser or mobile SDK.",
+                  "example": {
+                    "timestamp": 1704067200000,
+                    "event.name": "browser.web_vital",
+                    "view.name": "/checkout",
+                    "context.session.id": "5f0c9f3e-8a1b-4c6d-9e2f-1a2b3c4d5e6f",
+                    "browser.web_vital.lcp": 1840
+                  }
+                },
+                "description": "RUM events matching the query and time range."
+              }
+            }
+          }
+        }
+      },
+      "GetRumAttributesResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "attributes"
+            ],
+            "properties": {
+              "attributes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Every RUM attribute dot-path that can be queried. Use these names as-is in RUM search queries and RUM aggregations."
+              }
+            },
+            "example": {
+              "attributes": [
+                "events.context.session.id",
+                "events.event.name",
+                "events.view.name",
+                "exceptions.exception.type",
+                "measurements.browser.web_vital.lcp"
+              ]
+            }
+          }
+        }
+      },
       "PublicToken": {
         "type": "object",
         "required": [
@@ -35190,7 +35273,7 @@
               },
               "rum": {
                 "type": "string",
-                "description": "Ingested RUM events, through aggregation endpoints.",
+                "description": "Ingested RUM events, through search and aggregation endpoints.",
                 "enum": [
                   "read"
                 ]
@@ -36914,6 +36997,213 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GetMeResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rum/search": {
+      "get": {
+        "operationId": "searchRumEvents",
+        "tags": [
+          "rum"
+        ],
+        "description": "Searches Real User Monitoring (RUM) events in a required time range using Tsuga query syntax, most recent first. Use this endpoint to retrieve raw browser and mobile events, such as web vitals, navigations, resource timings, and exceptions, for investigations or automation. See [Browser views](/documentation/categorize/browser-views/index) and [Query syntax](/documentation/explore/query-syntax).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1456444800,
+              "maximum": 4927737600,
+              "format": "int64"
+            },
+            "example": 1704067200,
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "description": "Start of the query window as a Unix timestamp in seconds"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1456444800,
+              "maximum": 4927737600,
+              "format": "int64"
+            },
+            "example": 1704067200,
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "description": "End of the query window as a Unix timestamp in seconds"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "tsuga-query",
+              "minLength": 0,
+              "maxLength": 10000,
+              "default": "*"
+            },
+            "in": "query",
+            "name": "query",
+            "required": false,
+            "description": "Tsuga query selecting RUM events to return. Prefix every field with the stream it belongs to (`measurements.`, `events.`, or `exceptions.`), e.g. `events.view.name:/checkout`, and filter on a single stream per query. A query without stream-prefixed fields, including the default `*`, searches the `events` stream."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
+            },
+            "in": "query",
+            "name": "maxResults",
+            "required": false,
+            "description": "Maximum number of RUM events to return."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "clusterId",
+            "required": false,
+            "description": "Telemetry cluster to target. Required when the organization has multiple clusters; omit only for single-cluster organizations."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchRumEventsResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rum/attributes": {
+      "get": {
+        "operationId": "getRumAttributes",
+        "tags": [
+          "rum"
+        ],
+        "description": "Lists the RUM attribute dot-paths that can be queried. Use this to discover fields for RUM search queries, filters, and grouping. See[Browser views](/documentation/categorize/browser-views/index).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "clusterId",
+            "required": false,
+            "description": "Telemetry cluster to target. Required when the organization has multiple clusters; omit only for single-cluster organizations."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetRumAttributesResponse"
                 }
               }
             }
@@ -57857,6 +58147,10 @@
     {
       "name": "routes",
       "description": "Operations for log routes and route processors. Use these endpoints to manage ingest-time log processing definitions. See [Routes](/documentation/process/routes/index)."
+    },
+    {
+      "name": "rum",
+      "description": "Operations for searching Real User Monitoring (RUM) events recorded by the browser and mobile SDKs. See [Browser views](/documentation/categorize/browser-views/index)."
     },
     {
       "name": "services",
