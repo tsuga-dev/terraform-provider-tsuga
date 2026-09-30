@@ -130,6 +130,7 @@ func (p *tsugaProvider) Resources(_ context.Context) []func() resource.Resource 
 		NewDashboardResource,
 		NewDashboardFolderResource,
 		NewRouteResource,
+		NewMetricRouteResource,
 		NewMonitorResource,
 		NewSloResource,
 		NewCustomUsageTagResource,

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `tsuga_metric_route`: new resource for metric routes.
+
 ## [2.9.0] - 2026-09-24
 
 ### Added

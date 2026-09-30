@@ -78,6 +78,19 @@
     }
   },
   {
+    "name": "metric-route",
+    "resourceType": "tsuga_metric_route",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "isEnabled": true,
+      "metricNameRegex": "^http\\.server\\..*$",
+      "processors": []
+    }
+  },
+  {
     "name": "tag-policy",
     "resourceType": "tsuga_tag_policy",
     "resource": {
