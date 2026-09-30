@@ -8665,6 +8665,7 @@
                 "anomaly-log": "#/components/schemas/MonitorConfigurationAnomalyLog",
                 "anomaly-metric": "#/components/schemas/MonitorConfigurationAnomalyMetric",
                 "log-error-pattern": "#/components/schemas/MonitorConfigurationLogErrorPattern",
+                "log-error-pattern-increase": "#/components/schemas/MonitorConfigurationLogErrorPatternIncrease",
                 "anomaly-trace": "#/components/schemas/MonitorConfigurationAnomalyTrace",
                 "certificate-expiry": "#/components/schemas/MonitorConfigurationCertificateExpiry"
               }
@@ -8690,6 +8691,9 @@
               },
               {
                 "$ref": "#/components/schemas/MonitorConfigurationLogErrorPattern"
+              },
+              {
+                "$ref": "#/components/schemas/MonitorConfigurationLogErrorPatternIncrease"
               },
               {
                 "$ref": "#/components/schemas/MonitorConfigurationAnomalyTrace"
@@ -10215,6 +10219,8 @@
               "no-unused-operation-api-keys",
               "no-unused-ingestion-api-keys",
               "db-logs-trace-correlation",
+              "assets-comply-with-tag-policies",
+              "data-complies-with-tag-policies",
               "postgresql-server-metrics-collected",
               "mysql-server-metrics-collected",
               "mongodb-server-metrics-collected",
@@ -10375,6 +10381,9 @@
             "items": {
               "$ref": "#/components/schemas/QualityReportRow"
             }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
           }
         }
       },
@@ -10434,10 +10443,13 @@
                     }
                   }
                 },
-                "description": "Every example stored for this row, untruncated. Empty when the rule evaluation produced none."
+                "description": "Requested page of the examples stored for this row. Empty when the rule evaluation produced none, or when the offset is past the last one."
               }
             },
-            "description": "All examples stored for one quality-report row."
+            "description": "One page of the examples stored for a quality-report row."
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
           }
         }
       },
@@ -14033,7 +14045,7 @@
                           },
                           "weight": {
                             "type": "number",
-                            "description": "Share of this range attributed to the service, from `0` through `1`. Tsuga computes the weight from active leaf spans in the range; weights inside one range sum to `1`."
+                            "description": "Share of this range attributed to the service, from `0` through `1`. Tsuga computes the weight from active leaf spans in the range. Weights inside one range sum to `1`, except on a range merged from shorter ones. Each merge step truncates to the microsecond grid and merging is pairwise, so the loss compounds with the number of ranges merged rather than being bounded per range: it is a few parts in 10,000 on a typical trace, but a long run of very short adjacent ranges can fall well below `1`. `serviceTotals` is derived from the same merged ranges and carries the same loss."
                           },
                           "durationNs": {
                             "type": "string",
@@ -14074,7 +14086,7 @@
                     },
                     "share": {
                       "type": "number",
-                      "description": "Share of total trace duration attributed to this service, from `0` through `1`. Computed as `durationNs / totalDurationNs`; multiply by 100 for a percentage."
+                      "description": "Share of total trace duration attributed to this service, from `0` through `1`. Computed as `durationNs / totalDurationNs`; multiply by 100 for a percentage. Shares sum to less than `1` for two reasons: time where no span was running is credited to no service, and merging adjacent ranges truncates to the microsecond grid at each step, so the loss compounds with the number of ranges merged. A shortfall on a trace with no gap is that truncation; it is usually a few parts in 10,000, but a long run of very short adjacent ranges can make it large."
                     }
                   }
                 },
@@ -14089,14 +14101,14 @@
               "truncated": false,
               "services": [
                 {
-                  "key": "checkout|prod",
+                  "key": "[\"checkout\",\"prod\"]",
                   "name": "checkout",
                   "env": "prod",
                   "id": "123-456-abc",
                   "namespace": "default"
                 },
                 {
-                  "key": "payments|prod",
+                  "key": "[\"payments\",\"prod\"]",
                   "name": "payments",
                   "env": "prod",
                   "id": "456-789-def",
@@ -14110,7 +14122,7 @@
                   "durationNs": "1200000000",
                   "contributions": [
                     {
-                      "serviceKey": "checkout|prod",
+                      "serviceKey": "[\"checkout\",\"prod\"]",
                       "weight": 1,
                       "durationNs": "1200000000"
                     }
@@ -14125,12 +14137,12 @@
                   "durationNs": "1200000000",
                   "contributions": [
                     {
-                      "serviceKey": "checkout|prod",
+                      "serviceKey": "[\"checkout\",\"prod\"]",
                       "weight": 0.5,
                       "durationNs": "600000000"
                     },
                     {
-                      "serviceKey": "payments|prod",
+                      "serviceKey": "[\"payments\",\"prod\"]",
                       "weight": 0.5,
                       "durationNs": "600000000"
                     }
@@ -14143,12 +14155,12 @@
               ],
               "serviceTotals": [
                 {
-                  "serviceKey": "checkout|prod",
+                  "serviceKey": "[\"checkout\",\"prod\"]",
                   "durationNs": "1800000000",
                   "share": 0.75
                 },
                 {
-                  "serviceKey": "payments|prod",
+                  "serviceKey": "[\"payments\",\"prod\"]",
                   "durationNs": "600000000",
                   "share": 0.25
                 }
@@ -14261,15 +14273,15 @@
               },
               "targetGroupCount": {
                 "type": "number",
-                "description": "Number of spans sampled for the target group."
+                "description": "Number of spans matched by the target group filter over its time range. Not a sample: it is a plain count over the whole group."
               },
               "baselineGroupCount": {
                 "type": "number",
-                "description": "Number of spans sampled for the baseline group."
+                "description": "Number of spans matched by the baseline group filter over its time range. Not a sample: it is a plain count over the whole group."
               },
               "failedAttributeCount": {
                 "type": "number",
-                "description": "Number of attributes that could not be tested, for example because they were absent from too many sampled spans. A high count next to an empty `contrastSets` means the sample was too thin, not that the two groups are alike."
+                "description": "Number of candidate attributes Tsuga dropped because a query for them failed. Those attributes were not tested at all, so a high count next to an empty `contrastSets` means the comparison was incomplete, not that the two groups are alike."
               }
             },
             "example": {
@@ -17009,6 +17021,65 @@
           }
         }
       },
+      "MonitorConfigurationLogErrorPatternIncrease": {
+        "type": "object",
+        "required": [
+          "type",
+          "aggregationAlertLogic",
+          "noDataBehavior",
+          "filter"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Monitor that alerts when the volume of an existing log error pattern increases sharply for the configured teams and environment.",
+            "enum": [
+              "log-error-pattern-increase"
+            ]
+          },
+          "aggregationAlertLogic": {
+            "type": "string",
+            "description": "Fixed aggregation logic for log error pattern increase monitors. Each pattern whose volume increased is evaluated as its own alert group.",
+            "enum": [
+              "each"
+            ]
+          },
+          "noDataBehavior": {
+            "type": "string",
+            "description": "Fixed no-data behavior for log error pattern increase monitors. A pattern group resolves once its volume stops increasing.",
+            "enum": [
+              "resolve"
+            ]
+          },
+          "filter": {
+            "type": "object",
+            "required": [
+              "env"
+            ],
+            "properties": {
+              "teamIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Team IDs whose error logs are watched for volume increases. Tsuga resolves these team IDs to team names when exporting monitor assets. Omit to watch every team, in which case a service scope is required."
+              },
+              "env": {
+                "type": "string",
+                "description": "Environment whose error logs are watched for volume increases."
+              },
+              "services": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Service names whose error logs are watched for volume increases. Omit to watch every service matching the team and environment scope."
+              }
+            },
+            "description": "Log selection used for error pattern increase detection. All configured fields must match for logs to be included."
+          }
+        }
+      },
       "MonitorConfigurationAnomalyTrace": {
         "type": "object",
         "required": [
@@ -19100,7 +19171,7 @@
                 "type": "array",
                 "items": {
                   "type": "string",
-                  "minLength": 0,
+                  "minLength": 1,
                   "maxLength": 250
                 },
                 "description": "Team IDs whose logs are searched for new error patterns. Tsuga resolves these team IDs to team names when exporting monitor assets.",
@@ -19108,7 +19179,7 @@
               },
               "env": {
                 "type": "string",
-                "minLength": 0,
+                "minLength": 1,
                 "maxLength": 250,
                 "description": "Environment whose logs are searched for new error patterns."
               },
@@ -19116,7 +19187,7 @@
                 "type": "array",
                 "items": {
                   "type": "string",
-                  "minLength": 0,
+                  "minLength": 1,
                   "maxLength": 250
                 },
                 "description": "Service names whose logs are searched for new error patterns.",
@@ -19124,6 +19195,73 @@
               }
             },
             "description": "Log selection used for new error pattern detection. All configured fields must match for logs to be included, so sending both teams and services searches only the listed services owned by the listed teams. Send a non-empty `teamIds`, a non-empty `services`, or both."
+          }
+        }
+      },
+      "InputMonitorConfigurationLogErrorPatternIncrease": {
+        "type": "object",
+        "required": [
+          "type",
+          "aggregationAlertLogic",
+          "noDataBehavior",
+          "filter"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Monitor that alerts when the volume of an existing log error pattern increases sharply for the configured teams and environment.",
+            "enum": [
+              "log-error-pattern-increase"
+            ]
+          },
+          "aggregationAlertLogic": {
+            "type": "string",
+            "description": "Fixed aggregation logic for log error pattern increase monitors. Each pattern whose volume increased is evaluated as its own alert group.",
+            "enum": [
+              "each"
+            ]
+          },
+          "noDataBehavior": {
+            "type": "string",
+            "description": "Fixed no-data behavior for log error pattern increase monitors. A pattern group resolves once its volume stops increasing.",
+            "enum": [
+              "resolve"
+            ]
+          },
+          "filter": {
+            "type": "object",
+            "required": [
+              "env"
+            ],
+            "properties": {
+              "teamIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 250
+                },
+                "minItems": 1,
+                "description": "Team IDs whose error logs are watched for volume increases. Tsuga resolves these team IDs to team names when exporting monitor assets. Omit to watch every team, in which case `services` is required."
+              },
+              "env": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 250,
+                "description": "Environment whose error logs are watched for volume increases."
+              },
+              "services": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 250
+                },
+                "minItems": 1,
+                "description": "Service names whose error logs are watched for volume increases. Omit to watch every service matching the team and environment scope."
+              }
+            },
+            "description": "Log selection used for error pattern increase detection. All configured fields must match for logs to be included."
           }
         }
       },
@@ -33749,7 +33887,8 @@
                     "anomaly-log": "#/components/schemas/MonitorConfigurationAnomalyLog",
                     "anomaly-metric": "#/components/schemas/MonitorConfigurationAnomalyMetric",
                     "anomaly-trace": "#/components/schemas/MonitorConfigurationAnomalyTrace",
-                    "certificate-expiry": "#/components/schemas/MonitorConfigurationCertificateExpiry"
+                    "certificate-expiry": "#/components/schemas/MonitorConfigurationCertificateExpiry",
+                    "log-error-pattern-increase": "#/components/schemas/MonitorConfigurationLogErrorPatternIncrease"
                   }
                 },
                 "required": [
@@ -33776,6 +33915,9 @@
                   },
                   {
                     "$ref": "#/components/schemas/MonitorConfigurationCertificateExpiry"
+                  },
+                  {
+                    "$ref": "#/components/schemas/MonitorConfigurationLogErrorPatternIncrease"
                   }
                 ]
               },
@@ -38873,6 +39015,52 @@
                     "description": "Folder that should contain the dashboard. Optional; omit on update to keep the current folder, pass null to clear the folder, or pass a readable dashboard-folder ID to move it."
                   }
                 }
+              },
+              "example": {
+                "name": "API Performance Overview",
+                "owner": "team-123-abc",
+                "graphs": [
+                  {
+                    "id": "789-abc-def",
+                    "name": "Request Latency P99",
+                    "visualization": {
+                      "type": "timeseries",
+                      "source": "metrics",
+                      "queries": [
+                        {
+                          "aggregate": {
+                            "type": "percentile",
+                            "field": "duration",
+                            "percentile": 99
+                          },
+                          "filter": "service:api-gateway"
+                        }
+                      ]
+                    },
+                    "layout": {
+                      "x": 0,
+                      "y": 0,
+                      "w": 6,
+                      "h": 4
+                    }
+                  }
+                ],
+                "filters": [
+                  {
+                    "key": "env",
+                    "values": [
+                      "production"
+                    ]
+                  }
+                ],
+                "tags": [
+                  {
+                    "key": "team",
+                    "value": "platform"
+                  }
+                ],
+                "timePreset": "past-1-hour",
+                "folderId": null
               }
             }
           }
@@ -39692,6 +39880,30 @@
                   }
                 },
                 "description": "Dashboard graph update request. The graph identifier is supplied in the `graphId` path parameter; every body field is optional and omitted fields keep their current values."
+              },
+              "example": {
+                "name": "Request Latency P99",
+                "description": "p99 request latency for the API gateway.",
+                "visualization": {
+                  "type": "timeseries",
+                  "source": "metrics",
+                  "queries": [
+                    {
+                      "aggregate": {
+                        "type": "percentile",
+                        "field": "duration",
+                        "percentile": 99
+                      },
+                      "filter": "service:api-gateway"
+                    }
+                  ]
+                },
+                "layout": {
+                  "x": 0,
+                  "y": 0,
+                  "w": 6,
+                  "h": 4
+                }
               }
             }
           },
@@ -41866,6 +42078,9 @@
                     "description": "Human-readable name for the account shown in Tsuga."
                   }
                 }
+              },
+              "example": {
+                "accountFriendlyName": "Production AWS"
               }
             }
           }
@@ -45459,10 +45674,11 @@
                                 "threshold",
                                 "certificate-expiry",
                                 "anomaly-detection",
-                                "log-error-pattern"
+                                "log-error-pattern",
+                                "log-error-pattern-increase"
                               ]
                             },
-                            "maxItems": 4,
+                            "maxItems": 5,
                             "description": "Values compared by this filter. When `exclude` is omitted or false, rows matching any value are kept; when `exclude` is true, matching rows are removed."
                           },
                           "exclude": {
@@ -45799,6 +46015,7 @@
                         "anomaly-metric": "#/components/schemas/InputMonitorConfigurationAnomalyMetric",
                         "anomaly-trace": "#/components/schemas/InputMonitorConfigurationAnomalyTrace",
                         "log-error-pattern": "#/components/schemas/InputMonitorConfigurationLogErrorPattern",
+                        "log-error-pattern-increase": "#/components/schemas/InputMonitorConfigurationLogErrorPatternIncrease",
                         "certificate-expiry": "#/components/schemas/InputMonitorConfigurationCertificateExpiry"
                       }
                     },
@@ -45826,6 +46043,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/InputMonitorConfigurationLogErrorPattern"
+                      },
+                      {
+                        "$ref": "#/components/schemas/InputMonitorConfigurationLogErrorPatternIncrease"
                       },
                       {
                         "$ref": "#/components/schemas/InputMonitorConfigurationCertificateExpiry"
@@ -46025,6 +46245,37 @@
                     "permissions": "all",
                     "clusterIds": []
                   }
+                },
+                "example5": {
+                  "value": {
+                    "name": "Error Pattern Increase Detector",
+                    "message": "An existing error pattern is spiking.",
+                    "tags": [
+                      {
+                        "key": "team",
+                        "value": "platform"
+                      }
+                    ],
+                    "configuration": {
+                      "type": "log-error-pattern-increase",
+                      "aggregationAlertLogic": "each",
+                      "noDataBehavior": "resolve",
+                      "filter": {
+                        "teamIds": [
+                          "team-123-abc"
+                        ],
+                        "env": "production",
+                        "services": [
+                          "api-gateway"
+                        ]
+                      }
+                    },
+                    "priority": 2,
+                    "owner": "team-123-abc",
+                    "dashboardId": "789-abc-def",
+                    "permissions": "all",
+                    "clusterIds": []
+                  }
                 }
               }
             }
@@ -46184,7 +46435,7 @@
         "tags": [
           "monitors"
         ],
-        "description": "Creates a monitor owned by the specified team. The monitor can evaluate logs, metrics, traces, anomaly behavior, certificate expiry, or new error patterns depending on its configuration.",
+        "description": "Creates a monitor owned by the specified team. The monitor can evaluate logs, metrics, traces, anomaly behavior, certificate expiry, new error patterns, or error pattern increases depending on its configuration.",
         "requestBody": {
           "required": true,
           "content": {
@@ -46258,6 +46509,7 @@
                         "anomaly-metric": "#/components/schemas/InputMonitorConfigurationAnomalyMetric",
                         "anomaly-trace": "#/components/schemas/InputMonitorConfigurationAnomalyTrace",
                         "log-error-pattern": "#/components/schemas/InputMonitorConfigurationLogErrorPattern",
+                        "log-error-pattern-increase": "#/components/schemas/InputMonitorConfigurationLogErrorPatternIncrease",
                         "certificate-expiry": "#/components/schemas/InputMonitorConfigurationCertificateExpiry"
                       }
                     },
@@ -46285,6 +46537,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/InputMonitorConfigurationLogErrorPattern"
+                      },
+                      {
+                        "$ref": "#/components/schemas/InputMonitorConfigurationLogErrorPatternIncrease"
                       },
                       {
                         "$ref": "#/components/schemas/InputMonitorConfigurationCertificateExpiry"
@@ -46468,6 +46723,37 @@
                       "type": "log-error-pattern",
                       "aggregationAlertLogic": "each",
                       "noDataBehavior": "keep_last_status",
+                      "filter": {
+                        "teamIds": [
+                          "team-123-abc"
+                        ],
+                        "env": "production",
+                        "services": [
+                          "api-gateway"
+                        ]
+                      }
+                    },
+                    "priority": 2,
+                    "owner": "team-123-abc",
+                    "dashboardId": "789-abc-def",
+                    "permissions": "all",
+                    "clusterIds": []
+                  }
+                },
+                "example5": {
+                  "value": {
+                    "name": "Error Pattern Increase Detector",
+                    "message": "An existing error pattern is spiking.",
+                    "tags": [
+                      {
+                        "key": "team",
+                        "value": "platform"
+                      }
+                    ],
+                    "configuration": {
+                      "type": "log-error-pattern-increase",
+                      "aggregationAlertLogic": "each",
+                      "noDataBehavior": "resolve",
                       "filter": {
                         "teamIds": [
                           "team-123-abc"
@@ -50248,7 +50534,7 @@
         "tags": [
           "quality-reports"
         ],
-        "description": "Retrieves the latest persisted quality-report rows for a cluster, optionally scoped to one team. Use this to audit telemetry hygiene and routing recommendations.",
+        "description": "Retrieves the latest persisted quality-report rows for a cluster, optionally scoped to one team. Use this to audit telemetry hygiene and routing recommendations. A cluster holds one row per rule per team, so pagination fields limit the returned page.",
         "parameters": [
           {
             "schema": {
@@ -50271,6 +50557,28 @@
             "name": "team",
             "required": false,
             "description": "Team name used to scope the report. Matched against Tsuga team names. Optional; when set, returns only rows for that team and omits global rows. Unknown team names return RESOURCE_NOT_FOUND; teams the caller cannot access return an empty result."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Maximum number of items to return in this page. Omit to use the public API default of 100."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "description": "Zero-based index of the first matching item to return. Increase it with `limit` to request later pages. If `limit` is provided without `offset`, the offset defaults to 0."
           }
         ],
         "responses": {
@@ -50337,8 +50645,30 @@
         "tags": [
           "quality-reports"
         ],
-        "description": "Retrieves every example stored for one quality-report row. The latest-report endpoint returns only a preview of each row's examples, so use this to page past that preview when exampleCount exceeds the number of examples returned there.",
+        "description": "Retrieves a page of the examples stored for one quality-report row. The latest-report endpoint returns only a preview of each row's examples, so use this to page past that preview when exampleCount exceeds the number of examples returned there. The row's full example count is in `metadata.pagination.totalCount`.",
         "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Maximum number of items to return in this page. Omit to use the public API default of 100."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "description": "Zero-based index of the first matching item to return. Increase it with `limit` to request later pages. If `limit` is provided without `offset`, the offset defaults to 0."
+          },
           {
             "schema": {
               "type": "string",
@@ -51794,7 +52124,7 @@
             "in": "query",
             "name": "env",
             "required": false,
-            "description": "Environment whose activity and metadata each returned service is described by. Services not observed in it are omitted. Omit to describe each service by its busiest environment."
+            "description": "Environment to restrict the listing to. Services not observed in it are omitted. Omit to return one row per environment each service was observed in, so a service live in several environments returns several rows."
           }
         ],
         "responses": {
@@ -57679,13 +58009,13 @@
                       "maxLength": 250
                     },
                     "maxItems": 20,
-                    "description": "Span attribute dot-paths to test, such as `context.service.name` or `span_attributes.http.route`. At most 20. Omit to let Tsuga pick the attributes present in the sampled spans."
+                    "description": "Span attribute dot-paths to test, such as `context.service.name` or `span_attributes.http.route`. At most 20. Attributes referenced by either group filter are always excluded, along with their known sibling attributes for the same field, so the condition being contrasted does not come back as a finding under one of those names. Omit or pass an empty array to let Tsuga discover the most frequent attributes in the target group."
                   },
                   "topK": {
                     "type": "integer",
                     "minimum": 1,
                     "maximum": 100,
-                    "description": "Maximum number of attributes to return, strongest first. Valid values are 1 through 100."
+                    "description": "Maximum number of findings to return, strongest first. A finding is one attribute/value pair, and findings are grouped into one `contrastSets` entry per attribute, so a result carries at most this many `values` rows across possibly fewer entries. Valid values are 1 through 100."
                   },
                   "minLift": {
                     "type": "number",
