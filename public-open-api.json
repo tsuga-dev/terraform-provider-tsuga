@@ -11834,6 +11834,17 @@
                               ],
                               "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                             },
+                            "metricKind": {
+                              "enum": [
+                                "gauge",
+                                "cumulative-counter",
+                                "delta-counter",
+                                "cumulative-histogram",
+                                "delta-histogram",
+                                "summary"
+                              ],
+                              "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                            },
                             "filter": {
                               "type": "string",
                               "description": "Filter to apply to the aggregation"
@@ -12008,6 +12019,17 @@
                                 "last"
                               ],
                               "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                            },
+                            "metricKind": {
+                              "enum": [
+                                "gauge",
+                                "cumulative-counter",
+                                "delta-counter",
+                                "cumulative-histogram",
+                                "delta-histogram",
+                                "summary"
+                              ],
+                              "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                             },
                             "filter": {
                               "type": "string",
@@ -12256,6 +12278,17 @@
                                 "last"
                               ],
                               "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                            },
+                            "metricKind": {
+                              "enum": [
+                                "gauge",
+                                "cumulative-counter",
+                                "delta-counter",
+                                "cumulative-histogram",
+                                "delta-histogram",
+                                "summary"
+                              ],
+                              "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                             },
                             "filter": {
                               "type": "string",
@@ -15870,6 +15903,17 @@
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                 },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                },
                 "filter": {
                   "type": "string",
                   "description": "Filter to apply to the aggregation"
@@ -16144,6 +16188,17 @@
                     "last"
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                 },
                 "filter": {
                   "type": "string",
@@ -16420,6 +16475,17 @@
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                 },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                },
                 "filter": {
                   "type": "string",
                   "description": "Filter to apply to the aggregation"
@@ -16685,6 +16751,17 @@
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                 },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                },
                 "filter": {
                   "type": "string",
                   "description": "Filter to apply to the aggregation"
@@ -16949,6 +17026,17 @@
                     "last"
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                 },
                 "filter": {
                   "type": "string",
@@ -17333,6 +17421,17 @@
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                 },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                },
                 "filter": {
                   "type": "string",
                   "description": "Filter to apply to the aggregation"
@@ -17668,6 +17767,17 @@
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                 },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                },
                 "filter": {
                   "type": "string",
                   "format": "tsuga-query",
@@ -17963,6 +18073,17 @@
                     "last"
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                 },
                 "filter": {
                   "type": "string",
@@ -18260,6 +18381,17 @@
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                 },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                },
                 "filter": {
                   "type": "string",
                   "format": "tsuga-query",
@@ -18544,6 +18676,17 @@
                     "last"
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                 },
                 "filter": {
                   "type": "string",
@@ -18830,6 +18973,17 @@
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                 },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                },
                 "filter": {
                   "type": "string",
                   "format": "tsuga-query",
@@ -19114,6 +19268,17 @@
                     "last"
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                 },
                 "filter": {
                   "type": "string",
@@ -22337,9 +22502,9 @@
                 }
               },
               "title": "ConditionalFormatting",
-              "description": "Color rule evaluated against the displayed value. The first matching rule in the array is applied."
+              "description": "Color rule evaluated against the raw query value, before the unit is applied. The first matching rule in the array is applied."
             },
-            "description": "Conditional formatting rules applied to the displayed value"
+            "description": "Conditional formatting rules applied to the raw query value, before the unit is applied"
           },
           "precision": {
             "anyOf": [
@@ -22849,9 +23014,9 @@
                 }
               },
               "title": "ConditionalFormatting",
-              "description": "Color rule evaluated against the displayed value. The first matching rule in the array is applied."
+              "description": "Color rule evaluated against the raw query value, before the unit is applied. The first matching rule in the array is applied."
             },
-            "description": "Conditional formatting rules applied to the displayed value"
+            "description": "Conditional formatting rules applied to the raw query value, before the unit is applied"
           },
           "precision": {
             "anyOf": [
@@ -23069,9 +23234,9 @@
                 }
               },
               "title": "ConditionalFormatting",
-              "description": "Color rule evaluated against the displayed value. The first matching rule in the array is applied."
+              "description": "Color rule evaluated against the raw query value, before the unit is applied. The first matching rule in the array is applied."
             },
-            "description": "Conditional formatting rules applied to the displayed value"
+            "description": "Conditional formatting rules applied to the raw query value, before the unit is applied"
           }
         },
         "title": "TopListPromql"
@@ -23689,6 +23854,17 @@
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                 },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                },
                 "filter": {
                   "type": "string",
                   "description": "Filter to apply to the aggregation"
@@ -24287,6 +24463,17 @@
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                 },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                },
                 "filter": {
                   "type": "string",
                   "description": "Filter to apply to the aggregation"
@@ -24468,9 +24655,9 @@
                 }
               },
               "title": "ConditionalFormatting",
-              "description": "Color rule evaluated against the displayed value. The first matching rule in the array is applied."
+              "description": "Color rule evaluated against the raw query value, before the unit is applied. The first matching rule in the array is applied."
             },
-            "description": "Conditional formatting rules applied to the displayed value"
+            "description": "Conditional formatting rules applied to the raw query value, before the unit is applied"
           },
           "isStacked": {
             "type": "boolean",
@@ -24668,6 +24855,17 @@
                     "last"
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                 },
                 "filter": {
                   "type": "string",
@@ -25016,6 +25214,17 @@
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                 },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                },
                 "filter": {
                   "type": "string",
                   "description": "Filter to apply to the aggregation"
@@ -25096,9 +25305,9 @@
                 }
               },
               "title": "ConditionalFormatting",
-              "description": "Color rule evaluated against the displayed value. The first matching rule in the array is applied."
+              "description": "Color rule evaluated against the raw query value, before the unit is applied. The first matching rule in the array is applied."
             },
-            "description": "Conditional formatting rules applied to the displayed value"
+            "description": "Conditional formatting rules applied to the raw query value, before the unit is applied"
           },
           "precision": {
             "anyOf": [
@@ -25349,6 +25558,17 @@
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                 },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                },
                 "filter": {
                   "type": "string",
                   "description": "Filter to apply to the aggregation"
@@ -25389,7 +25609,7 @@
           },
           "max": {
             "type": "number",
-            "description": "Gauge maximum value"
+            "description": "Gauge maximum value, on the raw query value before the unit is applied"
           },
           "colorThresholds": {
             "type": "array",
@@ -25421,7 +25641,7 @@
               "title": "GaugeColorThreshold",
               "description": "Color band of the gauge range. Bands are ordered by `from`, so entries may be listed in any order."
             },
-            "description": "Color thresholds inside the gauge range"
+            "description": "Color thresholds inside the gauge range, on the raw query value before the unit is applied"
           },
           "precision": {
             "anyOf": [
@@ -25663,6 +25883,17 @@
                     "last"
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                 },
                 "filter": {
                   "type": "string",
@@ -26219,6 +26450,17 @@
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                 },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                },
                 "filter": {
                   "type": "string",
                   "description": "Filter to apply to the aggregation"
@@ -26552,6 +26794,17 @@
                     "last"
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                 },
                 "filter": {
                   "type": "string",
@@ -26897,6 +27150,17 @@
                           "last"
                         ],
                         "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                      },
+                      "metricKind": {
+                        "enum": [
+                          "gauge",
+                          "cumulative-counter",
+                          "delta-counter",
+                          "cumulative-histogram",
+                          "delta-histogram",
+                          "summary"
+                        ],
+                        "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                       },
                       "filter": {
                         "type": "string",
@@ -28256,9 +28520,9 @@
                 }
               },
               "title": "ConditionalFormatting",
-              "description": "Color rule evaluated against the displayed value. The first matching rule in the array is applied."
+              "description": "Color rule evaluated against the raw query value, before the unit is applied. The first matching rule in the array is applied."
             },
-            "description": "Conditional formatting rules applied to the displayed value"
+            "description": "Conditional formatting rules applied to the raw query value, before the unit is applied"
           },
           "precision": {
             "anyOf": [
@@ -28783,9 +29047,9 @@
                 }
               },
               "title": "ConditionalFormatting",
-              "description": "Color rule evaluated against the displayed value. The first matching rule in the array is applied."
+              "description": "Color rule evaluated against the raw query value, before the unit is applied. The first matching rule in the array is applied."
             },
-            "description": "Conditional formatting rules applied to the displayed value"
+            "description": "Conditional formatting rules applied to the raw query value, before the unit is applied"
           },
           "precision": {
             "anyOf": [
@@ -29010,9 +29274,9 @@
                 }
               },
               "title": "ConditionalFormatting",
-              "description": "Color rule evaluated against the displayed value. The first matching rule in the array is applied."
+              "description": "Color rule evaluated against the raw query value, before the unit is applied. The first matching rule in the array is applied."
             },
-            "description": "Conditional formatting rules applied to the displayed value"
+            "description": "Conditional formatting rules applied to the raw query value, before the unit is applied"
           }
         },
         "title": "TopListPromql"
@@ -29646,6 +29910,17 @@
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                 },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                },
                 "filter": {
                   "type": "string",
                   "format": "tsuga-query",
@@ -30274,6 +30549,17 @@
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                 },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                },
                 "filter": {
                   "type": "string",
                   "format": "tsuga-query",
@@ -30475,9 +30761,9 @@
                 }
               },
               "title": "ConditionalFormatting",
-              "description": "Color rule evaluated against the displayed value. The first matching rule in the array is applied."
+              "description": "Color rule evaluated against the raw query value, before the unit is applied. The first matching rule in the array is applied."
             },
-            "description": "Conditional formatting rules applied to the displayed value"
+            "description": "Conditional formatting rules applied to the raw query value, before the unit is applied"
           },
           "isStacked": {
             "type": "boolean",
@@ -30680,6 +30966,17 @@
                     "last"
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                 },
                 "filter": {
                   "type": "string",
@@ -31053,6 +31350,17 @@
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                 },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                },
                 "filter": {
                   "type": "string",
                   "format": "tsuga-query",
@@ -31147,9 +31455,9 @@
                 }
               },
               "title": "ConditionalFormatting",
-              "description": "Color rule evaluated against the displayed value. The first matching rule in the array is applied."
+              "description": "Color rule evaluated against the raw query value, before the unit is applied. The first matching rule in the array is applied."
             },
-            "description": "Conditional formatting rules applied to the displayed value"
+            "description": "Conditional formatting rules applied to the raw query value, before the unit is applied"
           },
           "precision": {
             "anyOf": [
@@ -31401,6 +31709,17 @@
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                 },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                },
                 "filter": {
                   "type": "string",
                   "format": "tsuga-query",
@@ -31455,7 +31774,7 @@
           },
           "max": {
             "type": "number",
-            "description": "Gauge maximum value"
+            "description": "Gauge maximum value, on the raw query value before the unit is applied"
           },
           "colorThresholds": {
             "type": "array",
@@ -31487,7 +31806,7 @@
               "title": "GaugeColorThreshold",
               "description": "Color band of the gauge range. Bands are ordered by `from`, so entries may be listed in any order."
             },
-            "description": "Color thresholds inside the gauge range"
+            "description": "Color thresholds inside the gauge range, on the raw query value before the unit is applied"
           },
           "precision": {
             "anyOf": [
@@ -31730,6 +32049,17 @@
                     "last"
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                 },
                 "filter": {
                   "type": "string",
@@ -32312,6 +32642,17 @@
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                 },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                },
                 "filter": {
                   "type": "string",
                   "format": "tsuga-query",
@@ -32670,6 +33011,17 @@
                     "last"
                   ],
                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                 },
                 "filter": {
                   "type": "string",
@@ -33040,6 +33392,17 @@
                           "last"
                         ],
                         "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                      },
+                      "metricKind": {
+                        "enum": [
+                          "gauge",
+                          "cumulative-counter",
+                          "delta-counter",
+                          "cumulative-histogram",
+                          "delta-histogram",
+                          "summary"
+                        ],
+                        "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                       },
                       "filter": {
                         "type": "string",
@@ -34308,6 +34671,17 @@
                                   ],
                                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                                 },
+                                "metricKind": {
+                                  "enum": [
+                                    "gauge",
+                                    "cumulative-counter",
+                                    "delta-counter",
+                                    "cumulative-histogram",
+                                    "delta-histogram",
+                                    "summary"
+                                  ],
+                                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                                },
                                 "filter": {
                                   "type": "string",
                                   "description": "Filter to apply to the aggregation"
@@ -34482,6 +34856,17 @@
                                     "last"
                                   ],
                                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                                },
+                                "metricKind": {
+                                  "enum": [
+                                    "gauge",
+                                    "cumulative-counter",
+                                    "delta-counter",
+                                    "cumulative-histogram",
+                                    "delta-histogram",
+                                    "summary"
+                                  ],
+                                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                                 },
                                 "filter": {
                                   "type": "string",
@@ -34730,6 +35115,17 @@
                                     "last"
                                   ],
                                   "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                                },
+                                "metricKind": {
+                                  "enum": [
+                                    "gauge",
+                                    "cumulative-counter",
+                                    "delta-counter",
+                                    "cumulative-histogram",
+                                    "delta-histogram",
+                                    "summary"
+                                  ],
+                                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                                 },
                                 "filter": {
                                   "type": "string",
@@ -35722,6 +36118,17 @@
                           ],
                           "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                         },
+                        "metricKind": {
+                          "enum": [
+                            "gauge",
+                            "cumulative-counter",
+                            "delta-counter",
+                            "cumulative-histogram",
+                            "delta-histogram",
+                            "summary"
+                          ],
+                          "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                        },
                         "filter": {
                           "type": "string",
                           "format": "tsuga-query",
@@ -36073,6 +36480,17 @@
                             "last"
                           ],
                           "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                        },
+                        "metricKind": {
+                          "enum": [
+                            "gauge",
+                            "cumulative-counter",
+                            "delta-counter",
+                            "cumulative-histogram",
+                            "delta-histogram",
+                            "summary"
+                          ],
+                          "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                         },
                         "filter": {
                           "type": "string",
@@ -53320,7 +53738,7 @@
         "tags": [
           "slos"
         ],
-        "description": "Replaces an existing SLO definition by ID. Send the full SLO input shape, including configuration, ownership, permissions, cluster scope, and the reconciled alert list. Changing configuration, target, timeframe, permissions, or cluster scope resets evaluated SLO state, so returned status and error budget are based on data evaluated after the update.",
+        "description": "Replaces an existing SLO definition by ID. Send the full SLO input shape, including configuration, ownership, permissions, cluster scope, and the reconciled alert list. Changing configuration, target, timeframe, permissions, or cluster scope resets the evaluation state of every alert on the SLO, so each alert ignores the transitions it recorded before the update. The SLO status and error budget are recomputed from the telemetry in the rolling window and are not cleared by an update.",
         "requestBody": {
           "required": true,
           "content": {
@@ -53552,6 +53970,17 @@
                                       ],
                                       "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                                     },
+                                    "metricKind": {
+                                      "enum": [
+                                        "gauge",
+                                        "cumulative-counter",
+                                        "delta-counter",
+                                        "cumulative-histogram",
+                                        "delta-histogram",
+                                        "summary"
+                                      ],
+                                      "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                                    },
                                     "filter": {
                                       "type": "string",
                                       "format": "tsuga-query",
@@ -53713,6 +54142,17 @@
                                         "last"
                                       ],
                                       "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                                    },
+                                    "metricKind": {
+                                      "enum": [
+                                        "gauge",
+                                        "cumulative-counter",
+                                        "delta-counter",
+                                        "cumulative-histogram",
+                                        "delta-histogram",
+                                        "summary"
+                                      ],
+                                      "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                                     },
                                     "filter": {
                                       "type": "string",
@@ -53954,6 +54394,17 @@
                                         "last"
                                       ],
                                       "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                                    },
+                                    "metricKind": {
+                                      "enum": [
+                                        "gauge",
+                                        "cumulative-counter",
+                                        "delta-counter",
+                                        "cumulative-histogram",
+                                        "delta-histogram",
+                                        "summary"
+                                      ],
+                                      "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                                     },
                                     "filter": {
                                       "type": "string",
@@ -54636,6 +55087,17 @@
                                       ],
                                       "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
                                     },
+                                    "metricKind": {
+                                      "enum": [
+                                        "gauge",
+                                        "cumulative-counter",
+                                        "delta-counter",
+                                        "cumulative-histogram",
+                                        "delta-histogram",
+                                        "summary"
+                                      ],
+                                      "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
+                                    },
                                     "filter": {
                                       "type": "string",
                                       "format": "tsuga-query",
@@ -54797,6 +55259,17 @@
                                         "last"
                                       ],
                                       "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                                    },
+                                    "metricKind": {
+                                      "enum": [
+                                        "gauge",
+                                        "cumulative-counter",
+                                        "delta-counter",
+                                        "cumulative-histogram",
+                                        "delta-histogram",
+                                        "summary"
+                                      ],
+                                      "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                                     },
                                     "filter": {
                                       "type": "string",
@@ -55038,6 +55511,17 @@
                                         "last"
                                       ],
                                       "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type."
+                                    },
+                                    "metricKind": {
+                                      "enum": [
+                                        "gauge",
+                                        "cumulative-counter",
+                                        "delta-counter",
+                                        "cumulative-histogram",
+                                        "delta-histogram",
+                                        "summary"
+                                      ],
+                                      "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence."
                                     },
                                     "filter": {
                                       "type": "string",
