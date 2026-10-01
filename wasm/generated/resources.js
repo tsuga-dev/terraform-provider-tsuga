@@ -1,5 +1,5 @@
 // Generated from the Terraform provider resource registry.
-export const resourceTypes = Object.freeze(["tsuga_cloud_account","tsuga_custom_usage_tag","tsuga_dashboard","tsuga_dashboard_folder","tsuga_ingestion_api_key","tsuga_monitor","tsuga_notification_integration","tsuga_notification_rule","tsuga_notification_silence","tsuga_retention_policy","tsuga_route","tsuga_slo","tsuga_tag_policy","tsuga_team","tsuga_team_membership"]);
+export const resourceTypes = Object.freeze(["tsuga_cloud_account","tsuga_custom_usage_tag","tsuga_dashboard","tsuga_dashboard_folder","tsuga_ingestion_api_key","tsuga_metric_route","tsuga_monitor","tsuga_notification_integration","tsuga_notification_rule","tsuga_notification_silence","tsuga_retention_policy","tsuga_route","tsuga_slo","tsuga_tag_policy","tsuga_team","tsuga_team_membership"]);
 export function bindResources(exportResource) {
   return {
     exportCloudAccount: (resource, options) => exportResource("tsuga_cloud_account", resource, options),
@@ -7,6 +7,7 @@ export function bindResources(exportResource) {
     exportDashboard: (resource, options) => exportResource("tsuga_dashboard", resource, options),
     exportDashboardFolder: (resource, options) => exportResource("tsuga_dashboard_folder", resource, options),
     exportIngestionApiKey: (resource, options) => exportResource("tsuga_ingestion_api_key", resource, options),
+    exportMetricRoute: (resource, options) => exportResource("tsuga_metric_route", resource, options),
     exportMonitor: (resource, options) => exportResource("tsuga_monitor", resource, options),
     exportNotificationIntegration: (resource, options) => exportResource("tsuga_notification_integration", resource, options),
     exportNotificationRule: (resource, options) => exportResource("tsuga_notification_rule", resource, options),
