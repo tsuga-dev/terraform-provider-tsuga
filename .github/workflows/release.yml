@@ -26,7 +26,7 @@ jobs:
         with:
           app-id: ${{ secrets.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token }}
@@ -111,7 +111,7 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: Send Slack notification
-        uses: rtCamp/action-slack-notify@c33737706dea87cd7784c687dadc9adf1be59990 # pin@v2
+        uses: rtCamp/action-slack-notify@c33737706dea87cd7784c687dadc9adf1be59990 # v2.3.2
         continue-on-error: true
         env:
           SLACK_USERNAME: GitHub CI Bot
