@@ -17789,6 +17789,7 @@
               "title": "MonitorAggregationQuery",
               "description": "Single aggregation query evaluated by a monitor."
             },
+            "minItems": 1,
             "maxItems": 15,
             "description": "Aggregation queries used by alerting. Each query is referenced from formulas as q1, q2, and so on."
           }
@@ -18096,6 +18097,7 @@
               "title": "MonitorAggregationQuery",
               "description": "Single aggregation query evaluated by a monitor."
             },
+            "minItems": 1,
             "maxItems": 15,
             "description": "Aggregation queries used by alerting. Each query is referenced from formulas as q1, q2, and so on."
           }
@@ -18403,6 +18405,7 @@
               "title": "MonitorAggregationQuery",
               "description": "Single aggregation query evaluated by a monitor."
             },
+            "minItems": 1,
             "maxItems": 15,
             "description": "Aggregation queries used by alerting. Each query is referenced from formulas as q1, q2, and so on."
           }
@@ -18699,6 +18702,7 @@
               "title": "MonitorAggregationQuery",
               "description": "Single aggregation query evaluated by a monitor."
             },
+            "minItems": 1,
             "maxItems": 15,
             "description": "Aggregation queries used by alerting. Each query is referenced from formulas as q1, q2, and so on."
           }
@@ -18995,6 +18999,7 @@
               "title": "MonitorAggregationQuery",
               "description": "Single aggregation query evaluated by a monitor."
             },
+            "minItems": 1,
             "maxItems": 15,
             "description": "Aggregation queries used by alerting. Each query is referenced from formulas as q1, q2, and so on."
           }
@@ -19291,6 +19296,7 @@
               "title": "MonitorAggregationQuery",
               "description": "Single aggregation query evaluated by a monitor."
             },
+            "minItems": 1,
             "maxItems": 15,
             "description": "Aggregation queries used by alerting. Each query is referenced from formulas as q1, q2, and so on."
           }
@@ -29931,6 +29937,7 @@
               },
               "title": "AggregationQuery"
             },
+            "minItems": 1,
             "maxItems": 15,
             "description": "Aggregations that may be combined together in the same query. Each item is referenced from `formula` as q1, q2, and so on, in submission order. For dataSource \"metrics\", each aggregate's `field` is the metric name, not an attribute; to count distinct values of an attribute use unique-count with field \"<metricName>.context.<attribute>\" (e.g. \"system.cpu.utilization.context.host.name\")."
           },
@@ -30570,6 +30577,7 @@
               },
               "title": "AggregationQuery"
             },
+            "minItems": 1,
             "maxItems": 15,
             "description": "Aggregations that may be combined together in the same query. Each item is referenced from `formula` as q1, q2, and so on, in submission order. For dataSource \"metrics\", each aggregate's `field` is the metric name, not an attribute; to count distinct values of an attribute use unique-count with field \"<metricName>.context.<attribute>\" (e.g. \"system.cpu.utilization.context.host.name\")."
           },
@@ -30988,6 +30996,7 @@
               },
               "title": "AggregationQuery"
             },
+            "minItems": 1,
             "maxItems": 15,
             "description": "Aggregations that may be combined together in the same query. Each item is referenced from `formula` as q1, q2, and so on, in submission order. For dataSource \"metrics\", each aggregate's `field` is the metric name, not an attribute; to count distinct values of an attribute use unique-count with field \"<metricName>.context.<attribute>\" (e.g. \"system.cpu.utilization.context.host.name\")."
           },
@@ -31371,6 +31380,7 @@
               },
               "title": "AggregationQuery"
             },
+            "minItems": 1,
             "maxItems": 15,
             "description": "Aggregations that may be combined together in the same query. Each item is referenced from `formula` as q1, q2, and so on, in submission order. For dataSource \"metrics\", each aggregate's `field` is the metric name, not an attribute; to count distinct values of an attribute use unique-count with field \"<metricName>.context.<attribute>\" (e.g. \"system.cpu.utilization.context.host.name\")."
           },
@@ -31730,6 +31740,7 @@
               },
               "title": "AggregationQuery"
             },
+            "minItems": 1,
             "maxItems": 15,
             "description": "Aggregations that may be combined together in the same query. Each item is referenced from `formula` as q1, q2, and so on, in submission order. For dataSource \"metrics\", each aggregate's `field` is the metric name, not an attribute; to count distinct values of an attribute use unique-count with field \"<metricName>.context.<attribute>\" (e.g. \"system.cpu.utilization.context.host.name\")."
           },
@@ -32071,6 +32082,7 @@
               },
               "title": "AggregationQuery"
             },
+            "minItems": 1,
             "maxItems": 15,
             "description": "Aggregations that may be combined together in the same query. Each item is referenced from `formula` as q1, q2, and so on, in submission order. For dataSource \"metrics\", each aggregate's `field` is the metric name, not an attribute; to count distinct values of an attribute use unique-count with field \"<metricName>.context.<attribute>\" (e.g. \"system.cpu.utilization.context.host.name\")."
           },
@@ -32663,6 +32675,7 @@
               },
               "title": "AggregationQuery"
             },
+            "minItems": 1,
             "maxItems": 15,
             "description": "Aggregations that may be combined together in the same query. Each item is referenced from `formula` as q1, q2, and so on, in submission order. For dataSource \"metrics\", each aggregate's `field` is the metric name, not an attribute; to count distinct values of an attribute use unique-count with field \"<metricName>.context.<attribute>\" (e.g. \"system.cpu.utilization.context.host.name\")."
           },
@@ -33033,6 +33046,7 @@
               },
               "title": "AggregationQuery"
             },
+            "minItems": 1,
             "maxItems": 15,
             "description": "Aggregations that may be combined together in the same query. Each item is referenced from `formula` as q1, q2, and so on, in submission order. For dataSource \"metrics\", each aggregate's `field` is the metric name, not an attribute; to count distinct values of an attribute use unique-count with field \"<metricName>.context.<attribute>\" (e.g. \"system.cpu.utilization.context.host.name\")."
           },
@@ -33414,6 +33428,7 @@
                     },
                     "title": "AggregationQuery"
                   },
+                  "minItems": 1,
                   "maxItems": 15,
                   "description": "Aggregations that may be combined together in the same query. Each item is referenced from `formula` as q1, q2, and so on, in submission order. For dataSource \"metrics\", each aggregate's `field` is the metric name, not an attribute; to count distinct values of an attribute use unique-count with field \"<metricName>.context.<attribute>\" (e.g. \"system.cpu.utilization.context.host.name\")."
                 },
@@ -35780,6 +35795,13 @@
                   "write"
                 ],
                 "description": "Retention policies applied to logs, metrics, and traces."
+              },
+              "sandbox-configuration": {
+                "type": "string",
+                "description": "Sandbox agent configurations of the key's teams, and the sandbox agent runs launched with them.",
+                "enum": [
+                  "read"
+                ]
               },
               "tag-policy": {
                 "enum": [
