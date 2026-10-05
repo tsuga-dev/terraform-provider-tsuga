@@ -114,7 +114,7 @@ jobs:
           TSUGA_USER_ID: ${{ vars.TSUGA_USER_ID }}
           TF_ACC: 1
         run: |
-          go test -v ./...
+          go test -v -parallel 8 ./...
 
   go-test:
     name: Go Tests

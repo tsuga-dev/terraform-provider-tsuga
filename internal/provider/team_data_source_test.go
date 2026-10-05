@@ -16,7 +16,7 @@ func TestAccTeamDataSourceLookupByName(t *testing.T) {
 	keyNameA := fmt.Sprintf("key-%s", randomString(10))
 	keyNameB := fmt.Sprintf("key-%s", randomString(10))
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -83,7 +83,7 @@ resource "tsuga_ingestion_api_key" "key_b" {
 func TestAccTeamDataSource(t *testing.T) {
 	teamName := fmt.Sprintf("test-%s", randomString(10))
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Read by id

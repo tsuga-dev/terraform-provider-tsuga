@@ -18,7 +18,7 @@ resource "tsuga_team" "test-team" {
 }
 `, teamName)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create a top-level folder

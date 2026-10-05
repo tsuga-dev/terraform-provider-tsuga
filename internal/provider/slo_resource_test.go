@@ -106,7 +106,7 @@ resource "tsuga_slo" "test" {
 `, teamName, burnRate)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -205,7 +205,7 @@ resource "tsuga_slo" "test" {
     { priority = 3, configuration = { threshold = 99 } },
   ]`
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -252,7 +252,7 @@ resource "tsuga_slo" "test" {
 func TestAccSloResource_Event(t *testing.T) {
 	teamName := fmt.Sprintf("test-%s", randomString(10))
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -406,7 +406,7 @@ resource "tsuga_slo" "test" {
 func TestAccSloResource_Time(t *testing.T) {
 	teamName := fmt.Sprintf("test-%s", randomString(10))
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -568,7 +568,7 @@ resource "tsuga_slo" "test" {
 func TestAccSloResource_EventToTimeSwitch(t *testing.T) {
 	teamName := fmt.Sprintf("test-%s", randomString(10))
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{

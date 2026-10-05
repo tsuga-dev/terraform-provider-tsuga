@@ -10,7 +10,7 @@ import (
 func TestAccMonitorResource(t *testing.T) {
 	teamName := fmt.Sprintf("test-%s", randomString(10))
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -146,7 +146,7 @@ resource "tsuga_monitor" "test" {
 func TestAccMonitorResource_WithTags(t *testing.T) {
 	teamName := fmt.Sprintf("test-%s", randomString(10))
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -212,7 +212,7 @@ resource "tsuga_monitor" "test" {
 func TestAccMonitorResource_WithDashboardId(t *testing.T) {
 	teamName := fmt.Sprintf("test-%s", randomString(10))
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -278,7 +278,7 @@ resource "tsuga_monitor" "test" {
 func TestAccMonitorResource_AnomalyMetric(t *testing.T) {
 	teamName := fmt.Sprintf("test-%s", randomString(10))
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -391,7 +391,7 @@ resource "tsuga_monitor" "test" {
 func TestAccMonitorResource_AnomalyLog(t *testing.T) {
 	teamName := fmt.Sprintf("test-%s", randomString(10))
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -499,7 +499,7 @@ resource "tsuga_monitor" "test" {
 func TestAccMonitorResource_CertificateExpiry(t *testing.T) {
 	teamName := fmt.Sprintf("test-%s", randomString(10))
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -580,7 +580,7 @@ resource "tsuga_monitor" "test" {
 func TestAccMonitorResource_LogErrorPattern(t *testing.T) {
 	teamName := fmt.Sprintf("test-%s", randomString(10))
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{

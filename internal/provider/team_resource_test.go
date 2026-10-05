@@ -20,7 +20,7 @@ func TestAccTeamResource(t *testing.T) {
 	// an in-place update (e.g. editing the description) never recreates the team.
 	teamID := statecheck.CompareValue(compare.ValuesSame())
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create
