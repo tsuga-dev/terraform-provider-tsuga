@@ -29,14 +29,6 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Install tfplugingen-openapi
-        run: |
-          go install github.com/hashicorp/terraform-plugin-codegen-openapi/cmd/tfplugingen-openapi@v0.3.0
-
-      - name: Install tfplugingen-framework
-        run: |
-          go install github.com/hashicorp/terraform-plugin-codegen-framework/cmd/tfplugingen-framework@v0.4.1
-
       - name: Run codegen script
         run: sh codegen.sh
 
@@ -135,9 +127,8 @@ jobs:
 
       - name: Find deadcode
         run: |
-          go install golang.org/x/tools/cmd/deadcode@v0.40.0
           # Also cover WASM-only entrypoint (only used in tests)
-          out="$(deadcode -test ./internal/provider/...)"
+          out="$(go tool -modfile=tools/deadcode/go.mod deadcode -test ./internal/provider/...)"
           if [[ -n "$out" ]] && [[ "$out" != "null" ]]; then
             echo "$out" >&2
             exit 1
