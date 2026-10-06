@@ -2116,6 +2116,7 @@
                       "note": "#/components/schemas/GraphVisualizationNote",
                       "list-log-patterns": "#/components/schemas/GraphVisualizationListLogPatterns",
                       "list-spans": "#/components/schemas/GraphVisualizationListSpans",
+                      "list-rum": "#/components/schemas/GraphVisualizationListRum",
                       "slo-uptime": "#/components/schemas/GraphVisualizationSloUptime",
                       "slo-over-time": "#/components/schemas/GraphVisualizationSloOverTime"
                     }
@@ -2195,6 +2196,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/GraphVisualizationListSpans"
+                    },
+                    {
+                      "$ref": "#/components/schemas/GraphVisualizationListRum"
                     },
                     {
                       "$ref": "#/components/schemas/GraphVisualizationSloUptime"
@@ -2518,6 +2522,7 @@
                     "note": "#/components/schemas/GraphVisualizationNote",
                     "list-log-patterns": "#/components/schemas/GraphVisualizationListLogPatterns",
                     "list-spans": "#/components/schemas/GraphVisualizationListSpans",
+                    "list-rum": "#/components/schemas/GraphVisualizationListRum",
                     "slo-uptime": "#/components/schemas/GraphVisualizationSloUptime",
                     "slo-over-time": "#/components/schemas/GraphVisualizationSloOverTime"
                   }
@@ -2597,6 +2602,9 @@
                   },
                   {
                     "$ref": "#/components/schemas/GraphVisualizationListSpans"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GraphVisualizationListRum"
                   },
                   {
                     "$ref": "#/components/schemas/GraphVisualizationSloUptime"
@@ -22147,7 +22155,7 @@
               },
               "title": "ListDefaultSorting"
             },
-            "description": "Default sorting applied to a list widget. Applies to log, span, or connection list widgets. Users can still change sorting by selecting columns in the rendered list."
+            "description": "Default sorting applied to a list widget. Applies to log, span, RUM event, or connection list widgets. Users can still change sorting by selecting columns in the rendered list."
           }
         },
         "title": "ListConnection"
@@ -27489,7 +27497,7 @@
               },
               "title": "ListDefaultSorting"
             },
-            "description": "Default sorting applied to a list widget. Applies to log, span, or connection list widgets. Users can still change sorting by selecting columns in the rendered list."
+            "description": "Default sorting applied to a list widget. Applies to log, span, RUM event, or connection list widgets. Users can still change sorting by selecting columns in the rendered list."
           }
         },
         "title": "List"
@@ -27693,10 +27701,134 @@
               },
               "title": "ListDefaultSorting"
             },
-            "description": "Default sorting applied to a list widget. Applies to log, span, or connection list widgets. Users can still change sorting by selecting columns in the rendered list."
+            "description": "Default sorting applied to a list widget. Applies to log, span, RUM event, or connection list widgets. Users can still change sorting by selecting columns in the rendered list."
           }
         },
         "title": "ListSpans"
+      },
+      "GraphVisualizationListRum": {
+        "type": "object",
+        "required": [
+          "type",
+          "query"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Displays matching RUM events in a tabular list",
+            "enum": [
+              "list-rum"
+            ]
+          },
+          "query": {
+            "type": "string",
+            "description": "Query that selects RUM events for the list"
+          },
+          "listColumns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "attribute"
+              ],
+              "properties": {
+                "attribute": {
+                  "type": "string",
+                  "description": "Attribute (log field or database row column) displayed as a column in the list"
+                },
+                "normalizer": {
+                  "title": "Normalizer",
+                  "description": "Display-value formatter for widget values or list/table columns.",
+                  "type": "object",
+                  "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                      "duration": "#/components/schemas/DataNormalizerDuration",
+                      "data": "#/components/schemas/DataNormalizerData",
+                      "percent": "#/components/schemas/DataNormalizerPercent",
+                      "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                      "date": "#/components/schemas/DataNormalizerDate",
+                      "level": "#/components/schemas/DataNormalizerLevel",
+                      "cpu": "#/components/schemas/DataNormalizerCpu",
+                      "none": "#/components/schemas/DataNormalizerNone",
+                      "custom": "#/components/schemas/DataNormalizerCustom"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerDuration"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerData"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerPercent"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerDate"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerLevel"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerCpu"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerNone"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerCustom"
+                    }
+                  ]
+                }
+              },
+              "title": "WidgetListColumn",
+              "description": "List column pairing a displayed attribute with the formatting applied to its values."
+            },
+            "description": "Custom columns to display for each RUM event. Attributes are read without their stream prefix, e.g. `view.name` rather than `events.view.name`."
+          },
+          "listColumnsSize": {
+            "type": "object",
+            "description": "List column widths in pixels, keyed by the `attribute` of the matching `listColumns` entry. Columns without an entry keep their default width.",
+            "additionalProperties": {
+              "type": "number",
+              "description": "List column width by column id"
+            }
+          },
+          "isCellWrapped": {
+            "type": "boolean",
+            "description": "Whether list widget cell text wraps instead of truncating. Applies to RUM event list widgets."
+          },
+          "defaultSorting": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "desc"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Column attribute used for the default list sort. It matches an attribute in `listColumns` or a built-in list column for the selected list source."
+                },
+                "desc": {
+                  "type": "boolean",
+                  "description": "Sort direction for the default list sort. `true` sorts descending; `false` sorts ascending."
+                }
+              },
+              "title": "ListDefaultSorting"
+            },
+            "description": "Default sorting applied to a list widget. Applies to log, span, RUM event, or connection list widgets. Users can still change sorting by selecting columns in the rendered list."
+          }
+        },
+        "title": "ListRum"
       },
       "GraphVisualizationSloUptime": {
         "type": "object",
@@ -28128,7 +28260,7 @@
               },
               "title": "ListDefaultSorting"
             },
-            "description": "Default sorting applied to a list widget. Optional on create or update for log, span, or connection list widgets. Users can still change sorting by selecting columns in the rendered list."
+            "description": "Default sorting applied to a list widget. Optional on create or update for log, span, RUM event, or connection list widgets. Users can still change sorting by selecting columns in the rendered list."
           }
         },
         "title": "ListConnection"
@@ -33772,7 +33904,7 @@
               },
               "title": "ListDefaultSorting"
             },
-            "description": "Default sorting applied to a list widget. Optional on create or update for log, span, or connection list widgets. Users can still change sorting by selecting columns in the rendered list."
+            "description": "Default sorting applied to a list widget. Optional on create or update for log, span, RUM event, or connection list widgets. Users can still change sorting by selecting columns in the rendered list."
           }
         },
         "title": "List"
@@ -33986,10 +34118,139 @@
               },
               "title": "ListDefaultSorting"
             },
-            "description": "Default sorting applied to a list widget. Optional on create or update for log, span, or connection list widgets. Users can still change sorting by selecting columns in the rendered list."
+            "description": "Default sorting applied to a list widget. Optional on create or update for log, span, RUM event, or connection list widgets. Users can still change sorting by selecting columns in the rendered list."
           }
         },
         "title": "ListSpans"
+      },
+      "InputGraphVisualizationListRum": {
+        "type": "object",
+        "required": [
+          "type",
+          "query"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Displays matching RUM events in a tabular list",
+            "enum": [
+              "list-rum"
+            ]
+          },
+          "query": {
+            "type": "string",
+            "format": "tsuga-query",
+            "minLength": 0,
+            "maxLength": 10000,
+            "description": "Query that selects RUM events for the list. Prefix every field with the stream it belongs to (`measurements.`, `events.`, or `exceptions.`) and filter on a single stream per query. A query without stream-prefixed fields searches the `events` stream."
+          },
+          "listColumns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "attribute"
+              ],
+              "properties": {
+                "attribute": {
+                  "type": "string",
+                  "description": "Attribute (log field or database row column) displayed as a column in the list"
+                },
+                "normalizer": {
+                  "title": "Normalizer",
+                  "description": "Display-value formatter for widget values or list/table columns.",
+                  "type": "object",
+                  "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                      "duration": "#/components/schemas/DataNormalizerDuration",
+                      "data": "#/components/schemas/DataNormalizerData",
+                      "percent": "#/components/schemas/DataNormalizerPercent",
+                      "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                      "date": "#/components/schemas/DataNormalizerDate",
+                      "level": "#/components/schemas/DataNormalizerLevel",
+                      "cpu": "#/components/schemas/DataNormalizerCpu",
+                      "none": "#/components/schemas/DataNormalizerNone",
+                      "custom": "#/components/schemas/InputDataNormalizerCustom"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerDuration"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerData"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerPercent"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerDate"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerLevel"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerCpu"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataNormalizerNone"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InputDataNormalizerCustom"
+                    }
+                  ]
+                }
+              },
+              "title": "WidgetListColumn",
+              "description": "List column pairing a displayed attribute with the formatting applied to its values."
+            },
+            "description": "Custom columns to display for each RUM event. Set attributes without their stream prefix, e.g. `view.name` rather than `events.view.name`."
+          },
+          "listColumnsSize": {
+            "type": "object",
+            "description": "List column widths in pixels, keyed by the `attribute` of the matching `listColumns` entry. Columns without an entry keep their default width.",
+            "additionalProperties": {
+              "type": "number",
+              "description": "List column width by column id"
+            }
+          },
+          "isCellWrapped": {
+            "type": "boolean",
+            "description": "Whether list widget cell text wraps instead of truncating. Applies to RUM event list widgets. Optional; omit or set false to use truncated cells."
+          },
+          "defaultSorting": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "desc"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 250,
+                  "description": "Column attribute used for the default list sort. Set this to an attribute in `listColumns` or a built-in list column for the selected list source."
+                },
+                "desc": {
+                  "type": "boolean",
+                  "description": "Sort direction for the default list sort. Set `true` for descending order or `false` for ascending order."
+                }
+              },
+              "title": "ListDefaultSorting"
+            },
+            "description": "Default sorting applied to a list widget. Optional on create or update for log, span, RUM event, or connection list widgets. Users can still change sorting by selecting columns in the rendered list."
+          }
+        },
+        "title": "ListRum"
       },
       "InputGraphVisualizationSloUptime": {
         "type": "object",
@@ -37628,7 +37889,7 @@
         "tags": [
           "rum"
         ],
-        "description": "Searches Real User Monitoring (RUM) events in a required time range using Tsuga query syntax, most recent first. Use this endpoint to retrieve raw browser and mobile events, such as web vitals, navigations, resource timings, and exceptions, for investigations or automation. See [Browser views](/documentation/categorize/browser-views/index) and [Query syntax](/documentation/explore/query-syntax).",
+        "description": "Searches Real User Monitoring (RUM) events in a required time range using Tsuga query syntax, most recent first. Use this endpoint to retrieve raw browser and mobile events, such as web vitals, navigations, resource timings, and exceptions, for investigations or automation. See [RUM views](/documentation/categorize/rum-views/index) and [Query syntax](/documentation/explore/query-syntax).",
         "parameters": [
           {
             "schema": {
@@ -37757,7 +38018,7 @@
         "tags": [
           "rum"
         ],
-        "description": "Lists the RUM attribute dot-paths that can be queried. Use this to discover fields for RUM search queries, filters, and grouping. See[Browser views](/documentation/categorize/browser-views/index).",
+        "description": "Lists the RUM attribute dot-paths that can be queried. Use this to discover fields for RUM search queries, filters, and grouping. See [RUM views](/documentation/categorize/rum-views/index).",
         "parameters": [
           {
             "schema": {
@@ -39229,6 +39490,7 @@
                               "note": "#/components/schemas/InputGraphVisualizationNote",
                               "list-log-patterns": "#/components/schemas/InputGraphVisualizationListLogPatterns",
                               "list-spans": "#/components/schemas/InputGraphVisualizationListSpans",
+                              "list-rum": "#/components/schemas/InputGraphVisualizationListRum",
                               "slo-uptime": "#/components/schemas/InputGraphVisualizationSloUptime",
                               "slo-over-time": "#/components/schemas/InputGraphVisualizationSloOverTime"
                             }
@@ -39308,6 +39570,9 @@
                             },
                             {
                               "$ref": "#/components/schemas/InputGraphVisualizationListSpans"
+                            },
+                            {
+                              "$ref": "#/components/schemas/InputGraphVisualizationListRum"
                             },
                             {
                               "$ref": "#/components/schemas/InputGraphVisualizationSloUptime"
@@ -39756,6 +40021,7 @@
                               "note": "#/components/schemas/InputGraphVisualizationNote",
                               "list-log-patterns": "#/components/schemas/InputGraphVisualizationListLogPatterns",
                               "list-spans": "#/components/schemas/InputGraphVisualizationListSpans",
+                              "list-rum": "#/components/schemas/InputGraphVisualizationListRum",
                               "slo-uptime": "#/components/schemas/InputGraphVisualizationSloUptime",
                               "slo-over-time": "#/components/schemas/InputGraphVisualizationSloOverTime"
                             }
@@ -39835,6 +40101,9 @@
                             },
                             {
                               "$ref": "#/components/schemas/InputGraphVisualizationListSpans"
+                            },
+                            {
+                              "$ref": "#/components/schemas/InputGraphVisualizationListRum"
                             },
                             {
                               "$ref": "#/components/schemas/InputGraphVisualizationSloUptime"
@@ -40194,6 +40463,7 @@
                         "note": "#/components/schemas/InputGraphVisualizationNote",
                         "list-log-patterns": "#/components/schemas/InputGraphVisualizationListLogPatterns",
                         "list-spans": "#/components/schemas/InputGraphVisualizationListSpans",
+                        "list-rum": "#/components/schemas/InputGraphVisualizationListRum",
                         "slo-uptime": "#/components/schemas/InputGraphVisualizationSloUptime",
                         "slo-over-time": "#/components/schemas/InputGraphVisualizationSloOverTime"
                       }
@@ -40273,6 +40543,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/InputGraphVisualizationListSpans"
+                      },
+                      {
+                        "$ref": "#/components/schemas/InputGraphVisualizationListRum"
                       },
                       {
                         "$ref": "#/components/schemas/InputGraphVisualizationSloUptime"
@@ -48491,7 +48764,11 @@
                           },
                           "url": {
                             "type": "string",
-                            "format": "uri"
+                            "format": "uri",
+                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "errorMessage": {
+                              "pattern": "The URL must not contain credentials (user:password@)."
+                            }
                           }
                         }
                       },
@@ -48530,7 +48807,11 @@
                           },
                           "webhookUrl": {
                             "type": "string",
-                            "format": "uri"
+                            "format": "uri",
+                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "errorMessage": {
+                              "pattern": "The URL must not contain credentials (user:password@)."
+                            }
                           }
                         }
                       },
@@ -48553,7 +48834,11 @@
                           },
                           "url": {
                             "type": "string",
-                            "format": "uri"
+                            "format": "uri",
+                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "errorMessage": {
+                              "pattern": "The URL must not contain credentials (user:password@)."
+                            }
                           },
                           "method": {
                             "enum": [
@@ -48815,7 +49100,11 @@
                           },
                           "webhookUrl": {
                             "type": "string",
-                            "format": "uri"
+                            "format": "uri",
+                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "errorMessage": {
+                              "pattern": "The URL must not contain credentials (user:password@)."
+                            }
                           }
                         }
                       },
@@ -48834,7 +49123,11 @@
                           },
                           "webhookUrl": {
                             "type": "string",
-                            "format": "uri"
+                            "format": "uri",
+                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "errorMessage": {
+                              "pattern": "The URL must not contain credentials (user:password@)."
+                            }
                           }
                         }
                       },
@@ -48856,6 +49149,10 @@
                           "siteUrl": {
                             "type": "string",
                             "format": "uri",
+                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "errorMessage": {
+                              "pattern": "The URL must not contain credentials (user:password@)."
+                            },
                             "description": "Base URL of the Jira Cloud site, like \"https://your-company.atlassian.net\". Tsuga files issues against this site."
                           },
                           "email": {
@@ -49165,7 +49462,11 @@
                           },
                           "url": {
                             "type": "string",
-                            "format": "uri"
+                            "format": "uri",
+                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "errorMessage": {
+                              "pattern": "The URL must not contain credentials (user:password@)."
+                            }
                           }
                         }
                       },
@@ -49204,7 +49505,11 @@
                           },
                           "webhookUrl": {
                             "type": "string",
-                            "format": "uri"
+                            "format": "uri",
+                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "errorMessage": {
+                              "pattern": "The URL must not contain credentials (user:password@)."
+                            }
                           }
                         }
                       },
@@ -49222,7 +49527,11 @@
                           },
                           "url": {
                             "type": "string",
-                            "format": "uri"
+                            "format": "uri",
+                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "errorMessage": {
+                              "pattern": "The URL must not contain credentials (user:password@)."
+                            }
                           },
                           "method": {
                             "enum": [
@@ -49478,7 +49787,11 @@
                           },
                           "webhookUrl": {
                             "type": "string",
-                            "format": "uri"
+                            "format": "uri",
+                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "errorMessage": {
+                              "pattern": "The URL must not contain credentials (user:password@)."
+                            }
                           }
                         }
                       },
@@ -49497,7 +49810,11 @@
                           },
                           "webhookUrl": {
                             "type": "string",
-                            "format": "uri"
+                            "format": "uri",
+                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "errorMessage": {
+                              "pattern": "The URL must not contain credentials (user:password@)."
+                            }
                           }
                         }
                       },
@@ -49515,7 +49832,11 @@
                           },
                           "siteUrl": {
                             "type": "string",
-                            "format": "uri"
+                            "format": "uri",
+                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "errorMessage": {
+                              "pattern": "The URL must not contain credentials (user:password@)."
+                            }
                           },
                           "email": {
                             "type": "string",
@@ -58986,7 +59307,7 @@
     },
     {
       "name": "rum",
-      "description": "Operations for searching Real User Monitoring (RUM) events recorded by the browser and mobile SDKs. See [Browser views](/documentation/categorize/browser-views/index)."
+      "description": "Operations for searching Real User Monitoring (RUM) events recorded by the browser and mobile SDKs. See [RUM views](/documentation/categorize/rum-views/index)."
     },
     {
       "name": "services",
