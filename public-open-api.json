@@ -8733,6 +8733,10 @@
             "type": "string",
             "description": "ID of the dashboard linked to this monitor for context when investigating alerts. Caller-supplied. Omitted when no dashboard is linked."
           },
+          "pauseUntil": {
+            "description": "Timestamp until which the monitor is snoozed. Omitted when the monitor is not snoozed.",
+            "type": "string"
+          },
           "clusterIds": {
             "type": "array",
             "items": {
@@ -12342,6 +12346,57 @@
                       }
                     },
                     "description": "Threshold comparison applied to each time-SLO evaluation slice"
+                  },
+                  "normalizer": {
+                    "title": "Normalizer",
+                    "description": "Display-value formatter for widget values or list/table columns.",
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type",
+                      "mapping": {
+                        "duration": "#/components/schemas/DataNormalizerDuration",
+                        "data": "#/components/schemas/DataNormalizerData",
+                        "percent": "#/components/schemas/DataNormalizerPercent",
+                        "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                        "date": "#/components/schemas/DataNormalizerDate",
+                        "level": "#/components/schemas/DataNormalizerLevel",
+                        "cpu": "#/components/schemas/DataNormalizerCpu",
+                        "none": "#/components/schemas/DataNormalizerNone",
+                        "custom": "#/components/schemas/DataNormalizerCustom"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/DataNormalizerDuration"
+                      },
+                      {
+                        "$ref": "#/components/schemas/DataNormalizerData"
+                      },
+                      {
+                        "$ref": "#/components/schemas/DataNormalizerPercent"
+                      },
+                      {
+                        "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+                      },
+                      {
+                        "$ref": "#/components/schemas/DataNormalizerDate"
+                      },
+                      {
+                        "$ref": "#/components/schemas/DataNormalizerLevel"
+                      },
+                      {
+                        "$ref": "#/components/schemas/DataNormalizerCpu"
+                      },
+                      {
+                        "$ref": "#/components/schemas/DataNormalizerNone"
+                      },
+                      {
+                        "$ref": "#/components/schemas/DataNormalizerCustom"
+                      }
+                    ]
                   },
                   "groupByFields": {
                     "type": "array",
@@ -20717,876 +20772,6 @@
             "minLength": 1,
             "maxLength": 250,
             "description": "Jira status the alert ticket is moved to when the alert resolves. Only takes effect when the rule delivers recovery transitions."
-          }
-        }
-      },
-      "InputSilenceScheduleOneTime": {
-        "type": "object",
-        "required": [
-          "type",
-          "startTime",
-          "endTime"
-        ],
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "Silence active once between the configured start and end times.",
-            "enum": [
-              "one-time"
-            ]
-          },
-          "startTime": {
-            "type": "string",
-            "format": "simple-date-time",
-            "description": "Local start date and time for the one-time silence, interpreted in `timeZone` when provided."
-          },
-          "endTime": {
-            "type": "string",
-            "format": "simple-date-time",
-            "description": "Local end date and time for the one-time silence. It must be after `startTime` and in the future."
-          },
-          "timeZone": {
-            "type": "string",
-            "format": "iana-timezone",
-            "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
-          }
-        },
-        "description": "One-time silence schedule with specific start and end times"
-      },
-      "InputSilenceScheduleRecurring": {
-        "type": "object",
-        "required": [
-          "type",
-          "weeklySchedule"
-        ],
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "Silence active on a recurring weekly schedule.",
-            "enum": [
-              "recurring"
-            ]
-          },
-          "weeklySchedule": {
-            "type": "object",
-            "properties": {
-              "monday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "minItems": 1,
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "tuesday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "minItems": 1,
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "wednesday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "minItems": 1,
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "thursday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "minItems": 1,
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "friday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "minItems": 1,
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "saturday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "minItems": 1,
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "sunday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "minItems": 1,
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              }
-            },
-            "description": "Recurring silence windows keyed by day of week, evaluated in the schedule `timeZone` or in UTC when it is omitted. At least one day must be listed, and a day with no entry is never silenced. Each window covers `startTime` up to but not including `endTime`."
-          },
-          "timeZone": {
-            "type": "string",
-            "format": "iana-timezone",
-            "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
-          }
-        },
-        "description": "Recurring weekly silence schedule"
-      },
-      "OutputSilenceScheduleOneTime": {
-        "type": "object",
-        "required": [
-          "type",
-          "startTime",
-          "endTime"
-        ],
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "Silence active once between the configured start and end times.",
-            "enum": [
-              "one-time"
-            ]
-          },
-          "startTime": {
-            "type": "string",
-            "description": "Local start date and time for the one-time silence, interpreted in `timeZone` when provided."
-          },
-          "endTime": {
-            "type": "string",
-            "description": "Local end date and time for the one-time silence. It must be after `startTime` and in the future when created or updated."
-          },
-          "timeZone": {
-            "type": "string",
-            "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
-          }
-        },
-        "description": "One-time silence schedule with specific start and end times"
-      },
-      "OutputSilenceScheduleRecurring": {
-        "type": "object",
-        "required": [
-          "type",
-          "weeklySchedule"
-        ],
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "Silence active on a recurring weekly schedule.",
-            "enum": [
-              "recurring"
-            ]
-          },
-          "weeklySchedule": {
-            "type": "object",
-            "properties": {
-              "monday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "tuesday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "wednesday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "thursday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "friday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "saturday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "sunday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              }
-            },
-            "description": "Recurring silence windows keyed by day of week, evaluated in the schedule `timeZone` or in UTC when it is omitted. A day with no entry is never silenced. Each window covers `startTime` up to but not including `endTime`."
-          },
-          "timeZone": {
-            "type": "string",
-            "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
-          }
-        },
-        "description": "Recurring weekly silence schedule"
-      },
-      "ProcessorParamsCreatorFormatString": {
-        "type": "object",
-        "required": [
-          "targetAttribute",
-          "formatString",
-          "subtype"
-        ],
-        "properties": {
-          "targetAttribute": {
-            "type": "string",
-            "description": "Attribute that will receive the formatted value"
-          },
-          "formatString": {
-            "type": "string",
-            "description": "Template string used to build the target attribute value"
-          },
-          "overrideTarget": {
-            "type": "boolean",
-            "description": "Whether to overwrite the target attribute when it already exists. If omitted, route processing treats this as true."
-          },
-          "subtype": {
-            "type": "string",
-            "description": "Builds a string from literal text and existing attribute values.",
-            "enum": [
-              "format-string"
-            ]
-          },
-          "replaceMissingByEmpty": {
-            "type": "boolean",
-            "description": "Whether missing referenced attributes render as empty strings. If omitted, route processing treats this as true."
-          }
-        }
-      },
-      "ProcessorParamsCreatorMathFormula": {
-        "type": "object",
-        "required": [
-          "targetAttribute",
-          "formula",
-          "subtype"
-        ],
-        "properties": {
-          "targetAttribute": {
-            "type": "string",
-            "description": "Attribute that will receive the computed value"
-          },
-          "formula": {
-            "type": "string",
-            "description": "Mathematical formula evaluated to populate the target attribute"
-          },
-          "overrideTarget": {
-            "type": "boolean",
-            "description": "Whether to overwrite the target attribute when it already exists. If omitted, route processing treats this as true."
-          },
-          "subtype": {
-            "type": "string",
-            "description": "Evaluates a mathematical expression and writes the numeric result.",
-            "enum": [
-              "math-formula"
-            ]
-          },
-          "replaceMissingBy0": {
-            "type": "boolean",
-            "description": "Whether missing referenced attributes evaluate as zero. If omitted, route processing treats this as true."
-          }
-        }
-      },
-      "ProcessorParamsCreatorCategory": {
-        "type": "object",
-        "required": [
-          "targetAttribute",
-          "clauses",
-          "subtype"
-        ],
-        "properties": {
-          "targetAttribute": {
-            "type": "string",
-            "description": "Attribute that will receive the category value"
-          },
-          "clauses": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "query",
-                "value"
-              ],
-              "properties": {
-                "query": {
-                  "type": "string",
-                  "description": "Query that selects logs for this category clause. Clauses are evaluated in order."
-                },
-                "value": {
-                  "type": "string",
-                  "description": "String category value assigned when this clause matches."
-                }
-              }
-            },
-            "description": "Conditions evaluated in order to determine the category value. The first matching clause wins."
-          },
-          "defaultValue": {
-            "type": "string",
-            "description": "String category value used when no clause matches. If omitted and no clause matches, no category value is written."
-          },
-          "subtype": {
-            "type": "string",
-            "description": "Assigns the first matching category value from ordered query clauses, with an optional default.",
-            "enum": [
-              "category"
-            ]
-          }
-        }
-      },
-      "InputProcessorParamsCreatorFormatString": {
-        "type": "object",
-        "required": [
-          "targetAttribute",
-          "formatString",
-          "subtype"
-        ],
-        "properties": {
-          "targetAttribute": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 250,
-            "description": "Attribute that will receive the formatted value"
-          },
-          "formatString": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 50000,
-            "description": "Template string used to build the target attribute value"
-          },
-          "overrideTarget": {
-            "type": "boolean",
-            "description": "Set to true to overwrite an existing target attribute value (defaults to true)"
-          },
-          "subtype": {
-            "type": "string",
-            "description": "Builds a string from literal text and existing attribute values.",
-            "enum": [
-              "format-string"
-            ]
-          },
-          "replaceMissingByEmpty": {
-            "type": "boolean",
-            "description": "Set to true for missing referenced attributes to render as empty strings. Defaults to true."
-          }
-        }
-      },
-      "InputProcessorParamsCreatorMathFormula": {
-        "type": "object",
-        "required": [
-          "targetAttribute",
-          "formula",
-          "subtype"
-        ],
-        "properties": {
-          "targetAttribute": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 250,
-            "description": "Attribute that will receive the computed value"
-          },
-          "formula": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 50000,
-            "description": "Mathematical formula evaluated to populate the target attribute"
-          },
-          "overrideTarget": {
-            "type": "boolean",
-            "description": "Set to true to overwrite an existing target attribute value (defaults to true)"
-          },
-          "subtype": {
-            "type": "string",
-            "description": "Evaluates a mathematical expression and writes the numeric result.",
-            "enum": [
-              "math-formula"
-            ]
-          },
-          "replaceMissingBy0": {
-            "type": "boolean",
-            "description": "Set to true for missing referenced attributes to evaluate as zero. Defaults to true."
-          }
-        }
-      },
-      "InputProcessorParamsCreatorCategory": {
-        "type": "object",
-        "required": [
-          "targetAttribute",
-          "clauses",
-          "subtype"
-        ],
-        "properties": {
-          "targetAttribute": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 250,
-            "description": "Attribute that will receive the category value"
-          },
-          "clauses": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "query",
-                "value"
-              ],
-              "properties": {
-                "query": {
-                  "type": "string",
-                  "format": "tsuga-query",
-                  "minLength": 1,
-                  "maxLength": 10000,
-                  "description": "Query that selects logs for this category clause. Clauses are evaluated in order."
-                },
-                "value": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 250,
-                  "description": "String category value assigned when this clause matches."
-                }
-              }
-            },
-            "minItems": 1,
-            "maxItems": 15,
-            "description": "Conditions evaluated in order to determine the category value. The first matching clause wins."
-          },
-          "defaultValue": {
-            "type": "string",
-            "minLength": 0,
-            "maxLength": 250,
-            "description": "String category value used when no clause matches. If omitted and no clause matches, no category value is written."
-          },
-          "subtype": {
-            "type": "string",
-            "description": "Assigns the first matching category value from ordered query clauses, with an optional default.",
-            "enum": [
-              "category"
-            ]
-          }
-        }
-      },
-      "ProcessorParamsMapperMapAttributes": {
-        "type": "object",
-        "required": [
-          "attributes",
-          "subtype"
-        ],
-        "properties": {
-          "attributes": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "originAttribute",
-                "targetAttribute"
-              ],
-              "properties": {
-                "originAttribute": {
-                  "type": "string",
-                  "description": "Attribute name to map to the target attribute"
-                },
-                "keepOrigin": {
-                  "type": "boolean",
-                  "description": "Whether the source attribute is preserved after mapping. If omitted, route processing treats this as false."
-                },
-                "overrideTarget": {
-                  "type": "boolean",
-                  "description": "Whether to overwrite the target attribute when it already exists. If omitted, route processing treats this as true."
-                },
-                "targetAttribute": {
-                  "type": "string",
-                  "description": "Attribute name that will receive the mapped value"
-                }
-              }
-            },
-            "description": "Mappings that map individual attributes to new targets"
-          },
-          "subtype": {
-            "type": "string",
-            "description": "Copies or moves one or more source attributes to target attributes.",
-            "enum": [
-              "map-attributes"
-            ]
-          }
-        }
-      },
-      "ProcessorParamsMapperMapLevel": {
-        "type": "object",
-        "required": [
-          "attributeName",
-          "subtype"
-        ],
-        "properties": {
-          "attributeName": {
-            "type": "string",
-            "description": "Attribute whose value will determine the log level"
-          },
-          "subtype": {
-            "type": "string",
-            "description": "Normalizes a severity or status attribute into Tsuga log levels.",
-            "enum": [
-              "map-level"
-            ]
-          }
-        }
-      },
-      "ProcessorParamsMapperMapTimestamp": {
-        "type": "object",
-        "required": [
-          "attributeName",
-          "subtype"
-        ],
-        "properties": {
-          "attributeName": {
-            "type": "string",
-            "description": "Attribute whose value will determine the log timestamp"
-          },
-          "subtype": {
-            "type": "string",
-            "description": "Uses an event-time attribute as the log timestamp.",
-            "enum": [
-              "map-timestamp"
-            ]
-          }
-        }
-      },
-      "InputProcessorParamsMapperMapAttributes": {
-        "type": "object",
-        "required": [
-          "attributes",
-          "subtype"
-        ],
-        "properties": {
-          "attributes": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "originAttribute",
-                "targetAttribute"
-              ],
-              "properties": {
-                "originAttribute": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 250,
-                  "description": "Attribute name to map to the target attribute"
-                },
-                "keepOrigin": {
-                  "type": "boolean",
-                  "description": "Preserve the source attribute after mapping (defaults to false)"
-                },
-                "overrideTarget": {
-                  "type": "boolean",
-                  "description": "Overwrite the target attribute when it already exists (defaults to true)"
-                },
-                "targetAttribute": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 250,
-                  "description": "Attribute name that will receive the mapped value"
-                }
-              }
-            },
-            "minItems": 1,
-            "maxItems": 50,
-            "description": "Mappings that map individual attributes to new targets"
-          },
-          "subtype": {
-            "type": "string",
-            "description": "Copies or moves one or more source attributes to target attributes.",
-            "enum": [
-              "map-attributes"
-            ]
-          }
-        }
-      },
-      "InputProcessorParamsMapperMapLevel": {
-        "type": "object",
-        "required": [
-          "attributeName",
-          "subtype"
-        ],
-        "properties": {
-          "attributeName": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 250,
-            "description": "Attribute whose value will determine the log level"
-          },
-          "subtype": {
-            "type": "string",
-            "description": "Normalizes a severity or status attribute into Tsuga log levels.",
-            "enum": [
-              "map-level"
-            ]
-          }
-        }
-      },
-      "InputProcessorParamsMapperMapTimestamp": {
-        "type": "object",
-        "required": [
-          "attributeName",
-          "subtype"
-        ],
-        "properties": {
-          "attributeName": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 250,
-            "description": "Attribute whose value will determine the log timestamp"
-          },
-          "subtype": {
-            "type": "string",
-            "description": "Uses an event-time attribute as the log timestamp.",
-            "enum": [
-              "map-timestamp"
-            ]
           }
         }
       },
@@ -34298,6 +33483,876 @@
         },
         "title": "SloOverTime"
       },
+      "InputSilenceScheduleOneTime": {
+        "type": "object",
+        "required": [
+          "type",
+          "startTime",
+          "endTime"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Silence active once between the configured start and end times.",
+            "enum": [
+              "one-time"
+            ]
+          },
+          "startTime": {
+            "type": "string",
+            "format": "simple-date-time",
+            "description": "Local start date and time for the one-time silence, interpreted in `timeZone` when provided."
+          },
+          "endTime": {
+            "type": "string",
+            "format": "simple-date-time",
+            "description": "Local end date and time for the one-time silence. It must be after `startTime` and in the future."
+          },
+          "timeZone": {
+            "type": "string",
+            "format": "iana-timezone",
+            "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
+          }
+        },
+        "description": "One-time silence schedule with specific start and end times"
+      },
+      "InputSilenceScheduleRecurring": {
+        "type": "object",
+        "required": [
+          "type",
+          "weeklySchedule"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Silence active on a recurring weekly schedule.",
+            "enum": [
+              "recurring"
+            ]
+          },
+          "weeklySchedule": {
+            "type": "object",
+            "properties": {
+              "monday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "minItems": 1,
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "tuesday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "minItems": 1,
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "wednesday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "minItems": 1,
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "thursday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "minItems": 1,
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "friday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "minItems": 1,
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "saturday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "minItems": 1,
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "sunday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "minItems": 1,
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              }
+            },
+            "description": "Recurring silence windows keyed by day of week, evaluated in the schedule `timeZone` or in UTC when it is omitted. At least one day must be listed, and a day with no entry is never silenced. Each window covers `startTime` up to but not including `endTime`."
+          },
+          "timeZone": {
+            "type": "string",
+            "format": "iana-timezone",
+            "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
+          }
+        },
+        "description": "Recurring weekly silence schedule"
+      },
+      "OutputSilenceScheduleOneTime": {
+        "type": "object",
+        "required": [
+          "type",
+          "startTime",
+          "endTime"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Silence active once between the configured start and end times.",
+            "enum": [
+              "one-time"
+            ]
+          },
+          "startTime": {
+            "type": "string",
+            "description": "Local start date and time for the one-time silence, interpreted in `timeZone` when provided."
+          },
+          "endTime": {
+            "type": "string",
+            "description": "Local end date and time for the one-time silence. It must be after `startTime` and in the future when created or updated."
+          },
+          "timeZone": {
+            "type": "string",
+            "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
+          }
+        },
+        "description": "One-time silence schedule with specific start and end times"
+      },
+      "OutputSilenceScheduleRecurring": {
+        "type": "object",
+        "required": [
+          "type",
+          "weeklySchedule"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Silence active on a recurring weekly schedule.",
+            "enum": [
+              "recurring"
+            ]
+          },
+          "weeklySchedule": {
+            "type": "object",
+            "properties": {
+              "monday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "tuesday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "wednesday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "thursday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "friday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "saturday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "sunday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              }
+            },
+            "description": "Recurring silence windows keyed by day of week, evaluated in the schedule `timeZone` or in UTC when it is omitted. A day with no entry is never silenced. Each window covers `startTime` up to but not including `endTime`."
+          },
+          "timeZone": {
+            "type": "string",
+            "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
+          }
+        },
+        "description": "Recurring weekly silence schedule"
+      },
+      "ProcessorParamsCreatorFormatString": {
+        "type": "object",
+        "required": [
+          "targetAttribute",
+          "formatString",
+          "subtype"
+        ],
+        "properties": {
+          "targetAttribute": {
+            "type": "string",
+            "description": "Attribute that will receive the formatted value"
+          },
+          "formatString": {
+            "type": "string",
+            "description": "Template string used to build the target attribute value"
+          },
+          "overrideTarget": {
+            "type": "boolean",
+            "description": "Whether to overwrite the target attribute when it already exists. If omitted, route processing treats this as true."
+          },
+          "subtype": {
+            "type": "string",
+            "description": "Builds a string from literal text and existing attribute values.",
+            "enum": [
+              "format-string"
+            ]
+          },
+          "replaceMissingByEmpty": {
+            "type": "boolean",
+            "description": "Whether missing referenced attributes render as empty strings. If omitted, route processing treats this as true."
+          }
+        }
+      },
+      "ProcessorParamsCreatorMathFormula": {
+        "type": "object",
+        "required": [
+          "targetAttribute",
+          "formula",
+          "subtype"
+        ],
+        "properties": {
+          "targetAttribute": {
+            "type": "string",
+            "description": "Attribute that will receive the computed value"
+          },
+          "formula": {
+            "type": "string",
+            "description": "Mathematical formula evaluated to populate the target attribute"
+          },
+          "overrideTarget": {
+            "type": "boolean",
+            "description": "Whether to overwrite the target attribute when it already exists. If omitted, route processing treats this as true."
+          },
+          "subtype": {
+            "type": "string",
+            "description": "Evaluates a mathematical expression and writes the numeric result.",
+            "enum": [
+              "math-formula"
+            ]
+          },
+          "replaceMissingBy0": {
+            "type": "boolean",
+            "description": "Whether missing referenced attributes evaluate as zero. If omitted, route processing treats this as true."
+          }
+        }
+      },
+      "ProcessorParamsCreatorCategory": {
+        "type": "object",
+        "required": [
+          "targetAttribute",
+          "clauses",
+          "subtype"
+        ],
+        "properties": {
+          "targetAttribute": {
+            "type": "string",
+            "description": "Attribute that will receive the category value"
+          },
+          "clauses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "query",
+                "value"
+              ],
+              "properties": {
+                "query": {
+                  "type": "string",
+                  "description": "Query that selects logs for this category clause. Clauses are evaluated in order."
+                },
+                "value": {
+                  "type": "string",
+                  "description": "String category value assigned when this clause matches."
+                }
+              }
+            },
+            "description": "Conditions evaluated in order to determine the category value. The first matching clause wins."
+          },
+          "defaultValue": {
+            "type": "string",
+            "description": "String category value used when no clause matches. If omitted and no clause matches, no category value is written."
+          },
+          "subtype": {
+            "type": "string",
+            "description": "Assigns the first matching category value from ordered query clauses, with an optional default.",
+            "enum": [
+              "category"
+            ]
+          }
+        }
+      },
+      "InputProcessorParamsCreatorFormatString": {
+        "type": "object",
+        "required": [
+          "targetAttribute",
+          "formatString",
+          "subtype"
+        ],
+        "properties": {
+          "targetAttribute": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250,
+            "description": "Attribute that will receive the formatted value"
+          },
+          "formatString": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50000,
+            "description": "Template string used to build the target attribute value"
+          },
+          "overrideTarget": {
+            "type": "boolean",
+            "description": "Set to true to overwrite an existing target attribute value (defaults to true)"
+          },
+          "subtype": {
+            "type": "string",
+            "description": "Builds a string from literal text and existing attribute values.",
+            "enum": [
+              "format-string"
+            ]
+          },
+          "replaceMissingByEmpty": {
+            "type": "boolean",
+            "description": "Set to true for missing referenced attributes to render as empty strings. Defaults to true."
+          }
+        }
+      },
+      "InputProcessorParamsCreatorMathFormula": {
+        "type": "object",
+        "required": [
+          "targetAttribute",
+          "formula",
+          "subtype"
+        ],
+        "properties": {
+          "targetAttribute": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250,
+            "description": "Attribute that will receive the computed value"
+          },
+          "formula": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50000,
+            "description": "Mathematical formula evaluated to populate the target attribute"
+          },
+          "overrideTarget": {
+            "type": "boolean",
+            "description": "Set to true to overwrite an existing target attribute value (defaults to true)"
+          },
+          "subtype": {
+            "type": "string",
+            "description": "Evaluates a mathematical expression and writes the numeric result.",
+            "enum": [
+              "math-formula"
+            ]
+          },
+          "replaceMissingBy0": {
+            "type": "boolean",
+            "description": "Set to true for missing referenced attributes to evaluate as zero. Defaults to true."
+          }
+        }
+      },
+      "InputProcessorParamsCreatorCategory": {
+        "type": "object",
+        "required": [
+          "targetAttribute",
+          "clauses",
+          "subtype"
+        ],
+        "properties": {
+          "targetAttribute": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250,
+            "description": "Attribute that will receive the category value"
+          },
+          "clauses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "query",
+                "value"
+              ],
+              "properties": {
+                "query": {
+                  "type": "string",
+                  "format": "tsuga-query",
+                  "minLength": 1,
+                  "maxLength": 10000,
+                  "description": "Query that selects logs for this category clause. Clauses are evaluated in order."
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 250,
+                  "description": "String category value assigned when this clause matches."
+                }
+              }
+            },
+            "minItems": 1,
+            "maxItems": 15,
+            "description": "Conditions evaluated in order to determine the category value. The first matching clause wins."
+          },
+          "defaultValue": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 250,
+            "description": "String category value used when no clause matches. If omitted and no clause matches, no category value is written."
+          },
+          "subtype": {
+            "type": "string",
+            "description": "Assigns the first matching category value from ordered query clauses, with an optional default.",
+            "enum": [
+              "category"
+            ]
+          }
+        }
+      },
+      "ProcessorParamsMapperMapAttributes": {
+        "type": "object",
+        "required": [
+          "attributes",
+          "subtype"
+        ],
+        "properties": {
+          "attributes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "originAttribute",
+                "targetAttribute"
+              ],
+              "properties": {
+                "originAttribute": {
+                  "type": "string",
+                  "description": "Attribute name to map to the target attribute"
+                },
+                "keepOrigin": {
+                  "type": "boolean",
+                  "description": "Whether the source attribute is preserved after mapping. If omitted, route processing treats this as false."
+                },
+                "overrideTarget": {
+                  "type": "boolean",
+                  "description": "Whether to overwrite the target attribute when it already exists. If omitted, route processing treats this as true."
+                },
+                "targetAttribute": {
+                  "type": "string",
+                  "description": "Attribute name that will receive the mapped value"
+                }
+              }
+            },
+            "description": "Mappings that map individual attributes to new targets"
+          },
+          "subtype": {
+            "type": "string",
+            "description": "Copies or moves one or more source attributes to target attributes.",
+            "enum": [
+              "map-attributes"
+            ]
+          }
+        }
+      },
+      "ProcessorParamsMapperMapLevel": {
+        "type": "object",
+        "required": [
+          "attributeName",
+          "subtype"
+        ],
+        "properties": {
+          "attributeName": {
+            "type": "string",
+            "description": "Attribute whose value will determine the log level"
+          },
+          "subtype": {
+            "type": "string",
+            "description": "Normalizes a severity or status attribute into Tsuga log levels.",
+            "enum": [
+              "map-level"
+            ]
+          }
+        }
+      },
+      "ProcessorParamsMapperMapTimestamp": {
+        "type": "object",
+        "required": [
+          "attributeName",
+          "subtype"
+        ],
+        "properties": {
+          "attributeName": {
+            "type": "string",
+            "description": "Attribute whose value will determine the log timestamp"
+          },
+          "subtype": {
+            "type": "string",
+            "description": "Uses an event-time attribute as the log timestamp.",
+            "enum": [
+              "map-timestamp"
+            ]
+          }
+        }
+      },
+      "InputProcessorParamsMapperMapAttributes": {
+        "type": "object",
+        "required": [
+          "attributes",
+          "subtype"
+        ],
+        "properties": {
+          "attributes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "originAttribute",
+                "targetAttribute"
+              ],
+              "properties": {
+                "originAttribute": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 250,
+                  "description": "Attribute name to map to the target attribute"
+                },
+                "keepOrigin": {
+                  "type": "boolean",
+                  "description": "Preserve the source attribute after mapping (defaults to false)"
+                },
+                "overrideTarget": {
+                  "type": "boolean",
+                  "description": "Overwrite the target attribute when it already exists (defaults to true)"
+                },
+                "targetAttribute": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 250,
+                  "description": "Attribute name that will receive the mapped value"
+                }
+              }
+            },
+            "minItems": 1,
+            "maxItems": 50,
+            "description": "Mappings that map individual attributes to new targets"
+          },
+          "subtype": {
+            "type": "string",
+            "description": "Copies or moves one or more source attributes to target attributes.",
+            "enum": [
+              "map-attributes"
+            ]
+          }
+        }
+      },
+      "InputProcessorParamsMapperMapLevel": {
+        "type": "object",
+        "required": [
+          "attributeName",
+          "subtype"
+        ],
+        "properties": {
+          "attributeName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250,
+            "description": "Attribute whose value will determine the log level"
+          },
+          "subtype": {
+            "type": "string",
+            "description": "Normalizes a severity or status attribute into Tsuga log levels.",
+            "enum": [
+              "map-level"
+            ]
+          }
+        }
+      },
+      "InputProcessorParamsMapperMapTimestamp": {
+        "type": "object",
+        "required": [
+          "attributeName",
+          "subtype"
+        ],
+        "properties": {
+          "attributeName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250,
+            "description": "Attribute whose value will determine the log timestamp"
+          },
+          "subtype": {
+            "type": "string",
+            "description": "Uses an event-time attribute as the log timestamp.",
+            "enum": [
+              "map-timestamp"
+            ]
+          }
+        }
+      },
       "ObservedServiceGraphNode": {
         "type": "object",
         "required": [
@@ -34581,6 +34636,10 @@
               "dashboardId": {
                 "type": "string",
                 "description": "ID of the dashboard linked to this monitor for context when investigating alerts. Caller-supplied. Omitted when no dashboard is linked."
+              },
+              "pauseUntil": {
+                "description": "Timestamp until which the monitor is snoozed. Omitted when the monitor is not snoozed.",
+                "type": "string"
               },
               "clusterIds": {
                 "type": "array",
@@ -35447,6 +35506,57 @@
                           }
                         },
                         "description": "Threshold comparison applied to each time-SLO evaluation slice"
+                      },
+                      "normalizer": {
+                        "title": "Normalizer",
+                        "description": "Display-value formatter for widget values or list/table columns.",
+                        "type": "object",
+                        "discriminator": {
+                          "propertyName": "type",
+                          "mapping": {
+                            "duration": "#/components/schemas/DataNormalizerDuration",
+                            "data": "#/components/schemas/DataNormalizerData",
+                            "percent": "#/components/schemas/DataNormalizerPercent",
+                            "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                            "date": "#/components/schemas/DataNormalizerDate",
+                            "level": "#/components/schemas/DataNormalizerLevel",
+                            "cpu": "#/components/schemas/DataNormalizerCpu",
+                            "none": "#/components/schemas/DataNormalizerNone",
+                            "custom": "#/components/schemas/DataNormalizerCustom"
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "oneOf": [
+                          {
+                            "$ref": "#/components/schemas/DataNormalizerDuration"
+                          },
+                          {
+                            "$ref": "#/components/schemas/DataNormalizerData"
+                          },
+                          {
+                            "$ref": "#/components/schemas/DataNormalizerPercent"
+                          },
+                          {
+                            "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+                          },
+                          {
+                            "$ref": "#/components/schemas/DataNormalizerDate"
+                          },
+                          {
+                            "$ref": "#/components/schemas/DataNormalizerLevel"
+                          },
+                          {
+                            "$ref": "#/components/schemas/DataNormalizerCpu"
+                          },
+                          {
+                            "$ref": "#/components/schemas/DataNormalizerNone"
+                          },
+                          {
+                            "$ref": "#/components/schemas/DataNormalizerCustom"
+                          }
+                        ]
                       },
                       "groupByFields": {
                         "type": "array",
@@ -46654,7 +46764,7 @@
         "tags": [
           "monitors"
         ],
-        "description": "Updates an existing monitor definition by ID. Required fields and the submitted configuration are overwritten; omitted `message`, `tags`, and `clusterIds` keep their existing values. Omitting `dashboardId` clears the dashboard link, and public updates clear any existing snooze because `pauseUntil` is not part of the public schema.",
+        "description": "Updates an existing monitor definition by ID. Required fields and the submitted configuration are overwritten; omitted `message`, `tags`, `clusterIds`, and `pauseUntil` keep their existing values. Omitting `dashboardId` clears the dashboard link.",
         "requestBody": {
           "required": true,
           "content": {
@@ -46794,6 +46904,18 @@
                     ],
                     "description": "ID of the dashboard to link to this monitor for context when investigating alerts. On create: omit or send `null` to leave the monitor unlinked. On update: omit to skip updating this field, send `null` to clear an existing link."
                   },
+                  "pauseUntil": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    ],
+                    "description": "ISO timestamp until which the monitor is snoozed. Must be in the future and at most one month from now. On create: omit or send `null` to leave the monitor active. On update: omit to keep the current snooze, send `null` to clear it."
+                  },
                   "permissions": {
                     "enum": [
                       "all",
@@ -46812,7 +46934,7 @@
                     "description": "Cluster IDs where the monitor should be deployed. Empty or omitted means all eligible clusters for cluster-deployed monitor types."
                   }
                 },
-                "description": "Monitor update request. Required fields and the submitted configuration are overwritten; omitted `message`, `tags`, and `clusterIds` keep their existing values. Omitting `dashboardId` clears the dashboard link."
+                "description": "Monitor update request. Required fields and the submitted configuration are overwritten; omitted `message`, `tags`, `clusterIds`, and `pauseUntil` keep their existing values. Omitting `dashboardId` clears the dashboard link."
               },
               "examples": {
                 "example1": {
@@ -46993,7 +47115,7 @@
               }
             }
           },
-          "description": "Monitor update request. Required fields and the submitted configuration are overwritten; omitted `message`, `tags`, and `clusterIds` keep their existing values. Omitting `dashboardId` clears the dashboard link."
+          "description": "Monitor update request. Required fields and the submitted configuration are overwritten; omitted `message`, `tags`, `clusterIds`, and `pauseUntil` keep their existing values. Omitting `dashboardId` clears the dashboard link."
         },
         "parameters": [
           {
@@ -47287,6 +47409,18 @@
                       }
                     ],
                     "description": "ID of the dashboard to link to this monitor for context when investigating alerts. On create: omit or send `null` to leave the monitor unlinked. On update: omit to skip updating this field, send `null` to clear an existing link."
+                  },
+                  "pauseUntil": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    ],
+                    "description": "ISO timestamp until which the monitor is snoozed. Must be in the future and at most one month from now. On create: omit or send `null` to leave the monitor active. On update: omit to keep the current snooze, send `null` to clear it."
                   },
                   "permissions": {
                     "enum": [
@@ -54807,6 +54941,57 @@
                             },
                             "description": "Threshold comparison applied to each time-SLO evaluation slice"
                           },
+                          "normalizer": {
+                            "title": "Normalizer",
+                            "description": "Display-value formatter for widget values or list/table columns.",
+                            "type": "object",
+                            "discriminator": {
+                              "propertyName": "type",
+                              "mapping": {
+                                "duration": "#/components/schemas/DataNormalizerDuration",
+                                "data": "#/components/schemas/DataNormalizerData",
+                                "percent": "#/components/schemas/DataNormalizerPercent",
+                                "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                                "date": "#/components/schemas/DataNormalizerDate",
+                                "level": "#/components/schemas/DataNormalizerLevel",
+                                "cpu": "#/components/schemas/DataNormalizerCpu",
+                                "none": "#/components/schemas/DataNormalizerNone",
+                                "custom": "#/components/schemas/InputDataNormalizerCustom"
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ],
+                            "oneOf": [
+                              {
+                                "$ref": "#/components/schemas/DataNormalizerDuration"
+                              },
+                              {
+                                "$ref": "#/components/schemas/DataNormalizerData"
+                              },
+                              {
+                                "$ref": "#/components/schemas/DataNormalizerPercent"
+                              },
+                              {
+                                "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+                              },
+                              {
+                                "$ref": "#/components/schemas/DataNormalizerDate"
+                              },
+                              {
+                                "$ref": "#/components/schemas/DataNormalizerLevel"
+                              },
+                              {
+                                "$ref": "#/components/schemas/DataNormalizerCpu"
+                              },
+                              {
+                                "$ref": "#/components/schemas/DataNormalizerNone"
+                              },
+                              {
+                                "$ref": "#/components/schemas/InputDataNormalizerCustom"
+                              }
+                            ]
+                          },
                           "groupByFields": {
                             "type": "array",
                             "items": {
@@ -55923,6 +56108,57 @@
                               }
                             },
                             "description": "Threshold comparison applied to each time-SLO evaluation slice"
+                          },
+                          "normalizer": {
+                            "title": "Normalizer",
+                            "description": "Display-value formatter for widget values or list/table columns.",
+                            "type": "object",
+                            "discriminator": {
+                              "propertyName": "type",
+                              "mapping": {
+                                "duration": "#/components/schemas/DataNormalizerDuration",
+                                "data": "#/components/schemas/DataNormalizerData",
+                                "percent": "#/components/schemas/DataNormalizerPercent",
+                                "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                                "date": "#/components/schemas/DataNormalizerDate",
+                                "level": "#/components/schemas/DataNormalizerLevel",
+                                "cpu": "#/components/schemas/DataNormalizerCpu",
+                                "none": "#/components/schemas/DataNormalizerNone",
+                                "custom": "#/components/schemas/InputDataNormalizerCustom"
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ],
+                            "oneOf": [
+                              {
+                                "$ref": "#/components/schemas/DataNormalizerDuration"
+                              },
+                              {
+                                "$ref": "#/components/schemas/DataNormalizerData"
+                              },
+                              {
+                                "$ref": "#/components/schemas/DataNormalizerPercent"
+                              },
+                              {
+                                "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+                              },
+                              {
+                                "$ref": "#/components/schemas/DataNormalizerDate"
+                              },
+                              {
+                                "$ref": "#/components/schemas/DataNormalizerLevel"
+                              },
+                              {
+                                "$ref": "#/components/schemas/DataNormalizerCpu"
+                              },
+                              {
+                                "$ref": "#/components/schemas/DataNormalizerNone"
+                              },
+                              {
+                                "$ref": "#/components/schemas/InputDataNormalizerCustom"
+                              }
+                            ]
                           },
                           "groupByFields": {
                             "type": "array",
