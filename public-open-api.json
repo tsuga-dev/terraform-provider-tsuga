@@ -943,6 +943,7 @@
               "CLUSTER_DB_QUERY_QUERY_EXECUTION_FAILED",
               "CLUSTER_DB_QUERY_QUERY_TIMEOUT",
               "CLUSTER_DB_QUERY_CONNECTION_TIMEOUT",
+              "CLUSTER_DB_QUERY_CONNECTION_POOL_TIMEOUT",
               "CLUSTER_AGGREGATION_STRUCTURE",
               "ABORT_ERROR",
               "BAD_REQUEST",
@@ -4134,6 +4135,12 @@
                             },
                             "startedAt": {
                               "type": "string"
+                            },
+                            "protectionEnabled": {
+                              "type": "boolean"
+                            },
+                            "protectionExpiresAt": {
+                              "type": "string"
                             }
                           }
                         }
@@ -5438,6 +5445,12 @@
                         "type": "string"
                       },
                       "startedAt": {
+                        "type": "string"
+                      },
+                      "protectionEnabled": {
+                        "type": "boolean"
+                      },
+                      "protectionExpiresAt": {
                         "type": "string"
                       }
                     }
@@ -10852,7 +10865,6 @@
       "Service": {
         "type": "object",
         "required": [
-          "id",
           "serviceName",
           "env",
           "teams",
@@ -10863,9 +10875,7 @@
           "clientProtocols",
           "frameworks",
           "cloudPlatforms",
-          "cloudProviders",
-          "lastSeenAt",
-          "firstSeenAt"
+          "cloudProviders"
         ],
         "properties": {
           "id": {
@@ -10889,22 +10899,17 @@
             "items": {
               "type": "object",
               "required": [
-                "team",
-                "lastSeenAt"
+                "team"
               ],
               "properties": {
                 "team": {
                   "type": "string",
                   "description": "Team name observed on telemetry for this service. The emitting service sets it through telemetry attributes. Returned when Tsuga has observed a team value for the service; metadata refreshes weekly or when a new service version appears."
-                },
-                "lastSeenAt": {
-                  "description": "Most recent time this team was observed for the service. Tsuga sets it from telemetry timestamps during service metadata refreshes.",
-                  "type": "string"
                 }
               },
-              "description": "A team name observed on telemetry for this service, with the last time it was seen."
+              "description": "A team name observed on telemetry for this service."
             },
-            "description": "Team names observed on telemetry for this service and when each was last seen."
+            "description": "Team names observed on telemetry for this service."
           },
           "versions": {
             "type": "array",
@@ -11124,8 +11129,7 @@
           "env": "production",
           "teams": [
             {
-              "team": "platform",
-              "lastSeenAt": "2024-01-15T12:34:56.000Z"
+              "team": "platform"
             }
           ],
           "versions": [
@@ -20775,6 +20779,453 @@
           }
         }
       },
+      "InputSilenceScheduleOneTime": {
+        "type": "object",
+        "required": [
+          "type",
+          "startTime",
+          "endTime"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Silence active once between the configured start and end times.",
+            "enum": [
+              "one-time"
+            ]
+          },
+          "startTime": {
+            "type": "string",
+            "format": "simple-date-time",
+            "description": "Local start date and time for the one-time silence, interpreted in `timeZone` when provided."
+          },
+          "endTime": {
+            "type": "string",
+            "format": "simple-date-time",
+            "description": "Local end date and time for the one-time silence. It must be after `startTime` and in the future."
+          },
+          "timeZone": {
+            "type": "string",
+            "format": "iana-timezone",
+            "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
+          }
+        },
+        "description": "One-time silence schedule with specific start and end times"
+      },
+      "InputSilenceScheduleRecurring": {
+        "type": "object",
+        "required": [
+          "type",
+          "weeklySchedule"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Silence active on a recurring weekly schedule.",
+            "enum": [
+              "recurring"
+            ]
+          },
+          "weeklySchedule": {
+            "type": "object",
+            "properties": {
+              "monday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "minItems": 1,
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "tuesday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "minItems": 1,
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "wednesday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "minItems": 1,
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "thursday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "minItems": 1,
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "friday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "minItems": 1,
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "saturday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "minItems": 1,
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "sunday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "format": "simple-time",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "minItems": 1,
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              }
+            },
+            "description": "Recurring silence windows keyed by day of week, evaluated in the schedule `timeZone` or in UTC when it is omitted. At least one day must be listed, and a day with no entry is never silenced. Each window covers `startTime` up to but not including `endTime`."
+          },
+          "timeZone": {
+            "type": "string",
+            "format": "iana-timezone",
+            "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
+          }
+        },
+        "description": "Recurring weekly silence schedule"
+      },
+      "OutputSilenceScheduleOneTime": {
+        "type": "object",
+        "required": [
+          "type",
+          "startTime",
+          "endTime"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Silence active once between the configured start and end times.",
+            "enum": [
+              "one-time"
+            ]
+          },
+          "startTime": {
+            "type": "string",
+            "description": "Local start date and time for the one-time silence, interpreted in `timeZone` when provided."
+          },
+          "endTime": {
+            "type": "string",
+            "description": "Local end date and time for the one-time silence. It must be after `startTime` and in the future when created or updated."
+          },
+          "timeZone": {
+            "type": "string",
+            "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
+          }
+        },
+        "description": "One-time silence schedule with specific start and end times"
+      },
+      "OutputSilenceScheduleRecurring": {
+        "type": "object",
+        "required": [
+          "type",
+          "weeklySchedule"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Silence active on a recurring weekly schedule.",
+            "enum": [
+              "recurring"
+            ]
+          },
+          "weeklySchedule": {
+            "type": "object",
+            "properties": {
+              "monday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "tuesday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "wednesday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "thursday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "friday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "saturday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              },
+              "sunday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "startTime",
+                    "endTime"
+                  ],
+                  "properties": {
+                    "startTime": {
+                      "type": "string",
+                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                    },
+                    "endTime": {
+                      "type": "string",
+                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
+                    }
+                  },
+                  "title": "SilenceTimeRange"
+                },
+                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
+              }
+            },
+            "description": "Recurring silence windows keyed by day of week, evaluated in the schedule `timeZone` or in UTC when it is omitted. A day with no entry is never silenced. Each window covers `startTime` up to but not including `endTime`."
+          },
+          "timeZone": {
+            "type": "string",
+            "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
+          }
+        },
+        "description": "Recurring weekly silence schedule"
+      },
       "DataNormalizerDuration": {
         "type": "object",
         "required": [
@@ -23862,6 +24313,14 @@
             "type": "boolean",
             "description": "Requests stacked rendering for a top-list widget. Tsuga renders stacked rows only for one count or sum query with exactly two grouped fields, no formula, non-negative values, and a single-cluster context; otherwise the widget renders as a normal top list."
           },
+          "legendMode": {
+            "enum": [
+              "table",
+              "legend-only",
+              "no-legend"
+            ],
+            "description": "Controls whether and how the widget displays legend or series details (e.g. table, legend-only, or no legend)"
+          },
           "customLink": {
             "type": "object",
             "required": [
@@ -26160,6 +26619,164 @@
               "orange"
             ],
             "description": "Color palette used to render the heatmap intensity gradient"
+          },
+          "yAxisSettings": {
+            "type": "object",
+            "required": [
+              "min",
+              "max",
+              "scale",
+              "alwaysIncludeZero"
+            ],
+            "properties": {
+              "min": {
+                "description": "Axis bound mode: automatic or fixed numeric value",
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Automatically choose this axis bound",
+                        "enum": [
+                          "auto"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "value"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Use a fixed numeric axis bound",
+                        "enum": [
+                          "number"
+                        ]
+                      },
+                      "value": {
+                        "type": "number",
+                        "description": "Fixed numeric axis bound value"
+                      }
+                    }
+                  }
+                ]
+              },
+              "max": {
+                "description": "Axis bound mode: automatic or fixed numeric value",
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Automatically choose this axis bound",
+                        "enum": [
+                          "auto"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "value"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Use a fixed numeric axis bound",
+                        "enum": [
+                          "number"
+                        ]
+                      },
+                      "value": {
+                        "type": "number",
+                        "description": "Fixed numeric axis bound value"
+                      }
+                    }
+                  }
+                ]
+              },
+              "scale": {
+                "description": "Y-axis scale mode",
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "exponent"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Power scale",
+                        "enum": [
+                          "pow"
+                        ]
+                      },
+                      "exponent": {
+                        "type": "number",
+                        "description": "Exponent used by the power scale"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "linear",
+                          "log",
+                          "sqrt"
+                        ],
+                        "description": "Built-in axis scale"
+                      }
+                    }
+                  }
+                ]
+              },
+              "alwaysIncludeZero": {
+                "type": "boolean",
+                "description": "Whether the rendered Y axis should always include zero"
+              }
+            },
+            "description": "Y-axis bounds and scale configuration for chart widgets."
           }
         },
         "title": "Heatmap"
@@ -30094,6 +30711,14 @@
             "type": "boolean",
             "description": "Requests stacked rendering for a top-list widget. Tsuga renders stacked rows only for one count or sum query with exactly two grouped fields, no formula, non-negative values, and a single-cluster context; otherwise the widget renders as a normal top list."
           },
+          "legendMode": {
+            "enum": [
+              "table",
+              "legend-only",
+              "no-legend"
+            ],
+            "description": "Controls whether and how the widget displays legend or series details (e.g. table, legend-only, or no legend)"
+          },
           "customLink": {
             "type": "object",
             "required": [
@@ -32531,6 +33156,165 @@
               "orange"
             ],
             "description": "Color palette used to render the heatmap intensity gradient"
+          },
+          "yAxisSettings": {
+            "type": "object",
+            "required": [
+              "min",
+              "max",
+              "scale",
+              "alwaysIncludeZero"
+            ],
+            "properties": {
+              "min": {
+                "description": "Axis bound mode: automatic or fixed numeric value",
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Automatically choose this axis bound",
+                        "enum": [
+                          "auto"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "value"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Use a fixed numeric axis bound",
+                        "enum": [
+                          "number"
+                        ]
+                      },
+                      "value": {
+                        "type": "number",
+                        "description": "Fixed numeric axis bound value"
+                      }
+                    }
+                  }
+                ]
+              },
+              "max": {
+                "description": "Axis bound mode: automatic or fixed numeric value",
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Automatically choose this axis bound",
+                        "enum": [
+                          "auto"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "value"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Use a fixed numeric axis bound",
+                        "enum": [
+                          "number"
+                        ]
+                      },
+                      "value": {
+                        "type": "number",
+                        "description": "Fixed numeric axis bound value"
+                      }
+                    }
+                  }
+                ]
+              },
+              "scale": {
+                "description": "Y-axis scale mode",
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "exponent"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Power scale",
+                        "enum": [
+                          "pow"
+                        ]
+                      },
+                      "exponent": {
+                        "type": "number",
+                        "minimum": 0,
+                        "description": "Exponent used by the power scale"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "linear",
+                          "log",
+                          "sqrt"
+                        ],
+                        "description": "Built-in axis scale"
+                      }
+                    }
+                  }
+                ]
+              },
+              "alwaysIncludeZero": {
+                "type": "boolean",
+                "description": "Whether the rendered Y axis should always include zero"
+              }
+            },
+            "description": "Y-axis bounds and scale configuration for chart widgets. Optional on create or update."
           }
         },
         "title": "Heatmap"
@@ -33482,453 +34266,6 @@
           }
         },
         "title": "SloOverTime"
-      },
-      "InputSilenceScheduleOneTime": {
-        "type": "object",
-        "required": [
-          "type",
-          "startTime",
-          "endTime"
-        ],
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "Silence active once between the configured start and end times.",
-            "enum": [
-              "one-time"
-            ]
-          },
-          "startTime": {
-            "type": "string",
-            "format": "simple-date-time",
-            "description": "Local start date and time for the one-time silence, interpreted in `timeZone` when provided."
-          },
-          "endTime": {
-            "type": "string",
-            "format": "simple-date-time",
-            "description": "Local end date and time for the one-time silence. It must be after `startTime` and in the future."
-          },
-          "timeZone": {
-            "type": "string",
-            "format": "iana-timezone",
-            "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
-          }
-        },
-        "description": "One-time silence schedule with specific start and end times"
-      },
-      "InputSilenceScheduleRecurring": {
-        "type": "object",
-        "required": [
-          "type",
-          "weeklySchedule"
-        ],
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "Silence active on a recurring weekly schedule.",
-            "enum": [
-              "recurring"
-            ]
-          },
-          "weeklySchedule": {
-            "type": "object",
-            "properties": {
-              "monday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "minItems": 1,
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "tuesday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "minItems": 1,
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "wednesday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "minItems": 1,
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "thursday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "minItems": 1,
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "friday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "minItems": 1,
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "saturday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "minItems": 1,
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "sunday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "format": "simple-time",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "minItems": 1,
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              }
-            },
-            "description": "Recurring silence windows keyed by day of week, evaluated in the schedule `timeZone` or in UTC when it is omitted. At least one day must be listed, and a day with no entry is never silenced. Each window covers `startTime` up to but not including `endTime`."
-          },
-          "timeZone": {
-            "type": "string",
-            "format": "iana-timezone",
-            "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
-          }
-        },
-        "description": "Recurring weekly silence schedule"
-      },
-      "OutputSilenceScheduleOneTime": {
-        "type": "object",
-        "required": [
-          "type",
-          "startTime",
-          "endTime"
-        ],
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "Silence active once between the configured start and end times.",
-            "enum": [
-              "one-time"
-            ]
-          },
-          "startTime": {
-            "type": "string",
-            "description": "Local start date and time for the one-time silence, interpreted in `timeZone` when provided."
-          },
-          "endTime": {
-            "type": "string",
-            "description": "Local end date and time for the one-time silence. It must be after `startTime` and in the future when created or updated."
-          },
-          "timeZone": {
-            "type": "string",
-            "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
-          }
-        },
-        "description": "One-time silence schedule with specific start and end times"
-      },
-      "OutputSilenceScheduleRecurring": {
-        "type": "object",
-        "required": [
-          "type",
-          "weeklySchedule"
-        ],
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "Silence active on a recurring weekly schedule.",
-            "enum": [
-              "recurring"
-            ]
-          },
-          "weeklySchedule": {
-            "type": "object",
-            "properties": {
-              "monday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "tuesday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "wednesday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "thursday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "friday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "saturday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              },
-              "sunday": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "startTime",
-                    "endTime"
-                  ],
-                  "properties": {
-                    "startTime": {
-                      "type": "string",
-                      "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
-                    },
-                    "endTime": {
-                      "type": "string",
-                      "description": "Local end time for this recurring silence window on this day. It must be after `startTime`, and ranges on the same day cannot overlap."
-                    }
-                  },
-                  "title": "SilenceTimeRange"
-                },
-                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap."
-              }
-            },
-            "description": "Recurring silence windows keyed by day of week, evaluated in the schedule `timeZone` or in UTC when it is omitted. A day with no entry is never silenced. Each window covers `startTime` up to but not including `endTime`."
-          },
-          "timeZone": {
-            "type": "string",
-            "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
-          }
-        },
-        "description": "Recurring weekly silence schedule"
       },
       "ProcessorParamsCreatorFormatString": {
         "type": "object",
@@ -48899,9 +49236,9 @@
                           "url": {
                             "type": "string",
                             "format": "uri",
-                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "pattern": "^https://[^/?#@]*([/?#]|$)",
                             "errorMessage": {
-                              "pattern": "The URL must not contain credentials (user:password@)."
+                              "pattern": "Must be an HTTPS URL without credentials (user:password@)."
                             }
                           }
                         }
@@ -48942,9 +49279,9 @@
                           "webhookUrl": {
                             "type": "string",
                             "format": "uri",
-                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "pattern": "^https://[^/?#@]*([/?#]|$)",
                             "errorMessage": {
-                              "pattern": "The URL must not contain credentials (user:password@)."
+                              "pattern": "Must be an HTTPS URL without credentials (user:password@)."
                             }
                           }
                         }
@@ -48969,9 +49306,9 @@
                           "url": {
                             "type": "string",
                             "format": "uri",
-                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "pattern": "^https://[^/?#@]*([/?#]|$)",
                             "errorMessage": {
-                              "pattern": "The URL must not contain credentials (user:password@)."
+                              "pattern": "Must be an HTTPS URL without credentials (user:password@)."
                             }
                           },
                           "method": {
@@ -49235,9 +49572,9 @@
                           "webhookUrl": {
                             "type": "string",
                             "format": "uri",
-                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "pattern": "^https://[^/?#@]*([/?#]|$)",
                             "errorMessage": {
-                              "pattern": "The URL must not contain credentials (user:password@)."
+                              "pattern": "Must be an HTTPS URL without credentials (user:password@)."
                             }
                           }
                         }
@@ -49258,9 +49595,9 @@
                           "webhookUrl": {
                             "type": "string",
                             "format": "uri",
-                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "pattern": "^https://[^/?#@]*([/?#]|$)",
                             "errorMessage": {
-                              "pattern": "The URL must not contain credentials (user:password@)."
+                              "pattern": "Must be an HTTPS URL without credentials (user:password@)."
                             }
                           }
                         }
@@ -49283,9 +49620,9 @@
                           "siteUrl": {
                             "type": "string",
                             "format": "uri",
-                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "pattern": "^https://[^/?#@]*([/?#]|$)",
                             "errorMessage": {
-                              "pattern": "The URL must not contain credentials (user:password@)."
+                              "pattern": "Must be an HTTPS URL without credentials (user:password@)."
                             },
                             "description": "Base URL of the Jira Cloud site, like \"https://your-company.atlassian.net\". Tsuga files issues against this site."
                           },
@@ -49597,9 +49934,9 @@
                           "url": {
                             "type": "string",
                             "format": "uri",
-                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "pattern": "^https://[^/?#@]*([/?#]|$)",
                             "errorMessage": {
-                              "pattern": "The URL must not contain credentials (user:password@)."
+                              "pattern": "Must be an HTTPS URL without credentials (user:password@)."
                             }
                           }
                         }
@@ -49640,9 +49977,9 @@
                           "webhookUrl": {
                             "type": "string",
                             "format": "uri",
-                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "pattern": "^https://[^/?#@]*([/?#]|$)",
                             "errorMessage": {
-                              "pattern": "The URL must not contain credentials (user:password@)."
+                              "pattern": "Must be an HTTPS URL without credentials (user:password@)."
                             }
                           }
                         }
@@ -49662,9 +49999,9 @@
                           "url": {
                             "type": "string",
                             "format": "uri",
-                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "pattern": "^https://[^/?#@]*([/?#]|$)",
                             "errorMessage": {
-                              "pattern": "The URL must not contain credentials (user:password@)."
+                              "pattern": "Must be an HTTPS URL without credentials (user:password@)."
                             }
                           },
                           "method": {
@@ -49922,9 +50259,9 @@
                           "webhookUrl": {
                             "type": "string",
                             "format": "uri",
-                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "pattern": "^https://[^/?#@]*([/?#]|$)",
                             "errorMessage": {
-                              "pattern": "The URL must not contain credentials (user:password@)."
+                              "pattern": "Must be an HTTPS URL without credentials (user:password@)."
                             }
                           }
                         }
@@ -49945,9 +50282,9 @@
                           "webhookUrl": {
                             "type": "string",
                             "format": "uri",
-                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "pattern": "^https://[^/?#@]*([/?#]|$)",
                             "errorMessage": {
-                              "pattern": "The URL must not contain credentials (user:password@)."
+                              "pattern": "Must be an HTTPS URL without credentials (user:password@)."
                             }
                           }
                         }
@@ -49967,9 +50304,9 @@
                           "siteUrl": {
                             "type": "string",
                             "format": "uri",
-                            "pattern": "^[^:/?#]+://[^/?#@]*([/?#]|$)",
+                            "pattern": "^https://[^/?#@]*([/?#]|$)",
                             "errorMessage": {
-                              "pattern": "The URL must not contain credentials (user:password@)."
+                              "pattern": "Must be an HTTPS URL without credentials (user:password@)."
                             }
                           },
                           "email": {
@@ -59072,7 +59409,7 @@
                       "maxLength": 250
                     },
                     "maxItems": 20,
-                    "description": "Span attribute dot-paths to test, such as `context.service.name` or `span_attributes.http.route`. At most 20. Attributes referenced by either group filter are always excluded, along with their known sibling attributes for the same field, so the condition being contrasted does not come back as a finding under one of those names. Omit or pass an empty array to let Tsuga discover the most frequent attributes in the target group."
+                    "description": "Span attribute dot-paths to test, such as `context.service.name` or `span_attributes.http.route`. At most 20. Attributes referenced by either group filter are always excluded, along with their known sibling attributes for the same field, so the condition being contrasted does not come back as a finding under one of those names. Omit or pass an empty array to let Tsuga sample both groups and test the attributes, most frequent in the target first, that take more than one value across the two samples. When none varies, nothing is tested and `contrastSets` is empty."
                   },
                   "topK": {
                     "type": "integer",
