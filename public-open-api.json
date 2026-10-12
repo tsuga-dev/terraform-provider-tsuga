@@ -11193,7 +11193,7 @@
           "traceErrorRate": 8.2
         }
       },
-      "ListServicesResponse": {
+      "QueryServicesResponse": {
         "type": "object",
         "required": [
           "requestId",
@@ -53306,59 +53306,220 @@
         }
       }
     },
-    "/v1/services": {
-      "get": {
-        "operationId": "listServices",
+    "/v1/services/query": {
+      "post": {
+        "operationId": "queryServices",
         "tags": [
           "services"
         ],
-        "description": "Lists services inferred from telemetry. Use this endpoint to inventory service ownership, environments, versions, runtimes, and recent activity. Pagination fields limit the returned page.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 1000,
-              "default": 100
-            },
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "description": "Maximum number of items to return in this page. Omit to use the public API default of 100."
+        "description": "Queries services inferred from telemetry. Use this endpoint to inventory service ownership, environments, versions, runtimes, and recent activity. Filters and sorting narrow the results, and pagination fields limit the returned page.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "filters": {
+                    "type": "object",
+                    "properties": {
+                      "searchQuery": {
+                        "type": "object",
+                        "required": [
+                          "value"
+                        ],
+                        "properties": {
+                          "value": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 250,
+                            "description": "Substring matched case-insensitively against service names."
+                          }
+                        },
+                        "description": "Text filter for service names."
+                      },
+                      "teams": {
+                        "type": "object",
+                        "required": [
+                          "values"
+                        ],
+                        "properties": {
+                          "values": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 250
+                            },
+                            "maxItems": 50,
+                            "description": "Values compared by this filter. When `exclude` is omitted or false, rows matching any value are kept; when `exclude` is true, matching rows are removed."
+                          },
+                          "exclude": {
+                            "type": "boolean",
+                            "description": "If true, exclude rows matching these values instead of including them"
+                          }
+                        },
+                        "description": "Restrict results to services observed under any of these team names"
+                      },
+                      "envs": {
+                        "type": "object",
+                        "required": [
+                          "values"
+                        ],
+                        "properties": {
+                          "values": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 250
+                            },
+                            "maxItems": 50,
+                            "description": "Values compared by this filter. When `exclude` is omitted or false, rows matching any value are kept; when `exclude` is true, matching rows are removed."
+                          },
+                          "exclude": {
+                            "type": "boolean",
+                            "description": "If true, exclude rows matching these values instead of including them"
+                          }
+                        },
+                        "description": "Restrict results to services observed in any of these environments"
+                      },
+                      "versions": {
+                        "type": "object",
+                        "required": [
+                          "values"
+                        ],
+                        "properties": {
+                          "values": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 250
+                            },
+                            "maxItems": 50,
+                            "description": "Values compared by this filter. When `exclude` is omitted or false, rows matching any value are kept; when `exclude` is true, matching rows are removed."
+                          },
+                          "exclude": {
+                            "type": "boolean",
+                            "description": "If true, exclude rows matching these values instead of including them"
+                          }
+                        },
+                        "description": "Restrict results to services whose latest observed version is one of these"
+                      },
+                      "languages": {
+                        "type": "object",
+                        "required": [
+                          "values"
+                        ],
+                        "properties": {
+                          "values": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 250
+                            },
+                            "maxItems": 50,
+                            "description": "Values compared by this filter. When `exclude` is omitted or false, rows matching any value are kept; when `exclude` is true, matching rows are removed."
+                          },
+                          "exclude": {
+                            "type": "boolean",
+                            "description": "If true, exclude rows matching these values instead of including them"
+                          }
+                        },
+                        "description": "Restrict results to services written in any of these languages"
+                      },
+                      "hasRecentData": {
+                        "type": "boolean",
+                        "description": "When true, only return services whose request rate over the queried window is non-zero"
+                      }
+                    },
+                    "description": "Optional filters applied to narrow the returned services"
+                  },
+                  "sort": {
+                    "type": "object",
+                    "required": [
+                      "by",
+                      "direction"
+                    ],
+                    "properties": {
+                      "by": {
+                        "enum": [
+                          "serviceName",
+                          "env",
+                          "lastDeploy",
+                          "traceErrorRate",
+                          "traceRequestRate",
+                          "teams",
+                          "api",
+                          "frameworks",
+                          "languages",
+                          "pagingDestination"
+                        ],
+                        "description": "Field to sort the returned services by"
+                      },
+                      "direction": {
+                        "enum": [
+                          "asc",
+                          "desc"
+                        ],
+                        "description": "Sort direction: ascending or descending."
+                      }
+                    },
+                    "description": "Optional sorting applied to the returned services"
+                  },
+                  "statsWindow": {
+                    "enum": [
+                      "1h",
+                      "4h",
+                      "24h"
+                    ],
+                    "description": "Lookback used to compute the trace request rate and trace error rate fields, and the span-call totals that pick each service's primary environment. Defaults to `1h`."
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
+                    "default": 100,
+                    "description": "Maximum number of items to return in this page. Omit to use the public API default of 100."
+                  },
+                  "offset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Zero-based index of the first matching item to return. Increase it with `limit` to request later pages. If `limit` is provided without `offset`, the offset defaults to 0."
+                  },
+                  "clusterId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "description": "Telemetry cluster to target. Omit to use the first cluster in the organization; this does not query all clusters."
+                  }
+                },
+                "description": "Service query request. Use filters, sorting, limit, and offset to page through services. Each service returns one row per environment it was observed in."
+              },
+              "example": {
+                "filters": {
+                  "searchQuery": {
+                    "value": "checkout"
+                  },
+                  "envs": {
+                    "values": [
+                      "prod"
+                    ]
+                  }
+                },
+                "sort": {
+                  "by": "traceErrorRate",
+                  "direction": "desc"
+                },
+                "limit": 10,
+                "offset": 0
+              }
+            }
           },
-          {
-            "schema": {
-              "type": "integer",
-              "minimum": 0
-            },
-            "in": "query",
-            "name": "offset",
-            "required": false,
-            "description": "Zero-based index of the first matching item to return. Increase it with `limit` to request later pages. If `limit` is provided without `offset`, the offset defaults to 0."
-          },
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 250
-            },
-            "in": "query",
-            "name": "clusterId",
-            "required": false,
-            "description": "Telemetry cluster to target. Omit to use the first cluster in the organization; this does not query all clusters."
-          },
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 250
-            },
-            "in": "query",
-            "name": "env",
-            "required": false,
-            "description": "Environment to restrict the listing to. Services not observed in it are omitted. Omit to return one row per environment each service was observed in, so a service live in several environments returns several rows."
-          }
-        ],
+          "description": "Service query request. Use filters, sorting, limit, and offset to page through services. Each service returns one row per environment it was observed in."
+        },
         "responses": {
           "200": {
             "description": "Successful response",
@@ -53373,7 +53534,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListServicesResponse"
+                  "$ref": "#/components/schemas/QueryServicesResponse"
                 }
               }
             }
