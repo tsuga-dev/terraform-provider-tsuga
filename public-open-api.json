@@ -1011,7 +1011,8 @@
           "code": {
             "enum": [
               "INTERNAL_ERROR",
-              "INVALID_QUERY_TO_CLUSTER"
+              "INVALID_QUERY_TO_CLUSTER",
+              "CLUSTER_DB_QUERY_CONNECTION_POOL_TIMEOUT"
             ],
             "description": "Machine readable error code describing what went wrong"
           },
@@ -2119,7 +2120,8 @@
                       "list-spans": "#/components/schemas/GraphVisualizationListSpans",
                       "list-rum": "#/components/schemas/GraphVisualizationListRum",
                       "slo-uptime": "#/components/schemas/GraphVisualizationSloUptime",
-                      "slo-over-time": "#/components/schemas/GraphVisualizationSloOverTime"
+                      "slo-over-time": "#/components/schemas/GraphVisualizationSloOverTime",
+                      "slo": "#/components/schemas/GraphVisualizationSlo"
                     }
                   },
                   "required": [
@@ -2206,6 +2208,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/GraphVisualizationSloOverTime"
+                    },
+                    {
+                      "$ref": "#/components/schemas/GraphVisualizationSlo"
                     }
                   ]
                 },
@@ -2525,7 +2530,8 @@
                     "list-spans": "#/components/schemas/GraphVisualizationListSpans",
                     "list-rum": "#/components/schemas/GraphVisualizationListRum",
                     "slo-uptime": "#/components/schemas/GraphVisualizationSloUptime",
-                    "slo-over-time": "#/components/schemas/GraphVisualizationSloOverTime"
+                    "slo-over-time": "#/components/schemas/GraphVisualizationSloOverTime",
+                    "slo": "#/components/schemas/GraphVisualizationSlo"
                   }
                 },
                 "required": [
@@ -2612,6 +2618,9 @@
                   },
                   {
                     "$ref": "#/components/schemas/GraphVisualizationSloOverTime"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GraphVisualizationSlo"
                   }
                 ]
               },
@@ -10870,12 +10879,8 @@
           "teams",
           "versions",
           "languages",
-          "runtimes",
           "serverProtocols",
-          "clientProtocols",
-          "frameworks",
-          "cloudPlatforms",
-          "cloudProviders"
+          "frameworks"
         ],
         "properties": {
           "id": {
@@ -10972,28 +10977,6 @@
             },
             "description": "Programming languages observed for this service."
           },
-          "runtimes": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "runtime",
-                "lastSeenAt"
-              ],
-              "properties": {
-                "runtime": {
-                  "type": "string",
-                  "description": "Runtime observed for this service. The emitting service or OpenTelemetry instrumentation sets it through telemetry metadata. Returned when runtime metadata is available for the service."
-                },
-                "lastSeenAt": {
-                  "description": "Most recent time this runtime was observed. Tsuga sets it from telemetry timestamps during service metadata refreshes.",
-                  "type": "string"
-                }
-              },
-              "description": "A runtime observed for this service, with the last time it was seen."
-            },
-            "description": "Runtime values observed for this service."
-          },
           "serverProtocols": {
             "type": "array",
             "items": {
@@ -11016,28 +10999,6 @@
             },
             "description": "API protocols this service exposes (from server-kind spans)"
           },
-          "clientProtocols": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "protocol",
-                "lastSeenAt"
-              ],
-              "properties": {
-                "protocol": {
-                  "type": "string",
-                  "description": "Observed API protocol, such as `http`, `grpc`, or `graphql`. Tsuga infers it from span metadata. Returned when protocol metadata is available for the service."
-                },
-                "lastSeenAt": {
-                  "description": "Most recent time this protocol was observed. Tsuga sets it from telemetry timestamps during service metadata refreshes.",
-                  "type": "string"
-                }
-              },
-              "description": "An API protocol observed for this service, with the last time it was seen."
-            },
-            "description": "API protocols this service calls out over (from client-kind spans)"
-          },
           "frameworks": {
             "type": "array",
             "items": {
@@ -11059,50 +11020,6 @@
               "description": "An application framework detected from OpenTelemetry instrumentation scope, with the last time it was seen."
             },
             "description": "Application frameworks detected from OTel instrumentation scope"
-          },
-          "cloudPlatforms": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "platform",
-                "lastSeenAt"
-              ],
-              "properties": {
-                "platform": {
-                  "type": "string",
-                  "description": "Observed cloud or orchestration platform, such as `aws_eks` or `kubernetes`. The emitting service or collector sets it through telemetry resource attributes. Returned when platform metadata is available for the service."
-                },
-                "lastSeenAt": {
-                  "description": "Most recent time this platform was observed. Tsuga sets it from telemetry timestamps during service metadata refreshes.",
-                  "type": "string"
-                }
-              },
-              "description": "A cloud or orchestration platform this service runs on, with the last time it was seen."
-            },
-            "description": "Cloud platforms this service is running on"
-          },
-          "cloudProviders": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "provider",
-                "lastSeenAt"
-              ],
-              "properties": {
-                "provider": {
-                  "type": "string",
-                  "description": "Observed cloud provider, such as `aws`, `gcp`, or `azure`. The emitting service or collector sets it through telemetry resource attributes. Returned when provider metadata is available for the service."
-                },
-                "lastSeenAt": {
-                  "description": "Most recent time this provider was observed. Tsuga sets it from telemetry timestamps during service metadata refreshes.",
-                  "type": "string"
-                }
-              },
-              "description": "A cloud provider this service runs on, with the last time it was seen."
-            },
-            "description": "Cloud providers this service is running on"
           },
           "lastSeenAt": {
             "description": "Most recent time Tsuga observed telemetry for this service.",
@@ -11147,43 +11064,15 @@
               "lastSeenAt": "2024-01-15T12:34:56.000Z"
             }
           ],
-          "runtimes": [
-            {
-              "runtime": "go",
-              "lastSeenAt": "2024-01-15T12:34:56.000Z"
-            }
-          ],
           "serverProtocols": [
             {
               "protocol": "http",
               "lastSeenAt": "2024-01-15T12:34:56.000Z"
             }
           ],
-          "clientProtocols": [
-            {
-              "protocol": "grpc",
-              "lastSeenAt": "2024-01-15T12:34:56.000Z"
-            }
-          ],
           "frameworks": [
             {
               "framework": "gin",
-              "lastSeenAt": "2024-01-15T12:34:56.000Z"
-            }
-          ],
-          "cloudPlatforms": [
-            {
-              "platform": "aws_eks",
-              "lastSeenAt": "2024-01-15T12:34:56.000Z"
-            },
-            {
-              "platform": "kubernetes",
-              "lastSeenAt": "2024-01-15T12:34:56.000Z"
-            }
-          ],
-          "cloudProviders": [
-            {
-              "provider": "aws",
               "lastSeenAt": "2024-01-15T12:34:56.000Z"
             }
           ],
@@ -27674,6 +27563,126 @@
         },
         "title": "SloOverTime"
       },
+      "GraphVisualizationSlo": {
+        "type": "object",
+        "required": [
+          "type",
+          "display"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Displays the latest status of SLOs as summary cards with the result count per status, a table of results, or both. Status is not recomputed over the dashboard time range.",
+            "enum": [
+              "slo"
+            ]
+          },
+          "sloId": {
+            "type": "string",
+            "description": "Id of the SLO to display. Omit it to cover every SLO that matches `filters`."
+          },
+          "filters": {
+            "type": "object",
+            "properties": {
+              "owners": {
+                "type": "object",
+                "required": [
+                  "values"
+                ],
+                "properties": {
+                  "values": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "exclude": {
+                    "type": "boolean"
+                  }
+                },
+                "description": "Restrict results to SLOs owned by any of these team IDs"
+              },
+              "tags": {
+                "type": "object",
+                "required": [
+                  "values"
+                ],
+                "properties": {
+                  "values": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "key",
+                        "value"
+                      ],
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "description": "Tag key attached to the resource. Consumers can use key/value tags for filtering, ownership context, and policy checks."
+                        },
+                        "value": {
+                          "type": "string",
+                          "description": "Tag value attached to the resource for this key. Tsuga returns the value exactly as stored."
+                        }
+                      },
+                      "title": "Tag"
+                    },
+                    "title": "Tags",
+                    "description": "Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies."
+                  },
+                  "exclude": {
+                    "type": "boolean"
+                  }
+                },
+                "description": "Restrict results to SLOs that have at least one of the listed key/value tags"
+              },
+              "statuses": {
+                "type": "object",
+                "required": [
+                  "values"
+                ],
+                "properties": {
+                  "values": {
+                    "type": "array",
+                    "items": {
+                      "enum": [
+                        "healthy",
+                        "breached",
+                        "no_data"
+                      ],
+                      "description": "SLO status: healthy (meeting the target), breached (breaching it), or no_data (not evaluated yet)"
+                    }
+                  },
+                  "exclude": {
+                    "type": "boolean"
+                  }
+                },
+                "description": "Keep only the results whose status is one of these values. A result is one cluster of an ungrouped SLO, or one group of a grouped SLO."
+              }
+            },
+            "description": "Narrows the SLOs the widget covers. Omit it, or any of its fields, to apply no filter."
+          },
+          "organizeBy": {
+            "enum": [
+              "team",
+              "cluster"
+            ],
+            "description": "Groups the results by owning team or by cluster. Omit it to list results ungrouped."
+          },
+          "display": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "summary",
+                "table"
+              ]
+            },
+            "description": "Sections to show: `summary` for the result count per status, `table` for the list of results."
+          }
+        },
+        "title": "Slo"
+      },
       "InputGraphVisualizationTimeseriesConnection": {
         "type": "object",
         "required": [
@@ -34267,6 +34276,142 @@
         },
         "title": "SloOverTime"
       },
+      "InputGraphVisualizationSlo": {
+        "type": "object",
+        "required": [
+          "type",
+          "display"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Displays the latest status of SLOs as summary cards with the result count per status, a table of results, or both. Status is not recomputed over the dashboard time range.",
+            "enum": [
+              "slo"
+            ]
+          },
+          "sloId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250,
+            "description": "Id of the SLO to display. Omit it to cover every SLO that matches `filters`."
+          },
+          "filters": {
+            "type": "object",
+            "properties": {
+              "owners": {
+                "type": "object",
+                "required": [
+                  "values"
+                ],
+                "properties": {
+                  "values": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 250
+                    },
+                    "maxItems": 50,
+                    "description": "Values compared by this filter. When `exclude` is omitted or false, rows matching any value are kept; when `exclude` is true, matching rows are removed."
+                  },
+                  "exclude": {
+                    "type": "boolean",
+                    "description": "If true, exclude rows matching these values instead of including them"
+                  }
+                },
+                "description": "Restrict results to SLOs owned by any of these team IDs"
+              },
+              "tags": {
+                "type": "object",
+                "required": [
+                  "values"
+                ],
+                "properties": {
+                  "values": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "key",
+                        "value"
+                      ],
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "maxLength": 128,
+                          "description": "Tag key to attach to the resource."
+                        },
+                        "value": {
+                          "type": "string",
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$",
+                          "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected."
+                        }
+                      },
+                      "title": "Tag"
+                    },
+                    "maxItems": 50,
+                    "description": "Values compared by this filter. When `exclude` is omitted or false, rows matching any value are kept; when `exclude` is true, matching rows are removed."
+                  },
+                  "exclude": {
+                    "type": "boolean",
+                    "description": "If true, exclude rows matching these values instead of including them"
+                  }
+                },
+                "description": "Restrict results to SLOs that have at least one of the listed key/value tags"
+              },
+              "statuses": {
+                "type": "object",
+                "required": [
+                  "values"
+                ],
+                "properties": {
+                  "values": {
+                    "type": "array",
+                    "items": {
+                      "enum": [
+                        "healthy",
+                        "breached",
+                        "no_data"
+                      ],
+                      "description": "SLO status: healthy (meeting the target), breached (breaching it), or no_data (not evaluated yet)"
+                    },
+                    "maxItems": 3,
+                    "description": "Values compared by this filter. When `exclude` is omitted or false, rows matching any value are kept; when `exclude` is true, matching rows are removed."
+                  },
+                  "exclude": {
+                    "type": "boolean",
+                    "description": "If true, exclude rows matching these values instead of including them"
+                  }
+                },
+                "description": "Keep only the results whose status is one of these values. A result is one cluster of an ungrouped SLO, or one group of a grouped SLO."
+              }
+            },
+            "description": "Narrows the SLOs the widget covers. Omit it, or any of its fields, to apply no filter."
+          },
+          "organizeBy": {
+            "enum": [
+              "team",
+              "cluster"
+            ],
+            "description": "Groups the results by owning team or by cluster. Omit it to list results ungrouped."
+          },
+          "display": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "summary",
+                "table"
+              ]
+            },
+            "minItems": 1,
+            "uniqueItems": true,
+            "description": "Sections to show: `summary` for the result count per status, `table` for the list of results."
+          }
+        },
+        "title": "Slo"
+      },
       "ProcessorParamsCreatorFormatString": {
         "type": "object",
         "required": [
@@ -39939,7 +40084,8 @@
                               "list-spans": "#/components/schemas/InputGraphVisualizationListSpans",
                               "list-rum": "#/components/schemas/InputGraphVisualizationListRum",
                               "slo-uptime": "#/components/schemas/InputGraphVisualizationSloUptime",
-                              "slo-over-time": "#/components/schemas/InputGraphVisualizationSloOverTime"
+                              "slo-over-time": "#/components/schemas/InputGraphVisualizationSloOverTime",
+                              "slo": "#/components/schemas/InputGraphVisualizationSlo"
                             }
                           },
                           "required": [
@@ -40026,6 +40172,9 @@
                             },
                             {
                               "$ref": "#/components/schemas/InputGraphVisualizationSloOverTime"
+                            },
+                            {
+                              "$ref": "#/components/schemas/InputGraphVisualizationSlo"
                             }
                           ]
                         },
@@ -40470,7 +40619,8 @@
                               "list-spans": "#/components/schemas/InputGraphVisualizationListSpans",
                               "list-rum": "#/components/schemas/InputGraphVisualizationListRum",
                               "slo-uptime": "#/components/schemas/InputGraphVisualizationSloUptime",
-                              "slo-over-time": "#/components/schemas/InputGraphVisualizationSloOverTime"
+                              "slo-over-time": "#/components/schemas/InputGraphVisualizationSloOverTime",
+                              "slo": "#/components/schemas/InputGraphVisualizationSlo"
                             }
                           },
                           "required": [
@@ -40557,6 +40707,9 @@
                             },
                             {
                               "$ref": "#/components/schemas/InputGraphVisualizationSloOverTime"
+                            },
+                            {
+                              "$ref": "#/components/schemas/InputGraphVisualizationSlo"
                             }
                           ]
                         },
@@ -40912,7 +41065,8 @@
                         "list-spans": "#/components/schemas/InputGraphVisualizationListSpans",
                         "list-rum": "#/components/schemas/InputGraphVisualizationListRum",
                         "slo-uptime": "#/components/schemas/InputGraphVisualizationSloUptime",
-                        "slo-over-time": "#/components/schemas/InputGraphVisualizationSloOverTime"
+                        "slo-over-time": "#/components/schemas/InputGraphVisualizationSloOverTime",
+                        "slo": "#/components/schemas/InputGraphVisualizationSlo"
                       }
                     },
                     "required": [
@@ -40999,6 +41153,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/InputGraphVisualizationSloOverTime"
+                      },
+                      {
+                        "$ref": "#/components/schemas/InputGraphVisualizationSlo"
                       }
                     ]
                   },
