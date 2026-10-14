@@ -8,6 +8,15 @@ import (
 )
 
 func TestAccDashboardFolderResource(t *testing.T) {
+	testAccFolderResource(t, dashboardFolderKind)
+}
+
+func TestAccMonitorFolderResource(t *testing.T) {
+	testAccFolderResource(t, monitorFolderKind)
+}
+
+func testAccFolderResource(t *testing.T, kind folderKind) {
+	resourceType := "tsuga_" + kind.typeName
 	teamName := fmt.Sprintf("test-%s", randomString(8))
 	folderName := fmt.Sprintf("test-folder-%s", randomString(8))
 
@@ -24,8 +33,8 @@ resource "tsuga_team" "test-team" {
 			// Create a top-level folder
 			{
 				Config: providerConfig + teamConfig + fmt.Sprintf(`
-resource "tsuga_dashboard_folder" "test" {
-  name  = "%s"
+resource "%[1]s" "test" {
+  name  = "%[2]s"
   owner = tsuga_team.test-team.id
   tags = [
     {
@@ -34,40 +43,40 @@ resource "tsuga_dashboard_folder" "test" {
     }
   ]
 }
-`, folderName),
+`, resourceType, folderName),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("tsuga_dashboard_folder.test", "name", folderName),
-					resource.TestCheckResourceAttr("tsuga_dashboard_folder.test", "tags.0.key", "team"),
-					resource.TestCheckResourceAttr("tsuga_dashboard_folder.test", "tags.0.value", "platform"),
-					resource.TestCheckNoResourceAttr("tsuga_dashboard_folder.test", "parent_folder_id"),
-					resource.TestCheckResourceAttrSet("tsuga_dashboard_folder.test", "id"),
+					resource.TestCheckResourceAttr(resourceType+".test", "name", folderName),
+					resource.TestCheckResourceAttr(resourceType+".test", "tags.0.key", "team"),
+					resource.TestCheckResourceAttr(resourceType+".test", "tags.0.value", "platform"),
+					resource.TestCheckNoResourceAttr(resourceType+".test", "parent_folder_id"),
+					resource.TestCheckResourceAttrSet(resourceType+".test", "id"),
 				),
 			},
 			// Rename, and nest a child folder under it
 			{
 				Config: providerConfig + teamConfig + fmt.Sprintf(`
-resource "tsuga_dashboard_folder" "test" {
-  name  = "%s-renamed"
+resource "%[1]s" "test" {
+  name  = "%[2]s-renamed"
   owner = tsuga_team.test-team.id
 }
 
-resource "tsuga_dashboard_folder" "child" {
-  name             = "%s-child"
+resource "%[1]s" "child" {
+  name             = "%[2]s-child"
   owner            = tsuga_team.test-team.id
-  parent_folder_id = tsuga_dashboard_folder.test.id
+  parent_folder_id = %[1]s.test.id
 }
-`, folderName, folderName),
+`, resourceType, folderName),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("tsuga_dashboard_folder.test", "name", folderName+"-renamed"),
+					resource.TestCheckResourceAttr(resourceType+".test", "name", folderName+"-renamed"),
 					resource.TestCheckResourceAttrPair(
-						"tsuga_dashboard_folder.child", "parent_folder_id",
-						"tsuga_dashboard_folder.test", "id",
+						resourceType+".child", "parent_folder_id",
+						resourceType+".test", "id",
 					),
 				),
 			},
 			// Import
 			{
-				ResourceName:      "tsuga_dashboard_folder.test",
+				ResourceName:      resourceType + ".test",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},

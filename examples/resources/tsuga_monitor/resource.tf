@@ -1,9 +1,15 @@
+resource "tsuga_monitor_folder" "production" {
+  name  = "Production"
+  owner = "abc-123-def"
+}
+
 resource "tsuga_monitor" "monitor" {
   name        = "No logs"
   owner       = "abc-123-def"
   permissions = "all"
   priority    = 1
   cluster_ids = []
+  folder_id   = tsuga_monitor_folder.production.id
   configuration = {
     log = {
       queries = [

@@ -65,6 +65,17 @@
     }
   },
   {
+    "name": "monitor-folder",
+    "resourceType": "tsuga_monitor_folder",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "parentFolderId": "parent-123"
+    }
+  },
+  {
     "name": "route",
     "resourceType": "tsuga_route",
     "resource": {
@@ -203,6 +214,7 @@
       "id": "resource-123",
       "name": "Example",
       "owner": "team-123",
+      "folderId": "folder-123",
       "tags": [],
       "priority": 1,
       "permissions": "all",

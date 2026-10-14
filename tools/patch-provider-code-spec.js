@@ -12,10 +12,11 @@
  *    (e.g. editing the description) keeps the id known in the plan instead of
  *    showing `id -> (known after apply)`, which otherwise cascades spurious
  *    diffs onto resources that reference it (team memberships, tag policies).
- *  - dashboard_folder resource: makes parent_folder_id plain optional. The API
- *    returns it only for nested folders, so codegen marks it computed_optional,
- *    and terraform then carries the prior parent into the plan when the
- *    attribute is dropped, making a move back to top level unplannable.
+ *  - dashboard_folder and monitor_folder resources: make parent_folder_id
+ *    plain optional. The API returns it only for nested folders, so codegen
+ *    marks it computed_optional, and terraform then carries the prior parent
+ *    into the plan when the attribute is dropped, making a move back to top
+ *    level unplannable.
  *    Also adds use_state_for_unknown to `id` (same reason as the team resource,
  *    and folders reference each other through parent_folder_id) and to `tags`,
  *    so a config that omits tags keeps the stored ones instead of planning
@@ -26,19 +27,17 @@
  */
 const fs = require("fs");
 
-if (process.argv.length < 3) {
-  console.error("Usage: patch-provider-code-spec.js <provider-code-spec.json>");
+function fail(message) {
+  console.error(message);
   process.exit(1);
+}
+
+if (process.argv.length < 3) {
+  fail("Usage: patch-provider-code-spec.js <provider-code-spec.json>");
 }
 
 const specPath = process.argv[2];
 const spec = JSON.parse(fs.readFileSync(specPath, "utf8"));
-
-const team = spec.datasources.find((d) => d.name === "team");
-if (!team) {
-  console.error("team datasource not found in spec");
-  process.exit(1);
-}
 
 /**
  * Recursively find an attribute by name in the schema (checks top-level and
@@ -56,114 +55,66 @@ function findAttr(attributes, name) {
   return null;
 }
 
-for (const name of ["id", "name"]) {
-  const attr = findAttr(team.schema.attributes, name);
-  if (!attr) {
-    console.error(`attribute "${name}" not found in team datasource`);
-    process.exit(1);
-  }
-  attr.string.computed_optional_required = "computed_optional";
+function requireEntry(entries, kind, name) {
+  const entry = entries.find((e) => e.name === name);
+  if (!entry) fail(`${name} ${kind} not found in spec`);
+  return entry;
 }
 
-// custom_usage_tag: tag_key requires replace (no update endpoint exists)
-const customUsageTag = spec.resources.find((r) => r.name === "custom_usage_tag");
-if (!customUsageTag) {
-  console.error("custom_usage_tag resource not found in spec");
-  process.exit(1);
-}
-const tagKeyAttr = findAttr(customUsageTag.schema.attributes, "tag_key");
-if (!tagKeyAttr) {
-  console.error("tag_key attribute not found in custom_usage_tag resource");
-  process.exit(1);
-}
-tagKeyAttr.string.plan_modifiers = [
-  {
-    custom: {
-      imports: [
-        {path: "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"},
-      ],
-      schema_definition: "stringplanmodifier.RequiresReplace()",
-    },
-  },
-];
+const requireDatasource = (name) => requireEntry(spec.datasources, "datasource", name);
+const requireResource = (name) => requireEntry(spec.resources, "resource", name);
 
-// team: id is stable for the team lifetime; keep it known across in-place
-// updates so dependent resources don't see spurious diffs.
-const teamResource = spec.resources.find((r) => r.name === "team");
-if (!teamResource) {
-  console.error("team resource not found in spec");
-  process.exit(1);
+function requireAttr(entry, name) {
+  const attr = findAttr(entry.schema.attributes, name);
+  if (!attr) fail(`${name} attribute not found in ${entry.name}`);
+  return attr;
 }
-const teamIdAttr = findAttr(teamResource.schema.attributes, "id");
-if (!teamIdAttr) {
-  console.error("id attribute not found in team resource");
-  process.exit(1);
-}
-teamIdAttr.string.plan_modifiers = [
-  {
-    custom: {
-      imports: [
-        {path: "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"},
-      ],
-      schema_definition: "stringplanmodifier.UseStateForUnknown()",
-    },
-  },
-];
 
-const dashboardFolder = spec.resources.find((r) => r.name === "dashboard_folder");
-if (!dashboardFolder) {
-  console.error("dashboard_folder resource not found in spec");
-  process.exit(1);
-}
-const parentFolderIdAttr = findAttr(dashboardFolder.schema.attributes, "parent_folder_id");
-if (!parentFolderIdAttr) {
-  console.error("parent_folder_id attribute not found in dashboard_folder resource");
-  process.exit(1);
-}
-parentFolderIdAttr.string.computed_optional_required = "optional";
+const STRING_PLAN_MODIFIER = "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier";
+const LIST_PLAN_MODIFIER = "github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier";
 
-const useStateForUnknown = (importPath, modifier) => [
+// A single custom plan modifier, in the shape tfplugingen-framework expects.
+const planModifier = (importPath, definition) => [
   {
     custom: {
       imports: [{path: importPath}],
-      schema_definition: modifier,
+      schema_definition: definition,
     },
   },
 ];
 
-const dashboardFolderIdAttr = findAttr(dashboardFolder.schema.attributes, "id");
-if (!dashboardFolderIdAttr) {
-  console.error("id attribute not found in dashboard_folder resource");
-  process.exit(1);
+const team = requireDatasource("team");
+for (const name of ["id", "name"]) {
+  requireAttr(team, name).string.computed_optional_required = "computed_optional";
 }
-dashboardFolderIdAttr.string.plan_modifiers = useStateForUnknown(
-  "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier",
+
+// custom_usage_tag: tag_key requires replace (no update endpoint exists)
+requireAttr(requireResource("custom_usage_tag"), "tag_key").string.plan_modifiers = planModifier(
+  STRING_PLAN_MODIFIER,
+  "stringplanmodifier.RequiresReplace()",
+);
+
+// team: id is stable for the team lifetime; keep it known across in-place
+// updates so dependent resources don't see spurious diffs.
+requireAttr(requireResource("team"), "id").string.plan_modifiers = planModifier(
+  STRING_PLAN_MODIFIER,
   "stringplanmodifier.UseStateForUnknown()",
 );
 
-const dashboardFolderTagsAttr = findAttr(dashboardFolder.schema.attributes, "tags");
-if (!dashboardFolderTagsAttr) {
-  console.error("tags attribute not found in dashboard_folder resource");
-  process.exit(1);
+for (const folderResourceName of ["dashboard_folder", "monitor_folder"]) {
+  const folder = requireResource(folderResourceName);
+  requireAttr(folder, "parent_folder_id").string.computed_optional_required = "optional";
+  requireAttr(folder, "id").string.plan_modifiers = planModifier(
+    STRING_PLAN_MODIFIER,
+    "stringplanmodifier.UseStateForUnknown()",
+  );
+  requireAttr(folder, "tags").list_nested.plan_modifiers = planModifier(
+    LIST_PLAN_MODIFIER,
+    "listplanmodifier.UseStateForUnknown()",
+  );
 }
-dashboardFolderTagsAttr.list_nested.plan_modifiers = useStateForUnknown(
-  "github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier",
-  "listplanmodifier.UseStateForUnknown()",
-);
 
-const ingestionApiKey = spec.resources.find((r) => r.name === "ingestion_api_key");
-if (!ingestionApiKey) {
-  console.error("ingestion_api_key resource not found in spec");
-  process.exit(1);
-}
-const teamOverrideFieldsAttr = findAttr(
-  ingestionApiKey.schema.attributes,
-  "team_override_fields",
-);
-if (!teamOverrideFieldsAttr) {
-  console.error("team_override_fields attribute not found in ingestion_api_key resource");
-  process.exit(1);
-}
-teamOverrideFieldsAttr.list.computed_optional_required = "computed_optional";
+requireAttr(requireResource("ingestion_api_key"), "team_override_fields").list.computed_optional_required =
+  "computed_optional";
 
 fs.writeFileSync(specPath, JSON.stringify(spec, null, 2) + "\n");

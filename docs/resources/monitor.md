@@ -13,12 +13,18 @@ Monitor allowing to send alerts based on telemetry data
 ## Example Usage
 
 ```terraform
+resource "tsuga_monitor_folder" "production" {
+  name  = "Production"
+  owner = "abc-123-def"
+}
+
 resource "tsuga_monitor" "monitor" {
   name        = "No logs"
   owner       = "abc-123-def"
   permissions = "all"
   priority    = 1
   cluster_ids = []
+  folder_id   = tsuga_monitor_folder.production.id
   configuration = {
     log = {
       queries = [
@@ -96,6 +102,7 @@ resource "tsuga_monitor" "certificate_expiry_monitor" {
 
 - `cluster_ids` (List of String) Cluster IDs associated with this monitor
 - `dashboard_id` (String) Identifier of a dashboard related to the monitor
+- `folder_id` (String) ID of the monitor folder holding the monitor. Omit to leave the monitor outside any folder.
 - `message` (String) Message to be displayed if a notification is triggered
 - `tags` (Attributes List) List of key/value tags applied to the resource (see [below for nested schema](#nestedatt--tags))
 

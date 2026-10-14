@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `tsuga_monitor_folder`: new resource organizing monitors into folders.
+- `tsuga_monitor`: `folder_id`, the monitor folder holding the monitor. Dropping it moves the monitor out of its folder.
+
 ## [2.10.0] - 2026-09-30
 
 ### Added

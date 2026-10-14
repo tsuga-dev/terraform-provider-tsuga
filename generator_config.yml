@@ -25,6 +25,19 @@ resources:
     delete:
       path: /v1/dashboard-folders/{id}
       method: DELETE
+  monitor_folder:
+    create:
+      path: /v1/monitor-folders
+      method: POST
+    read:
+      path: /v1/monitor-folders/{id}
+      method: GET
+    update:
+      path: /v1/monitor-folders/{id}
+      method: PUT
+    delete:
+      path: /v1/monitor-folders/{id}
+      method: DELETE
   custom_usage_tag:
     create:
       path: /v1/custom-usage-tags

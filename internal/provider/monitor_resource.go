@@ -379,6 +379,13 @@ func (r *monitorResource) buildMonitorRequestBody(ctx context.Context, plan reso
 		body["dashboardId"] = plan.DashboardId.ValueString()
 	}
 
+	// Sent even when null so dropping the attribute moves the monitor out of its folder.
+	if plan.FolderId.IsNull() {
+		body["folderId"] = nil
+	} else if !plan.FolderId.IsUnknown() {
+		body["folderId"] = plan.FolderId.ValueString()
+	}
+
 	if tags, tagDiags := expandTags(ctx, plan.Tags); tagDiags.HasError() {
 		diags.Append(tagDiags...)
 		return nil, diags
@@ -476,6 +483,7 @@ type monitorAPIData struct {
 	Priority      float64                 `json:"priority"`
 	Owner         string                  `json:"owner"`
 	DashboardId   string                  `json:"dashboardId"`
+	FolderId      string                  `json:"folderId"`
 	Permissions   string                  `json:"permissions"`
 	ClusterIds    []string                `json:"clusterIds"`
 }
@@ -991,6 +999,7 @@ func flattenMonitor(ctx context.Context, data monitorAPIData) (resource_monitor.
 		Priority:      types.Int64Value(int64(data.Priority)),
 		Owner:         types.StringValue(data.Owner),
 		DashboardId:   stringValueOrNull(data.DashboardId),
+		FolderId:      stringValueOrNull(data.FolderId),
 		Permissions:   types.StringValue(data.Permissions),
 		ClusterIds:    clusterIds,
 	}

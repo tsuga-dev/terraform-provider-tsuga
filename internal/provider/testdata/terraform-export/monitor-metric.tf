@@ -19,6 +19,7 @@ resource "tsuga_monitor" "monitor_metric" {
       timeframe = 5
     }
   }
+  folder_id   = "folder-123"
   message     = "Literal $${service} and %%{ if x }\n\"quoted\" \\ unicode 🌲"
   name        = "Example"
   owner       = "team-123"

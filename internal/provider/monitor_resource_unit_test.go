@@ -304,3 +304,83 @@ func TestExpandFlattenAnomalyTraceMonitor_RoundTrips(t *testing.T) {
 		t.Fatalf("expected time_aggregate to round-trip, got %v", back[0].TimeAggregate)
 	}
 }
+
+func TestBuildMonitorRequestBody_FolderId(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name   string
+		folder types.String
+		want   interface{}
+	}{
+		{name: "set", folder: types.StringValue("folder-123"), want: "folder-123"},
+		{name: "null moves out of the folder", folder: types.StringNull(), want: nil},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			plan := resource_monitor.MonitorModel{
+				Name:        types.StringValue("Certificates"),
+				Owner:       types.StringValue("team-123"),
+				Priority:    types.Int64Value(3),
+				Permissions: types.StringValue("all"),
+				Tags:        types.ListNull(types.ObjectType{}),
+				ClusterIds:  types.ListNull(types.StringType),
+				FolderId:    tc.folder,
+				Configuration: resource_monitor.MonitorConfigurationModel{
+					CertificateExpiry: &resource_monitor.CertificateExpiryMonitorConfigurationModel{
+						WarnBeforeInDays:      types.Int64Value(15),
+						CloudAccounts:         types.ListNull(types.StringType),
+						AggregationAlertLogic: types.StringValue("each"),
+						NoDataBehavior:        types.StringValue("resolve"),
+					},
+				},
+			}
+
+			body, diags := (&monitorResource{}).buildMonitorRequestBody(ctx, plan)
+			if diags.HasError() {
+				t.Fatalf("unexpected diagnostics: %v", diags)
+			}
+
+			got, ok := body["folderId"]
+			if !ok {
+				t.Fatal("folderId should be present")
+			}
+			if got != tc.want {
+				t.Fatalf("folderId = %#v, want %#v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestFlattenMonitor_FolderId(t *testing.T) {
+	data := monitorAPIData{
+		ID:          "monitor-1",
+		Name:        "Certificates",
+		Owner:       "team-1",
+		Priority:    3,
+		Permissions: "all",
+		Configuration: monitorAPIConfiguration{
+			Type:                  "certificate-expiry",
+			AggregationAlertLogic: "each",
+			NoDataBehavior:        "resolve",
+		},
+	}
+
+	unfiled, diags := flattenMonitor(context.Background(), data)
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if !unfiled.FolderId.IsNull() {
+		t.Fatalf("expected null folder_id for an unfiled monitor, got %v", unfiled.FolderId)
+	}
+
+	data.FolderId = "folder-1"
+	filed, diags := flattenMonitor(context.Background(), data)
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if filed.FolderId.ValueString() != "folder-1" {
+		t.Fatalf("folder_id = %v, want folder-1", filed.FolderId)
+	}
+}

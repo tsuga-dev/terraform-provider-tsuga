@@ -97,6 +97,13 @@ func MonitorResourceSchema(ctx context.Context) schema.Schema {
 					stringvalidator.LengthBetween(1, 250),
 				},
 			},
+			"folder_id": schema.StringAttribute{
+				Optional:    true,
+				Description: "ID of the monitor folder holding the monitor. Omit to leave the monitor outside any folder.",
+				Validators: []validator.String{
+					stringvalidator.LengthBetween(1, 250),
+				},
+			},
 			"permissions": schema.StringAttribute{
 				Required:    true,
 				Description: "This controls which data the monitor can see",
@@ -471,6 +478,7 @@ type MonitorModel struct {
 	Priority      types.Int64               `tfsdk:"priority"`
 	Owner         types.String              `tfsdk:"owner"`
 	DashboardId   types.String              `tfsdk:"dashboard_id"`
+	FolderId      types.String              `tfsdk:"folder_id"`
 	Permissions   types.String              `tfsdk:"permissions"`
 	ClusterIds    types.List                `tfsdk:"cluster_ids"`
 }

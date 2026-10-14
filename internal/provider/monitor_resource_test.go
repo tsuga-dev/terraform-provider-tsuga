@@ -275,6 +275,78 @@ resource "tsuga_monitor" "test" {
 	})
 }
 
+func TestAccMonitorResource_WithFolderId(t *testing.T) {
+	teamName := fmt.Sprintf("test-%s", randomString(10))
+
+	config := func(folderAttribute string) string {
+		return providerConfig + fmt.Sprintf(`
+resource "tsuga_team" "test-team" {
+  name = "%s"
+  visibility = "public"
+}
+
+resource "tsuga_monitor_folder" "test-folder" {
+  name  = "test-monitor-folder"
+  owner = tsuga_team.test-team.id
+}
+
+resource "tsuga_monitor" "test" {
+  name        = "test-monitor-in-folder"
+  owner       = tsuga_team.test-team.id
+  priority    = 3
+  permissions = "all"
+  %s
+
+  configuration = {
+    metric = {
+      conditions = [{
+        formula   = "q1"
+        operator  = "greater_than"
+        threshold = 10.0
+      }]
+      no_data_behavior        = "alert"
+      timeframe               = 5
+      group_by_fields         = []
+      aggregation_alert_logic = "no_aggregation"
+      queries = [{
+        name   = "q1"
+        filter = "service:api"
+        aggregate = {
+          sum = {
+            field = "duration"
+          }
+        }
+      }]
+    }
+  }
+}
+`, teamName, folderAttribute)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// File the monitor into the folder
+			{
+				Config: config("folder_id = tsuga_monitor_folder.test-folder.id"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair(
+						"tsuga_monitor.test", "folder_id",
+						"tsuga_monitor_folder.test-folder", "id",
+					),
+				),
+			},
+			// Dropping folder_id moves the monitor out of the folder
+			{
+				Config: config(""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckNoResourceAttr("tsuga_monitor.test", "folder_id"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccMonitorResource_AnomalyMetric(t *testing.T) {
 	teamName := fmt.Sprintf("test-%s", randomString(10))
 

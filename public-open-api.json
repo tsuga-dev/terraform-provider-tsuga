@@ -2888,6 +2888,220 @@
           }
         }
       },
+      "MonitorFolderWithMonitorCount": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "owner",
+          "monitorCount"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Tsuga-generated monitor folder ID assigned when the folder is created. Use it as monitor `folderId` or child-folder `parentFolderId`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the monitor folder. Set by the caller on create or update."
+          },
+          "owner": {
+            "type": "string",
+            "description": "ID of the team that owns the monitor folder. Set by the caller on create or update and used for folder access control."
+          },
+          "parentFolderId": {
+            "type": "string",
+            "description": "ID of the top-level parent folder when this folder is nested. Set by the caller on create or update. Returned only for child folders; omitted for top-level folders."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "value"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "Tag key attached to the resource. Consumers can use key/value tags for filtering, ownership context, and policy checks."
+                },
+                "value": {
+                  "type": "string",
+                  "description": "Tag value attached to the resource for this key. Tsuga returns the value exactly as stored."
+                }
+              },
+              "title": "Tag"
+            },
+            "title": "Tags",
+            "description": "Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies."
+          },
+          "monitorCount": {
+            "type": "number",
+            "description": "Number of monitors directly assigned to this folder that the caller can read. Returned only by folder list responses; callers without monitor read access see 0."
+          }
+        },
+        "description": "Folder used to organize monitors into a two-level hierarchy, including the number of readable monitors it directly contains.",
+        "example": {
+          "id": "123-456-abc",
+          "name": "Platform",
+          "owner": "team-123-abc",
+          "tags": [
+            {
+              "key": "team",
+              "value": "platform"
+            }
+          ],
+          "monitorCount": 10
+        }
+      },
+      "QueryMonitorFoldersResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MonitorFolderWithMonitorCount"
+            }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
+          }
+        }
+      },
+      "MonitorFolder": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "owner"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Tsuga-generated monitor folder ID assigned when the folder is created. Use it as monitor `folderId` or child-folder `parentFolderId`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the monitor folder. Set by the caller on create or update."
+          },
+          "owner": {
+            "type": "string",
+            "description": "ID of the team that owns the monitor folder. Set by the caller on create or update and used for folder access control."
+          },
+          "parentFolderId": {
+            "type": "string",
+            "description": "ID of the top-level parent folder when this folder is nested. Set by the caller on create or update. Returned only for child folders; omitted for top-level folders."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "value"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "Tag key attached to the resource. Consumers can use key/value tags for filtering, ownership context, and policy checks."
+                },
+                "value": {
+                  "type": "string",
+                  "description": "Tag value attached to the resource for this key. Tsuga returns the value exactly as stored."
+                }
+              },
+              "title": "Tag"
+            },
+            "title": "Tags",
+            "description": "Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies."
+          }
+        },
+        "description": "Folder used to organize monitors into a two-level hierarchy",
+        "example": {
+          "id": "123-456-abc",
+          "name": "Platform",
+          "owner": "team-123-abc",
+          "tags": [
+            {
+              "key": "team",
+              "value": "platform"
+            }
+          ]
+        }
+      },
+      "GetMonitorFolderResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/MonitorFolder"
+          }
+        }
+      },
+      "CreateMonitorFolderResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/MonitorFolder"
+          }
+        }
+      },
+      "UpdateMonitorFolderResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/MonitorFolder"
+          }
+        }
+      },
+      "DeleteMonitorFolderResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DeleteResponse"
+          }
+        }
+      },
       "DocPage": {
         "type": "object",
         "required": [
@@ -8755,6 +8969,10 @@
             "type": "string",
             "description": "ID of the dashboard linked to this monitor for context when investigating alerts. Caller-supplied. Omitted when no dashboard is linked."
           },
+          "folderId": {
+            "type": "string",
+            "description": "ID of the monitor folder containing this monitor. Omitted for unfiled monitors."
+          },
           "pauseUntil": {
             "description": "Timestamp until which the monitor is snoozed. Omitted when the monitor is not snoozed.",
             "type": "string"
@@ -8803,6 +9021,7 @@
           "priority": 1,
           "owner": "team-123-abc",
           "dashboardId": "789-abc-def",
+          "folderId": "folder-123-abc",
           "permissions": "all",
           "clusterIds": []
         }
@@ -35130,6 +35349,10 @@
                 "type": "string",
                 "description": "ID of the dashboard linked to this monitor for context when investigating alerts. Caller-supplied. Omitted when no dashboard is linked."
               },
+              "folderId": {
+                "type": "string",
+                "description": "ID of the monitor folder containing this monitor. Omitted for unfiled monitors."
+              },
               "pauseUntil": {
                 "description": "Timestamp until which the monitor is snoozed. Omitted when the monitor is not snoozed.",
                 "type": "string"
@@ -36512,6 +36735,13 @@
                   "write"
                 ],
                 "description": "Folders organizing dashboards."
+              },
+              "monitor-folder": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Folders organizing monitors."
               },
               "documentation": {
                 "type": "string",
@@ -42019,6 +42249,706 @@
         }
       }
     },
+    "/v1/monitor-folders/query": {
+      "post": {
+        "operationId": "queryMonitorFolders",
+        "tags": [
+          "monitor-folders"
+        ],
+        "description": "Queries monitor folders visible to the authenticated operation key. Returns all folders unless the `parentFolderId` filter is set: pass a folder ID to select the children of that folder, or null to return only top-level folders. Results are ordered by most recently updated folder first unless `sort` is set, and include the number of readable monitors directly assigned to each folder. Use filters to narrow by owning team, name or ID substring, or tags.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
+                    "default": 100,
+                    "description": "Maximum number of items to return in this page. Omit to use the public API default of 100."
+                  },
+                  "offset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Zero-based index of the first matching item to return. Increase it with `limit` to request later pages. If `limit` is provided without `offset`, the offset defaults to 0."
+                  },
+                  "filters": {
+                    "type": "object",
+                    "properties": {
+                      "owners": {
+                        "type": "object",
+                        "required": [
+                          "values"
+                        ],
+                        "properties": {
+                          "values": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 250
+                            },
+                            "maxItems": 50,
+                            "description": "Values compared by this filter. When `exclude` is omitted or false, rows matching any value are kept; when `exclude` is true, matching rows are removed."
+                          },
+                          "exclude": {
+                            "type": "boolean",
+                            "description": "If true, exclude rows matching these values instead of including them"
+                          }
+                        },
+                        "description": "Restrict results to monitor folders owned by any of these team IDs"
+                      },
+                      "searchQuery": {
+                        "type": "object",
+                        "required": [
+                          "value"
+                        ],
+                        "properties": {
+                          "value": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 250,
+                            "description": "Substring matched case-insensitively against monitor folder names or folder IDs. Omit the whole `searchQuery` filter to skip text filtering."
+                          },
+                          "exclude": {
+                            "type": "boolean",
+                            "description": "If true, exclude monitor folders matching this value instead of including them"
+                          }
+                        },
+                        "description": "Text filter for monitor folder names or IDs. Optional; `exclude: true` returns folders whose name and ID do not match the substring."
+                      },
+                      "tags": {
+                        "type": "object",
+                        "required": [
+                          "values"
+                        ],
+                        "properties": {
+                          "values": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "key",
+                                "value"
+                              ],
+                              "properties": {
+                                "key": {
+                                  "type": "string",
+                                  "maxLength": 128,
+                                  "description": "Tag key to attach to the resource."
+                                },
+                                "value": {
+                                  "type": "string",
+                                  "maxLength": 256,
+                                  "pattern": "^\\S(.*\\S)?$",
+                                  "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected."
+                                }
+                              },
+                              "title": "Tag"
+                            },
+                            "maxItems": 50,
+                            "description": "Values compared by this filter. When `exclude` is omitted or false, rows matching any value are kept; when `exclude` is true, matching rows are removed."
+                          },
+                          "exclude": {
+                            "type": "boolean",
+                            "description": "If true, exclude rows matching these values instead of including them"
+                          }
+                        },
+                        "description": "Restrict results to monitor folders that have at least one of the listed key/value tags"
+                      },
+                      "parentFolderId": {
+                        "anyOf": [
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 250
+                          }
+                        ],
+                        "description": "Parent folder filter for monitor folder query results. Optional; pass a folder ID to return the child folders nested directly under it, or null to return only top-level folders. Omit to return all folders."
+                      }
+                    }
+                  },
+                  "sort": {
+                    "type": "object",
+                    "required": [
+                      "by",
+                      "direction"
+                    ],
+                    "properties": {
+                      "by": {
+                        "enum": [
+                          "owner",
+                          "tags",
+                          "monitorCount",
+                          "updatedAt",
+                          "name"
+                        ],
+                        "description": "Field to sort the returned monitor folders by: `owner` sorts by owning team name, `tags` sorts by tag key/value pairs, `monitorCount` sorts by the number of readable monitors directly in the folder, `updatedAt` sorts by last-updated timestamp, and `name` sorts alphabetically by folder name."
+                      },
+                      "direction": {
+                        "enum": [
+                          "asc",
+                          "desc"
+                        ],
+                        "description": "Sort direction: ascending or descending."
+                      }
+                    },
+                    "description": "Optional sorting applied to the returned monitor folders"
+                  }
+                },
+                "description": "Monitor folder query request. Use filters, sorting, limit, and offset to page through visible monitor folders."
+              },
+              "example": {
+                "filters": {
+                  "owners": {
+                    "values": [
+                      "team-123-abc"
+                    ]
+                  },
+                  "searchQuery": {
+                    "value": "Platform"
+                  },
+                  "tags": {
+                    "values": [
+                      {
+                        "key": "team",
+                        "value": "platform"
+                      }
+                    ]
+                  }
+                },
+                "sort": {
+                  "by": "name",
+                  "direction": "asc"
+                },
+                "limit": 10,
+                "offset": 0
+              }
+            }
+          },
+          "description": "Monitor folder query request. Use filters, sorting, limit, and offset to page through visible monitor folders."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryMonitorFoldersResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/monitor-folders/{id}": {
+      "get": {
+        "operationId": "getMonitorFolder",
+        "tags": [
+          "monitor-folders"
+        ],
+        "description": "Retrieves one monitor folder by ID.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identifier of the monitor folder to retrieve. Use the `id` returned by folder list, get, create, or update responses."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetMonitorFolderResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateMonitorFolder",
+        "tags": [
+          "monitor-folders"
+        ],
+        "description": "Updates an existing monitor folder by ID. Send the folder name, owner, tags, and parent relationship; omit `parentFolderId` to keep the current parent or send null to move the folder to top level.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "owner"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "description": "Display name of the monitor folder."
+                  },
+                  "owner": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "description": "ID of the team that owns the monitor folder and controls folder access."
+                  },
+                  "parentFolderId": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 250
+                      }
+                    ],
+                    "description": "ID of the top-level folder to nest this folder under. Omit on create or pass null to create a top-level folder; omit on update to keep the current parent; pass null on update to move the folder to top level. Non-null values must name a readable top-level folder. Folders can be nested at most two levels deep."
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "key",
+                        "value"
+                      ],
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "maxLength": 128,
+                          "description": "Tag key to attach to the resource."
+                        },
+                        "value": {
+                          "type": "string",
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$",
+                          "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected."
+                        }
+                      },
+                      "title": "Tag"
+                    },
+                    "title": "Tags",
+                    "maxItems": 50,
+                    "description": "Key/value tags to apply to the resource. Tag policies may require specific keys or values."
+                  }
+                },
+                "description": "Monitor folder create or update request. Provide a name, owner team, optional parent folder, and optional tags."
+              },
+              "example": {
+                "name": "Platform",
+                "owner": "team-123-abc",
+                "parentFolderId": null,
+                "tags": [
+                  {
+                    "key": "team",
+                    "value": "platform"
+                  }
+                ]
+              }
+            }
+          },
+          "description": "Monitor folder create or update request. Provide a name, owner team, optional parent folder, and optional tags."
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identifier of the monitor folder to update. Use the `id` returned by folder list, get, create, or update responses."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateMonitorFolderResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteMonitorFolder",
+        "tags": [
+          "monitor-folders"
+        ],
+        "description": "Deletes an empty monitor folder by ID. The request fails if the folder still contains monitors or child folders; monitors and child folders are not moved or deleted automatically.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identifier of the monitor folder to delete. Use the `id` returned by folder list, get, create, or update responses."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteMonitorFolderResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/monitor-folders": {
+      "post": {
+        "operationId": "createMonitorFolder",
+        "tags": [
+          "monitor-folders"
+        ],
+        "description": "Creates a monitor folder owned by the specified team. To create a child folder, set `parentFolderId` to a readable top-level folder.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "owner"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "description": "Display name of the monitor folder."
+                  },
+                  "owner": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "description": "ID of the team that owns the monitor folder and controls folder access."
+                  },
+                  "parentFolderId": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 250
+                      }
+                    ],
+                    "description": "ID of the top-level folder to nest this folder under. Omit on create or pass null to create a top-level folder; omit on update to keep the current parent; pass null on update to move the folder to top level. Non-null values must name a readable top-level folder. Folders can be nested at most two levels deep."
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "key",
+                        "value"
+                      ],
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "maxLength": 128,
+                          "description": "Tag key to attach to the resource."
+                        },
+                        "value": {
+                          "type": "string",
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$",
+                          "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected."
+                        }
+                      },
+                      "title": "Tag"
+                    },
+                    "title": "Tags",
+                    "maxItems": 50,
+                    "description": "Key/value tags to apply to the resource. Tag policies may require specific keys or values."
+                  }
+                },
+                "description": "Monitor folder create or update request. Provide a name, owner team, optional parent folder, and optional tags."
+              },
+              "example": {
+                "name": "Platform",
+                "owner": "team-123-abc",
+                "parentFolderId": null,
+                "tags": [
+                  {
+                    "key": "team",
+                    "value": "platform"
+                  }
+                ]
+              }
+            }
+          },
+          "description": "Monitor folder create or update request. Provide a name, owner team, optional parent folder, and optional tags."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateMonitorFolderResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/docs": {
       "get": {
         "operationId": "getDocPage",
@@ -46858,7 +47788,7 @@
         "tags": [
           "monitors"
         ],
-        "description": "Queries monitors visible to the authenticated operation key. Use this endpoint to inventory monitor definitions, filter by owner, tag, priority, type, activity, or cluster, and page through results. See [Monitors](/documentation/alert/monitors/index).",
+        "description": "Queries monitors visible to the authenticated operation key. Use this endpoint to inventory monitor definitions, filter by owner, tag, priority, type, activity, cluster, or folder, and page through results. See [Monitors](/documentation/alert/monitors/index).",
         "requestBody": {
           "required": true,
           "content": {
@@ -47045,6 +47975,19 @@
                           }
                         },
                         "description": "Restrict results to monitors deployed to any of these cluster IDs (monitors with no cluster restriction are always included)"
+                      },
+                      "folderId": {
+                        "anyOf": [
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 250
+                          }
+                        ],
+                        "description": "Return monitors directly assigned to this folder ID, or unfiled monitors when null. Omit to return all monitors."
                       }
                     }
                   },
@@ -47116,7 +48059,8 @@
                     "values": [
                       "cluster-123-abc"
                     ]
-                  }
+                  },
+                  "folderId": "folder-123-abc"
                 },
                 "sort": {
                   "by": "name",
@@ -47269,7 +48213,7 @@
         "tags": [
           "monitors"
         ],
-        "description": "Updates an existing monitor definition by ID. Required fields and the submitted configuration are overwritten; omitted `message`, `tags`, `clusterIds`, and `pauseUntil` keep their existing values. Omitting `dashboardId` clears the dashboard link.",
+        "description": "Updates an existing monitor definition by ID. Required fields and the submitted configuration are overwritten; omitted `message`, `tags`, `clusterIds`, `pauseUntil`, and `folderId` keep their existing values. Omitting `dashboardId` clears the dashboard link.",
         "requestBody": {
           "required": true,
           "content": {
@@ -47409,6 +48353,19 @@
                     ],
                     "description": "ID of the dashboard to link to this monitor for context when investigating alerts. On create: omit or send `null` to leave the monitor unlinked. On update: omit to skip updating this field, send `null` to clear an existing link."
                   },
+                  "folderId": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 250
+                      }
+                    ],
+                    "description": "Folder to organize this monitor in. Omit on create or send null to leave it unfiled; omit on update to keep its folder, or send null to remove it. A non-null ID must name a readable monitor folder. Assignment does not change ownership, data access, or evaluation state."
+                  },
                   "pauseUntil": {
                     "anyOf": [
                       {
@@ -47439,7 +48396,7 @@
                     "description": "Cluster IDs where the monitor should be deployed. Empty or omitted means all eligible clusters for cluster-deployed monitor types."
                   }
                 },
-                "description": "Monitor update request. Required fields and the submitted configuration are overwritten; omitted `message`, `tags`, `clusterIds`, and `pauseUntil` keep their existing values. Omitting `dashboardId` clears the dashboard link."
+                "description": "Monitor update request. Required fields and the submitted configuration are overwritten; omitted `message`, `tags`, `clusterIds`, `pauseUntil`, and `folderId` keep their existing values. Omitting `dashboardId` clears the dashboard link."
               },
               "examples": {
                 "example1": {
@@ -47477,6 +48434,7 @@
                     "priority": 1,
                     "owner": "team-123-abc",
                     "dashboardId": "789-abc-def",
+                    "folderId": "folder-123-abc",
                     "permissions": "all",
                     "clusterIds": []
                   }
@@ -47525,6 +48483,7 @@
                     "priority": 2,
                     "owner": "team-123-abc",
                     "dashboardId": "789-abc-def",
+                    "folderId": "folder-123-abc",
                     "permissions": "all",
                     "clusterIds": []
                   }
@@ -47551,6 +48510,7 @@
                     "priority": 3,
                     "owner": "team-123-abc",
                     "dashboardId": "789-abc-def",
+                    "folderId": "folder-123-abc",
                     "permissions": "all",
                     "clusterIds": []
                   }
@@ -47582,6 +48542,7 @@
                     "priority": 2,
                     "owner": "team-123-abc",
                     "dashboardId": "789-abc-def",
+                    "folderId": "folder-123-abc",
                     "permissions": "all",
                     "clusterIds": []
                   }
@@ -47613,6 +48574,7 @@
                     "priority": 2,
                     "owner": "team-123-abc",
                     "dashboardId": "789-abc-def",
+                    "folderId": "folder-123-abc",
                     "permissions": "all",
                     "clusterIds": []
                   }
@@ -47620,7 +48582,7 @@
               }
             }
           },
-          "description": "Monitor update request. Required fields and the submitted configuration are overwritten; omitted `message`, `tags`, `clusterIds`, and `pauseUntil` keep their existing values. Omitting `dashboardId` clears the dashboard link."
+          "description": "Monitor update request. Required fields and the submitted configuration are overwritten; omitted `message`, `tags`, `clusterIds`, `pauseUntil`, and `folderId` keep their existing values. Omitting `dashboardId` clears the dashboard link."
         },
         "parameters": [
           {
@@ -47915,6 +48877,19 @@
                     ],
                     "description": "ID of the dashboard to link to this monitor for context when investigating alerts. On create: omit or send `null` to leave the monitor unlinked. On update: omit to skip updating this field, send `null` to clear an existing link."
                   },
+                  "folderId": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 250
+                      }
+                    ],
+                    "description": "Folder to organize this monitor in. Omit on create or send null to leave it unfiled; omit on update to keep its folder, or send null to remove it. A non-null ID must name a readable monitor folder. Assignment does not change ownership, data access, or evaluation state."
+                  },
                   "pauseUntil": {
                     "anyOf": [
                       {
@@ -47983,6 +48958,7 @@
                     "priority": 1,
                     "owner": "team-123-abc",
                     "dashboardId": "789-abc-def",
+                    "folderId": "folder-123-abc",
                     "permissions": "all",
                     "clusterIds": []
                   }
@@ -48031,6 +49007,7 @@
                     "priority": 2,
                     "owner": "team-123-abc",
                     "dashboardId": "789-abc-def",
+                    "folderId": "folder-123-abc",
                     "permissions": "all",
                     "clusterIds": []
                   }
@@ -48057,6 +49034,7 @@
                     "priority": 3,
                     "owner": "team-123-abc",
                     "dashboardId": "789-abc-def",
+                    "folderId": "folder-123-abc",
                     "permissions": "all",
                     "clusterIds": []
                   }
@@ -48088,6 +49066,7 @@
                     "priority": 2,
                     "owner": "team-123-abc",
                     "dashboardId": "789-abc-def",
+                    "folderId": "folder-123-abc",
                     "permissions": "all",
                     "clusterIds": []
                   }
@@ -48119,6 +49098,7 @@
                     "priority": 2,
                     "owner": "team-123-abc",
                     "dashboardId": "789-abc-def",
+                    "folderId": "folder-123-abc",
                     "permissions": "all",
                     "clusterIds": []
                   }
@@ -60194,6 +61174,10 @@
     {
       "name": "quality-reports",
       "description": "Operations for telemetry quality report rows. Use these endpoints to inspect rule outcomes and recommendations for teams or clusters. See [Quality reports](/documentation/account-and-settings/quality-reports)."
+    },
+    {
+      "name": "monitor-folders",
+      "description": "Folders for organizing monitors into a two-level hierarchy."
     },
     {
       "name": "dashboard-folders",
