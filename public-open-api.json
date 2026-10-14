@@ -10380,6 +10380,10 @@
             "type": "integer",
             "description": "Total number of examples persisted for this row, before the preview truncation applied to examples. Returned whenever examples are visible to the caller."
           },
+          "evaluatedAt": {
+            "type": "string",
+            "description": "ISO timestamp at which the rule evaluator produced this result. Set to the report generation time unless the evaluation failed during that generation; the row then carries the last successful result for the same rule and scope, and evaluatedAt is when that result was computed. Omitted when the rule has never been evaluated successfully for this scope, in which case status is ignored, and on rows stored before Tsuga recorded this timestamp."
+          },
           "createdAt": {
             "type": "string",
             "description": "ISO timestamp the row was generated at"
@@ -10396,6 +10400,7 @@
           "weight": 2,
           "reportOverallScore": 0.85,
           "reportTotalWeight": 2,
+          "evaluatedAt": "2026-02-26T12:00:00.000Z",
           "createdAt": "2026-02-26T12:00:00.000Z"
         }
       },
@@ -21153,7 +21158,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "description": "Normalizes values as data sizes using byte units",
+            "description": "Normalizes values as data sizes using byte or bit units",
             "enum": [
               "data"
             ]
@@ -21165,9 +21170,15 @@
               "MB",
               "GB",
               "TB",
-              "PB"
+              "PB",
+              "bit",
+              "Kibit",
+              "Mibit",
+              "Gibit",
+              "Tibit",
+              "Pibit"
             ],
-            "description": "Data size unit used to present the normalized values"
+            "description": "Data size unit of the raw values. Byte units (B, KB, MB, ...) scale in steps of 1000. Bit units (bit, Kibit, Mibit, ...) are binary: values are converted to bytes and scale in steps of 1024 (KiB, MiB, GiB, ...)."
           }
         },
         "title": "Data"
