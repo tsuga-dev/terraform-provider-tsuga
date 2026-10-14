@@ -10,12 +10,13 @@ import (
 func TestAccTagPolicyResource_telemetry(t *testing.T) {
 	telemetryTagKey := fmt.Sprintf("environment-%s", randomString(8))
 	assetTagKey := fmt.Sprintf("cost-center-%s", randomString(8))
+	ownerTeamName := fmt.Sprintf("owner-%s", randomString(8))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create with telemetry configuration
 			{
-				Config: testAccTagPolicyResource_telemetry("test-tag-policy", telemetryTagKey),
+				Config: testAccTagPolicyResource_telemetry("test-tag-policy", telemetryTagKey, ownerTeamName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("tsuga_tag_policy.test", "name", "test-tag-policy"),
 					resource.TestCheckResourceAttr("tsuga_tag_policy.test", "is_active", "true"),
@@ -35,7 +36,7 @@ func TestAccTagPolicyResource_telemetry(t *testing.T) {
 			},
 			// Update to tsuga_asset configuration
 			{
-				Config: testAccTagPolicyResource_tsugaAsset("test-tag-policy-updated", assetTagKey),
+				Config: testAccTagPolicyResource_tsugaAsset("test-tag-policy-updated", assetTagKey, ownerTeamName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("tsuga_tag_policy.test", "name", "test-tag-policy-updated"),
 					resource.TestCheckResourceAttr("tsuga_tag_policy.test", "configuration.tsuga_asset.asset_types.#", "3"),
@@ -86,10 +87,10 @@ func TestAccTagPolicyResource_emptyAllowedTagValues(t *testing.T) {
 	})
 }
 
-func testAccTagPolicyResource_telemetry(name, tagKey string) string {
+func testAccTagPolicyResource_telemetry(name, tagKey, ownerTeamName string) string {
 	return fmt.Sprintf(`
 resource "tsuga_team" "owner" {
-  name       = "owner-%[2]s"
+  name       = %[3]q
   visibility = "public"
 }
 
@@ -110,13 +111,13 @@ resource "tsuga_tag_policy" "test" {
     }
   }
 }
-`, name, tagKey)
+`, name, tagKey, ownerTeamName)
 }
 
-func testAccTagPolicyResource_tsugaAsset(name, tagKey string) string {
+func testAccTagPolicyResource_tsugaAsset(name, tagKey, ownerTeamName string) string {
 	return fmt.Sprintf(`
 resource "tsuga_team" "owner" {
-  name       = "owner-%[2]s"
+  name       = %[3]q
   visibility = "public"
 }
 
@@ -135,7 +136,7 @@ resource "tsuga_tag_policy" "test" {
     }
   }
 }
-`, name, tagKey)
+`, name, tagKey, ownerTeamName)
 }
 
 func testAccTagPolicyResource_withTeamScope(tagKey string) string {
