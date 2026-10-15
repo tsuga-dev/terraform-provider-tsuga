@@ -1344,78 +1344,67 @@
             "description": "Identifier used to trace the lifecycle of this API request"
           },
           "data": {
-            "allOf": [
-              {
-                "type": "object",
-                "required": [
-                  "id",
-                  "name",
-                  "keyLastCharacters",
-                  "owner",
-                  "tags"
-                ],
-                "properties": {
-                  "id": {
-                    "type": "string",
-                    "description": "Tsuga-generated ingestion API key ID assigned when the key is created."
-                  },
-                  "name": {
-                    "type": "string",
-                    "description": "Human-readable key name. Names must be kebab-case when creating or updating keys."
-                  },
-                  "keyLastCharacters": {
-                    "type": "string",
-                    "description": "Last visible characters of the secret key. Use this to identify a key without exposing the full secret."
-                  },
-                  "owner": {
-                    "type": "string",
-                    "description": "Team ID that owns and manages the ingestion API key."
-                  },
-                  "tags": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "required": [
-                        "key",
-                        "value"
-                      ],
-                      "properties": {
-                        "key": {
-                          "type": "string",
-                          "description": "Tag key attached to the resource. Consumers can use key/value tags for filtering, ownership context, and policy checks."
-                        },
-                        "value": {
-                          "type": "string",
-                          "description": "Tag value attached to the resource for this key. Tsuga returns the value exactly as stored."
-                        }
-                      },
-                      "title": "Tag"
-                    },
-                    "title": "Tags",
-                    "description": "Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies."
-                  },
-                  "teamOverrideFields": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "description": "Telemetry attribute names used to override ownership for data sent with this key."
-                  }
-                }
-              },
-              {
-                "type": "object",
-                "required": [
-                  "key"
-                ],
-                "properties": {
-                  "key": {
-                    "type": "string",
-                    "description": "Full Tsuga-generated ingestion API key secret. Returned only in the create response; list, get, and update responses expose only `keyLastCharacters`."
-                  }
-                }
-              }
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "keyLastCharacters",
+              "owner",
+              "tags",
+              "key"
             ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Tsuga-generated ingestion API key ID assigned when the key is created."
+              },
+              "name": {
+                "type": "string",
+                "description": "Human-readable key name. Names must be kebab-case when creating or updating keys."
+              },
+              "keyLastCharacters": {
+                "type": "string",
+                "description": "Last visible characters of the secret key. Use this to identify a key without exposing the full secret."
+              },
+              "owner": {
+                "type": "string",
+                "description": "Team ID that owns and manages the ingestion API key."
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "key",
+                    "value"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "description": "Tag key attached to the resource. Consumers can use key/value tags for filtering, ownership context, and policy checks."
+                    },
+                    "value": {
+                      "type": "string",
+                      "description": "Tag value attached to the resource for this key. Tsuga returns the value exactly as stored."
+                    }
+                  },
+                  "title": "Tag"
+                },
+                "title": "Tags",
+                "description": "Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies."
+              },
+              "teamOverrideFields": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Telemetry attribute names used to override ownership for data sent with this key."
+              },
+              "key": {
+                "type": "string",
+                "description": "Full Tsuga-generated ingestion API key secret. Returned only in the create response; list, get, and update responses expose only `keyLastCharacters`."
+              }
+            },
             "title": "IngestionApiKeyCreated",
             "example": {
               "id": "123-456-abc",
@@ -1612,6 +1601,763 @@
                 "$ref": "#/components/schemas/UserIdentity"
               }
             ]
+          }
+        }
+      },
+      "OperationApiKey": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "owner",
+          "scope",
+          "permissions",
+          "keyLastCharacters"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the operation API key. Generated by Tsuga when the key is created. Use this as the stable key identifier when correlating API calls with audit logs or key-management records."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the operation API key. Set by the user who created or last updated the key. Returned for every operation-key-authenticated request so clients can show which saved key is active."
+          },
+          "owner": {
+            "type": "string",
+            "description": "Identifier of the team that owns the operation API key. Set when the key is created or updated. Combined with `scope`, it determines which team-owned resources the key can reach."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "value"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "Tag key attached to the resource. Consumers can use key/value tags for filtering, ownership context, and policy checks."
+                },
+                "value": {
+                  "type": "string",
+                  "description": "Tag value attached to the resource for this key. Tsuga returns the value exactly as stored."
+                }
+              },
+              "title": "Tag"
+            },
+            "title": "Tags",
+            "description": "Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies."
+          },
+          "scope": {
+            "enum": [
+              "all",
+              "owning-team-and-public",
+              "owning-team-only"
+            ],
+            "description": "Team-access boundary for the operation API key. Set when the key is created or updated. `all` can reach all teams, `owning-team-and-public` can reach the owning team and public teams, and `owning-team-only` can reach only the owning team."
+          },
+          "permissions": {
+            "type": "object",
+            "properties": {
+              "investigations": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Investigations, the records collecting the timeline and findings of an incident analysis."
+              },
+              "dashboard": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Dashboards and the graphs they contain."
+              },
+              "dashboard-folder": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Folders organizing dashboards."
+              },
+              "monitor-folder": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Folders organizing monitors."
+              },
+              "documentation": {
+                "type": "string",
+                "description": "Tsuga documentation and API reference pages, which are public content rather than account data.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "ingestion-api-key": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Ingestion API keys, used to send telemetry data to Tsuga."
+              },
+              "rum-public-token": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "RUM public tokens, embedded in web and mobile applications to send real user monitoring telemetry."
+              },
+              "operation-api-key": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Operation API keys, used to authenticate API, Terraform, MCP, and Tsuga CLI clients."
+              },
+              "inventory": {
+                "type": "string",
+                "description": "Cloud resources discovered by inventory scans.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "cloud-account": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Cloud accounts Tsuga scans to discover resources."
+              },
+              "logs": {
+                "type": "string",
+                "description": "Ingested log events, through search and aggregation endpoints.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "log-route": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Log routes, which select newly ingested logs and apply processors to them."
+              },
+              "metrics": {
+                "type": "string",
+                "description": "Ingested metrics, through query and aggregation endpoints.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "metric-route": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Metric routes, which select newly ingested metrics by name and apply processors to them."
+              },
+              "monitor": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Monitors, the alert definitions evaluated against telemetry."
+              },
+              "allowed-domains": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Email domains whose users are allowed to join the organization."
+              },
+              "queue": {
+                "type": "string",
+                "description": "Message queues of the catalog, inferred from telemetry.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "quality-report": {
+                "type": "string",
+                "description": "Telemetry quality reports.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "billing": {
+                "type": "string",
+                "description": "Ingested data volume billed to the organization.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "service": {
+                "type": "string",
+                "description": "Services of the catalog, inferred from telemetry.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "service-target": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Notification targets attached to a service."
+              },
+              "slo": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Service level objectives and the alerts attached to them."
+              },
+              "notification-rule": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Notification rules, which route alert transitions to notification targets."
+              },
+              "adaptive-notification-rule": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Adaptive notification rules, which page the owners of the failing service when one of their monitors or SLOs fires."
+              },
+              "notification-integration": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Notification integrations, containing the credentials Tsuga uses when sending notifications."
+              },
+              "notification-silence": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Notification silences, which suppress matching notification delivery."
+              },
+              "custom-usage-tag": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Custom usage tags, the telemetry tag keys tracked as usage dimensions."
+              },
+              "retention-policy": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Retention policies applied to logs, metrics, and traces."
+              },
+              "sandbox-configuration": {
+                "type": "string",
+                "description": "Sandbox agent configurations of the key's teams, and the sandbox agent runs launched with them.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "tag-policy": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Tag policies, which enforce tag requirements on Tsuga-managed assets and telemetry data."
+              },
+              "team": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Teams, their settings and their memberships."
+              },
+              "traces": {
+                "type": "string",
+                "description": "Ingested spans, through search and aggregation endpoints.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "rum": {
+                "type": "string",
+                "description": "Ingested RUM events, through search and aggregation endpoints.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "user": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "User accounts of the organization."
+              },
+              "user-invitation": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Invitations for people who do not belong to the organization yet."
+              }
+            },
+            "description": "Resource types the key can act on, each mapped to `read` or `write`. `write` also grants read access. A resource type absent from the map is not accessible to the key at all."
+          },
+          "keyLastCharacters": {
+            "type": "string",
+            "description": "Last characters of the operation API key secret. Set by Tsuga from the generated secret and returned because the full secret is only shown once at creation. Use this to distinguish saved keys without exposing the secret."
+          },
+          "expiresAt": {
+            "description": "Timestamp after which the operation API key stops authenticating. Set when the key is created or updated. Returned only for keys that have an expiration date.",
+            "type": "string"
+          }
+        },
+        "description": "Operation API key used to authenticate API, Terraform, MCP, and Tsuga CLI clients. The full key secret is returned only when the key is created. See [API keys](/documentation/account-and-settings/api-keys).",
+        "example": {
+          "id": "123-456-abc",
+          "name": "terraform-production",
+          "owner": "team-123-abc",
+          "tags": [
+            {
+              "key": "env",
+              "value": "production"
+            }
+          ],
+          "scope": "owning-team-only",
+          "permissions": {
+            "dashboard": "write",
+            "monitor": "write",
+            "logs": "read"
+          },
+          "keyLastCharacters": "x7Qm"
+        }
+      },
+      "ListOperationApiKeysResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OperationApiKey"
+            }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
+          }
+        }
+      },
+      "GetOperationApiKeyResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/OperationApiKey"
+          }
+        }
+      },
+      "CreateOperationApiKeyResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "owner",
+              "scope",
+              "permissions",
+              "keyLastCharacters",
+              "key"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique identifier of the operation API key. Generated by Tsuga when the key is created. Use this as the stable key identifier when correlating API calls with audit logs or key-management records."
+              },
+              "name": {
+                "type": "string",
+                "description": "Display name of the operation API key. Set by the user who created or last updated the key. Returned for every operation-key-authenticated request so clients can show which saved key is active."
+              },
+              "owner": {
+                "type": "string",
+                "description": "Identifier of the team that owns the operation API key. Set when the key is created or updated. Combined with `scope`, it determines which team-owned resources the key can reach."
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "key",
+                    "value"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "description": "Tag key attached to the resource. Consumers can use key/value tags for filtering, ownership context, and policy checks."
+                    },
+                    "value": {
+                      "type": "string",
+                      "description": "Tag value attached to the resource for this key. Tsuga returns the value exactly as stored."
+                    }
+                  },
+                  "title": "Tag"
+                },
+                "title": "Tags",
+                "description": "Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies."
+              },
+              "scope": {
+                "enum": [
+                  "all",
+                  "owning-team-and-public",
+                  "owning-team-only"
+                ],
+                "description": "Team-access boundary for the operation API key. Set when the key is created or updated. `all` can reach all teams, `owning-team-and-public` can reach the owning team and public teams, and `owning-team-only` can reach only the owning team."
+              },
+              "permissions": {
+                "type": "object",
+                "properties": {
+                  "investigations": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Investigations, the records collecting the timeline and findings of an incident analysis."
+                  },
+                  "dashboard": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Dashboards and the graphs they contain."
+                  },
+                  "dashboard-folder": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Folders organizing dashboards."
+                  },
+                  "monitor-folder": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Folders organizing monitors."
+                  },
+                  "documentation": {
+                    "type": "string",
+                    "description": "Tsuga documentation and API reference pages, which are public content rather than account data.",
+                    "enum": [
+                      "read"
+                    ]
+                  },
+                  "ingestion-api-key": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Ingestion API keys, used to send telemetry data to Tsuga."
+                  },
+                  "rum-public-token": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "RUM public tokens, embedded in web and mobile applications to send real user monitoring telemetry."
+                  },
+                  "operation-api-key": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Operation API keys, used to authenticate API, Terraform, MCP, and Tsuga CLI clients."
+                  },
+                  "inventory": {
+                    "type": "string",
+                    "description": "Cloud resources discovered by inventory scans.",
+                    "enum": [
+                      "read"
+                    ]
+                  },
+                  "cloud-account": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Cloud accounts Tsuga scans to discover resources."
+                  },
+                  "logs": {
+                    "type": "string",
+                    "description": "Ingested log events, through search and aggregation endpoints.",
+                    "enum": [
+                      "read"
+                    ]
+                  },
+                  "log-route": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Log routes, which select newly ingested logs and apply processors to them."
+                  },
+                  "metrics": {
+                    "type": "string",
+                    "description": "Ingested metrics, through query and aggregation endpoints.",
+                    "enum": [
+                      "read"
+                    ]
+                  },
+                  "metric-route": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Metric routes, which select newly ingested metrics by name and apply processors to them."
+                  },
+                  "monitor": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Monitors, the alert definitions evaluated against telemetry."
+                  },
+                  "allowed-domains": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Email domains whose users are allowed to join the organization."
+                  },
+                  "queue": {
+                    "type": "string",
+                    "description": "Message queues of the catalog, inferred from telemetry.",
+                    "enum": [
+                      "read"
+                    ]
+                  },
+                  "quality-report": {
+                    "type": "string",
+                    "description": "Telemetry quality reports.",
+                    "enum": [
+                      "read"
+                    ]
+                  },
+                  "billing": {
+                    "type": "string",
+                    "description": "Ingested data volume billed to the organization.",
+                    "enum": [
+                      "read"
+                    ]
+                  },
+                  "service": {
+                    "type": "string",
+                    "description": "Services of the catalog, inferred from telemetry.",
+                    "enum": [
+                      "read"
+                    ]
+                  },
+                  "service-target": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Notification targets attached to a service."
+                  },
+                  "slo": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Service level objectives and the alerts attached to them."
+                  },
+                  "notification-rule": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Notification rules, which route alert transitions to notification targets."
+                  },
+                  "adaptive-notification-rule": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Adaptive notification rules, which page the owners of the failing service when one of their monitors or SLOs fires."
+                  },
+                  "notification-integration": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Notification integrations, containing the credentials Tsuga uses when sending notifications."
+                  },
+                  "notification-silence": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Notification silences, which suppress matching notification delivery."
+                  },
+                  "custom-usage-tag": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Custom usage tags, the telemetry tag keys tracked as usage dimensions."
+                  },
+                  "retention-policy": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Retention policies applied to logs, metrics, and traces."
+                  },
+                  "sandbox-configuration": {
+                    "type": "string",
+                    "description": "Sandbox agent configurations of the key's teams, and the sandbox agent runs launched with them.",
+                    "enum": [
+                      "read"
+                    ]
+                  },
+                  "tag-policy": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Tag policies, which enforce tag requirements on Tsuga-managed assets and telemetry data."
+                  },
+                  "team": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Teams, their settings and their memberships."
+                  },
+                  "traces": {
+                    "type": "string",
+                    "description": "Ingested spans, through search and aggregation endpoints.",
+                    "enum": [
+                      "read"
+                    ]
+                  },
+                  "rum": {
+                    "type": "string",
+                    "description": "Ingested RUM events, through search and aggregation endpoints.",
+                    "enum": [
+                      "read"
+                    ]
+                  },
+                  "user": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "User accounts of the organization."
+                  },
+                  "user-invitation": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Invitations for people who do not belong to the organization yet."
+                  }
+                },
+                "description": "Resource types the key can act on, each mapped to `read` or `write`. `write` also grants read access. A resource type absent from the map is not accessible to the key at all."
+              },
+              "keyLastCharacters": {
+                "type": "string",
+                "description": "Last characters of the operation API key secret. Set by Tsuga from the generated secret and returned because the full secret is only shown once at creation. Use this to distinguish saved keys without exposing the secret."
+              },
+              "expiresAt": {
+                "description": "Timestamp after which the operation API key stops authenticating. Set when the key is created or updated. Returned only for keys that have an expiration date.",
+                "type": "string"
+              },
+              "key": {
+                "type": "string",
+                "description": "Full operation API key secret. Returned only in the create response; list, get, and update responses expose only `keyLastCharacters`."
+              }
+            },
+            "title": "OperationApiKeyCreated",
+            "example": {
+              "id": "123-456-abc",
+              "name": "terraform-production",
+              "owner": "team-123-abc",
+              "tags": [
+                {
+                  "key": "env",
+                  "value": "production"
+                }
+              ],
+              "scope": "owning-team-only",
+              "permissions": {
+                "dashboard": "write",
+                "monitor": "write",
+                "logs": "read"
+              },
+              "keyLastCharacters": "x7Qm",
+              "key": "tsuga_op:v1:abc123xyx7Qm"
+            }
+          }
+        }
+      },
+      "UpdateOperationApiKeyResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/OperationApiKey"
+          }
+        }
+      },
+      "DeleteOperationApiKeyResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DeleteResponse"
           }
         }
       },
@@ -3099,6 +3845,93 @@
           },
           "data": {
             "$ref": "#/components/schemas/DeleteResponse"
+          }
+        }
+      },
+      "Queue": {
+        "type": "object",
+        "required": [
+          "name",
+          "env",
+          "messagingSystem",
+          "publishPerSecond",
+          "consumePerSecond",
+          "consumerErrorsPerSecond",
+          "p90ProcessingMs"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "env": {
+            "type": "string"
+          },
+          "messagingSystem": {
+            "type": "string"
+          },
+          "publishPerSecond": {
+            "type": "number",
+            "description": "Messages published per second."
+          },
+          "consumePerSecond": {
+            "type": "number",
+            "description": "Messages consumed per second."
+          },
+          "consumerErrorsPerSecond": {
+            "type": "number",
+            "description": "Messages per second whose consumer span has an error status."
+          },
+          "p90ProcessingMs": {
+            "type": "number",
+            "description": "p90 duration of consumer spans."
+          }
+        },
+        "description": "Message queue inferred from producer and consumer messaging spans (OpenTelemetry `messaging.*` attributes), with its publish, consume, and consumer error rates.",
+        "example": {
+          "name": "orders",
+          "env": "production",
+          "messagingSystem": "kafka",
+          "publishPerSecond": 42.5,
+          "consumePerSecond": 41.9,
+          "consumerErrorsPerSecond": 0.2,
+          "p90ProcessingMs": 18.4
+        }
+      },
+      "ListQueuesResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Queue"
+            }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
+          }
+        }
+      },
+      "GetQueueResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Queue"
           }
         }
       },
@@ -9499,6 +10332,293 @@
           }
         }
       },
+      "AdaptiveRule": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "owner",
+          "isActive",
+          "shouldCreateInvestigation",
+          "monitorIds",
+          "sloIds",
+          "fallbackTarget"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the adaptive notification rule. Generated by Tsuga."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the adaptive notification rule."
+          },
+          "owner": {
+            "type": "string",
+            "description": "Team ID that owns and manages the rule."
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the rule currently sends notifications when one of its monitors fires."
+          },
+          "shouldCreateInvestigation": {
+            "type": "boolean",
+            "description": "Whether each page records an investigation holding the sampled traces and the call graph the destination was resolved from, linked from the notification body."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "value"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "Tag key attached to the resource. Consumers can use key/value tags for filtering, ownership context, and policy checks."
+                },
+                "value": {
+                  "type": "string",
+                  "description": "Tag value attached to the resource for this key. Tsuga returns the value exactly as stored."
+                }
+              },
+              "title": "Tag"
+            },
+            "title": "Tags",
+            "description": "Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies."
+          },
+          "monitorIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Monitors this rule reacts to."
+          },
+          "sloIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "SLOs this rule reacts to."
+          },
+          "fallbackTarget": {
+            "type": "object",
+            "required": [
+              "id",
+              "config"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Identifier of the notification target within this rule, used with the rule ID for per-target delivery state such as rate limiting."
+              },
+              "rateLimit": {
+                "type": "object",
+                "required": [
+                  "maxMessages",
+                  "minutes"
+                ],
+                "properties": {
+                  "maxMessages": {
+                    "type": "integer",
+                    "description": "Maximum number of notifications this target can send during the rate-limiting window."
+                  },
+                  "minutes": {
+                    "type": "integer",
+                    "description": "Length of the rate-limiting window, in minutes."
+                  }
+                },
+                "description": "Per-target rate limit used when sending notifications. If omitted, Tsuga allows up to 1000 notifications every 10 minutes for this target."
+              },
+              "config": {
+                "description": "Destination that received the notification. The `type` field discriminates the variant: `email` sends directly to the listed addresses, and every other type routes through the named integration referenced by `integrationId`.",
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type",
+                  "mapping": {
+                    "slack": "#/components/schemas/RuleTargetConfigSlack",
+                    "incident-io": "#/components/schemas/RuleTargetConfigIncidentIo",
+                    "email": "#/components/schemas/RuleTargetConfigEmail",
+                    "grafana-irm": "#/components/schemas/RuleTargetConfigGrafanaIrm",
+                    "pagerduty": "#/components/schemas/RuleTargetConfigPagerDuty",
+                    "microsoft-teams": "#/components/schemas/RuleTargetConfigMicrosoftTeams",
+                    "webhook": "#/components/schemas/RuleTargetConfigWebhook",
+                    "servicenow": "#/components/schemas/RuleTargetConfigServiceNow",
+                    "google-chat": "#/components/schemas/RuleTargetConfigGoogleChat",
+                    "squadcast": "#/components/schemas/RuleTargetConfigSquadcast",
+                    "jira": "#/components/schemas/RuleTargetConfigJira"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/RuleTargetConfigSlack"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RuleTargetConfigIncidentIo"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RuleTargetConfigEmail"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RuleTargetConfigGrafanaIrm"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RuleTargetConfigPagerDuty"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RuleTargetConfigMicrosoftTeams"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RuleTargetConfigWebhook"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RuleTargetConfigServiceNow"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RuleTargetConfigGoogleChat"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RuleTargetConfigSquadcast"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RuleTargetConfigJira"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "description": "Adaptive notification rule that reacts to selected monitors and SLOs. When one of them fires, Tsuga pages the owners of the failing service it identifies from the sampled traces, and pages the fallback target when no owner can be resolved. See [Rules](/documentation/alert/notifications/rules).",
+        "example": {
+          "id": "123-456-abc",
+          "name": "Checkout latency",
+          "owner": "team-123-abc",
+          "isActive": true,
+          "shouldCreateInvestigation": true,
+          "tags": [
+            {
+              "key": "channel",
+              "value": "alerts"
+            }
+          ],
+          "monitorIds": [
+            "monitor-123-abc"
+          ],
+          "sloIds": [
+            "slo-456-def"
+          ],
+          "fallbackTarget": {
+            "id": "789-abc-def",
+            "rateLimit": {
+              "maxMessages": 10,
+              "minutes": 5
+            },
+            "config": {
+              "type": "email",
+              "addresses": [
+                "oncall@example.com"
+              ],
+              "renotifyConfig": {
+                "mode": "each",
+                "renotificationStates": [
+                  "alert"
+                ],
+                "renotifyIntervalMinutes": 30
+              }
+            }
+          }
+        }
+      },
+      "ListAdaptiveNotificationRulesResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdaptiveRule"
+            }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
+          }
+        }
+      },
+      "GetAdaptiveNotificationRuleResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AdaptiveRule"
+          }
+        }
+      },
+      "CreateAdaptiveNotificationRuleResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AdaptiveRule"
+          }
+        }
+      },
+      "UpdateAdaptiveNotificationRuleResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AdaptiveRule"
+          }
+        }
+      },
+      "DeleteAdaptiveNotificationRuleResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DeleteResponse"
+          }
+        }
+      },
       "NotificationIntegration": {
         "type": "object",
         "required": [
@@ -10475,6 +11595,7 @@
               "no-unused-operation-api-keys",
               "no-unused-ingestion-api-keys",
               "db-logs-trace-correlation",
+              "logs-missing-trace-id",
               "assets-comply-with-tag-policies",
               "data-complies-with-tag-policies",
               "postgresql-server-metrics-collected",
@@ -11259,7 +12380,7 @@
               "properties": {
                 "platform": {
                   "type": "string",
-                  "description": "Observed cloud or orchestration platform, such as `aws_eks` or `kubernetes`. The emitting service or collector sets it through telemetry resource attributes. Returned when platform metadata is available for the service."
+                  "description": "Observed cloud or orchestration platform. Tsuga reads the `cloud.platform` resource attribute, such as `aws_eks` or `aws_lambda`, and adds `kubernetes` when spans carry `k8s.cluster.name` and `aws_ecs` when they carry `aws.ecs.task.arn`. The emitting service or collector sets these resource attributes."
                 },
                 "lastSeenAt": {
                   "description": "Most recent time this platform was observed. Tsuga sets it from telemetry timestamps during service metadata refreshes.",
@@ -11268,7 +12389,7 @@
               },
               "description": "A cloud or orchestration platform this service runs on, with the last time it was seen."
             },
-            "description": "Cloud platforms this service is running on"
+            "description": "Cloud platforms this service is running on. Absent or empty when Tsuga has not observed platform metadata for the service; treat both the same."
           },
           "cloudProviders": {
             "type": "array",
@@ -11281,7 +12402,7 @@
               "properties": {
                 "provider": {
                   "type": "string",
-                  "description": "Observed cloud provider, such as `aws`, `gcp`, or `azure`. The emitting service or collector sets it through telemetry resource attributes. Returned when provider metadata is available for the service."
+                  "description": "Observed cloud provider, read from the `cloud.provider` resource attribute, such as `aws`, `gcp`, or `azure`. The emitting service or collector sets it."
                 },
                 "lastSeenAt": {
                   "description": "Most recent time this provider was observed. Tsuga sets it from telemetry timestamps during service metadata refreshes.",
@@ -11290,7 +12411,7 @@
               },
               "description": "A cloud provider this service runs on, with the last time it was seen."
             },
-            "description": "Cloud providers this service is running on"
+            "description": "Cloud providers this service is running on. Absent or empty when Tsuga has not observed provider metadata for the service; treat both the same."
           },
           "lastSeenAt": {
             "description": "Most recent time Tsuga observed telemetry for this service.",
@@ -36936,6 +38057,13 @@
                 ],
                 "description": "RUM public tokens, embedded in web and mobile applications to send real user monitoring telemetry."
               },
+              "operation-api-key": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Operation API keys, used to authenticate API, Terraform, MCP, and Tsuga CLI clients."
+              },
               "inventory": {
                 "type": "string",
                 "description": "Cloud resources discovered by inventory scans.",
@@ -36992,6 +38120,13 @@
                 ],
                 "description": "Email domains whose users are allowed to join the organization."
               },
+              "queue": {
+                "type": "string",
+                "description": "Message queues of the catalog, inferred from telemetry.",
+                "enum": [
+                  "read"
+                ]
+              },
               "quality-report": {
                 "type": "string",
                 "description": "Telemetry quality reports.",
@@ -37033,6 +38168,13 @@
                   "write"
                 ],
                 "description": "Notification rules, which route alert transitions to notification targets."
+              },
+              "adaptive-notification-rule": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Adaptive notification rules, which page the owners of the failing service when one of their monitors or SLOs fires."
               },
               "notification-integration": {
                 "enum": [
@@ -38838,6 +39980,1072 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GetMeResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/operation-api-keys": {
+      "get": {
+        "operationId": "listOperationApiKeys",
+        "tags": [
+          "operation-api-keys"
+        ],
+        "description": "Lists operation API keys visible to the caller. Use this to inventory machine clients, with their owners, scopes, and permissions. Pagination fields limit the returned page.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Maximum number of items to return in this page. Omit to use the public API default of 100."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "description": "Zero-based index of the first matching item to return. Increase it with `limit` to request later pages. If `limit` is provided without `offset`, the offset defaults to 0."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListOperationApiKeysResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createOperationApiKey",
+        "tags": [
+          "operation-api-keys"
+        ],
+        "description": "Creates an operation API key. Store the returned `key` immediately because Tsuga returns the full secret only in this response. When the caller is an operation API key, the resulting key cannot have a wider scope than the caller, cannot have a higher permission level than the caller on any resource, must have an expiration in the future, and cannot expire later than the caller's own expiration.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "owner",
+                  "scope",
+                  "permissions",
+                  "expiresAt"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "format": "kebab-case",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Kebab-case name for the operation API key."
+                  },
+                  "owner": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "description": "ID of the team that owns the operation API key. When the caller is an operation API key, the team must be within the caller's scope."
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "key",
+                        "value"
+                      ],
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "maxLength": 128,
+                          "description": "Tag key to attach to the resource."
+                        },
+                        "value": {
+                          "type": "string",
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$",
+                          "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected."
+                        }
+                      },
+                      "title": "Tag"
+                    },
+                    "title": "Tags",
+                    "maxItems": 50,
+                    "description": "Key/value tags to apply to the resource. Tag policies may require specific keys or values."
+                  },
+                  "scope": {
+                    "enum": [
+                      "all",
+                      "owning-team-and-public",
+                      "owning-team-only"
+                    ],
+                    "description": "Team-access boundary for the operation API key. Set when the key is created or updated. `all` can reach all teams, `owning-team-and-public` can reach the owning team and public teams, and `owning-team-only` can reach only the owning team."
+                  },
+                  "permissions": {
+                    "type": "object",
+                    "properties": {
+                      "investigations": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Investigations, the records collecting the timeline and findings of an incident analysis."
+                      },
+                      "dashboard": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Dashboards and the graphs they contain."
+                      },
+                      "dashboard-folder": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Folders organizing dashboards."
+                      },
+                      "monitor-folder": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Folders organizing monitors."
+                      },
+                      "documentation": {
+                        "type": "string",
+                        "description": "Tsuga documentation and API reference pages, which are public content rather than account data.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "ingestion-api-key": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Ingestion API keys, used to send telemetry data to Tsuga."
+                      },
+                      "rum-public-token": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "RUM public tokens, embedded in web and mobile applications to send real user monitoring telemetry."
+                      },
+                      "operation-api-key": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Operation API keys, used to authenticate API, Terraform, MCP, and Tsuga CLI clients."
+                      },
+                      "inventory": {
+                        "type": "string",
+                        "description": "Cloud resources discovered by inventory scans.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "cloud-account": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Cloud accounts Tsuga scans to discover resources."
+                      },
+                      "logs": {
+                        "type": "string",
+                        "description": "Ingested log events, through search and aggregation endpoints.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "log-route": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Log routes, which select newly ingested logs and apply processors to them."
+                      },
+                      "metrics": {
+                        "type": "string",
+                        "description": "Ingested metrics, through query and aggregation endpoints.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "metric-route": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Metric routes, which select newly ingested metrics by name and apply processors to them."
+                      },
+                      "monitor": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Monitors, the alert definitions evaluated against telemetry."
+                      },
+                      "allowed-domains": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Email domains whose users are allowed to join the organization."
+                      },
+                      "queue": {
+                        "type": "string",
+                        "description": "Message queues of the catalog, inferred from telemetry.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "quality-report": {
+                        "type": "string",
+                        "description": "Telemetry quality reports.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "billing": {
+                        "type": "string",
+                        "description": "Ingested data volume billed to the organization.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "service": {
+                        "type": "string",
+                        "description": "Services of the catalog, inferred from telemetry.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "service-target": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Notification targets attached to a service."
+                      },
+                      "slo": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Service level objectives and the alerts attached to them."
+                      },
+                      "notification-rule": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Notification rules, which route alert transitions to notification targets."
+                      },
+                      "adaptive-notification-rule": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Adaptive notification rules, which page the owners of the failing service when one of their monitors or SLOs fires."
+                      },
+                      "notification-integration": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Notification integrations, containing the credentials Tsuga uses when sending notifications."
+                      },
+                      "notification-silence": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Notification silences, which suppress matching notification delivery."
+                      },
+                      "custom-usage-tag": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Custom usage tags, the telemetry tag keys tracked as usage dimensions."
+                      },
+                      "retention-policy": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Retention policies applied to logs, metrics, and traces."
+                      },
+                      "sandbox-configuration": {
+                        "type": "string",
+                        "description": "Sandbox agent configurations of the key's teams, and the sandbox agent runs launched with them.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "tag-policy": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Tag policies, which enforce tag requirements on Tsuga-managed assets and telemetry data."
+                      },
+                      "team": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Teams, their settings and their memberships."
+                      },
+                      "traces": {
+                        "type": "string",
+                        "description": "Ingested spans, through search and aggregation endpoints.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "rum": {
+                        "type": "string",
+                        "description": "Ingested RUM events, through search and aggregation endpoints.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "user": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "User accounts of the organization."
+                      },
+                      "user-invitation": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Invitations for people who do not belong to the organization yet."
+                      }
+                    },
+                    "description": "Resource types the key can act on, each mapped to `read` or `write`. `write` also grants read access. A resource type absent from the map is not accessible to the key at all."
+                  },
+                  "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time after which the key stops working. When the caller is an operation API key, set a future expiration, no later than the caller's own when the caller expires."
+                  }
+                },
+                "description": "Operation API key creation request. Provide a kebab-case name, owner team, scope, permissions, expiration date, and optionally tags."
+              },
+              "example": {
+                "name": "terraform-production",
+                "owner": "team-123-abc",
+                "tags": [
+                  {
+                    "key": "env",
+                    "value": "production"
+                  }
+                ],
+                "scope": "owning-team-only",
+                "permissions": {
+                  "dashboard": "write",
+                  "monitor": "write",
+                  "logs": "read"
+                },
+                "expiresAt": "2027-01-01T00:00:00.000Z"
+              }
+            }
+          },
+          "description": "Operation API key creation request. Provide a kebab-case name, owner team, scope, permissions, expiration date, and optionally tags."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateOperationApiKeyResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/operation-api-keys/{id}": {
+      "get": {
+        "operationId": "getOperationApiKey",
+        "tags": [
+          "operation-api-keys"
+        ],
+        "description": "Retrieves one operation API key by ID. The response never includes the full secret key value; only the last visible characters are returned.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identifier of the operation API key to retrieve. Use the `id` returned by operation API key list or create responses."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetOperationApiKeyResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateOperationApiKey",
+        "tags": [
+          "operation-api-keys"
+        ],
+        "description": "Updates an operation API key by ID, including name, owner, tags, scope, permissions, and expiration. The secret key value is not rotated by this operation. When the caller is an operation API key, the resulting key cannot have a wider scope than the caller, cannot have a higher permission level than the caller on any resource, must have an expiration in the future, and cannot expire later than the caller's own expiration. The key to update must also belong to a team within the scope of the caller.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "owner",
+                  "scope",
+                  "permissions",
+                  "expiresAt"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "format": "kebab-case",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Kebab-case name for the operation API key."
+                  },
+                  "owner": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "description": "ID of the team that owns the operation API key. When the caller is an operation API key, the team must be within the caller's scope."
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "key",
+                        "value"
+                      ],
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "maxLength": 128,
+                          "description": "Tag key to attach to the resource."
+                        },
+                        "value": {
+                          "type": "string",
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$",
+                          "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected."
+                        }
+                      },
+                      "title": "Tag"
+                    },
+                    "title": "Tags",
+                    "maxItems": 50,
+                    "description": "Key/value tags to apply to the resource. Tag policies may require specific keys or values."
+                  },
+                  "scope": {
+                    "enum": [
+                      "all",
+                      "owning-team-and-public",
+                      "owning-team-only"
+                    ],
+                    "description": "Team-access boundary for the operation API key. Set when the key is created or updated. `all` can reach all teams, `owning-team-and-public` can reach the owning team and public teams, and `owning-team-only` can reach only the owning team."
+                  },
+                  "permissions": {
+                    "type": "object",
+                    "properties": {
+                      "investigations": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Investigations, the records collecting the timeline and findings of an incident analysis."
+                      },
+                      "dashboard": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Dashboards and the graphs they contain."
+                      },
+                      "dashboard-folder": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Folders organizing dashboards."
+                      },
+                      "monitor-folder": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Folders organizing monitors."
+                      },
+                      "documentation": {
+                        "type": "string",
+                        "description": "Tsuga documentation and API reference pages, which are public content rather than account data.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "ingestion-api-key": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Ingestion API keys, used to send telemetry data to Tsuga."
+                      },
+                      "rum-public-token": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "RUM public tokens, embedded in web and mobile applications to send real user monitoring telemetry."
+                      },
+                      "operation-api-key": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Operation API keys, used to authenticate API, Terraform, MCP, and Tsuga CLI clients."
+                      },
+                      "inventory": {
+                        "type": "string",
+                        "description": "Cloud resources discovered by inventory scans.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "cloud-account": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Cloud accounts Tsuga scans to discover resources."
+                      },
+                      "logs": {
+                        "type": "string",
+                        "description": "Ingested log events, through search and aggregation endpoints.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "log-route": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Log routes, which select newly ingested logs and apply processors to them."
+                      },
+                      "metrics": {
+                        "type": "string",
+                        "description": "Ingested metrics, through query and aggregation endpoints.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "metric-route": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Metric routes, which select newly ingested metrics by name and apply processors to them."
+                      },
+                      "monitor": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Monitors, the alert definitions evaluated against telemetry."
+                      },
+                      "allowed-domains": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Email domains whose users are allowed to join the organization."
+                      },
+                      "queue": {
+                        "type": "string",
+                        "description": "Message queues of the catalog, inferred from telemetry.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "quality-report": {
+                        "type": "string",
+                        "description": "Telemetry quality reports.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "billing": {
+                        "type": "string",
+                        "description": "Ingested data volume billed to the organization.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "service": {
+                        "type": "string",
+                        "description": "Services of the catalog, inferred from telemetry.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "service-target": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Notification targets attached to a service."
+                      },
+                      "slo": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Service level objectives and the alerts attached to them."
+                      },
+                      "notification-rule": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Notification rules, which route alert transitions to notification targets."
+                      },
+                      "adaptive-notification-rule": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Adaptive notification rules, which page the owners of the failing service when one of their monitors or SLOs fires."
+                      },
+                      "notification-integration": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Notification integrations, containing the credentials Tsuga uses when sending notifications."
+                      },
+                      "notification-silence": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Notification silences, which suppress matching notification delivery."
+                      },
+                      "custom-usage-tag": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Custom usage tags, the telemetry tag keys tracked as usage dimensions."
+                      },
+                      "retention-policy": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Retention policies applied to logs, metrics, and traces."
+                      },
+                      "sandbox-configuration": {
+                        "type": "string",
+                        "description": "Sandbox agent configurations of the key's teams, and the sandbox agent runs launched with them.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "tag-policy": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Tag policies, which enforce tag requirements on Tsuga-managed assets and telemetry data."
+                      },
+                      "team": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Teams, their settings and their memberships."
+                      },
+                      "traces": {
+                        "type": "string",
+                        "description": "Ingested spans, through search and aggregation endpoints.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "rum": {
+                        "type": "string",
+                        "description": "Ingested RUM events, through search and aggregation endpoints.",
+                        "enum": [
+                          "read"
+                        ]
+                      },
+                      "user": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "User accounts of the organization."
+                      },
+                      "user-invitation": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Invitations for people who do not belong to the organization yet."
+                      }
+                    },
+                    "description": "Resource types the key can act on, each mapped to `read` or `write`. `write` also grants read access. A resource type absent from the map is not accessible to the key at all."
+                  },
+                  "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time after which the key stops working. When the caller is an operation API key, set a future expiration, no later than the caller's own when the caller expires."
+                  }
+                },
+                "description": "Operation API key update request. Provide the full definition, including name, owner team, scope, permissions, and expiration date."
+              },
+              "example": {
+                "name": "terraform-production",
+                "owner": "team-123-abc",
+                "tags": [
+                  {
+                    "key": "env",
+                    "value": "production"
+                  }
+                ],
+                "scope": "owning-team-only",
+                "permissions": {
+                  "dashboard": "write",
+                  "monitor": "write",
+                  "logs": "read"
+                },
+                "expiresAt": "2027-01-01T00:00:00.000Z"
+              }
+            }
+          },
+          "description": "Operation API key update request. Provide the full definition, including name, owner team, scope, permissions, and expiration date."
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identifier of the operation API key to update. Use the `id` returned by operation API key list, get, or create responses."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateOperationApiKeyResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteOperationApiKey",
+        "tags": [
+          "operation-api-keys"
+        ],
+        "description": "Deletes an operation API key by ID. Clients using the deleted key can no longer authenticate with it. When the caller is an operation API key, the key must belong to a team within the scope of the caller.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identifier of the operation API key to delete. Use the `id` returned by operation API key list, get, or create responses."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteOperationApiKeyResponse"
                 }
               }
             }
@@ -43114,6 +45322,241 @@
         }
       }
     },
+    "/v1/queues": {
+      "get": {
+        "operationId": "listQueues",
+        "tags": [
+          "queues"
+        ],
+        "description": "Lists message queues inferred from producer and consumer messaging spans, with their publish, consume, and consumer error rates over the stats window.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Maximum number of items to return in this page. Omit to use the public API default of 100."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "description": "Zero-based index of the first matching item to return. Increase it with `limit` to request later pages. If `limit` is provided without `offset`, the offset defaults to 0."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "clusterId",
+            "required": false,
+            "description": "Telemetry cluster to target. Omit to use the first cluster in the organization; this does not query all clusters."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "env",
+            "required": false,
+            "description": "Environment used to restrict the queues."
+          },
+          {
+            "schema": {
+              "enum": [
+                "1h",
+                "4h",
+                "24h"
+              ]
+            },
+            "in": "query",
+            "name": "statsWindow",
+            "required": false,
+            "description": "Lookback over messaging spans used to list the queues and compute their rates. Defaults to `1h`."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListQueuesResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/queues/by-name": {
+      "get": {
+        "operationId": "getQueue",
+        "tags": [
+          "queues"
+        ],
+        "description": "Retrieves one message queue by name, messaging system, and environment. Searches the last hour first, then the last 24 hours.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "name",
+            "required": true,
+            "description": "Queue name (`messaging.destination.name`)."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "messagingSystem",
+            "required": true,
+            "description": "Messaging system (`messaging.system`), for example `kafka` or `aws_sqs`."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "env",
+            "required": true,
+            "description": "Environment the queue was observed in."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "clusterId",
+            "required": false,
+            "description": "Telemetry cluster to target. Omit to use the first cluster in the organization; this does not query all clusters."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetQueueResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/docs": {
       "get": {
         "operationId": "getDocPage",
@@ -46146,6 +48589,17 @@
             "name": "clusterId",
             "required": false,
             "description": "Telemetry cluster to target. Required when the organization has multiple clusters; omit only for single-cluster organizations."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "description": "Return only attribute dot-paths containing this text, case-insensitively, e.g. `k8s` or `http.status`."
           }
         ],
         "responses": {
@@ -50338,6 +52792,824 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DeleteNotificationRuleResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/adaptive-notification-rules": {
+      "get": {
+        "operationId": "listAdaptiveNotificationRules",
+        "tags": [
+          "adaptive-notification-rules"
+        ],
+        "description": "Lists adaptive notification rules visible to the authenticated operation key. Standard notification rules are listed by the notification rules endpoint. Pagination fields limit the returned page.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Maximum number of items to return in this page. Omit to use the public API default of 100."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "description": "Zero-based index of the first matching item to return. Increase it with `limit` to request later pages. If `limit` is provided without `offset`, the offset defaults to 0."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListAdaptiveNotificationRulesResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createAdaptiveNotificationRule",
+        "tags": [
+          "adaptive-notification-rules"
+        ],
+        "description": "Creates an adaptive notification rule. Only trace monitors, metric monitors over OTel span metrics, and SLOs over traces or OTel span metrics are eligible.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "owner",
+                  "isActive",
+                  "fallbackTarget"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "description": "Display name of the adaptive notification rule."
+                  },
+                  "owner": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "description": "Team ID that owns and manages the rule"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "key",
+                        "value"
+                      ],
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "maxLength": 128,
+                          "description": "Tag key to attach to the resource."
+                        },
+                        "value": {
+                          "type": "string",
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$",
+                          "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected."
+                        }
+                      },
+                      "title": "Tag"
+                    },
+                    "title": "Tags",
+                    "maxItems": 50,
+                    "description": "Key/value tags to apply to the resource. Tag policies may require specific keys or values."
+                  },
+                  "isActive": {
+                    "type": "boolean",
+                    "description": "Set to true for the rule to send notifications when one of its monitors fires."
+                  },
+                  "shouldCreateInvestigation": {
+                    "type": "boolean",
+                    "description": "Set to true to record an investigation for each page, holding the sampled traces and the call graph the destination was resolved from, and to link it from the notification body. Defaults to false."
+                  },
+                  "monitorIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 250
+                    },
+                    "maxItems": 100,
+                    "description": "Monitors this rule reacts to. Only trace monitors and metric monitors over OTel span metrics are eligible. On update, omitting this field keeps the current monitors; send an empty array to remove them. Send at least one monitor or SLO."
+                  },
+                  "sloIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 250
+                    },
+                    "maxItems": 100,
+                    "description": "SLOs this rule reacts to. Only SLOs over traces or OTel span metrics are eligible. On update, omitting this field keeps the current SLOs; send an empty array to remove them. Send at least one monitor or SLO."
+                  },
+                  "fallbackTarget": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "config"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 250,
+                        "description": "Identifier of the notification target within this rule. Choose a stable ID that is unique among this rule's targets; Tsuga uses it with the rule ID for per-target delivery state such as rate limiting."
+                      },
+                      "rateLimit": {
+                        "type": "object",
+                        "required": [
+                          "maxMessages",
+                          "minutes"
+                        ],
+                        "properties": {
+                          "maxMessages": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "Maximum number of notifications this target can send during the rate-limiting window. The ratio of `maxMessages` to `minutes` cannot exceed 100 notifications per minute."
+                          },
+                          "minutes": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "Length of the rate-limiting window, in minutes. The ratio of `maxMessages` to `minutes` cannot exceed 100 notifications per minute."
+                          }
+                        },
+                        "description": "Per-target rate limit used when sending notifications. If omitted, Tsuga allows up to 1000 notifications every 10 minutes for this target."
+                      },
+                      "config": {
+                        "description": "Destination that should receive the notification. The `type` field discriminates the variant: `email` sends directly to the listed addresses and needs no integration; every other type routes through the integration identified by `integrationId`, which must already exist (create it first with the notification integration endpoints).",
+                        "type": "object",
+                        "discriminator": {
+                          "propertyName": "type",
+                          "mapping": {
+                            "slack": "#/components/schemas/RuleTargetInputSlack",
+                            "incident-io": "#/components/schemas/RuleTargetInputIncidentIo",
+                            "pagerduty": "#/components/schemas/RuleTargetInputPagerDuty",
+                            "email": "#/components/schemas/RuleTargetInputEmail",
+                            "grafana-irm": "#/components/schemas/RuleTargetInputGrafanaIrm",
+                            "microsoft-teams": "#/components/schemas/RuleTargetInputMicrosoftTeams",
+                            "webhook": "#/components/schemas/RuleTargetInputWebhook",
+                            "servicenow": "#/components/schemas/RuleTargetInputServiceNow",
+                            "google-chat": "#/components/schemas/RuleTargetInputGoogleChat",
+                            "squadcast": "#/components/schemas/RuleTargetInputSquadcast",
+                            "jira": "#/components/schemas/RuleTargetInputJira"
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "oneOf": [
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputSlack"
+                          },
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputIncidentIo"
+                          },
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputPagerDuty"
+                          },
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputEmail"
+                          },
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputGrafanaIrm"
+                          },
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputMicrosoftTeams"
+                          },
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputWebhook"
+                          },
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputServiceNow"
+                          },
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputGoogleChat"
+                          },
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputSquadcast"
+                          },
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputJira"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "description": "Adaptive notification rule create or update request. Provide the monitors or SLOs the rule reacts to, the owner, the active state, and the fallback target."
+              },
+              "example": {
+                "name": "Checkout latency",
+                "owner": "team-123-abc",
+                "isActive": true,
+                "shouldCreateInvestigation": true,
+                "tags": [
+                  {
+                    "key": "channel",
+                    "value": "alerts"
+                  }
+                ],
+                "monitorIds": [
+                  "monitor-123-abc"
+                ],
+                "sloIds": [
+                  "slo-456-def"
+                ],
+                "fallbackTarget": {
+                  "id": "789-abc-def",
+                  "rateLimit": {
+                    "maxMessages": 10,
+                    "minutes": 5
+                  },
+                  "config": {
+                    "type": "email",
+                    "addresses": [
+                      "oncall@example.com"
+                    ],
+                    "renotifyConfig": {
+                      "mode": "each",
+                      "renotificationStates": [
+                        "alert"
+                      ],
+                      "renotifyIntervalMinutes": 30
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "description": "Adaptive notification rule create or update request. Provide the monitors or SLOs the rule reacts to, the owner, the active state, and the fallback target."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateAdaptiveNotificationRuleResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/adaptive-notification-rules/{id}": {
+      "get": {
+        "operationId": "getAdaptiveNotificationRule",
+        "tags": [
+          "adaptive-notification-rules"
+        ],
+        "description": "Retrieves one adaptive notification rule by ID.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identifier of the adaptive notification rule to retrieve. Use the `id` returned by adaptive notification rule list or create responses."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAdaptiveNotificationRuleResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateAdaptiveNotificationRule",
+        "tags": [
+          "adaptive-notification-rules"
+        ],
+        "description": "Updates an existing adaptive notification rule by ID. Required fields and the fallback target are overwritten; omitted optional fields, including `monitorIds` and `sloIds`, keep their existing values. Send an empty array to clear a list.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "owner",
+                  "isActive",
+                  "fallbackTarget"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "description": "Display name of the adaptive notification rule."
+                  },
+                  "owner": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "description": "Team ID that owns and manages the rule"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "key",
+                        "value"
+                      ],
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "maxLength": 128,
+                          "description": "Tag key to attach to the resource."
+                        },
+                        "value": {
+                          "type": "string",
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$",
+                          "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected."
+                        }
+                      },
+                      "title": "Tag"
+                    },
+                    "title": "Tags",
+                    "maxItems": 50,
+                    "description": "Key/value tags to apply to the resource. Tag policies may require specific keys or values."
+                  },
+                  "isActive": {
+                    "type": "boolean",
+                    "description": "Set to true for the rule to send notifications when one of its monitors fires."
+                  },
+                  "shouldCreateInvestigation": {
+                    "type": "boolean",
+                    "description": "Set to true to record an investigation for each page, holding the sampled traces and the call graph the destination was resolved from, and to link it from the notification body. Defaults to false."
+                  },
+                  "monitorIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 250
+                    },
+                    "maxItems": 100,
+                    "description": "Monitors this rule reacts to. Only trace monitors and metric monitors over OTel span metrics are eligible. On update, omitting this field keeps the current monitors; send an empty array to remove them. Send at least one monitor or SLO."
+                  },
+                  "sloIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 250
+                    },
+                    "maxItems": 100,
+                    "description": "SLOs this rule reacts to. Only SLOs over traces or OTel span metrics are eligible. On update, omitting this field keeps the current SLOs; send an empty array to remove them. Send at least one monitor or SLO."
+                  },
+                  "fallbackTarget": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "config"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 250,
+                        "description": "Identifier of the notification target within this rule. Choose a stable ID that is unique among this rule's targets; Tsuga uses it with the rule ID for per-target delivery state such as rate limiting."
+                      },
+                      "rateLimit": {
+                        "type": "object",
+                        "required": [
+                          "maxMessages",
+                          "minutes"
+                        ],
+                        "properties": {
+                          "maxMessages": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "Maximum number of notifications this target can send during the rate-limiting window. The ratio of `maxMessages` to `minutes` cannot exceed 100 notifications per minute."
+                          },
+                          "minutes": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "Length of the rate-limiting window, in minutes. The ratio of `maxMessages` to `minutes` cannot exceed 100 notifications per minute."
+                          }
+                        },
+                        "description": "Per-target rate limit used when sending notifications. If omitted, Tsuga allows up to 1000 notifications every 10 minutes for this target."
+                      },
+                      "config": {
+                        "description": "Destination that should receive the notification. The `type` field discriminates the variant: `email` sends directly to the listed addresses and needs no integration; every other type routes through the integration identified by `integrationId`, which must already exist (create it first with the notification integration endpoints).",
+                        "type": "object",
+                        "discriminator": {
+                          "propertyName": "type",
+                          "mapping": {
+                            "slack": "#/components/schemas/RuleTargetInputSlack",
+                            "incident-io": "#/components/schemas/RuleTargetInputIncidentIo",
+                            "pagerduty": "#/components/schemas/RuleTargetInputPagerDuty",
+                            "email": "#/components/schemas/RuleTargetInputEmail",
+                            "grafana-irm": "#/components/schemas/RuleTargetInputGrafanaIrm",
+                            "microsoft-teams": "#/components/schemas/RuleTargetInputMicrosoftTeams",
+                            "webhook": "#/components/schemas/RuleTargetInputWebhook",
+                            "servicenow": "#/components/schemas/RuleTargetInputServiceNow",
+                            "google-chat": "#/components/schemas/RuleTargetInputGoogleChat",
+                            "squadcast": "#/components/schemas/RuleTargetInputSquadcast",
+                            "jira": "#/components/schemas/RuleTargetInputJira"
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "oneOf": [
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputSlack"
+                          },
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputIncidentIo"
+                          },
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputPagerDuty"
+                          },
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputEmail"
+                          },
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputGrafanaIrm"
+                          },
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputMicrosoftTeams"
+                          },
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputWebhook"
+                          },
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputServiceNow"
+                          },
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputGoogleChat"
+                          },
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputSquadcast"
+                          },
+                          {
+                            "$ref": "#/components/schemas/RuleTargetInputJira"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "description": "Adaptive notification rule create or update request. Provide the monitors or SLOs the rule reacts to, the owner, the active state, and the fallback target."
+              },
+              "example": {
+                "name": "Checkout latency",
+                "owner": "team-123-abc",
+                "isActive": true,
+                "shouldCreateInvestigation": true,
+                "tags": [
+                  {
+                    "key": "channel",
+                    "value": "alerts"
+                  }
+                ],
+                "monitorIds": [
+                  "monitor-123-abc"
+                ],
+                "sloIds": [
+                  "slo-456-def"
+                ],
+                "fallbackTarget": {
+                  "id": "789-abc-def",
+                  "rateLimit": {
+                    "maxMessages": 10,
+                    "minutes": 5
+                  },
+                  "config": {
+                    "type": "email",
+                    "addresses": [
+                      "oncall@example.com"
+                    ],
+                    "renotifyConfig": {
+                      "mode": "each",
+                      "renotificationStates": [
+                        "alert"
+                      ],
+                      "renotifyIntervalMinutes": 30
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "description": "Adaptive notification rule create or update request. Provide the monitors or SLOs the rule reacts to, the owner, the active state, and the fallback target."
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identifier of the adaptive notification rule to update. Use the `id` returned by adaptive notification rule list, get, or create responses."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateAdaptiveNotificationRuleResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteAdaptiveNotificationRule",
+        "tags": [
+          "adaptive-notification-rules"
+        ],
+        "description": "Deletes an adaptive notification rule by ID. Its monitors and SLOs keep evaluating, but this rule no longer pages anyone.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identifier of the adaptive notification rule to delete. Use the `id` returned by adaptive notification rule list, get, create, or update responses."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteAdaptiveNotificationRuleResponse"
                 }
               }
             }
@@ -59488,7 +62760,7 @@
         "tags": [
           "teams"
         ],
-        "description": "Replaces a team definition by ID, including name, description, visibility, and tags.",
+        "description": "Replaces a team definition by ID, including description, visibility, and tags. The name cannot be changed and must match the current one.",
         "requestBody": {
           "required": true,
           "content": {
@@ -61477,8 +64749,16 @@
       "description": "Operations for notification routing rules. Use these endpoints to match alert transitions and send notifications to configured targets. See [Rules](/documentation/alert/notifications/rules)."
     },
     {
+      "name": "adaptive-notification-rules",
+      "description": "Operations for adaptive notification rules. Use these endpoints to page the owners of the failing service when selected monitors or SLOs fire. See [Rules](/documentation/alert/notifications/rules)."
+    },
+    {
       "name": "notification-silences",
       "description": "Operations for notification silences. Use these endpoints to suppress matching notification delivery during one-time or recurring windows. See [Silences](/documentation/alert/notifications/silences)."
+    },
+    {
+      "name": "operation-api-keys",
+      "description": "Operations for machine access keys. Use these endpoints to create, list, inspect, update, and delete operation keys used by the API, Terraform, CLI, and MCP. See [API keys](/documentation/account-and-settings/api-keys)."
     },
     {
       "name": "organization",

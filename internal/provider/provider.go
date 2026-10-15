@@ -125,6 +125,7 @@ func (p *tsugaProvider) Resources(_ context.Context) []func() resource.Resource 
 		NewTeamResource,
 		NewTeamMembershipResource,
 		NewNotificationRuleResource,
+		NewAdaptiveNotificationRuleResource,
 		NewNotificationSilenceResource,
 		NewNotificationIntegrationResource,
 		NewDashboardResource,

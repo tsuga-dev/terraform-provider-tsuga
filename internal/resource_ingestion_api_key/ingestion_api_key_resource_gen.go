@@ -27,6 +27,11 @@ func IngestionApiKeyResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Tsuga-generated ingestion API key ID assigned when the key is created.",
 				MarkdownDescription: "Tsuga-generated ingestion API key ID assigned when the key is created.",
 			},
+			"key": schema.StringAttribute{
+				Computed:            true,
+				Description:         "Full Tsuga-generated ingestion API key secret. Returned only in the create response; list, get, and update responses expose only `keyLastCharacters`.",
+				MarkdownDescription: "Full Tsuga-generated ingestion API key secret. Returned only in the create response; list, get, and update responses expose only `keyLastCharacters`.",
+			},
 			"key_last_characters": schema.StringAttribute{
 				Computed:            true,
 				Description:         "Last visible characters of the secret key. Use this to identify a key without exposing the full secret.",
@@ -98,6 +103,7 @@ func IngestionApiKeyResourceSchema(ctx context.Context) schema.Schema {
 
 type IngestionApiKeyModel struct {
 	Id                 types.String `tfsdk:"id"`
+	Key                types.String `tfsdk:"key"`
 	KeyLastCharacters  types.String `tfsdk:"key_last_characters"`
 	Name               types.String `tfsdk:"name"`
 	Owner              types.String `tfsdk:"owner"`

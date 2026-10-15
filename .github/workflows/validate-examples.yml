@@ -30,6 +30,7 @@ jobs:
           - tsuga_monitor_folder
           - tsuga_notification_integration
           - tsuga_notification_rule
+          - tsuga_adaptive_notification_rule
           - tsuga_notification_silence
           - tsuga_retention_policy
           - tsuga_route

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `tsuga_adaptive_notification_rule`: new resource for adaptive notification rules. Dropping `monitor_ids` or `slo_ids` clears that list.
+
 ## [2.11.0] - 2026-10-15
 
 ### Added

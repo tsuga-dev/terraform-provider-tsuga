@@ -157,6 +157,27 @@
     }
   },
   {
+    "name": "adaptive-notification-rule",
+    "resourceType": "tsuga_adaptive_notification_rule",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "isActive": true,
+      "shouldCreateInvestigation": false,
+      "monitorIds": ["monitor-123"],
+      "sloIds": [],
+      "fallbackTarget": {
+        "id": "target-1",
+        "config": {
+          "type": "email",
+          "addresses": ["oncall@example.com"]
+        }
+      }
+    }
+  },
+  {
     "name": "notification-silence",
     "resourceType": "tsuga_notification_silence",
     "resource": {

@@ -484,6 +484,13 @@
             }
           },
           {
+            "name": "key",
+            "string": {
+              "computed_optional_required": "computed",
+              "description": "Full Tsuga-generated ingestion API key secret. Returned only in the create response; list, get, and update responses expose only `keyLastCharacters`."
+            }
+          },
+          {
             "name": "key_last_characters",
             "string": {
               "computed_optional_required": "computed",
