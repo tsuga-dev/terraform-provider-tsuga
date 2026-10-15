@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsuga Public API",
     "description": "Public HTTP API for Tsuga customers and customer-operated tools. Use these endpoints to query observability data, manage customer-owned Tsuga resources, and retrieve documentation or API-reference content. Public API requests authenticate with Bearer tokens such as operation keys. See [API reference](/documentation/api).",
-    "version": "1.0.0",
+    "version": "20261014.20.0+ce244f5",
     "contact": {
       "name": "Tsuga",
       "url": "https://tsuga.com"
@@ -4253,7 +4253,8 @@
                                 "PYTHON",
                                 "KFP",
                                 "GO",
-                                "GENERIC"
+                                "GENERIC",
+                                "RUBY"
                               ]
                             },
                             "uri": {
@@ -5564,7 +5565,8 @@
                           "PYTHON",
                           "KFP",
                           "GO",
-                          "GENERIC"
+                          "GENERIC",
+                          "RUBY"
                         ]
                       },
                       "uri": {
@@ -10468,6 +10470,7 @@
               "k8s-recommended-metrics",
               "k8s-recommended-change-events",
               "otel-collector-self-metrics",
+              "span-metrics-delta-temporality",
               "use-standard-attributes",
               "no-unused-operation-api-keys",
               "no-unused-ingestion-api-keys",
@@ -11245,6 +11248,50 @@
             },
             "description": "Application frameworks detected from OTel instrumentation scope"
           },
+          "cloudPlatforms": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "platform",
+                "lastSeenAt"
+              ],
+              "properties": {
+                "platform": {
+                  "type": "string",
+                  "description": "Observed cloud or orchestration platform, such as `aws_eks` or `kubernetes`. The emitting service or collector sets it through telemetry resource attributes. Returned when platform metadata is available for the service."
+                },
+                "lastSeenAt": {
+                  "description": "Most recent time this platform was observed. Tsuga sets it from telemetry timestamps during service metadata refreshes.",
+                  "type": "string"
+                }
+              },
+              "description": "A cloud or orchestration platform this service runs on, with the last time it was seen."
+            },
+            "description": "Cloud platforms this service is running on"
+          },
+          "cloudProviders": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "provider",
+                "lastSeenAt"
+              ],
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "description": "Observed cloud provider, such as `aws`, `gcp`, or `azure`. The emitting service or collector sets it through telemetry resource attributes. Returned when provider metadata is available for the service."
+                },
+                "lastSeenAt": {
+                  "description": "Most recent time this provider was observed. Tsuga sets it from telemetry timestamps during service metadata refreshes.",
+                  "type": "string"
+                }
+              },
+              "description": "A cloud provider this service runs on, with the last time it was seen."
+            },
+            "description": "Cloud providers this service is running on"
+          },
           "lastSeenAt": {
             "description": "Most recent time Tsuga observed telemetry for this service.",
             "type": "string"
@@ -11297,6 +11344,22 @@
           "frameworks": [
             {
               "framework": "gin",
+              "lastSeenAt": "2024-01-15T12:34:56.000Z"
+            }
+          ],
+          "cloudPlatforms": [
+            {
+              "platform": "aws_eks",
+              "lastSeenAt": "2024-01-15T12:34:56.000Z"
+            },
+            {
+              "platform": "kubernetes",
+              "lastSeenAt": "2024-01-15T12:34:56.000Z"
+            }
+          ],
+          "cloudProviders": [
+            {
+              "provider": "aws",
               "lastSeenAt": "2024-01-15T12:34:56.000Z"
             }
           ],
@@ -11720,6 +11783,50 @@
           }
         },
         "description": "Directed dependency edge from a caller node (`from`) to a callee node (`to`), with call-volume and error counts observed over the query window."
+      },
+      "ShortUrl": {
+        "type": "object",
+        "required": [
+          "id",
+          "url",
+          "expiresAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Code of the short link, the last path segment of `https://app.tsuga.com/l/<id>`."
+          },
+          "url": {
+            "type": "string",
+            "description": "Relative app URL (path and search) the short link opens. Search parameters use the app URL encoding: object and array values are JSON-stringified, then URL-encoded."
+          },
+          "expiresAt": {
+            "description": "Timestamp after which the short link stops resolving.",
+            "type": "string"
+          }
+        },
+        "description": "A short link copied with **Copy page URL** on the Logs or Traces page, resolved to the app URL it opens. See [Share the current search](/documentation/explore/logs#share-the-current-search).",
+        "example": {
+          "id": "aB3-dE5fG-h7J",
+          "url": "/explorer?query=level%3Aerror&timeRange=%7B%22type%22%3A%22absolute%22%2C%22from%22%3A1767225600000%2C%22to%22%3A1767229200000%7D",
+          "expiresAt": "2026-02-01T00:00:00.000Z"
+        }
+      },
+      "GetShortUrlResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ShortUrl"
+          }
+        }
       },
       "Slo": {
         "type": "object",
@@ -14820,6 +14927,71 @@
           },
           "data": {
             "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+      "WidgetShare": {
+        "type": "object",
+        "required": [
+          "id",
+          "search",
+          "url",
+          "expiresAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Code of the share link, the last path segment of `https://api.tsuga.com/v0/widget-shares/<orgId>/<id>`."
+          },
+          "title": {
+            "type": "string",
+            "description": "Name of the widget the link was shared from. Omitted when the widget had no name."
+          },
+          "search": {
+            "type": "string",
+            "description": "Analytics search parameters captured when the link was created, without the leading `?`. Values use the app URL encoding: object and array values are JSON-stringified, then URL-encoded. `timeZone` is the time zone of the user who created the link, which the shared image uses."
+          },
+          "dashboardId": {
+            "type": "string",
+            "description": "ID of the dashboard holding the shared widget. Omitted for Analytics shares."
+          },
+          "graphId": {
+            "type": "string",
+            "description": "ID of the shared widget on its dashboard. Omitted for Analytics shares."
+          },
+          "url": {
+            "type": "string",
+            "description": "Absolute app URL a signed-in browser opening the share link is redirected to: the widget on its dashboard, or Analytics. It carries no `timeZone`, so the app shows the result in the time zone of the viewer."
+          },
+          "expiresAt": {
+            "description": "Timestamp after which the share link stops resolving.",
+            "type": "string"
+          }
+        },
+        "description": "A widget share link created from Analytics or a dashboard widget, with the query it renders. See [Share links](/documentation/visualize/analytics/index#share-links).",
+        "example": {
+          "id": "kL9-mN2pQ-r4S",
+          "title": "Checkout errors",
+          "search": "source=logs&queries=%5B%7B%22aggregate%22%3A%7B%22type%22%3A%22count%22%7D%2C%22filter%22%3A%22service%3Acheckout%22%7D%5D&timeRange=%7B%22type%22%3A%22absolute%22%2C%22from%22%3A1767225600000%2C%22to%22%3A1767229200000%7D",
+          "dashboardId": "dashboard-123-abc",
+          "graphId": "graph-123-abc",
+          "url": "https://app.tsuga.com/dashboards/dashboard-123-abc?openedGraph=graph-123-abc&openedGraphReadonly=true&timeRange=%7B%22type%22%3A%22absolute%22%2C%22from%22%3A1767225600000%2C%22to%22%3A1767229200000%7D",
+          "expiresAt": "2026-02-01T00:00:00.000Z"
+        }
+      },
+      "GetWidgetShareResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/WidgetShare"
           }
         }
       },
@@ -36909,14 +37081,7 @@
                   "read",
                   "write"
                 ],
-                "description": "Teams and their settings."
-              },
-              "team-membership": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Team memberships, each pairing a user with a team role."
+                "description": "Teams, their settings and their memberships."
               },
               "traces": {
                 "type": "string",
@@ -47811,6 +47976,19 @@
                   "filters": {
                     "type": "object",
                     "properties": {
+                      "folderId": {
+                        "anyOf": [
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 250
+                          }
+                        ],
+                        "description": "Return monitors directly assigned to this folder ID, or unfiled monitors when null. Omit to return all monitors."
+                      },
                       "owners": {
                         "type": "object",
                         "required": [
@@ -47975,19 +48153,6 @@
                           }
                         },
                         "description": "Restrict results to monitors deployed to any of these cluster IDs (monitors with no cluster restriction are always included)"
-                      },
-                      "folderId": {
-                        "anyOf": [
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 250
-                          }
-                        ],
-                        "description": "Return monitors directly assigned to this folder ID, or unfiled monitors when null. Omit to return all monitors."
                       }
                     }
                   },
@@ -55488,6 +55653,84 @@
         }
       }
     },
+    "/v1/short-urls/{id}": {
+      "get": {
+        "operationId": "getShortUrl",
+        "tags": [
+          "short-urls"
+        ],
+        "description": "Resolves a short link to the app URL it opens. Use this to recover the query, filters, and time range behind a link copied from the Logs or Traces page. An expired or unknown code returns 404.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Code of the short link, the last path segment of `https://app.tsuga.com/l/<id>`."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetShortUrlResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/slos/query": {
       "post": {
         "operationId": "querySlos",
@@ -61066,6 +61309,84 @@
           }
         }
       }
+    },
+    "/v1/widget-shares/{id}": {
+      "get": {
+        "operationId": "getWidgetShare",
+        "tags": [
+          "widget-shares"
+        ],
+        "description": "Retrieves the query behind a widget share link. Use this to recover the widget title, Analytics search, and dashboard of a link whose unfurl only shows an image. An expired or unknown code returns 404.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Code of the share link, the last path segment of `https://api.tsuga.com/v0/widget-shares/<orgId>/<id>`."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetWidgetShareResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "servers": [
@@ -61200,6 +61521,10 @@
       "description": "Operations for services inferred from telemetry. Use these endpoints to inspect service metadata, activity, and dependency graphs. See [Services](/documentation/categorize/services/index)."
     },
     {
+      "name": "short-urls",
+      "description": "Operations for short links copied from the Logs and Traces pages. Use these endpoints to resolve a short link to the app URL it opens. See [Logs](/documentation/explore/logs#share-the-current-search)."
+    },
+    {
       "name": "tag-policies",
       "description": "Operations for tag policies applied to Tsuga-managed assets or telemetry data. Use these endpoints to configure required tags and allowed values. See [Tag policies](/documentation/account-and-settings/tag-policies)."
     },
@@ -61218,6 +61543,10 @@
     {
       "name": "users",
       "description": "Operations for organization users. Use these endpoints to list users and resolve user IDs, roles, and display metadata. See [Members](/documentation/account-and-settings/members)."
+    },
+    {
+      "name": "widget-shares",
+      "description": "Operations for widget share links created from Analytics or a dashboard widget. Use these endpoints to read the query a share link renders. See [Share links](/documentation/visualize/analytics/index#share-links)."
     }
   ]
 }
