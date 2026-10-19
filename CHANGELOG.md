@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.13.0] - 2026-10-19
+
 ### Added
 
 - `tsuga_rum_public_token`: new resource for RUM public tokens.
