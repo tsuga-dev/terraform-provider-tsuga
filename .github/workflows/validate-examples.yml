@@ -32,8 +32,10 @@ jobs:
           - tsuga_notification_rule
           - tsuga_adaptive_notification_rule
           - tsuga_notification_silence
+          - tsuga_operation_api_key
           - tsuga_retention_policy
           - tsuga_route
+          - tsuga_rum_public_token
           - tsuga_slo
           - tsuga_tag_policy
           - tsuga_team

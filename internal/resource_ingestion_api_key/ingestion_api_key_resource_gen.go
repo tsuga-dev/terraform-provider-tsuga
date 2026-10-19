@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -29,8 +31,12 @@ func IngestionApiKeyResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"key": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Full Tsuga-generated ingestion API key secret. Returned only in the create response; list, get, and update responses expose only `keyLastCharacters`.",
-				MarkdownDescription: "Full Tsuga-generated ingestion API key secret. Returned only in the create response; list, get, and update responses expose only `keyLastCharacters`.",
+				Sensitive:           true,
+				Description:         "The full API key value. Only available at creation time; not retrievable afterwards.",
+				MarkdownDescription: "The full API key value. Only available at creation time; not retrievable afterwards.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"key_last_characters": schema.StringAttribute{
 				Computed:            true,
@@ -90,7 +96,6 @@ func IngestionApiKeyResourceSchema(ctx context.Context) schema.Schema {
 			"team_override_fields": schema.ListAttribute{
 				ElementType:         types.StringType,
 				Optional:            true,
-				Computed:            true,
 				Description:         "Array form. Up to 3 fields are allowed.",
 				MarkdownDescription: "Array form. Up to 3 fields are allowed.",
 				Validators: []validator.List{

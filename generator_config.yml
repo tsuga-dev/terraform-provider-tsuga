@@ -87,3 +87,29 @@ resources:
     delete:
       path: /v1/retention-policies/{id}
       method: DELETE
+  rum_public_token:
+    create:
+      path: /v1/public-tokens
+      method: POST
+    read:
+      path: /v1/public-tokens/{id}
+      method: GET
+    update:
+      path: /v1/public-tokens/{id}
+      method: PUT
+    delete:
+      path: /v1/public-tokens/{id}
+      method: DELETE
+  operation_api_key:
+    create:
+      path: /v1/operation-api-keys
+      method: POST
+    read:
+      path: /v1/operation-api-keys/{id}
+      method: GET
+    update:
+      path: /v1/operation-api-keys/{id}
+      method: PUT
+    delete:
+      path: /v1/operation-api-keys/{id}
+      method: DELETE

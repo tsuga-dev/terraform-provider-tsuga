@@ -1,5 +1,5 @@
 // Generated from the Terraform provider resource registry.
-export type ResourceType = "tsuga_adaptive_notification_rule" | "tsuga_cloud_account" | "tsuga_custom_usage_tag" | "tsuga_dashboard" | "tsuga_dashboard_folder" | "tsuga_ingestion_api_key" | "tsuga_metric_route" | "tsuga_monitor" | "tsuga_monitor_folder" | "tsuga_notification_integration" | "tsuga_notification_rule" | "tsuga_notification_silence" | "tsuga_retention_policy" | "tsuga_route" | "tsuga_slo" | "tsuga_tag_policy" | "tsuga_team" | "tsuga_team_membership";
+export type ResourceType = "tsuga_adaptive_notification_rule" | "tsuga_cloud_account" | "tsuga_custom_usage_tag" | "tsuga_dashboard" | "tsuga_dashboard_folder" | "tsuga_ingestion_api_key" | "tsuga_metric_route" | "tsuga_monitor" | "tsuga_monitor_folder" | "tsuga_notification_integration" | "tsuga_notification_rule" | "tsuga_notification_silence" | "tsuga_operation_api_key" | "tsuga_retention_policy" | "tsuga_route" | "tsuga_rum_public_token" | "tsuga_slo" | "tsuga_tag_policy" | "tsuga_team" | "tsuga_team_membership";
 export declare const resourceTypes: readonly ResourceType[];
 
 export interface ExportOptions {
@@ -37,8 +37,10 @@ export interface TerraformExporter {
   exportNotificationIntegration(resource: object | string, options?: ExportOptions): ExportResult;
   exportNotificationRule(resource: object | string, options?: ExportOptions): ExportResult;
   exportNotificationSilence(resource: object | string, options?: ExportOptions): ExportResult;
+  exportOperationApiKey(resource: object | string, options?: ExportOptions): ExportResult;
   exportRetentionPolicy(resource: object | string, options?: ExportOptions): ExportResult;
   exportRoute(resource: object | string, options?: ExportOptions): ExportResult;
+  exportRumPublicToken(resource: object | string, options?: ExportOptions): ExportResult;
   exportSlo(resource: object | string, options?: ExportOptions): ExportResult;
   exportTagPolicy(resource: object | string, options?: ExportOptions): ExportResult;
   exportTeam(resource: object | string, options?: ExportOptions): ExportResult;

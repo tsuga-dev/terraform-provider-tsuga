@@ -13,9 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -29,19 +26,6 @@ func NewIngestionApiKeyResource() resource.Resource {
 
 type ingestionApiKeyResource struct {
 	client *TsugaClient
-}
-
-// ingestionApiKeyModel is the Terraform state model. It mirrors
-// resource_ingestion_api_key.IngestionApiKeyModel but adds the `key` field,
-// which the API only returns on creation.
-type ingestionApiKeyModel struct {
-	Id                 types.String `tfsdk:"id"`
-	Name               types.String `tfsdk:"name"`
-	Owner              types.String `tfsdk:"owner"`
-	KeyLastCharacters  types.String `tfsdk:"key_last_characters"`
-	Key                types.String `tfsdk:"key"`
-	Tags               types.List   `tfsdk:"tags"`
-	TeamOverrideFields types.List   `tfsdk:"team_override_fields"`
 }
 
 type ingestionApiKeyAPIResponse struct {
@@ -80,14 +64,6 @@ func (r *ingestionApiKeyResource) Metadata(_ context.Context, req resource.Metad
 func (r *ingestionApiKeyResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	base := resource_ingestion_api_key.IngestionApiKeyResourceSchema(ctx)
 	base.Description = "An ingestion API key used to send telemetry data to Tsuga."
-	base.Attributes["key"] = schema.StringAttribute{
-		Computed:  true,
-		Sensitive: true,
-		PlanModifiers: []planmodifier.String{
-			stringplanmodifier.UseStateForUnknown(),
-		},
-		Description: "The full API key value. Only available at creation time; not retrievable afterwards.",
-	}
 	resp.Schema = base
 }
 
@@ -96,7 +72,7 @@ func (r *ingestionApiKeyResource) ImportState(ctx context.Context, req resource.
 }
 
 func (r *ingestionApiKeyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan ingestionApiKeyModel
+	var plan resource_ingestion_api_key.IngestionApiKeyModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -142,7 +118,7 @@ func (r *ingestionApiKeyResource) Create(ctx context.Context, req resource.Creat
 }
 
 func (r *ingestionApiKeyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state ingestionApiKeyModel
+	var state resource_ingestion_api_key.IngestionApiKeyModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -171,7 +147,7 @@ func (r *ingestionApiKeyResource) Read(ctx context.Context, req resource.ReadReq
 }
 
 func (r *ingestionApiKeyResource) readJSON(ctx context.Context, bodyReader io.Reader, resp *resource.ReadResponse) {
-	var state ingestionApiKeyModel
+	var state resource_ingestion_api_key.IngestionApiKeyModel
 	resp.Diagnostics.Append(resp.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -200,8 +176,8 @@ func (r *ingestionApiKeyResource) readJSON(ctx context.Context, bodyReader io.Re
 }
 
 func (r *ingestionApiKeyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan ingestionApiKeyModel
-	var state ingestionApiKeyModel
+	var plan resource_ingestion_api_key.IngestionApiKeyModel
+	var state resource_ingestion_api_key.IngestionApiKeyModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -252,7 +228,7 @@ func (r *ingestionApiKeyResource) Update(ctx context.Context, req resource.Updat
 }
 
 func (r *ingestionApiKeyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state ingestionApiKeyModel
+	var state resource_ingestion_api_key.IngestionApiKeyModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -275,7 +251,7 @@ func (r *ingestionApiKeyResource) Delete(ctx context.Context, req resource.Delet
 	}
 }
 
-func (r *ingestionApiKeyResource) modelToRequest(ctx context.Context, model ingestionApiKeyModel) (map[string]interface{}, diag.Diagnostics) {
+func (r *ingestionApiKeyResource) modelToRequest(ctx context.Context, model resource_ingestion_api_key.IngestionApiKeyModel) (map[string]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	body := map[string]interface{}{
@@ -314,7 +290,7 @@ func (r *ingestionApiKeyResource) modelToRequest(ctx context.Context, model inge
 	return body, diags
 }
 
-func (r *ingestionApiKeyResource) apiRespToModel(ctx context.Context, model *ingestionApiKeyModel, apiResp ingestionApiKeyAPIResponse) diag.Diagnostics {
+func (r *ingestionApiKeyResource) apiRespToModel(ctx context.Context, model *resource_ingestion_api_key.IngestionApiKeyModel, apiResp ingestionApiKeyAPIResponse) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	model.Id = types.StringValue(apiResp.Data.ID)

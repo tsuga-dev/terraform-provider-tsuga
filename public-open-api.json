@@ -39818,7 +39818,8 @@
                   "name",
                   "owner",
                   "scope",
-                  "permissions"
+                  "permissions",
+                  "expiresAt"
                 ],
                 "properties": {
                   "name": {
@@ -40114,19 +40115,12 @@
                     "description": "Resource types the key can act on, each mapped to `read` or `write`. `write` also grants read access. A resource type absent from the map is not accessible to the key at all."
                   },
                   "expiresAt": {
-                    "anyOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string",
-                        "format": "date-time",
-                        "description": "Date and time after which the key stops working. Send null for a key that never expires. On update, leave it out to keep the current expiration. When the caller is an operation API key, set a future expiration, no later than the caller's own when the caller expires."
-                      }
-                    ]
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time after which the key stops working. When the caller is an operation API key, set a future expiration, no later than the caller's own when the caller expires."
                   }
                 },
-                "description": "Operation API key creation request. Provide a kebab-case name, owner team, scope, and permissions, and optionally tags and an expiration date."
+                "description": "Operation API key creation request. Provide a kebab-case name, owner team, scope, permissions, expiration date, and optionally tags."
               },
               "example": {
                 "name": "terraform-production",
@@ -40142,11 +40136,12 @@
                   "dashboard": "write",
                   "monitor": "write",
                   "logs": "read"
-                }
+                },
+                "expiresAt": "2027-01-01T00:00:00.000Z"
               }
             }
           },
-          "description": "Operation API key creation request. Provide a kebab-case name, owner team, scope, and permissions, and optionally tags and an expiration date."
+          "description": "Operation API key creation request. Provide a kebab-case name, owner team, scope, permissions, expiration date, and optionally tags."
         },
         "responses": {
           "200": {
@@ -40299,7 +40294,8 @@
                   "name",
                   "owner",
                   "scope",
-                  "permissions"
+                  "permissions",
+                  "expiresAt"
                 ],
                 "properties": {
                   "name": {
@@ -40595,19 +40591,12 @@
                     "description": "Resource types the key can act on, each mapped to `read` or `write`. `write` also grants read access. A resource type absent from the map is not accessible to the key at all."
                   },
                   "expiresAt": {
-                    "anyOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string",
-                        "format": "date-time",
-                        "description": "Date and time after which the key stops working. Send null for a key that never expires. On update, leave it out to keep the current expiration. When the caller is an operation API key, set a future expiration, no later than the caller's own when the caller expires."
-                      }
-                    ]
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time after which the key stops working. When the caller is an operation API key, set a future expiration, no later than the caller's own when the caller expires."
                   }
                 },
-                "description": "Operation API key update request. Provide the full definition, including name, owner team, scope, and permissions."
+                "description": "Operation API key update request. Provide the full definition, including name, owner team, scope, permissions, and expiration date."
               },
               "example": {
                 "name": "terraform-production",
@@ -40623,11 +40612,12 @@
                   "dashboard": "write",
                   "monitor": "write",
                   "logs": "read"
-                }
+                },
+                "expiresAt": "2027-01-01T00:00:00.000Z"
               }
             }
           },
-          "description": "Operation API key update request. Provide the full definition, including name, owner team, scope, and permissions."
+          "description": "Operation API key update request. Provide the full definition, including name, owner team, scope, permissions, and expiration date."
         },
         "parameters": [
           {

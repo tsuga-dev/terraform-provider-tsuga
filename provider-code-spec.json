@@ -457,7 +457,7 @@
           {
             "name": "team_override_fields",
             "list": {
-              "computed_optional_required": "computed_optional",
+              "computed_optional_required": "optional",
               "element_type": {
                 "string": {}
               },
@@ -487,7 +487,20 @@
             "name": "key",
             "string": {
               "computed_optional_required": "computed",
-              "description": "Full Tsuga-generated ingestion API key secret. Returned only in the create response; list, get, and update responses expose only `keyLastCharacters`."
+              "description": "The full API key value. Only available at creation time; not retrievable afterwards.",
+              "sensitive": true,
+              "plan_modifiers": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+                      }
+                    ],
+                    "schema_definition": "stringplanmodifier.UseStateForUnknown()"
+                  }
+                }
+              ]
             }
           },
           {
@@ -670,6 +683,253 @@
       }
     },
     {
+      "name": "operation_api_key",
+      "schema": {
+        "attributes": [
+          {
+            "name": "expires_at",
+            "string": {
+              "computed_optional_required": "required",
+              "description": "Date and time after which the key stops working. When the caller is an operation API key, set a future expiration, no later than the caller's own when the caller expires."
+            }
+          },
+          {
+            "name": "name",
+            "string": {
+              "computed_optional_required": "required",
+              "description": "Kebab-case name for the operation API key.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.LengthBetween(1, 100)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "owner",
+            "string": {
+              "computed_optional_required": "required",
+              "description": "ID of the team that owns the operation API key. When the caller is an operation API key, the team must be within the caller's scope.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "permissions",
+            "map": {
+              "computed_optional_required": "required",
+              "element_type": {
+                "string": {}
+              },
+              "description": "Resource types the key can act on, each mapped to `read` or `write`. `write` also grants read access. A resource type absent from the map is not accessible to the key at all. Keys are API resource types such as `dashboard`, `dashboard-folder` or `logs`.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
+                      },
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "mapvalidator.ValueStringsAre(stringvalidator.OneOf(\"read\", \"write\"))"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "scope",
+            "string": {
+              "computed_optional_required": "required",
+              "description": "Team-access boundary for the operation API key. Set when the key is created or updated. `all` can reach all teams, `owning-team-and-public` can reach the owning team and public teams, and `owning-team-only` can reach only the owning team.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.OneOf(\n\"all\",\n\"owning-team-and-public\",\n\"owning-team-only\",\n)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "tags",
+            "list_nested": {
+              "computed_optional_required": "computed_optional",
+              "nested_object": {
+                "attributes": [
+                  {
+                    "name": "key",
+                    "string": {
+                      "computed_optional_required": "required",
+                      "description": "Tag key to attach to the resource.",
+                      "validators": [
+                        {
+                          "custom": {
+                            "imports": [
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                              }
+                            ],
+                            "schema_definition": "stringvalidator.LengthAtMost(128)"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "value",
+                    "string": {
+                      "computed_optional_required": "required",
+                      "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected.",
+                      "validators": [
+                        {
+                          "custom": {
+                            "imports": [
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                              }
+                            ],
+                            "schema_definition": "stringvalidator.LengthAtMost(256)"
+                          }
+                        },
+                        {
+                          "custom": {
+                            "imports": [
+                              {
+                                "path": "regexp"
+                              },
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                              }
+                            ],
+                            "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^\\\\S(.*\\\\S)?$\"), \"\")"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "custom_type": {
+                  "import": {
+                    "path": "terraform-provider-tsuga/internal/resource_team"
+                  },
+                  "type": "resource_team.TagsType{ObjectType: types.ObjectType{AttrTypes: resource_team.TagsValue{}.AttributeTypes(ctx)}}",
+                  "value_type": "resource_team.TagsValue"
+                }
+              },
+              "description": "Key/value tags to apply to the resource. Tag policies may require specific keys or values.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.SizeAtMost(50)"
+                  }
+                }
+              ],
+              "plan_modifiers": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+                      }
+                    ],
+                    "schema_definition": "listplanmodifier.UseStateForUnknown()"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "id",
+            "string": {
+              "computed_optional_required": "computed",
+              "description": "Unique identifier of the operation API key. Generated by Tsuga when the key is created. Use this as the stable key identifier when correlating API calls with audit logs or key-management records.",
+              "plan_modifiers": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+                      }
+                    ],
+                    "schema_definition": "stringplanmodifier.UseStateForUnknown()"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "key",
+            "string": {
+              "computed_optional_required": "computed",
+              "description": "The full API key value. Only available at creation time; not retrievable afterwards.",
+              "sensitive": true,
+              "plan_modifiers": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+                      }
+                    ],
+                    "schema_definition": "stringplanmodifier.UseStateForUnknown()"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "key_last_characters",
+            "string": {
+              "computed_optional_required": "computed",
+              "description": "Last characters of the operation API key secret. Set by Tsuga from the generated secret and returned because the full secret is only shown once at creation. Use this to distinguish saved keys without exposing the secret.",
+              "plan_modifiers": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+                      }
+                    ],
+                    "schema_definition": "stringplanmodifier.UseStateForUnknown()"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "retention_policy",
       "schema": {
         "attributes": [
@@ -761,6 +1021,221 @@
             "string": {
               "computed_optional_required": "computed",
               "description": "Unique identifier of the retention policy. Generated by Tsuga."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "rum_public_token",
+      "schema": {
+        "attributes": [
+          {
+            "name": "allowed_url_prefixes",
+            "list": {
+              "computed_optional_required": "required",
+              "element_type": {
+                "string": {}
+              },
+              "description": "URL prefixes which RUM telemetry data can be sent from. Supports wildcard matching. At least one prefix is required for `web` applications, and the array must be empty for `ios` and `android` applications."
+            }
+          },
+          {
+            "name": "application_type",
+            "string": {
+              "computed_optional_required": "required",
+              "description": "Kind of application the token is issued for. Only `web` telemetry is checked against `allowedUrlPrefixes`, since mobile applications do not send an `Origin` header. Fixed at creation: an update must resend the token's current value.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.OneOf(\n\"web\",\n\"ios\",\n\"android\",\n)"
+                  }
+                }
+              ],
+              "plan_modifiers": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+                      }
+                    ],
+                    "schema_definition": "stringplanmodifier.RequiresReplace()"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "name",
+            "string": {
+              "computed_optional_required": "required",
+              "description": "Kebab-case name for the RUM public token. Maximum length is 100 characters.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.LengthBetween(1, 100)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "owner",
+            "string": {
+              "computed_optional_required": "required",
+              "description": "Team ID that will own and manage the RUM public token.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "tags",
+            "list_nested": {
+              "computed_optional_required": "required",
+              "nested_object": {
+                "attributes": [
+                  {
+                    "name": "key",
+                    "string": {
+                      "computed_optional_required": "required",
+                      "description": "Tag key to attach to the resource.",
+                      "validators": [
+                        {
+                          "custom": {
+                            "imports": [
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                              }
+                            ],
+                            "schema_definition": "stringvalidator.LengthAtMost(128)"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "value",
+                    "string": {
+                      "computed_optional_required": "required",
+                      "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected.",
+                      "validators": [
+                        {
+                          "custom": {
+                            "imports": [
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                              }
+                            ],
+                            "schema_definition": "stringvalidator.LengthAtMost(256)"
+                          }
+                        },
+                        {
+                          "custom": {
+                            "imports": [
+                              {
+                                "path": "regexp"
+                              },
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                              }
+                            ],
+                            "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^\\\\S(.*\\\\S)?$\"), \"\")"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "custom_type": {
+                  "import": {
+                    "path": "terraform-provider-tsuga/internal/resource_team"
+                  },
+                  "type": "resource_team.TagsType{ObjectType: types.ObjectType{AttrTypes: resource_team.TagsValue{}.AttributeTypes(ctx)}}",
+                  "value_type": "resource_team.TagsValue"
+                }
+              },
+              "description": "Key/value tags to apply to the resource. Tag policies may require specific keys or values.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.SizeAtMost(50)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "team_override_fields",
+            "list": {
+              "computed_optional_required": "optional",
+              "element_type": {
+                "string": {}
+              },
+              "description": "Array form. Up to 3 fields are allowed.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.SizeBetween(1, 3)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "id",
+            "string": {
+              "computed_optional_required": "computed",
+              "description": "Tsuga-generated RUM public token ID assigned when the token is created."
+            }
+          },
+          {
+            "name": "token",
+            "string": {
+              "computed_optional_required": "computed",
+              "description": "Full token value, prefixed with `tsuga_rum:v1:`, to configure in the RUM browser or mobile SDK. RUM tokens are public by design, so the value is not masked on subsequent reads and never changes after creation.",
+              "plan_modifiers": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+                      }
+                    ],
+                    "schema_definition": "stringplanmodifier.UseStateForUnknown()"
+                  }
+                }
+              ]
             }
           }
         ]

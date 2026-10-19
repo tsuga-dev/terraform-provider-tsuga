@@ -54,6 +54,49 @@
     }
   },
   {
+    "name": "operation-api-key",
+    "resourceType": "tsuga_operation_api_key",
+    "resource": {
+      "id": "resource-123",
+      "name": "terraform-production",
+      "owner": "team-123",
+      "tags": [
+        {
+          "key": "env",
+          "value": "production"
+        }
+      ],
+      "scope": "owning-team-only",
+      "permissions": {
+        "dashboard": "write",
+        "dashboard-folder": "read",
+        "logs": "read"
+      },
+      "key": "never-export-this-secret",
+      "keyLastCharacters": "cret",
+      "expiresAt": "2027-01-01T00:00:00.000Z"
+    }
+  },
+  {
+    "name": "rum-public-token",
+    "resourceType": "tsuga_rum_public_token",
+    "resource": {
+      "id": "resource-123",
+      "name": "example-web-app",
+      "token": "tsuga_rum:v1:example",
+      "owner": "team-123",
+      "applicationType": "web",
+      "allowedUrlPrefixes": ["https://app.example.com"],
+      "tags": [
+        {
+          "key": "env",
+          "value": "production"
+        }
+      ],
+      "teamOverrideFields": ["service"]
+    }
+  },
+  {
     "name": "folder",
     "resourceType": "tsuga_dashboard_folder",
     "resource": {

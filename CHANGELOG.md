@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `tsuga_rum_public_token`: new resource for RUM public tokens.
+- `tsuga_operation_api_key`: new resource for operation API keys.
+
+### Changed
+
+- `tsuga_ingestion_api_key`: omitting `team_override_fields` now clears them. Previously the stored value was kept, so they could never be unset from Terraform.
+
 ## [2.12.0] - 2026-10-15
 
 ### Added
