@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.15.0] - 2026-10-20
+
 ### Added
 
 - `tsuga_dashboard`: new widget types `timeseries_promql`, `bar_promql`, `pie_promql`, `query_value_promql`, `top_list_promql`, `list_rum`, `slo`, `slo_over_time` and `slo_uptime`.
