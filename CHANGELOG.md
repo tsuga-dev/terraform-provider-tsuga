@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `tsuga_team` data source: looking a team up by `name` now uses the API `name` filter. It used to read only the first 100 teams, so teams past that returned "Team not found".
+
 ### Added
 
 - Requests now include the `x-tsuga-source-terraform-version` header, set to the Terraform version reported by the CLI, when it is known.

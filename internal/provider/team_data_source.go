@@ -102,7 +102,9 @@ func (d *teamDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 			return
 		}
 	} else {
-		httpResp, err := d.client.doRequest(ctx, http.MethodGet, "/v1/teams", nil)
+		name := config.Name.ValueString()
+		apiPath := "/v1/teams?" + url.Values{"name": {name}}.Encode()
+		httpResp, err := d.client.doRequest(ctx, http.MethodGet, apiPath, nil)
 		if err != nil {
 			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list teams: %s", err))
 			return
@@ -126,29 +128,16 @@ func (d *teamDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 			return
 		}
 
-		name := config.Name.ValueString()
-		var matches []int
-		for i, t := range listResp.Data {
-			if t.Name == name {
-				matches = append(matches, i)
-			}
-		}
-
-		switch len(matches) {
-		case 0:
+		if len(listResp.Data) == 0 {
 			resp.Diagnostics.AddError("Team not found", fmt.Sprintf("No team was found with name %q.", name))
 			return
-		case 1:
-			t := listResp.Data[matches[0]]
-			result.Data.ID = t.ID
-			result.Data.Name = t.Name
-			result.Data.Description = t.Description
-			result.Data.Visibility = t.Visibility
-			result.Data.Tags = t.Tags
-		default:
-			resp.Diagnostics.AddError("Multiple teams found", fmt.Sprintf("Found %d teams with name %q. Use \"id\" to disambiguate.", len(matches), name))
-			return
 		}
+		t := listResp.Data[0]
+		result.Data.ID = t.ID
+		result.Data.Name = t.Name
+		result.Data.Description = t.Description
+		result.Data.Visibility = t.Visibility
+		result.Data.Tags = t.Tags
 	}
 
 	config.Id = types.StringValue(result.Data.ID)
