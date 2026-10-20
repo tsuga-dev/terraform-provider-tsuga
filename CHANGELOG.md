@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.14.0] - 2026-10-20
+
 ### Fixed
 
 - `tsuga_team` data source: looking a team up by `name` now uses the API `name` filter. It used to read only the first 100 teams, so teams past that returned "Team not found".
