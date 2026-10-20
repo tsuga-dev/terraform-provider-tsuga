@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Requests now include the `x-tsuga-source-terraform-version` header, set to the Terraform version reported by the CLI, when it is known.
+
 ## [2.13.0] - 2026-10-19
 
 ### Added

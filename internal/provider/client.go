@@ -11,12 +11,13 @@ import (
 )
 
 type TsugaClient struct {
-	BaseURL string
-	Token   string
-	Version string
-	Commit  string
-	Date    string
-	client  *http.Client
+	BaseURL          string
+	Token            string
+	Version          string
+	Commit           string
+	Date             string
+	TerraformVersion string
+	client           *http.Client
 }
 
 func (c *TsugaClient) httpClient() *http.Client {
@@ -49,6 +50,9 @@ func (c *TsugaClient) doRequest(ctx context.Context, method, path string, body i
 	req.Header.Set("x-tsuga-source-version", c.Version)
 	req.Header.Set("x-tsuga-source-commit", c.Commit)
 	req.Header.Set("x-tsuga-source-date", c.Date)
+	if c.TerraformVersion != "" {
+		req.Header.Set("x-tsuga-source-terraform-version", c.TerraformVersion)
+	}
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}

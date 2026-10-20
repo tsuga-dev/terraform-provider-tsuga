@@ -38,9 +38,10 @@ func TestTsugaClientDoRequest(t *testing.T) {
 	defer server.Close()
 
 	client := &TsugaClient{
-		BaseURL: server.URL,
-		Token:   "token-123",
-		client:  server.Client(),
+		BaseURL:          server.URL,
+		Token:            "token-123",
+		TerraformVersion: "1.0.0+pulumi-terraform-bridge",
+		client:           server.Client(),
 	}
 
 	_, err := client.doRequest(ctx, http.MethodPost, "/teams", map[string]string{"name": "cedar"})
@@ -59,6 +60,9 @@ func TestTsugaClientDoRequest(t *testing.T) {
 	}
 	if got := received.Headers.Get("Content-Type"); got != "application/json" {
 		t.Errorf("expected Content-Type application/json, got %q", got)
+	}
+	if got := received.Headers.Get("x-tsuga-source-terraform-version"); got != "1.0.0+pulumi-terraform-bridge" {
+		t.Errorf("expected x-tsuga-source-terraform-version header, got %q", got)
 	}
 	if received.Body["name"] != "cedar" {
 		t.Errorf("expected JSON body to include name=cedar, got %v", received.Body)

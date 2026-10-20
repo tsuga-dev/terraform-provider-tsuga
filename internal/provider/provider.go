@@ -97,11 +97,12 @@ func (p *tsugaProvider) Configure(ctx context.Context, req provider.ConfigureReq
 
 	// Create and configure the client
 	client := &TsugaClient{
-		BaseURL: baseURL,
-		Token:   token,
-		Version: p.version,
-		Commit:  p.commit,
-		Date:    p.date,
+		BaseURL:          baseURL,
+		Token:            token,
+		Version:          p.version,
+		Commit:           p.commit,
+		Date:             p.date,
+		TerraformVersion: req.TerraformVersion,
 	}
 
 	resp.DataSourceData = client
