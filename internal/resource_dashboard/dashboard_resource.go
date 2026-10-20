@@ -2,11 +2,15 @@ package resource_dashboard
 
 import (
 	"context"
+	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -125,6 +129,7 @@ func DashboardResourceSchema(ctx context.Context) schema.Schema {
 						"past-2-days",
 						"past-3-days",
 						"past-7-days",
+						"past-15-days",
 						"past-30-days",
 						"past-3-months",
 						"current-day",
@@ -223,6 +228,15 @@ func DashboardResourceSchema(ctx context.Context) schema.Schema {
 								"pie_connection":         visualizationPieConnectionSchema(),
 								"bar_connection":         visualizationBarConnectionSchema(),
 								"query_value_connection": visualizationQueryValueConnectionSchema(),
+								"timeseries_promql":      visualizationTimeseriesPromqlSchema(),
+								"bar_promql":             visualizationBarPromqlSchema(),
+								"pie_promql":             visualizationPiePromqlSchema(),
+								"query_value_promql":     visualizationQueryValuePromqlSchema(),
+								"top_list_promql":        visualizationTopListPromqlSchema(),
+								"list_rum":               visualizationListRumSchema(),
+								"slo":                    visualizationSloSchema(),
+								"slo_over_time":          visualizationSloOverTimeSchema(),
+								"slo_uptime":             visualizationSloUptimeSchema(),
 							},
 						},
 					},
@@ -242,7 +256,7 @@ func visualizationSeriesSchema() schema.Attribute {
 			"source": schema.StringAttribute{
 				Required: true,
 				Validators: []validator.String{
-					stringvalidator.OneOf("logs", "metrics", "traces"),
+					stringvalidator.OneOf("logs", "metrics", "traces", "rum"),
 				},
 			},
 			"queries":        queriesSchema(),
@@ -268,7 +282,71 @@ func visualizationTimeseriesSchema() schema.Attribute {
 		Optional:    true,
 		Description: "Whether to apply automatic smoothing to the rendered timeseries",
 	}
+	attr.Attributes["custom_link"] = customLinkSchema()
+	attr.Attributes["group_by_mode"] = groupByModeSchema()
+	attr.Attributes["line_style_options"] = lineStyleOptionsSchema()
+	attr.Attributes["thresholds"] = thresholdsSchema()
 	return attr
+}
+
+func customLinkSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Optional:    true,
+		Description: "Custom link added to the widget context menu",
+		Attributes: map[string]schema.Attribute{
+			"label": schema.StringAttribute{
+				Optional:    true,
+				Description: "Text of the entry added to the widget context menu. Defaults to \"Open custom link\" when omitted.",
+				Validators: []validator.String{
+					stringvalidator.LengthBetween(1, 250),
+				},
+			},
+			"url": schema.StringAttribute{
+				Required:    true,
+				Description: "URL opened in a new tab by the context menu entry. Every `{{group.<field>}}` placeholder is replaced by the URL-encoded value the clicked series has for that group-by field; without placeholders, every series opens the same URL. `{` and `}` are only allowed as part of a placeholder. Tsuga omits the menu entry when the clicked series has no value for one of the referenced fields.",
+				Validators: []validator.String{
+					stringvalidator.LengthAtMost(250),
+					stringvalidator.RegexMatches(CustomLinkURLPattern, "must be an http(s) URL; `{` and `}` are only allowed in `{{group.<field>}}` placeholders"),
+				},
+			},
+		},
+	}
+}
+
+var CustomLinkURLPattern = regexp.MustCompile(`^https?://(?:[^\s{}]|\{\{group\.[^{}\s]+\}\})+$`)
+
+func groupByModeSchema() schema.Attribute {
+	return schema.StringAttribute{
+		Optional:    true,
+		Description: "`absolute` keeps each group at its own value; `relative` shows it as a percentage of the ungrouped total (defaults to absolute)",
+		Validators: []validator.String{
+			stringvalidator.OneOf("relative", "absolute"),
+		},
+	}
+}
+
+func lineStyleOptionsSchema() schema.Attribute {
+	return schema.MapNestedAttribute{
+		Optional:    true,
+		Description: "Line style of each series, keyed by 1-based query index. The last index is the formula when there is one. For widgets with a single query, only the `1` entry is read and it applies to every series. Defaults to regular.",
+		Validators: []validator.Map{
+			mapvalidator.SizeAtLeast(1),
+			mapvalidator.KeysAre(stringvalidator.RegexMatches(regexp.MustCompile(`^[1-9][0-9]*$`), "must be a 1-based query index")),
+		},
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"group_id": schema.StringAttribute{
+					Required: true,
+				},
+				"line_style": schema.StringAttribute{
+					Required: true,
+					Validators: []validator.String{
+						stringvalidator.OneOf("regular", "dashed"),
+					},
+				},
+			},
+		},
+	}
 }
 
 func timeBucketSchema() schema.Attribute {
@@ -341,6 +419,15 @@ func yAxisSettingsSchema() schema.Attribute {
 }
 
 func visualizationTableSchema() schema.Attribute {
+	sorting := listDefaultSortingSchema().(schema.ListNestedAttribute)
+	sorting.Description = "Default sorting applied to a table widget. Column IDs are `label` for the grouping column and `col-<index>` for each entry in `columns`. Users can still change sorting by selecting columns in the rendered table."
+	id := sorting.NestedObject.Attributes["id"].(schema.StringAttribute)
+	id.Description = "ID of the column to sort by"
+	sorting.NestedObject.Attributes["id"] = id
+	desc := sorting.NestedObject.Attributes["desc"].(schema.BoolAttribute)
+	desc.Description = "Whether the sort is descending"
+	sorting.NestedObject.Attributes["desc"] = desc
+
 	return schema.SingleNestedAttribute{
 		Optional: true,
 		Attributes: map[string]schema.Attribute{
@@ -360,7 +447,7 @@ func visualizationTableSchema() schema.Attribute {
 						"source": schema.StringAttribute{
 							Required: true,
 							Validators: []validator.String{
-								stringvalidator.OneOf("logs", "metrics", "traces"),
+								stringvalidator.OneOf("logs", "metrics", "traces", "rum"),
 							},
 						},
 						"queries":        queriesSchema(),
@@ -374,7 +461,18 @@ func visualizationTableSchema() schema.Attribute {
 					},
 				},
 			},
-			"group_by": groupBySchema(),
+			"group_by":      groupBySchema(),
+			"group_by_mode": groupByModeSchema(),
+			"custom_link":   customLinkSchema(),
+			"column_sizes": schema.MapAttribute{
+				Optional:    true,
+				ElementType: types.Float64Type,
+				Description: "Table column widths in pixels, keyed by column id: `label` for the grouping column and `col-<index>` for each entry in `columns`. Columns without an entry keep their default width.",
+				Validators: []validator.Map{
+					mapvalidator.SizeAtLeast(1),
+				},
+			},
+			"default_sorting": sorting,
 		},
 	}
 }
@@ -401,6 +499,32 @@ func queriesSchema() schema.Attribute {
 						stringvalidator.OneOf("avg", "sum", "min", "max", "last"),
 					},
 				},
+				"metric_kind": schema.StringAttribute{
+					Optional:    true,
+					Description: "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence.",
+					Validators: []validator.String{
+						stringvalidator.OneOf("gauge", "cumulative-counter", "delta-counter", "cumulative-histogram", "delta-histogram", "summary"),
+					},
+				},
+				"fill": schema.SingleNestedAttribute{
+					Optional:    true,
+					Description: "Missing-point fill behavior for aggregation results. Omit to keep missing points null.",
+					Attributes: map[string]schema.Attribute{
+						"mode": schema.SingleNestedAttribute{
+							Required:    true,
+							Description: "How missing aggregation points should be filled.",
+							Attributes: map[string]schema.Attribute{
+								"type": schema.StringAttribute{
+									Required:    true,
+									Description: "`zero` fills missing points with zero. `null` keeps missing points null.",
+									Validators: []validator.String{
+										stringvalidator.OneOf("zero", "null"),
+									},
+								},
+							},
+						},
+					},
+				},
 				"functions": schema.ListNestedAttribute{
 					Optional: true,
 					Validators: []validator.List{
@@ -411,7 +535,7 @@ func queriesSchema() schema.Attribute {
 							"type": schema.StringAttribute{
 								Required: true,
 								Validators: []validator.String{
-									stringvalidator.OneOf("per-second", "per-minute", "per-hour", "rate", "increase", "rolling", "log", "power", "sqrt", "last", "time-offset"),
+									stringvalidator.OneOf("per-second", "per-minute", "per-hour", "rate", "increase", "rolling", "log", "power", "sqrt", "last", "time-offset", "cumsum"),
 								},
 							},
 							"window": schema.StringAttribute{
@@ -543,6 +667,8 @@ func visualizationPieSchema() schema.Attribute {
 	attr := visualizationSeriesSchema().(schema.SingleNestedAttribute)
 	delete(attr.Attributes, "y_axis_settings")
 	attr.Attributes["legend_mode"] = legendModeSchema()
+	attr.Attributes["custom_link"] = customLinkSchema()
+	attr.Attributes["group_by_mode"] = groupByModeSchema()
 	return attr
 }
 
@@ -554,6 +680,9 @@ func visualizationTopListSchema() schema.Attribute {
 		Description: "Requests stacked rendering for a top-list widget. Tsuga renders stacked rows only for one count or sum query with exactly two grouped fields, no formula, non-negative values, and a single-cluster context; otherwise the widget renders as a normal top list.",
 	}
 	attr.Attributes["conditions"] = conditionsSchema()
+	attr.Attributes["custom_link"] = customLinkSchema()
+	attr.Attributes["group_by_mode"] = groupByModeSchema()
+	attr.Attributes["legend_mode"] = legendModeSchema()
 	return attr
 }
 
@@ -576,6 +705,9 @@ func visualizationBarSchema() schema.Attribute {
 	attr := visualizationSeriesSchema().(schema.SingleNestedAttribute)
 	attr.Attributes["legend_mode"] = legendModeSchema()
 	attr.Attributes["time_bucket"] = timeBucketSchema()
+	attr.Attributes["custom_link"] = customLinkSchema()
+	attr.Attributes["group_by_mode"] = groupByModeSchema()
+	attr.Attributes["thresholds"] = thresholdsSchema()
 	return attr
 }
 
@@ -630,13 +762,24 @@ func visualizationDistributionSchema() schema.Attribute {
 			),
 		},
 	}
+	attr.Attributes["group"] = groupSchema()
 	return attr
+}
+
+func groupSchema() schema.Attribute {
+	return schema.StringAttribute{
+		Optional:    true,
+		Description: "Attribute that switches the count to \"Groups\" mode: records are grouped by this attribute, the aggregation produces one value per group, and the chart buckets those per-group values. When omitted, individual records are bucketed.",
+		Validators: []validator.String{
+			stringvalidator.LengthAtMost(250),
+		},
+	}
 }
 
 func visualizationHeatmapSchema() schema.Attribute {
 	attr := visualizationSeriesSchema().(schema.SingleNestedAttribute)
 	attr.Description = "Displays the aggregation as a heatmap chart"
-	delete(attr.Attributes, "y_axis_settings")
+	attr.Attributes["group"] = groupSchema()
 	attr.Attributes["palette"] = schema.StringAttribute{
 		Optional:    true,
 		Description: "Color palette used to render the heatmap intensity gradient",
@@ -874,6 +1017,9 @@ func thresholdsSchema() schema.Attribute {
 	return schema.ListNestedAttribute{
 		Optional:    true,
 		Description: "Threshold markers displayed on the chart",
+		Validators: []validator.List{
+			listvalidator.SizeAtLeast(1),
+		},
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
 				"value": schema.Float64Attribute{
@@ -918,9 +1064,10 @@ func visualizationTimeseriesConnectionSchema() schema.Attribute {
 					),
 				},
 			},
-			"legend_mode":     legendModeSchema(),
-			"thresholds":      thresholdsSchema(),
-			"y_axis_settings": yAxisSettingsSchema(),
+			"legend_mode":        legendModeSchema(),
+			"thresholds":         thresholdsSchema(),
+			"y_axis_settings":    yAxisSettingsSchema(),
+			"line_style_options": lineStyleOptionsSchema(),
 		},
 	}
 }
@@ -1009,6 +1156,248 @@ func visualizationNoteSchema() schema.Attribute {
 	}
 }
 
+func visualizationPromqlSchema(description string) schema.SingleNestedAttribute {
+	return schema.SingleNestedAttribute{
+		Optional:    true,
+		Description: description,
+		Attributes: map[string]schema.Attribute{
+			"type": schema.StringAttribute{
+				Computed: true,
+			},
+			"queries": schema.ListAttribute{
+				Required:    true,
+				ElementType: types.StringType,
+				Description: "PromQL expressions configured for this widget",
+				Validators: []validator.List{
+					listvalidator.SizeAtLeast(1),
+					listvalidator.ValueStringsAre(
+						stringvalidator.LengthBetween(1, 50000),
+					),
+				},
+			},
+			"aliases":    aliasesSchema(),
+			"normalizer": normalizer.Schema(),
+			"precision": schema.Float64Attribute{
+				Optional:    true,
+				Description: "Number of decimal places to display in the value",
+			},
+		},
+	}
+}
+
+func visualizationTimeseriesPromqlSchema() schema.Attribute {
+	attr := visualizationChartPromqlSchema("Displays PromQL metrics query-based aggregation as a time series chart")
+	attr.Attributes["line_style_options"] = lineStyleOptionsSchema()
+	attr.Attributes["smoothing"] = schema.BoolAttribute{
+		Optional:    true,
+		Description: "Whether to apply automatic smoothing to the rendered timeseries",
+	}
+	return attr
+}
+
+func visualizationBarPromqlSchema() schema.Attribute {
+	return visualizationChartPromqlSchema("Displays PromQL metrics query-based aggregation as a bar chart")
+}
+
+func visualizationChartPromqlSchema(description string) schema.SingleNestedAttribute {
+	attr := visualizationPromqlSchema(description)
+	attr.Attributes["legend_mode"] = legendModeSchema()
+	attr.Attributes["thresholds"] = thresholdsSchema()
+	attr.Attributes["time_bucket"] = timeBucketSchema()
+	attr.Attributes["y_axis_settings"] = yAxisSettingsSchema()
+	return attr
+}
+
+func visualizationPiePromqlSchema() schema.Attribute {
+	attr := visualizationPromqlSchema("Displays PromQL metrics query-based aggregation as a pie chart")
+	attr.Attributes["legend_mode"] = legendModeSchema()
+	return attr
+}
+
+func visualizationQueryValuePromqlSchema() schema.Attribute {
+	attr := visualizationPromqlSchema("Displays a single value computed by PromQL metrics queries")
+	attr.Attributes["legend_mode"] = legendModeSchema()
+	attr.Attributes["background_mode"] = schema.StringAttribute{
+		Optional: true,
+		Validators: []validator.String{
+			stringvalidator.OneOf("background", "no-background"),
+		},
+	}
+	attr.Attributes["conditions"] = conditionsSchema()
+	return attr
+}
+
+func visualizationTopListPromqlSchema() schema.Attribute {
+	attr := visualizationPromqlSchema("Displays PromQL metrics query-based aggregation as a ranked top list")
+	attr.Attributes["conditions"] = conditionsSchema()
+	return attr
+}
+
+func visualizationListRumSchema() schema.Attribute {
+	attr := visualizationListSchema().(schema.SingleNestedAttribute)
+	attr.Description = "Displays matching RUM events in a tabular list"
+	query := attr.Attributes["query"].(schema.StringAttribute)
+	query.Description = "Query that selects RUM events for the list. Prefix every field with the stream it belongs to (`measurements.`, `events.`, or `exceptions.`) and filter on a single stream per query. A query without stream-prefixed fields searches the `events` stream."
+	attr.Attributes["query"] = query
+	return attr
+}
+
+func sloIdSchema(required bool, description string) schema.Attribute {
+	return schema.StringAttribute{
+		Required:    required,
+		Optional:    !required,
+		Description: description,
+		Validators: []validator.String{
+			stringvalidator.LengthBetween(1, 250),
+		},
+	}
+}
+
+func sloFilterExcludeSchema() schema.Attribute {
+	return schema.BoolAttribute{
+		Optional:    true,
+		Description: "If true, exclude rows matching these values instead of including them",
+	}
+}
+
+const sloFilterValuesDescription = "Values compared by this filter. When `exclude` is omitted or false, rows matching any value are kept; when `exclude` is true, matching rows are removed."
+
+func visualizationSloSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Optional:    true,
+		Description: "Displays the latest status of SLOs as summary cards with the result count per status, a table of results, or both. Status is not recomputed over the dashboard time range.",
+		Attributes: map[string]schema.Attribute{
+			"type": schema.StringAttribute{
+				Computed: true,
+			},
+			"slo_id": sloIdSchema(false, "Id of the SLO to display. Omit it to cover every SLO that matches `filters`."),
+			"display": schema.ListAttribute{
+				Required:    true,
+				ElementType: types.StringType,
+				Description: "Sections to show: `summary` for the result count per status, `table` for the list of results.",
+				Validators: []validator.List{
+					listvalidator.SizeAtLeast(1),
+					listvalidator.UniqueValues(),
+					listvalidator.ValueStringsAre(
+						stringvalidator.OneOf("summary", "table"),
+					),
+				},
+			},
+			"organize_by": schema.StringAttribute{
+				Optional:    true,
+				Description: "Groups the results by owning team or by cluster. Omit it to list results ungrouped.",
+				Validators: []validator.String{
+					stringvalidator.OneOf("team", "cluster"),
+				},
+			},
+			"filters": schema.SingleNestedAttribute{
+				Optional:    true,
+				Description: "Narrows the SLOs the widget covers. Omit it, or any of its fields, to apply no filter.",
+				Validators: []validator.Object{
+					objectvalidator.AtLeastOneOf(
+						path.MatchRelative().AtName("owners"),
+						path.MatchRelative().AtName("statuses"),
+						path.MatchRelative().AtName("tags"),
+					),
+				},
+				Attributes: map[string]schema.Attribute{
+					"owners": schema.SingleNestedAttribute{
+						Optional:    true,
+						Description: "Restrict results to SLOs owned by any of these team IDs",
+						Attributes: map[string]schema.Attribute{
+							"values": schema.ListAttribute{
+								Required:    true,
+								ElementType: types.StringType,
+								Description: sloFilterValuesDescription,
+								Validators: []validator.List{
+									listvalidator.SizeAtMost(50),
+									listvalidator.ValueStringsAre(
+										stringvalidator.LengthBetween(1, 250),
+									),
+								},
+							},
+							"exclude": sloFilterExcludeSchema(),
+						},
+					},
+					"statuses": schema.SingleNestedAttribute{
+						Optional:    true,
+						Description: "Keep only the results whose status is one of these values. A result is one cluster of an ungrouped SLO, or one group of a grouped SLO.",
+						Attributes: map[string]schema.Attribute{
+							"values": schema.ListAttribute{
+								Required:    true,
+								ElementType: types.StringType,
+								Description: sloFilterValuesDescription + " Statuses: healthy (meeting the target), breached (breaching it), or no_data (not evaluated yet).",
+								Validators: []validator.List{
+									listvalidator.SizeAtMost(3),
+									listvalidator.ValueStringsAre(
+										stringvalidator.OneOf("healthy", "breached", "no_data"),
+									),
+								},
+							},
+							"exclude": sloFilterExcludeSchema(),
+						},
+					},
+					"tags": schema.SingleNestedAttribute{
+						Optional:    true,
+						Description: "Restrict results to SLOs that have at least one of the listed key/value tags",
+						Attributes: map[string]schema.Attribute{
+							"values": schema.ListNestedAttribute{
+								Required:    true,
+								Description: sloFilterValuesDescription,
+								Validators: []validator.List{
+									listvalidator.SizeAtMost(50),
+								},
+								NestedObject: schema.NestedAttributeObject{
+									Attributes: map[string]schema.Attribute{
+										"key": schema.StringAttribute{
+											Required:    true,
+											Description: "Tag key",
+											Validators: []validator.String{
+												stringvalidator.LengthAtMost(128),
+											},
+										},
+										"value": schema.StringAttribute{
+											Required:    true,
+											Description: "Tag value. Leading or trailing whitespace is rejected.",
+											Validators: []validator.String{
+												stringvalidator.LengthAtMost(256),
+												stringvalidator.RegexMatches(regexp.MustCompile(`^\S(.*\S)?$`), "must not have leading or trailing whitespace"),
+											},
+										},
+									},
+								},
+							},
+							"exclude": sloFilterExcludeSchema(),
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func visualizationSloOverTimeSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Optional:    true,
+		Description: "Displays the good and bad events, or the per-slice status, of an SLO over the dashboard time range. Experimental.",
+		Attributes: map[string]schema.Attribute{
+			"type":   schema.StringAttribute{Computed: true},
+			"slo_id": sloIdSchema(true, "Id of the SLO to display"),
+		},
+	}
+}
+
+func visualizationSloUptimeSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		Optional:    true,
+		Description: "Displays the SLI percentage of an SLO computed over the dashboard time range, colored against the SLO target. Experimental.",
+		Attributes: map[string]schema.Attribute{
+			"type":   schema.StringAttribute{Computed: true},
+			"slo_id": sloIdSchema(true, "Id of the SLO to display"),
+		},
+	}
+}
+
 type DashboardModel struct {
 	Id         types.String `tfsdk:"id"`
 	Name       types.String `tfsdk:"name"`
@@ -1057,6 +1446,15 @@ type VisualizationModel struct {
 	PieConnection        *PieConnectionVisualization        `tfsdk:"pie_connection"`
 	BarConnection        *BarConnectionVisualization        `tfsdk:"bar_connection"`
 	QueryValueConnection *QueryValueConnectionVisualization `tfsdk:"query_value_connection"`
+	TimeseriesPromql     *TimeseriesPromqlVisualization     `tfsdk:"timeseries_promql"`
+	BarPromql            *BarPromqlVisualization            `tfsdk:"bar_promql"`
+	PiePromql            *PiePromqlVisualization            `tfsdk:"pie_promql"`
+	QueryValuePromql     *QueryValuePromqlVisualization     `tfsdk:"query_value_promql"`
+	TopListPromql        *TopListPromqlVisualization        `tfsdk:"top_list_promql"`
+	ListRum              *ListVisualization                 `tfsdk:"list_rum"`
+	Slo                  *SloVisualization                  `tfsdk:"slo"`
+	SloOverTime          *SloIdVisualization                `tfsdk:"slo_over_time"`
+	SloUptime            *SloIdVisualization                `tfsdk:"slo_uptime"`
 }
 
 type SeriesBase struct {
@@ -1078,9 +1476,23 @@ type SeriesVisualizationModel struct {
 
 type TimeseriesVisualization struct {
 	SeriesVisualizationModel
-	LegendMode types.String     `tfsdk:"legend_mode"`
-	TimeBucket *TimeBucketModel `tfsdk:"time_bucket"`
-	Smoothing  types.Bool       `tfsdk:"smoothing"`
+	LegendMode       types.String     `tfsdk:"legend_mode"`
+	TimeBucket       *TimeBucketModel `tfsdk:"time_bucket"`
+	Smoothing        types.Bool       `tfsdk:"smoothing"`
+	CustomLink       *CustomLinkModel `tfsdk:"custom_link"`
+	GroupByMode      types.String     `tfsdk:"group_by_mode"`
+	LineStyleOptions types.Map        `tfsdk:"line_style_options"`
+	Thresholds       types.List       `tfsdk:"thresholds"`
+}
+
+type CustomLinkModel struct {
+	Label types.String `tfsdk:"label"`
+	Url   types.String `tfsdk:"url"`
+}
+
+type LineStyleOptionModel struct {
+	GroupId   types.String `tfsdk:"group_id"`
+	LineStyle types.String `tfsdk:"line_style"`
 }
 
 type AliasesModel struct {
@@ -1106,9 +1518,13 @@ type YAxisScaleModel struct {
 }
 
 type TableVisualizationModel struct {
-	Type    types.String `tfsdk:"type"`
-	Columns types.List   `tfsdk:"columns"`
-	GroupBy types.List   `tfsdk:"group_by"`
+	Type           types.String     `tfsdk:"type"`
+	Columns        types.List       `tfsdk:"columns"`
+	GroupBy        types.List       `tfsdk:"group_by"`
+	GroupByMode    types.String     `tfsdk:"group_by_mode"`
+	CustomLink     *CustomLinkModel `tfsdk:"custom_link"`
+	ColumnSizes    types.Map        `tfsdk:"column_sizes"`
+	DefaultSorting types.List       `tfsdk:"default_sorting"`
 }
 
 type TableColumnModel struct {
@@ -1131,21 +1547,29 @@ type QueryValueVisualization struct {
 
 type PieVisualization struct {
 	SeriesBase
-	LegendMode types.String `tfsdk:"legend_mode"`
-	GroupBy    types.List   `tfsdk:"group_by"`
+	LegendMode  types.String     `tfsdk:"legend_mode"`
+	GroupBy     types.List       `tfsdk:"group_by"`
+	CustomLink  *CustomLinkModel `tfsdk:"custom_link"`
+	GroupByMode types.String     `tfsdk:"group_by_mode"`
 }
 
 type TopListVisualization struct {
 	SeriesBase
-	GroupBy    types.List `tfsdk:"group_by"`
-	Conditions types.List `tfsdk:"conditions"`
-	IsStacked  types.Bool `tfsdk:"is_stacked"`
+	GroupBy     types.List       `tfsdk:"group_by"`
+	Conditions  types.List       `tfsdk:"conditions"`
+	IsStacked   types.Bool       `tfsdk:"is_stacked"`
+	CustomLink  *CustomLinkModel `tfsdk:"custom_link"`
+	GroupByMode types.String     `tfsdk:"group_by_mode"`
+	LegendMode  types.String     `tfsdk:"legend_mode"`
 }
 
 type BarVisualization struct {
 	SeriesVisualizationModel
-	LegendMode types.String     `tfsdk:"legend_mode"`
-	TimeBucket *TimeBucketModel `tfsdk:"time_bucket"`
+	LegendMode  types.String     `tfsdk:"legend_mode"`
+	TimeBucket  *TimeBucketModel `tfsdk:"time_bucket"`
+	CustomLink  *CustomLinkModel `tfsdk:"custom_link"`
+	GroupByMode types.String     `tfsdk:"group_by_mode"`
+	Thresholds  types.List       `tfsdk:"thresholds"`
 }
 
 type GaugeVisualization struct {
@@ -1164,12 +1588,15 @@ type DistributionVisualization struct {
 	GroupBy           types.List   `tfsdk:"group_by"`
 	BoundsScale       types.String `tfsdk:"bounds_scale"`
 	PercentileMarkers types.List   `tfsdk:"percentile_markers"`
+	Group             types.String `tfsdk:"group"`
 }
 
 type HeatmapVisualization struct {
 	SeriesBase
-	GroupBy types.List   `tfsdk:"group_by"`
-	Palette types.String `tfsdk:"palette"`
+	GroupBy       types.List          `tfsdk:"group_by"`
+	Palette       types.String        `tfsdk:"palette"`
+	Group         types.String        `tfsdk:"group"`
+	YAxisSettings *YAxisSettingsModel `tfsdk:"y_axis_settings"`
 }
 
 type ListLogPatternsVisualization struct {
@@ -1226,12 +1653,78 @@ type ListDefaultSortingModel struct {
 }
 
 type TimeseriesConnectionVisualization struct {
-	Type          types.String        `tfsdk:"type"`
-	ConnectionId  types.String        `tfsdk:"connection_id"`
-	Queries       types.List          `tfsdk:"queries"`
+	Type             types.String        `tfsdk:"type"`
+	ConnectionId     types.String        `tfsdk:"connection_id"`
+	Queries          types.List          `tfsdk:"queries"`
+	LegendMode       types.String        `tfsdk:"legend_mode"`
+	Thresholds       types.List          `tfsdk:"thresholds"`
+	YAxisSettings    *YAxisSettingsModel `tfsdk:"y_axis_settings"`
+	LineStyleOptions types.Map           `tfsdk:"line_style_options"`
+}
+
+type PromqlBase struct {
+	Type       types.String      `tfsdk:"type"`
+	Queries    types.List        `tfsdk:"queries"`
+	Aliases    *AliasesModel     `tfsdk:"aliases"`
+	Normalizer *normalizer.Model `tfsdk:"normalizer"`
+	Precision  types.Float64     `tfsdk:"precision"`
+}
+
+type TimeseriesPromqlVisualization struct {
+	BarPromqlVisualization
+	LineStyleOptions types.Map  `tfsdk:"line_style_options"`
+	Smoothing        types.Bool `tfsdk:"smoothing"`
+}
+
+type BarPromqlVisualization struct {
+	PromqlBase
 	LegendMode    types.String        `tfsdk:"legend_mode"`
 	Thresholds    types.List          `tfsdk:"thresholds"`
+	TimeBucket    *TimeBucketModel    `tfsdk:"time_bucket"`
 	YAxisSettings *YAxisSettingsModel `tfsdk:"y_axis_settings"`
+}
+
+type PiePromqlVisualization struct {
+	PromqlBase
+	LegendMode types.String `tfsdk:"legend_mode"`
+}
+
+type QueryValuePromqlVisualization struct {
+	PromqlBase
+	LegendMode     types.String `tfsdk:"legend_mode"`
+	BackgroundMode types.String `tfsdk:"background_mode"`
+	Conditions     types.List   `tfsdk:"conditions"`
+}
+
+type TopListPromqlVisualization struct {
+	PromqlBase
+	Conditions types.List `tfsdk:"conditions"`
+}
+
+type SloVisualization struct {
+	Type       types.String     `tfsdk:"type"`
+	SloId      types.String     `tfsdk:"slo_id"`
+	Display    types.List       `tfsdk:"display"`
+	OrganizeBy types.String     `tfsdk:"organize_by"`
+	Filters    *SloFiltersModel `tfsdk:"filters"`
+}
+
+type SloFiltersModel struct {
+	Owners   *SloFilterModel `tfsdk:"owners"`
+	Statuses *SloFilterModel `tfsdk:"statuses"`
+	Tags     *SloFilterModel `tfsdk:"tags"`
+}
+
+// SloFilterModel is one SLO widget filter; values holds strings for owners and
+// statuses and key/value objects for tags.
+type SloFilterModel struct {
+	Values  types.List `tfsdk:"values"`
+	Exclude types.Bool `tfsdk:"exclude"`
+}
+
+type SloIdVisualization struct {
+	Type  types.String `tfsdk:"type"`
+	SloId types.String `tfsdk:"slo_id"`
 }
 
 type ThresholdModel struct {
@@ -1258,10 +1751,20 @@ type NoteVisualizationModel struct {
 }
 
 type QueryModel struct {
-	Aggregate     AggregateModel `tfsdk:"aggregate"`
-	Filter        types.String   `tfsdk:"filter"`
-	Functions     types.List     `tfsdk:"functions"`
-	TimeAggregate types.String   `tfsdk:"time_aggregate"`
+	Aggregate     AggregateModel  `tfsdk:"aggregate"`
+	Filter        types.String    `tfsdk:"filter"`
+	Functions     types.List      `tfsdk:"functions"`
+	TimeAggregate types.String    `tfsdk:"time_aggregate"`
+	MetricKind    types.String    `tfsdk:"metric_kind"`
+	Fill          *QueryFillModel `tfsdk:"fill"`
+}
+
+type QueryFillModel struct {
+	Mode QueryFillModeModel `tfsdk:"mode"`
+}
+
+type QueryFillModeModel struct {
+	Type types.String `tfsdk:"type"`
 }
 
 type AggregateModel struct {
@@ -1354,6 +1857,15 @@ func VisualizationAttrTypes() map[string]attr.Type {
 		"pie_connection":         types.ObjectType{AttrTypes: PieConnectionVisualizationAttrTypes()},
 		"bar_connection":         types.ObjectType{AttrTypes: BarConnectionVisualizationAttrTypes()},
 		"query_value_connection": types.ObjectType{AttrTypes: QueryValueConnectionVisualizationAttrTypes()},
+		"timeseries_promql":      types.ObjectType{AttrTypes: TimeseriesPromqlVisualizationAttrTypes()},
+		"bar_promql":             types.ObjectType{AttrTypes: BarPromqlVisualizationAttrTypes()},
+		"pie_promql":             types.ObjectType{AttrTypes: PiePromqlVisualizationAttrTypes()},
+		"query_value_promql":     types.ObjectType{AttrTypes: QueryValuePromqlVisualizationAttrTypes()},
+		"top_list_promql":        types.ObjectType{AttrTypes: TopListPromqlVisualizationAttrTypes()},
+		"list_rum":               types.ObjectType{AttrTypes: ListVisualizationAttrTypes()},
+		"slo":                    types.ObjectType{AttrTypes: SloVisualizationAttrTypes()},
+		"slo_over_time":          types.ObjectType{AttrTypes: SloIdVisualizationAttrTypes()},
+		"slo_uptime":             types.ObjectType{AttrTypes: SloIdVisualizationAttrTypes()},
 	}
 }
 
@@ -1377,7 +1889,33 @@ func TimeseriesVisualizationAttrTypes() map[string]attr.Type {
 	attrs["legend_mode"] = types.StringType
 	attrs["time_bucket"] = types.ObjectType{AttrTypes: TimeBucketAttrTypes()}
 	attrs["smoothing"] = types.BoolType
+	attrs["custom_link"] = types.ObjectType{AttrTypes: CustomLinkAttrTypes()}
+	attrs["group_by_mode"] = types.StringType
+	attrs["line_style_options"] = LineStyleOptionsType()
+	attrs["thresholds"] = ThresholdsType()
 	return attrs
+}
+
+func CustomLinkAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"label": types.StringType,
+		"url":   types.StringType,
+	}
+}
+
+func LineStyleOptionAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"group_id":   types.StringType,
+		"line_style": types.StringType,
+	}
+}
+
+func LineStyleOptionsType() types.MapType {
+	return types.MapType{ElemType: types.ObjectType{AttrTypes: LineStyleOptionAttrTypes()}}
+}
+
+func ThresholdsType() types.ListType {
+	return types.ListType{ElemType: types.ObjectType{AttrTypes: ThresholdAttrTypes()}}
 }
 
 func AliasesAttrTypes() map[string]attr.Type {
@@ -1412,9 +1950,13 @@ func YAxisScaleAttrTypes() map[string]attr.Type {
 
 func TableVisualizationAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"type":     types.StringType,
-		"columns":  types.ListType{ElemType: types.ObjectType{AttrTypes: TableColumnAttrTypes()}},
-		"group_by": types.ListType{ElemType: types.ObjectType{AttrTypes: groupby.AttrTypes()}},
+		"type":            types.StringType,
+		"columns":         types.ListType{ElemType: types.ObjectType{AttrTypes: TableColumnAttrTypes()}},
+		"group_by":        types.ListType{ElemType: types.ObjectType{AttrTypes: groupby.AttrTypes()}},
+		"group_by_mode":   types.StringType,
+		"custom_link":     types.ObjectType{AttrTypes: CustomLinkAttrTypes()},
+		"column_sizes":    types.MapType{ElemType: types.Float64Type},
+		"default_sorting": types.ListType{ElemType: types.ObjectType{AttrTypes: ListDefaultSortingAttrTypes()}},
 	}
 }
 
@@ -1435,6 +1977,8 @@ func PieVisualizationAttrTypes() map[string]attr.Type {
 	attrs := SeriesVisualizationAttrTypes()
 	delete(attrs, "y_axis_settings")
 	attrs["legend_mode"] = types.StringType
+	attrs["custom_link"] = types.ObjectType{AttrTypes: CustomLinkAttrTypes()}
+	attrs["group_by_mode"] = types.StringType
 	return attrs
 }
 
@@ -1453,6 +1997,9 @@ func TopListVisualizationAttrTypes() map[string]attr.Type {
 	delete(attrs, "y_axis_settings")
 	attrs["is_stacked"] = types.BoolType
 	attrs["conditions"] = types.ListType{ElemType: types.ObjectType{AttrTypes: ConditionAttrTypes()}}
+	attrs["custom_link"] = types.ObjectType{AttrTypes: CustomLinkAttrTypes()}
+	attrs["group_by_mode"] = types.StringType
+	attrs["legend_mode"] = types.StringType
 	return attrs
 }
 
@@ -1460,6 +2007,9 @@ func BarVisualizationAttrTypes() map[string]attr.Type {
 	attrs := SeriesVisualizationAttrTypes()
 	attrs["legend_mode"] = types.StringType
 	attrs["time_bucket"] = types.ObjectType{AttrTypes: TimeBucketAttrTypes()}
+	attrs["custom_link"] = types.ObjectType{AttrTypes: CustomLinkAttrTypes()}
+	attrs["group_by_mode"] = types.StringType
+	attrs["thresholds"] = ThresholdsType()
 	return attrs
 }
 
@@ -1484,13 +2034,14 @@ func DistributionVisualizationAttrTypes() map[string]attr.Type {
 	delete(attrs, "y_axis_settings")
 	attrs["bounds_scale"] = types.StringType
 	attrs["percentile_markers"] = types.ListType{ElemType: types.Int64Type}
+	attrs["group"] = types.StringType
 	return attrs
 }
 
 func HeatmapVisualizationAttrTypes() map[string]attr.Type {
 	attrs := SeriesVisualizationAttrTypes()
-	delete(attrs, "y_axis_settings")
 	attrs["palette"] = types.StringType
+	attrs["group"] = types.StringType
 	return attrs
 }
 
@@ -1525,7 +2076,7 @@ func BarConnectionVisualizationAttrTypes() map[string]attr.Type {
 		"connection_id":   types.StringType,
 		"queries":         types.ListType{ElemType: types.StringType},
 		"legend_mode":     types.StringType,
-		"thresholds":      types.ListType{ElemType: types.ObjectType{AttrTypes: ThresholdAttrTypes()}},
+		"thresholds":      ThresholdsType(),
 		"y_axis_settings": types.ObjectType{AttrTypes: YAxisSettingsAttrTypes()},
 	}
 }
@@ -1570,13 +2121,64 @@ func ThresholdAttrTypes() map[string]attr.Type {
 
 func TimeseriesConnectionVisualizationAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"type":            types.StringType,
-		"connection_id":   types.StringType,
-		"queries":         types.ListType{ElemType: types.StringType},
-		"legend_mode":     types.StringType,
-		"thresholds":      types.ListType{ElemType: types.ObjectType{AttrTypes: ThresholdAttrTypes()}},
-		"y_axis_settings": types.ObjectType{AttrTypes: YAxisSettingsAttrTypes()},
+		"type":               types.StringType,
+		"connection_id":      types.StringType,
+		"queries":            types.ListType{ElemType: types.StringType},
+		"legend_mode":        types.StringType,
+		"thresholds":         ThresholdsType(),
+		"y_axis_settings":    types.ObjectType{AttrTypes: YAxisSettingsAttrTypes()},
+		"line_style_options": LineStyleOptionsType(),
 	}
+}
+
+func TimeseriesPromqlVisualizationAttrTypes() map[string]attr.Type {
+	return visualizationTimeseriesPromqlSchema().GetType().(types.ObjectType).AttrTypes
+}
+
+func BarPromqlVisualizationAttrTypes() map[string]attr.Type {
+	return visualizationBarPromqlSchema().GetType().(types.ObjectType).AttrTypes
+}
+
+func PiePromqlVisualizationAttrTypes() map[string]attr.Type {
+	return visualizationPiePromqlSchema().GetType().(types.ObjectType).AttrTypes
+}
+
+func QueryValuePromqlVisualizationAttrTypes() map[string]attr.Type {
+	return visualizationQueryValuePromqlSchema().GetType().(types.ObjectType).AttrTypes
+}
+
+func TopListPromqlVisualizationAttrTypes() map[string]attr.Type {
+	return visualizationTopListPromqlSchema().GetType().(types.ObjectType).AttrTypes
+}
+
+func SloVisualizationAttrTypes() map[string]attr.Type {
+	return visualizationSloSchema().GetType().(types.ObjectType).AttrTypes
+}
+
+func SloFiltersAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"owners":   types.ObjectType{AttrTypes: SloFilterAttrTypes(types.StringType)},
+		"statuses": types.ObjectType{AttrTypes: SloFilterAttrTypes(types.StringType)},
+		"tags":     types.ObjectType{AttrTypes: SloFilterAttrTypes(types.ObjectType{AttrTypes: SloTagAttrTypes()})},
+	}
+}
+
+func SloFilterAttrTypes(valueType attr.Type) map[string]attr.Type {
+	return map[string]attr.Type{
+		"values":  types.ListType{ElemType: valueType},
+		"exclude": types.BoolType,
+	}
+}
+
+func SloTagAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"key":   types.StringType,
+		"value": types.StringType,
+	}
+}
+
+func SloIdVisualizationAttrTypes() map[string]attr.Type {
+	return visualizationSloOverTimeSchema().GetType().(types.ObjectType).AttrTypes
 }
 
 func ListConnectionVisualizationAttrTypes() map[string]attr.Type {
@@ -1607,6 +2209,20 @@ func QueryAttrTypes() map[string]attr.Type {
 		"filter":         types.StringType,
 		"functions":      types.ListType{ElemType: types.ObjectType{AttrTypes: FunctionAttrTypes()}},
 		"time_aggregate": types.StringType,
+		"metric_kind":    types.StringType,
+		"fill":           types.ObjectType{AttrTypes: QueryFillAttrTypes()},
+	}
+}
+
+func QueryFillAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"mode": types.ObjectType{AttrTypes: QueryFillModeAttrTypes()},
+	}
+}
+
+func QueryFillModeAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"type": types.StringType,
 	}
 }
 

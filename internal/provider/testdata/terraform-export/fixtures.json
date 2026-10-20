@@ -595,6 +595,422 @@
     }
   },
   {
+    "name": "dashboard-widgets",
+    "resourceType": "tsuga_dashboard",
+    "resource": {
+      "id": "resource-456",
+      "name": "Widgets",
+      "owner": "team-123",
+      "tags": [],
+      "timePreset": "past-15-days",
+      "graphs": [
+        {
+          "id": "timeseries",
+          "visualization": {
+            "type": "timeseries",
+            "source": "rum",
+            "queries": [
+              {
+                "aggregate": {
+                  "type": "count"
+                },
+                "filter": "events.type:view",
+                "functions": [
+                  {
+                    "type": "cumsum"
+                  }
+                ],
+                "fill": {
+                  "mode": {
+                    "type": "zero"
+                  }
+                }
+              },
+              {
+                "aggregate": {
+                  "type": "sum",
+                  "field": "http.requests"
+                },
+                "metricKind": "delta-counter"
+              }
+            ],
+            "groupBy": [
+              {
+                "fields": [
+                  "service.name"
+                ],
+                "limit": 10
+              }
+            ],
+            "groupByMode": "relative",
+            "customLink": {
+              "label": "Open service",
+              "url": "https://example.com/services/{{group.service.name}}"
+            },
+            "lineStyleOptions": {
+              "1": {
+                "groupId": "a",
+                "lineStyle": "dashed"
+              }
+            },
+            "thresholds": [
+              {
+                "value": 100,
+                "level": "alert"
+              }
+            ]
+          }
+        },
+        {
+          "id": "bar",
+          "visualization": {
+            "type": "bar",
+            "source": "logs",
+            "queries": [
+              {
+                "aggregate": {
+                  "type": "count"
+                }
+              }
+            ],
+            "groupByMode": "absolute",
+            "customLink": {
+              "url": "https://example.com"
+            },
+            "thresholds": [
+              {
+                "value": 5,
+                "level": "warning"
+              }
+            ]
+          }
+        },
+        {
+          "id": "pie",
+          "visualization": {
+            "type": "pie",
+            "source": "traces",
+            "queries": [
+              {
+                "aggregate": {
+                  "type": "count"
+                }
+              }
+            ],
+            "groupByMode": "relative",
+            "customLink": {
+              "url": "https://example.com/pie"
+            }
+          }
+        },
+        {
+          "id": "top-list",
+          "visualization": {
+            "type": "top-list",
+            "source": "logs",
+            "queries": [
+              {
+                "aggregate": {
+                  "type": "count"
+                }
+              }
+            ],
+            "legendMode": "table",
+            "groupByMode": "absolute",
+            "customLink": {
+              "url": "https://example.com/top"
+            }
+          }
+        },
+        {
+          "id": "table",
+          "visualization": {
+            "type": "table",
+            "columns": [
+              {
+                "name": "Errors",
+                "source": "rum",
+                "queries": [
+                  {
+                    "aggregate": {
+                      "type": "count"
+                    },
+                    "fill": {
+                      "mode": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                ]
+              }
+            ],
+            "groupBy": [
+              {
+                "fields": [
+                  "service.name"
+                ],
+                "limit": 5
+              }
+            ],
+            "groupByMode": "relative",
+            "customLink": {
+              "url": "https://example.com/table"
+            },
+            "columnSizes": {
+              "label": 200,
+              "col-0": 120
+            },
+            "defaultSorting": [
+              {
+                "id": "col-0",
+                "desc": true
+              }
+            ]
+          }
+        },
+        {
+          "id": "heatmap",
+          "visualization": {
+            "type": "heatmap",
+            "source": "traces",
+            "queries": [
+              {
+                "aggregate": {
+                  "type": "average",
+                  "field": "duration"
+                }
+              }
+            ],
+            "group": "trace_id",
+            "yAxisSettings": {
+              "min": {
+                "type": "auto"
+              },
+              "max": {
+                "type": "number",
+                "value": 10
+              },
+              "scale": {
+                "type": "log"
+              },
+              "alwaysIncludeZero": false
+            }
+          }
+        },
+        {
+          "id": "distribution",
+          "visualization": {
+            "type": "distribution",
+            "source": "traces",
+            "queries": [
+              {
+                "aggregate": {
+                  "type": "average",
+                  "field": "duration"
+                }
+              }
+            ],
+            "group": "trace_id"
+          }
+        },
+        {
+          "id": "timeseries-connection",
+          "visualization": {
+            "type": "timeseries-connection",
+            "connectionId": "connection-123",
+            "queries": [
+              "SELECT 1"
+            ],
+            "lineStyleOptions": {
+              "1": {
+                "groupId": "a",
+                "lineStyle": "regular"
+              }
+            }
+          }
+        },
+        {
+          "id": "timeseries-promql",
+          "visualization": {
+            "type": "timeseries-promql",
+            "queries": [
+              "sum(rate(http_requests_total[5m]))"
+            ],
+            "aliases": {
+              "queries": {
+                "0": "Requests"
+              }
+            },
+            "legendMode": "legend-only",
+            "lineStyleOptions": {
+              "1": {
+                "groupId": "a",
+                "lineStyle": "dashed"
+              }
+            },
+            "smoothing": true,
+            "thresholds": [
+              {
+                "value": 1,
+                "level": "success"
+              }
+            ],
+            "timeBucket": {
+              "time": 5,
+              "metric": "min"
+            },
+            "yAxisSettings": {
+              "min": {
+                "type": "auto"
+              },
+              "max": {
+                "type": "auto"
+              },
+              "scale": {
+                "type": "pow",
+                "exponent": 2
+              },
+              "alwaysIncludeZero": true
+            },
+            "normalizer": {
+              "type": "percent"
+            },
+            "precision": 2
+          }
+        },
+        {
+          "id": "bar-promql",
+          "visualization": {
+            "type": "bar-promql",
+            "queries": [
+              "sum(up)"
+            ],
+            "legendMode": "no-legend",
+            "thresholds": [
+              {
+                "value": 3,
+                "level": "alert"
+              }
+            ],
+            "timeBucket": {
+              "time": 1,
+              "metric": "hour"
+            }
+          }
+        },
+        {
+          "id": "pie-promql",
+          "visualization": {
+            "type": "pie-promql",
+            "queries": [
+              "sum by (job) (up)"
+            ],
+            "legendMode": "table"
+          }
+        },
+        {
+          "id": "query-value-promql",
+          "visualization": {
+            "type": "query-value-promql",
+            "queries": [
+              "sum(up)"
+            ],
+            "backgroundMode": "background",
+            "conditions": [
+              {
+                "operator": "less_than",
+                "value": 1,
+                "color": "alert"
+              }
+            ]
+          }
+        },
+        {
+          "id": "top-list-promql",
+          "visualization": {
+            "type": "top-list-promql",
+            "queries": [
+              "topk(5, up)"
+            ],
+            "conditions": [
+              {
+                "operator": "greater_than",
+                "value": 0,
+                "color": "success"
+              }
+            ]
+          }
+        },
+        {
+          "id": "list-rum",
+          "visualization": {
+            "type": "list-rum",
+            "query": "events.type:error",
+            "listColumns": [
+              {
+                "attribute": "view.name"
+              }
+            ],
+            "defaultSorting": [
+              {
+                "id": "view.name",
+                "desc": false
+              }
+            ],
+            "isCellWrapped": true
+          }
+        },
+        {
+          "id": "slo",
+          "visualization": {
+            "type": "slo",
+            "display": [
+              "summary",
+              "table"
+            ],
+            "organizeBy": "team",
+            "filters": {
+              "owners": {
+                "values": [
+                  "team-123"
+                ]
+              },
+              "statuses": {
+                "values": [
+                  "breached",
+                  "no_data"
+                ],
+                "exclude": true
+              },
+              "tags": {
+                "values": [
+                  {
+                    "key": "env",
+                    "value": "prod"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "slo-over-time",
+          "visualization": {
+            "type": "slo-over-time",
+            "sloId": "slo-123"
+          }
+        },
+        {
+          "id": "slo-uptime",
+          "visualization": {
+            "type": "slo-uptime",
+            "sloId": "slo-123"
+          }
+        }
+      ]
+    }
+  },
+  {
     "name": "slo-event",
     "resourceType": "tsuga_slo",
     "resource": {

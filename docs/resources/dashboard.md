@@ -593,6 +593,110 @@ resource "tsuga_dashboard" "dashboard" {
           background_mode = "background"
         }
       }
+    },
+    {
+      id   = "top-namespaces-by-errors"
+      name = "Top Namespaces by Errors"
+      layout = {
+        x = 0
+        y = 36
+        w = 6
+        h = 5
+      }
+      visualization = {
+        top_list = {
+          source        = "logs"
+          legend_mode   = "table"
+          group_by_mode = "relative"
+          queries = [
+            {
+              filter = "level:ERROR"
+              aggregate = {
+                count = {}
+              }
+            }
+          ]
+          group_by = [
+            {
+              limit  = 10
+              fields = ["context.k8s.namespace.name"]
+            }
+          ]
+          custom_link = {
+            label = "Open namespace"
+            url   = "https://example.com/namespaces/{{group.context.k8s.namespace.name}}"
+          }
+        }
+      }
+    },
+    {
+      id   = "pod-cpu-promql"
+      name = "Pod CPU (PromQL)"
+      layout = {
+        x = 6
+        y = 36
+        w = 6
+        h = 5
+      }
+      visualization = {
+        timeseries_promql = {
+          queries     = ["sum by (k8s_namespace_name) (k8s_pod_cpu_usage)"]
+          legend_mode = "legend-only"
+          thresholds = [
+            {
+              value = 0.8
+              level = "warning"
+            }
+          ]
+          line_style_options = {
+            "1" = {
+              group_id   = "1"
+              line_style = "dashed"
+            }
+          }
+        }
+      }
+    },
+    {
+      id   = "rum-errors"
+      name = "RUM Errors"
+      layout = {
+        x = 0
+        y = 41
+        w = 6
+        h = 5
+      }
+      visualization = {
+        list_rum = {
+          query = "exceptions.message:*"
+          list_columns = [
+            {
+              attribute = "view.name"
+            }
+          ]
+        }
+      }
+    },
+    {
+      id   = "breached-slos"
+      name = "Breached SLOs"
+      layout = {
+        x = 6
+        y = 41
+        w = 6
+        h = 5
+      }
+      visualization = {
+        slo = {
+          display     = ["summary", "table"]
+          organize_by = "team"
+          filters = {
+            statuses = {
+              values = ["breached"]
+            }
+          }
+        }
+      }
     }
   ]
   tags = [
@@ -647,23 +751,32 @@ Optional:
 
 - `bar` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar))
 - `bar_connection` (Attributes) Displays the database rows-based aggregation as a bar chart (see [below for nested schema](#nestedatt--graphs--visualization--bar_connection))
+- `bar_promql` (Attributes) Displays PromQL metrics query-based aggregation as a bar chart (see [below for nested schema](#nestedatt--graphs--visualization--bar_promql))
 - `distribution` (Attributes) Displays the aggregation as a distribution chart (see [below for nested schema](#nestedatt--graphs--visualization--distribution))
 - `gauge` (Attributes) Displays the aggregation as a gauge (see [below for nested schema](#nestedatt--graphs--visualization--gauge))
 - `heatmap` (Attributes) Displays the aggregation as a heatmap chart (see [below for nested schema](#nestedatt--graphs--visualization--heatmap))
 - `list` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--list))
 - `list_connection` (Attributes) Displays database rows as a tabular list (see [below for nested schema](#nestedatt--graphs--visualization--list_connection))
 - `list_log_patterns` (Attributes) Displays log patterns clustered from logs matching the query (see [below for nested schema](#nestedatt--graphs--visualization--list_log_patterns))
+- `list_rum` (Attributes) Displays matching RUM events in a tabular list (see [below for nested schema](#nestedatt--graphs--visualization--list_rum))
 - `list_spans` (Attributes) Displays individual spans as a tabular list (see [below for nested schema](#nestedatt--graphs--visualization--list_spans))
 - `note` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--note))
 - `pie` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie))
 - `pie_connection` (Attributes) Displays the database rows-based aggregation as a pie chart (see [below for nested schema](#nestedatt--graphs--visualization--pie_connection))
+- `pie_promql` (Attributes) Displays PromQL metrics query-based aggregation as a pie chart (see [below for nested schema](#nestedatt--graphs--visualization--pie_promql))
 - `query_value` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value))
 - `query_value_connection` (Attributes) Displays a single value computed by a SQL query against a database connection (see [below for nested schema](#nestedatt--graphs--visualization--query_value_connection))
+- `query_value_promql` (Attributes) Displays a single value computed by PromQL metrics queries (see [below for nested schema](#nestedatt--graphs--visualization--query_value_promql))
+- `slo` (Attributes) Displays the latest status of SLOs as summary cards with the result count per status, a table of results, or both. Status is not recomputed over the dashboard time range. (see [below for nested schema](#nestedatt--graphs--visualization--slo))
+- `slo_over_time` (Attributes) Displays the good and bad events, or the per-slice status, of an SLO over the dashboard time range. Experimental. (see [below for nested schema](#nestedatt--graphs--visualization--slo_over_time))
+- `slo_uptime` (Attributes) Displays the SLI percentage of an SLO computed over the dashboard time range, colored against the SLO target. Experimental. (see [below for nested schema](#nestedatt--graphs--visualization--slo_uptime))
 - `table` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--table))
 - `timeseries` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries))
 - `timeseries_connection` (Attributes) Displays database rows-based aggregation as a time series chart (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_connection))
+- `timeseries_promql` (Attributes) Displays PromQL metrics query-based aggregation as a time series chart (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_promql))
 - `top_list` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list))
 - `top_list_connection` (Attributes) Displays the database rows-based aggregation as a ranked top list (see [below for nested schema](#nestedatt--graphs--visualization--top_list_connection))
+- `top_list_promql` (Attributes) Displays PromQL metrics query-based aggregation as a ranked top list (see [below for nested schema](#nestedatt--graphs--visualization--top_list_promql))
 
 <a id="nestedatt--graphs--visualization--bar"></a>
 ### Nested Schema for `graphs.visualization.bar`
@@ -676,11 +789,14 @@ Required:
 Optional:
 
 - `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar--aliases))
+- `custom_link` (Attributes) Custom link added to the widget context menu (see [below for nested schema](#nestedatt--graphs--visualization--bar--custom_link))
 - `formula` (String)
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--bar--group_by))
+- `group_by_mode` (String) `absolute` keeps each group at its own value; `relative` shows it as a percentage of the ungrouped total (defaults to absolute)
 - `legend_mode` (String) Controls whether and how the widget displays legend or series details; must be table, legend-only, or no-legend
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
+- `thresholds` (Attributes List) Threshold markers displayed on the chart (see [below for nested schema](#nestedatt--graphs--visualization--bar--thresholds))
 - `time_bucket` (Attributes) Groups time-series data into fixed-size time buckets (see [below for nested schema](#nestedatt--graphs--visualization--bar--time_bucket))
 - `visible_series` (List of Boolean)
 - `y_axis_settings` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar--y_axis_settings))
@@ -698,8 +814,10 @@ Required:
 
 Optional:
 
+- `fill` (Attributes) Missing-point fill behavior for aggregation results. Omit to keep missing points null. (see [below for nested schema](#nestedatt--graphs--visualization--bar--queries--fill))
 - `filter` (String)
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--bar--queries--functions))
+- `metric_kind` (String) Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence.
 - `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
 <a id="nestedatt--graphs--visualization--bar--queries--aggregate"></a>
@@ -773,6 +891,22 @@ Required:
 
 
 
+<a id="nestedatt--graphs--visualization--bar--queries--fill"></a>
+### Nested Schema for `graphs.visualization.bar.queries.fill`
+
+Required:
+
+- `mode` (Attributes) How missing aggregation points should be filled. (see [below for nested schema](#nestedatt--graphs--visualization--bar--queries--fill--mode))
+
+<a id="nestedatt--graphs--visualization--bar--queries--fill--mode"></a>
+### Nested Schema for `graphs.visualization.bar.queries.fill.mode`
+
+Required:
+
+- `type` (String) `zero` fills missing points with zero. `null` keeps missing points null.
+
+
+
 <a id="nestedatt--graphs--visualization--bar--queries--functions"></a>
 ### Nested Schema for `graphs.visualization.bar.queries.functions`
 
@@ -796,6 +930,18 @@ Optional:
 
 - `formula` (String)
 - `queries` (Map of String)
+
+
+<a id="nestedatt--graphs--visualization--bar--custom_link"></a>
+### Nested Schema for `graphs.visualization.bar.custom_link`
+
+Required:
+
+- `url` (String) URL opened in a new tab by the context menu entry. Every `{{group.<field>}}` placeholder is replaced by the URL-encoded value the clicked series has for that group-by field; without placeholders, every series opens the same URL. `{` and `}` are only allowed as part of a placeholder. Tsuga omits the menu entry when the clicked series has no value for one of the referenced fields.
+
+Optional:
+
+- `label` (String) Text of the entry added to the widget context menu. Defaults to "Open custom link" when omitted.
 
 
 <a id="nestedatt--graphs--visualization--bar--group_by"></a>
@@ -822,6 +968,15 @@ Required:
 Optional:
 
 - `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+
+
+<a id="nestedatt--graphs--visualization--bar--thresholds"></a>
+### Nested Schema for `graphs.visualization.bar.thresholds`
+
+Required:
+
+- `level` (String) Level applied to the threshold marker
+- `value` (Number) Y-axis value where the threshold marker is placed
 
 
 <a id="nestedatt--graphs--visualization--bar--time_bucket"></a>
@@ -956,6 +1111,114 @@ Optional:
 
 
 
+<a id="nestedatt--graphs--visualization--bar_promql"></a>
+### Nested Schema for `graphs.visualization.bar_promql`
+
+Required:
+
+- `queries` (List of String) PromQL expressions configured for this widget
+
+Optional:
+
+- `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar_promql--aliases))
+- `legend_mode` (String) Controls whether and how the widget displays legend or series details; must be table, legend-only, or no-legend
+- `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar_promql--normalizer))
+- `precision` (Number) Number of decimal places to display in the value
+- `thresholds` (Attributes List) Threshold markers displayed on the chart (see [below for nested schema](#nestedatt--graphs--visualization--bar_promql--thresholds))
+- `time_bucket` (Attributes) Groups time-series data into fixed-size time buckets (see [below for nested schema](#nestedatt--graphs--visualization--bar_promql--time_bucket))
+- `y_axis_settings` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar_promql--y_axis_settings))
+
+Read-Only:
+
+- `type` (String)
+
+<a id="nestedatt--graphs--visualization--bar_promql--aliases"></a>
+### Nested Schema for `graphs.visualization.bar_promql.aliases`
+
+Optional:
+
+- `formula` (String)
+- `queries` (Map of String)
+
+
+<a id="nestedatt--graphs--visualization--bar_promql--normalizer"></a>
+### Nested Schema for `graphs.visualization.bar_promql.normalizer`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+
+
+<a id="nestedatt--graphs--visualization--bar_promql--thresholds"></a>
+### Nested Schema for `graphs.visualization.bar_promql.thresholds`
+
+Required:
+
+- `level` (String) Level applied to the threshold marker
+- `value` (Number) Y-axis value where the threshold marker is placed
+
+
+<a id="nestedatt--graphs--visualization--bar_promql--time_bucket"></a>
+### Nested Schema for `graphs.visualization.bar_promql.time_bucket`
+
+Required:
+
+- `metric` (String)
+- `time` (Number)
+
+
+<a id="nestedatt--graphs--visualization--bar_promql--y_axis_settings"></a>
+### Nested Schema for `graphs.visualization.bar_promql.y_axis_settings`
+
+Required:
+
+- `always_include_zero` (Boolean)
+- `max` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar_promql--y_axis_settings--max))
+- `min` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar_promql--y_axis_settings--min))
+- `scale` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--bar_promql--y_axis_settings--scale))
+
+<a id="nestedatt--graphs--visualization--bar_promql--y_axis_settings--max"></a>
+### Nested Schema for `graphs.visualization.bar_promql.y_axis_settings.max`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--bar_promql--y_axis_settings--min"></a>
+### Nested Schema for `graphs.visualization.bar_promql.y_axis_settings.min`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--bar_promql--y_axis_settings--scale"></a>
+### Nested Schema for `graphs.visualization.bar_promql.y_axis_settings.scale`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `exponent` (Number)
+
+
+
+
 <a id="nestedatt--graphs--visualization--distribution"></a>
 ### Nested Schema for `graphs.visualization.distribution`
 
@@ -969,6 +1232,7 @@ Optional:
 - `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--distribution--aliases))
 - `bounds_scale` (String)
 - `formula` (String)
+- `group` (String) Attribute that switches the count to "Groups" mode: records are grouped by this attribute, the aggregation produces one value per group, and the chart buckets those per-group values. When omitted, individual records are bucketed.
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--distribution--group_by))
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--distribution--normalizer))
 - `percentile_markers` (List of Number) Percentile markers (0-100) displayed on top of the distribution chart
@@ -988,8 +1252,10 @@ Required:
 
 Optional:
 
+- `fill` (Attributes) Missing-point fill behavior for aggregation results. Omit to keep missing points null. (see [below for nested schema](#nestedatt--graphs--visualization--distribution--queries--fill))
 - `filter` (String)
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--distribution--queries--functions))
+- `metric_kind` (String) Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence.
 - `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
 <a id="nestedatt--graphs--visualization--distribution--queries--aggregate"></a>
@@ -1060,6 +1326,22 @@ Required:
 Required:
 
 - `field` (String)
+
+
+
+<a id="nestedatt--graphs--visualization--distribution--queries--fill"></a>
+### Nested Schema for `graphs.visualization.distribution.queries.fill`
+
+Required:
+
+- `mode` (Attributes) How missing aggregation points should be filled. (see [below for nested schema](#nestedatt--graphs--visualization--distribution--queries--fill--mode))
+
+<a id="nestedatt--graphs--visualization--distribution--queries--fill--mode"></a>
+### Nested Schema for `graphs.visualization.distribution.queries.fill.mode`
+
+Required:
+
+- `type` (String) `zero` fills missing points with zero. `null` keeps missing points null.
 
 
 
@@ -1146,8 +1428,10 @@ Required:
 
 Optional:
 
+- `fill` (Attributes) Missing-point fill behavior for aggregation results. Omit to keep missing points null. (see [below for nested schema](#nestedatt--graphs--visualization--gauge--queries--fill))
 - `filter` (String)
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--gauge--queries--functions))
+- `metric_kind` (String) Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence.
 - `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
 <a id="nestedatt--graphs--visualization--gauge--queries--aggregate"></a>
@@ -1221,6 +1505,22 @@ Required:
 
 
 
+<a id="nestedatt--graphs--visualization--gauge--queries--fill"></a>
+### Nested Schema for `graphs.visualization.gauge.queries.fill`
+
+Required:
+
+- `mode` (Attributes) How missing aggregation points should be filled. (see [below for nested schema](#nestedatt--graphs--visualization--gauge--queries--fill--mode))
+
+<a id="nestedatt--graphs--visualization--gauge--queries--fill--mode"></a>
+### Nested Schema for `graphs.visualization.gauge.queries.fill.mode`
+
+Required:
+
+- `type` (String) `zero` fills missing points with zero. `null` keeps missing points null.
+
+
+
 <a id="nestedatt--graphs--visualization--gauge--queries--functions"></a>
 ### Nested Schema for `graphs.visualization.gauge.queries.functions`
 
@@ -1280,11 +1580,13 @@ Optional:
 
 - `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--aliases))
 - `formula` (String)
+- `group` (String) Attribute that switches the count to "Groups" mode: records are grouped by this attribute, the aggregation produces one value per group, and the chart buckets those per-group values. When omitted, individual records are bucketed.
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--group_by))
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--normalizer))
 - `palette` (String) Color palette used to render the heatmap intensity gradient
 - `precision` (Number) Number of decimal places to display in the value
 - `visible_series` (List of Boolean)
+- `y_axis_settings` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--y_axis_settings))
 
 Read-Only:
 
@@ -1299,8 +1601,10 @@ Required:
 
 Optional:
 
+- `fill` (Attributes) Missing-point fill behavior for aggregation results. Omit to keep missing points null. (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--queries--fill))
 - `filter` (String)
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--queries--functions))
+- `metric_kind` (String) Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence.
 - `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
 <a id="nestedatt--graphs--visualization--heatmap--queries--aggregate"></a>
@@ -1374,6 +1678,22 @@ Required:
 
 
 
+<a id="nestedatt--graphs--visualization--heatmap--queries--fill"></a>
+### Nested Schema for `graphs.visualization.heatmap.queries.fill`
+
+Required:
+
+- `mode` (Attributes) How missing aggregation points should be filled. (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--queries--fill--mode))
+
+<a id="nestedatt--graphs--visualization--heatmap--queries--fill--mode"></a>
+### Nested Schema for `graphs.visualization.heatmap.queries.fill.mode`
+
+Required:
+
+- `type` (String) `zero` fills missing points with zero. `null` keeps missing points null.
+
+
+
 <a id="nestedatt--graphs--visualization--heatmap--queries--functions"></a>
 ### Nested Schema for `graphs.visualization.heatmap.queries.functions`
 
@@ -1423,6 +1743,53 @@ Required:
 Optional:
 
 - `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+
+
+<a id="nestedatt--graphs--visualization--heatmap--y_axis_settings"></a>
+### Nested Schema for `graphs.visualization.heatmap.y_axis_settings`
+
+Required:
+
+- `always_include_zero` (Boolean)
+- `max` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--y_axis_settings--max))
+- `min` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--y_axis_settings--min))
+- `scale` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--heatmap--y_axis_settings--scale))
+
+<a id="nestedatt--graphs--visualization--heatmap--y_axis_settings--max"></a>
+### Nested Schema for `graphs.visualization.heatmap.y_axis_settings.max`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--heatmap--y_axis_settings--min"></a>
+### Nested Schema for `graphs.visualization.heatmap.y_axis_settings.min`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--heatmap--y_axis_settings--scale"></a>
+### Nested Schema for `graphs.visualization.heatmap.y_axis_settings.scale`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `exponent` (Number)
+
 
 
 
@@ -1547,6 +1914,58 @@ Read-Only:
 - `type` (String)
 
 
+<a id="nestedatt--graphs--visualization--list_rum"></a>
+### Nested Schema for `graphs.visualization.list_rum`
+
+Required:
+
+- `query` (String) Query that selects RUM events for the list. Prefix every field with the stream it belongs to (`measurements.`, `events.`, or `exceptions.`) and filter on a single stream per query. A query without stream-prefixed fields searches the `events` stream.
+
+Optional:
+
+- `default_sorting` (Attributes List) Default sorting applied to the list widget (see [below for nested schema](#nestedatt--graphs--visualization--list_rum--default_sorting))
+- `is_cell_wrapped` (Boolean) Whether cell contents wrap instead of being truncated
+- `list_columns` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--list_rum--list_columns))
+- `list_columns_size` (Map of Number) Column widths keyed by column id
+
+Read-Only:
+
+- `type` (String)
+
+<a id="nestedatt--graphs--visualization--list_rum--default_sorting"></a>
+### Nested Schema for `graphs.visualization.list_rum.default_sorting`
+
+Required:
+
+- `desc` (Boolean) Sort direction: true for descending order, false for ascending
+- `id` (String) Column attribute used for the default list sort
+
+
+<a id="nestedatt--graphs--visualization--list_rum--list_columns"></a>
+### Nested Schema for `graphs.visualization.list_rum.list_columns`
+
+Required:
+
+- `attribute` (String)
+
+Optional:
+
+- `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--list_rum--list_columns--normalizer))
+
+<a id="nestedatt--graphs--visualization--list_rum--list_columns--normalizer"></a>
+### Nested Schema for `graphs.visualization.list_rum.list_columns.normalizer`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+
+
+
+
 <a id="nestedatt--graphs--visualization--list_spans"></a>
 ### Nested Schema for `graphs.visualization.list_spans`
 
@@ -1628,8 +2047,10 @@ Required:
 Optional:
 
 - `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie--aliases))
+- `custom_link` (Attributes) Custom link added to the widget context menu (see [below for nested schema](#nestedatt--graphs--visualization--pie--custom_link))
 - `formula` (String)
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--pie--group_by))
+- `group_by_mode` (String) `absolute` keeps each group at its own value; `relative` shows it as a percentage of the ungrouped total (defaults to absolute)
 - `legend_mode` (String) Controls whether and how the widget displays legend or series details; must be table, legend-only, or no-legend
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
@@ -1648,8 +2069,10 @@ Required:
 
 Optional:
 
+- `fill` (Attributes) Missing-point fill behavior for aggregation results. Omit to keep missing points null. (see [below for nested schema](#nestedatt--graphs--visualization--pie--queries--fill))
 - `filter` (String)
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--pie--queries--functions))
+- `metric_kind` (String) Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence.
 - `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
 <a id="nestedatt--graphs--visualization--pie--queries--aggregate"></a>
@@ -1723,6 +2146,22 @@ Required:
 
 
 
+<a id="nestedatt--graphs--visualization--pie--queries--fill"></a>
+### Nested Schema for `graphs.visualization.pie.queries.fill`
+
+Required:
+
+- `mode` (Attributes) How missing aggregation points should be filled. (see [below for nested schema](#nestedatt--graphs--visualization--pie--queries--fill--mode))
+
+<a id="nestedatt--graphs--visualization--pie--queries--fill--mode"></a>
+### Nested Schema for `graphs.visualization.pie.queries.fill.mode`
+
+Required:
+
+- `type` (String) `zero` fills missing points with zero. `null` keeps missing points null.
+
+
+
 <a id="nestedatt--graphs--visualization--pie--queries--functions"></a>
 ### Nested Schema for `graphs.visualization.pie.queries.functions`
 
@@ -1746,6 +2185,18 @@ Optional:
 
 - `formula` (String)
 - `queries` (Map of String)
+
+
+<a id="nestedatt--graphs--visualization--pie--custom_link"></a>
+### Nested Schema for `graphs.visualization.pie.custom_link`
+
+Required:
+
+- `url` (String) URL opened in a new tab by the context menu entry. Every `{{group.<field>}}` placeholder is replaced by the URL-encoded value the clicked series has for that group-by field; without placeholders, every series opens the same URL. `{` and `}` are only allowed as part of a placeholder. Tsuga omits the menu entry when the clicked series has no value for one of the referenced fields.
+
+Optional:
+
+- `label` (String) Text of the entry added to the widget context menu. Defaults to "Open custom link" when omitted.
 
 
 <a id="nestedatt--graphs--visualization--pie--group_by"></a>
@@ -1792,6 +2243,46 @@ Read-Only:
 - `type` (String)
 
 
+<a id="nestedatt--graphs--visualization--pie_promql"></a>
+### Nested Schema for `graphs.visualization.pie_promql`
+
+Required:
+
+- `queries` (List of String) PromQL expressions configured for this widget
+
+Optional:
+
+- `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie_promql--aliases))
+- `legend_mode` (String) Controls whether and how the widget displays legend or series details; must be table, legend-only, or no-legend
+- `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--pie_promql--normalizer))
+- `precision` (Number) Number of decimal places to display in the value
+
+Read-Only:
+
+- `type` (String)
+
+<a id="nestedatt--graphs--visualization--pie_promql--aliases"></a>
+### Nested Schema for `graphs.visualization.pie_promql.aliases`
+
+Optional:
+
+- `formula` (String)
+- `queries` (Map of String)
+
+
+<a id="nestedatt--graphs--visualization--pie_promql--normalizer"></a>
+### Nested Schema for `graphs.visualization.pie_promql.normalizer`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+
+
+
 <a id="nestedatt--graphs--visualization--query_value"></a>
 ### Nested Schema for `graphs.visualization.query_value`
 
@@ -1824,8 +2315,10 @@ Required:
 
 Optional:
 
+- `fill` (Attributes) Missing-point fill behavior for aggregation results. Omit to keep missing points null. (see [below for nested schema](#nestedatt--graphs--visualization--query_value--queries--fill))
 - `filter` (String)
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--query_value--queries--functions))
+- `metric_kind` (String) Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence.
 - `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
 <a id="nestedatt--graphs--visualization--query_value--queries--aggregate"></a>
@@ -1896,6 +2389,22 @@ Required:
 Required:
 
 - `field` (String)
+
+
+
+<a id="nestedatt--graphs--visualization--query_value--queries--fill"></a>
+### Nested Schema for `graphs.visualization.query_value.queries.fill`
+
+Required:
+
+- `mode` (Attributes) How missing aggregation points should be filled. (see [below for nested schema](#nestedatt--graphs--visualization--query_value--queries--fill--mode))
+
+<a id="nestedatt--graphs--visualization--query_value--queries--fill--mode"></a>
+### Nested Schema for `graphs.visualization.query_value.queries.fill.mode`
+
+Required:
+
+- `type` (String) `zero` fills missing points with zero. `null` keeps missing points null.
 
 
 
@@ -1990,6 +2499,155 @@ Optional:
 
 
 
+<a id="nestedatt--graphs--visualization--query_value_promql"></a>
+### Nested Schema for `graphs.visualization.query_value_promql`
+
+Required:
+
+- `queries` (List of String) PromQL expressions configured for this widget
+
+Optional:
+
+- `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value_promql--aliases))
+- `background_mode` (String)
+- `conditions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--query_value_promql--conditions))
+- `legend_mode` (String) Controls whether and how the widget displays legend or series details; must be table, legend-only, or no-legend
+- `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--query_value_promql--normalizer))
+- `precision` (Number) Number of decimal places to display in the value
+
+Read-Only:
+
+- `type` (String)
+
+<a id="nestedatt--graphs--visualization--query_value_promql--aliases"></a>
+### Nested Schema for `graphs.visualization.query_value_promql.aliases`
+
+Optional:
+
+- `formula` (String)
+- `queries` (Map of String)
+
+
+<a id="nestedatt--graphs--visualization--query_value_promql--conditions"></a>
+### Nested Schema for `graphs.visualization.query_value_promql.conditions`
+
+Required:
+
+- `color` (String)
+- `operator` (String)
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--query_value_promql--normalizer"></a>
+### Nested Schema for `graphs.visualization.query_value_promql.normalizer`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+
+
+
+<a id="nestedatt--graphs--visualization--slo"></a>
+### Nested Schema for `graphs.visualization.slo`
+
+Required:
+
+- `display` (List of String) Sections to show: `summary` for the result count per status, `table` for the list of results.
+
+Optional:
+
+- `filters` (Attributes) Narrows the SLOs the widget covers. Omit it, or any of its fields, to apply no filter. (see [below for nested schema](#nestedatt--graphs--visualization--slo--filters))
+- `organize_by` (String) Groups the results by owning team or by cluster. Omit it to list results ungrouped.
+- `slo_id` (String) Id of the SLO to display. Omit it to cover every SLO that matches `filters`.
+
+Read-Only:
+
+- `type` (String)
+
+<a id="nestedatt--graphs--visualization--slo--filters"></a>
+### Nested Schema for `graphs.visualization.slo.filters`
+
+Optional:
+
+- `owners` (Attributes) Restrict results to SLOs owned by any of these team IDs (see [below for nested schema](#nestedatt--graphs--visualization--slo--filters--owners))
+- `statuses` (Attributes) Keep only the results whose status is one of these values. A result is one cluster of an ungrouped SLO, or one group of a grouped SLO. (see [below for nested schema](#nestedatt--graphs--visualization--slo--filters--statuses))
+- `tags` (Attributes) Restrict results to SLOs that have at least one of the listed key/value tags (see [below for nested schema](#nestedatt--graphs--visualization--slo--filters--tags))
+
+<a id="nestedatt--graphs--visualization--slo--filters--owners"></a>
+### Nested Schema for `graphs.visualization.slo.filters.owners`
+
+Required:
+
+- `values` (List of String) Values compared by this filter. When `exclude` is omitted or false, rows matching any value are kept; when `exclude` is true, matching rows are removed.
+
+Optional:
+
+- `exclude` (Boolean) If true, exclude rows matching these values instead of including them
+
+
+<a id="nestedatt--graphs--visualization--slo--filters--statuses"></a>
+### Nested Schema for `graphs.visualization.slo.filters.statuses`
+
+Required:
+
+- `values` (List of String) Values compared by this filter. When `exclude` is omitted or false, rows matching any value are kept; when `exclude` is true, matching rows are removed. Statuses: healthy (meeting the target), breached (breaching it), or no_data (not evaluated yet).
+
+Optional:
+
+- `exclude` (Boolean) If true, exclude rows matching these values instead of including them
+
+
+<a id="nestedatt--graphs--visualization--slo--filters--tags"></a>
+### Nested Schema for `graphs.visualization.slo.filters.tags`
+
+Required:
+
+- `values` (Attributes List) Values compared by this filter. When `exclude` is omitted or false, rows matching any value are kept; when `exclude` is true, matching rows are removed. (see [below for nested schema](#nestedatt--graphs--visualization--slo--filters--tags--values))
+
+Optional:
+
+- `exclude` (Boolean) If true, exclude rows matching these values instead of including them
+
+<a id="nestedatt--graphs--visualization--slo--filters--tags--values"></a>
+### Nested Schema for `graphs.visualization.slo.filters.tags.values`
+
+Required:
+
+- `key` (String) Tag key
+- `value` (String) Tag value. Leading or trailing whitespace is rejected.
+
+
+
+
+
+<a id="nestedatt--graphs--visualization--slo_over_time"></a>
+### Nested Schema for `graphs.visualization.slo_over_time`
+
+Required:
+
+- `slo_id` (String) Id of the SLO to display
+
+Read-Only:
+
+- `type` (String)
+
+
+<a id="nestedatt--graphs--visualization--slo_uptime"></a>
+### Nested Schema for `graphs.visualization.slo_uptime`
+
+Required:
+
+- `slo_id` (String) Id of the SLO to display
+
+Read-Only:
+
+- `type` (String)
+
+
 <a id="nestedatt--graphs--visualization--table"></a>
 ### Nested Schema for `graphs.visualization.table`
 
@@ -1999,7 +2657,11 @@ Required:
 
 Optional:
 
+- `column_sizes` (Map of Number) Table column widths in pixels, keyed by column id: `label` for the grouping column and `col-<index>` for each entry in `columns`. Columns without an entry keep their default width.
+- `custom_link` (Attributes) Custom link added to the widget context menu (see [below for nested schema](#nestedatt--graphs--visualization--table--custom_link))
+- `default_sorting` (Attributes List) Default sorting applied to a table widget. Column IDs are `label` for the grouping column and `col-<index>` for each entry in `columns`. Users can still change sorting by selecting columns in the rendered table. (see [below for nested schema](#nestedatt--graphs--visualization--table--default_sorting))
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--table--group_by))
+- `group_by_mode` (String) `absolute` keeps each group at its own value; `relative` shows it as a percentage of the ungrouped total (defaults to absolute)
 
 Read-Only:
 
@@ -2031,8 +2693,10 @@ Required:
 
 Optional:
 
+- `fill` (Attributes) Missing-point fill behavior for aggregation results. Omit to keep missing points null. (see [below for nested schema](#nestedatt--graphs--visualization--table--columns--queries--fill))
 - `filter` (String)
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--table--columns--queries--functions))
+- `metric_kind` (String) Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence.
 - `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
 <a id="nestedatt--graphs--visualization--table--columns--queries--aggregate"></a>
@@ -2106,6 +2770,22 @@ Required:
 
 
 
+<a id="nestedatt--graphs--visualization--table--columns--queries--fill"></a>
+### Nested Schema for `graphs.visualization.table.columns.queries.fill`
+
+Required:
+
+- `mode` (Attributes) How missing aggregation points should be filled. (see [below for nested schema](#nestedatt--graphs--visualization--table--columns--queries--fill--mode))
+
+<a id="nestedatt--graphs--visualization--table--columns--queries--fill--mode"></a>
+### Nested Schema for `graphs.visualization.table.columns.queries.fill.mode`
+
+Required:
+
+- `type` (String) `zero` fills missing points with zero. `null` keeps missing points null.
+
+
+
 <a id="nestedatt--graphs--visualization--table--columns--queries--functions"></a>
 ### Nested Schema for `graphs.visualization.table.columns.queries.functions`
 
@@ -2144,6 +2824,27 @@ Optional:
 
 
 
+<a id="nestedatt--graphs--visualization--table--custom_link"></a>
+### Nested Schema for `graphs.visualization.table.custom_link`
+
+Required:
+
+- `url` (String) URL opened in a new tab by the context menu entry. Every `{{group.<field>}}` placeholder is replaced by the URL-encoded value the clicked series has for that group-by field; without placeholders, every series opens the same URL. `{` and `}` are only allowed as part of a placeholder. Tsuga omits the menu entry when the clicked series has no value for one of the referenced fields.
+
+Optional:
+
+- `label` (String) Text of the entry added to the widget context menu. Defaults to "Open custom link" when omitted.
+
+
+<a id="nestedatt--graphs--visualization--table--default_sorting"></a>
+### Nested Schema for `graphs.visualization.table.default_sorting`
+
+Required:
+
+- `desc` (Boolean) Whether the sort is descending
+- `id` (String) ID of the column to sort by
+
+
 <a id="nestedatt--graphs--visualization--table--group_by"></a>
 ### Nested Schema for `graphs.visualization.table.group_by`
 
@@ -2170,12 +2871,16 @@ Required:
 Optional:
 
 - `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--aliases))
+- `custom_link` (Attributes) Custom link added to the widget context menu (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--custom_link))
 - `formula` (String)
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--group_by))
+- `group_by_mode` (String) `absolute` keeps each group at its own value; `relative` shows it as a percentage of the ungrouped total (defaults to absolute)
 - `legend_mode` (String) Controls whether and how the widget displays legend or series details; must be table, legend-only, or no-legend
+- `line_style_options` (Attributes Map) Line style of each series, keyed by 1-based query index. The last index is the formula when there is one. For widgets with a single query, only the `1` entry is read and it applies to every series. Defaults to regular. (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--line_style_options))
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
 - `smoothing` (Boolean) Whether to apply automatic smoothing to the rendered timeseries
+- `thresholds` (Attributes List) Threshold markers displayed on the chart (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--thresholds))
 - `time_bucket` (Attributes) Groups time-series data into fixed-size time buckets (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--time_bucket))
 - `visible_series` (List of Boolean)
 - `y_axis_settings` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--y_axis_settings))
@@ -2193,8 +2898,10 @@ Required:
 
 Optional:
 
+- `fill` (Attributes) Missing-point fill behavior for aggregation results. Omit to keep missing points null. (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--queries--fill))
 - `filter` (String)
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--queries--functions))
+- `metric_kind` (String) Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence.
 - `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
 <a id="nestedatt--graphs--visualization--timeseries--queries--aggregate"></a>
@@ -2268,6 +2975,22 @@ Required:
 
 
 
+<a id="nestedatt--graphs--visualization--timeseries--queries--fill"></a>
+### Nested Schema for `graphs.visualization.timeseries.queries.fill`
+
+Required:
+
+- `mode` (Attributes) How missing aggregation points should be filled. (see [below for nested schema](#nestedatt--graphs--visualization--timeseries--queries--fill--mode))
+
+<a id="nestedatt--graphs--visualization--timeseries--queries--fill--mode"></a>
+### Nested Schema for `graphs.visualization.timeseries.queries.fill.mode`
+
+Required:
+
+- `type` (String) `zero` fills missing points with zero. `null` keeps missing points null.
+
+
+
 <a id="nestedatt--graphs--visualization--timeseries--queries--functions"></a>
 ### Nested Schema for `graphs.visualization.timeseries.queries.functions`
 
@@ -2293,6 +3016,18 @@ Optional:
 - `queries` (Map of String)
 
 
+<a id="nestedatt--graphs--visualization--timeseries--custom_link"></a>
+### Nested Schema for `graphs.visualization.timeseries.custom_link`
+
+Required:
+
+- `url` (String) URL opened in a new tab by the context menu entry. Every `{{group.<field>}}` placeholder is replaced by the URL-encoded value the clicked series has for that group-by field; without placeholders, every series opens the same URL. `{` and `}` are only allowed as part of a placeholder. Tsuga omits the menu entry when the clicked series has no value for one of the referenced fields.
+
+Optional:
+
+- `label` (String) Text of the entry added to the widget context menu. Defaults to "Open custom link" when omitted.
+
+
 <a id="nestedatt--graphs--visualization--timeseries--group_by"></a>
 ### Nested Schema for `graphs.visualization.timeseries.group_by`
 
@@ -2307,6 +3042,15 @@ Optional:
 - `sort_order` (String) Sort direction applied to groups: 'asc' or 'desc'.
 
 
+<a id="nestedatt--graphs--visualization--timeseries--line_style_options"></a>
+### Nested Schema for `graphs.visualization.timeseries.line_style_options`
+
+Required:
+
+- `group_id` (String)
+- `line_style` (String)
+
+
 <a id="nestedatt--graphs--visualization--timeseries--normalizer"></a>
 ### Nested Schema for `graphs.visualization.timeseries.normalizer`
 
@@ -2317,6 +3061,15 @@ Required:
 Optional:
 
 - `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+
+
+<a id="nestedatt--graphs--visualization--timeseries--thresholds"></a>
+### Nested Schema for `graphs.visualization.timeseries.thresholds`
+
+Required:
+
+- `level` (String) Level applied to the threshold marker
+- `value` (Number) Y-axis value where the threshold marker is placed
 
 
 <a id="nestedatt--graphs--visualization--timeseries--time_bucket"></a>
@@ -2387,12 +3140,22 @@ Required:
 Optional:
 
 - `legend_mode` (String) Controls whether and how the widget displays legend or series details; must be table, legend-only, or no-legend
+- `line_style_options` (Attributes Map) Line style of each series, keyed by 1-based query index. The last index is the formula when there is one. For widgets with a single query, only the `1` entry is read and it applies to every series. Defaults to regular. (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_connection--line_style_options))
 - `thresholds` (Attributes List) Threshold markers displayed on the chart (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_connection--thresholds))
 - `y_axis_settings` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_connection--y_axis_settings))
 
 Read-Only:
 
 - `type` (String)
+
+<a id="nestedatt--graphs--visualization--timeseries_connection--line_style_options"></a>
+### Nested Schema for `graphs.visualization.timeseries_connection.line_style_options`
+
+Required:
+
+- `group_id` (String)
+- `line_style` (String)
+
 
 <a id="nestedatt--graphs--visualization--timeseries_connection--thresholds"></a>
 ### Nested Schema for `graphs.visualization.timeseries_connection.thresholds`
@@ -2451,6 +3214,125 @@ Optional:
 
 
 
+<a id="nestedatt--graphs--visualization--timeseries_promql"></a>
+### Nested Schema for `graphs.visualization.timeseries_promql`
+
+Required:
+
+- `queries` (List of String) PromQL expressions configured for this widget
+
+Optional:
+
+- `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_promql--aliases))
+- `legend_mode` (String) Controls whether and how the widget displays legend or series details; must be table, legend-only, or no-legend
+- `line_style_options` (Attributes Map) Line style of each series, keyed by 1-based query index. The last index is the formula when there is one. For widgets with a single query, only the `1` entry is read and it applies to every series. Defaults to regular. (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_promql--line_style_options))
+- `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_promql--normalizer))
+- `precision` (Number) Number of decimal places to display in the value
+- `smoothing` (Boolean) Whether to apply automatic smoothing to the rendered timeseries
+- `thresholds` (Attributes List) Threshold markers displayed on the chart (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_promql--thresholds))
+- `time_bucket` (Attributes) Groups time-series data into fixed-size time buckets (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_promql--time_bucket))
+- `y_axis_settings` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_promql--y_axis_settings))
+
+Read-Only:
+
+- `type` (String)
+
+<a id="nestedatt--graphs--visualization--timeseries_promql--aliases"></a>
+### Nested Schema for `graphs.visualization.timeseries_promql.aliases`
+
+Optional:
+
+- `formula` (String)
+- `queries` (Map of String)
+
+
+<a id="nestedatt--graphs--visualization--timeseries_promql--line_style_options"></a>
+### Nested Schema for `graphs.visualization.timeseries_promql.line_style_options`
+
+Required:
+
+- `group_id` (String)
+- `line_style` (String)
+
+
+<a id="nestedatt--graphs--visualization--timeseries_promql--normalizer"></a>
+### Nested Schema for `graphs.visualization.timeseries_promql.normalizer`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+
+
+<a id="nestedatt--graphs--visualization--timeseries_promql--thresholds"></a>
+### Nested Schema for `graphs.visualization.timeseries_promql.thresholds`
+
+Required:
+
+- `level` (String) Level applied to the threshold marker
+- `value` (Number) Y-axis value where the threshold marker is placed
+
+
+<a id="nestedatt--graphs--visualization--timeseries_promql--time_bucket"></a>
+### Nested Schema for `graphs.visualization.timeseries_promql.time_bucket`
+
+Required:
+
+- `metric` (String)
+- `time` (Number)
+
+
+<a id="nestedatt--graphs--visualization--timeseries_promql--y_axis_settings"></a>
+### Nested Schema for `graphs.visualization.timeseries_promql.y_axis_settings`
+
+Required:
+
+- `always_include_zero` (Boolean)
+- `max` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_promql--y_axis_settings--max))
+- `min` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_promql--y_axis_settings--min))
+- `scale` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--timeseries_promql--y_axis_settings--scale))
+
+<a id="nestedatt--graphs--visualization--timeseries_promql--y_axis_settings--max"></a>
+### Nested Schema for `graphs.visualization.timeseries_promql.y_axis_settings.max`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--timeseries_promql--y_axis_settings--min"></a>
+### Nested Schema for `graphs.visualization.timeseries_promql.y_axis_settings.min`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--timeseries_promql--y_axis_settings--scale"></a>
+### Nested Schema for `graphs.visualization.timeseries_promql.y_axis_settings.scale`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `exponent` (Number)
+
+
+
+
 <a id="nestedatt--graphs--visualization--top_list"></a>
 ### Nested Schema for `graphs.visualization.top_list`
 
@@ -2463,9 +3345,12 @@ Optional:
 
 - `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--aliases))
 - `conditions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--conditions))
+- `custom_link` (Attributes) Custom link added to the widget context menu (see [below for nested schema](#nestedatt--graphs--visualization--top_list--custom_link))
 - `formula` (String)
 - `group_by` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--group_by))
+- `group_by_mode` (String) `absolute` keeps each group at its own value; `relative` shows it as a percentage of the ungrouped total (defaults to absolute)
 - `is_stacked` (Boolean) Requests stacked rendering for a top-list widget. Tsuga renders stacked rows only for one count or sum query with exactly two grouped fields, no formula, non-negative values, and a single-cluster context; otherwise the widget renders as a normal top list.
+- `legend_mode` (String) Controls whether and how the widget displays legend or series details; must be table, legend-only, or no-legend
 - `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--normalizer))
 - `precision` (Number) Number of decimal places to display in the value
 - `visible_series` (List of Boolean)
@@ -2483,8 +3368,10 @@ Required:
 
 Optional:
 
+- `fill` (Attributes) Missing-point fill behavior for aggregation results. Omit to keep missing points null. (see [below for nested schema](#nestedatt--graphs--visualization--top_list--queries--fill))
 - `filter` (String)
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--top_list--queries--functions))
+- `metric_kind` (String) Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence.
 - `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
 
 <a id="nestedatt--graphs--visualization--top_list--queries--aggregate"></a>
@@ -2558,6 +3445,22 @@ Required:
 
 
 
+<a id="nestedatt--graphs--visualization--top_list--queries--fill"></a>
+### Nested Schema for `graphs.visualization.top_list.queries.fill`
+
+Required:
+
+- `mode` (Attributes) How missing aggregation points should be filled. (see [below for nested schema](#nestedatt--graphs--visualization--top_list--queries--fill--mode))
+
+<a id="nestedatt--graphs--visualization--top_list--queries--fill--mode"></a>
+### Nested Schema for `graphs.visualization.top_list.queries.fill.mode`
+
+Required:
+
+- `type` (String) `zero` fills missing points with zero. `null` keeps missing points null.
+
+
+
 <a id="nestedatt--graphs--visualization--top_list--queries--functions"></a>
 ### Nested Schema for `graphs.visualization.top_list.queries.functions`
 
@@ -2591,6 +3494,18 @@ Required:
 - `color` (String)
 - `operator` (String)
 - `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--top_list--custom_link"></a>
+### Nested Schema for `graphs.visualization.top_list.custom_link`
+
+Required:
+
+- `url` (String) URL opened in a new tab by the context menu entry. Every `{{group.<field>}}` placeholder is replaced by the URL-encoded value the clicked series has for that group-by field; without placeholders, every series opens the same URL. `{` and `}` are only allowed as part of a placeholder. Tsuga omits the menu entry when the clicked series has no value for one of the referenced fields.
+
+Optional:
+
+- `label` (String) Text of the entry added to the widget context menu. Defaults to "Open custom link" when omitted.
 
 
 <a id="nestedatt--graphs--visualization--top_list--group_by"></a>
@@ -2631,6 +3546,56 @@ Required:
 Read-Only:
 
 - `type` (String)
+
+
+<a id="nestedatt--graphs--visualization--top_list_promql"></a>
+### Nested Schema for `graphs.visualization.top_list_promql`
+
+Required:
+
+- `queries` (List of String) PromQL expressions configured for this widget
+
+Optional:
+
+- `aliases` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list_promql--aliases))
+- `conditions` (Attributes List) (see [below for nested schema](#nestedatt--graphs--visualization--top_list_promql--conditions))
+- `normalizer` (Attributes) (see [below for nested schema](#nestedatt--graphs--visualization--top_list_promql--normalizer))
+- `precision` (Number) Number of decimal places to display in the value
+
+Read-Only:
+
+- `type` (String)
+
+<a id="nestedatt--graphs--visualization--top_list_promql--aliases"></a>
+### Nested Schema for `graphs.visualization.top_list_promql.aliases`
+
+Optional:
+
+- `formula` (String)
+- `queries` (Map of String)
+
+
+<a id="nestedatt--graphs--visualization--top_list_promql--conditions"></a>
+### Nested Schema for `graphs.visualization.top_list_promql.conditions`
+
+Required:
+
+- `color` (String)
+- `operator` (String)
+- `value` (Number)
+
+
+<a id="nestedatt--graphs--visualization--top_list_promql--normalizer"></a>
+### Nested Schema for `graphs.visualization.top_list_promql.normalizer`
+
+Required:
+
+- `type` (String)
+
+Optional:
+
+- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+
 
 
 

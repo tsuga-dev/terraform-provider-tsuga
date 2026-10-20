@@ -2,6 +2,9 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
+	"os"
+	"reflect"
 	"terraform-provider-tsuga/internal/aggregate"
 	"terraform-provider-tsuga/internal/resource_dashboard"
 	"testing"
@@ -443,5 +446,142 @@ func TestExpandFlattenQueries_TimeAggregateRoundTrips(t *testing.T) {
 	}
 	if back[0].TimeAggregate.ValueString() != "last" {
 		t.Fatalf("expected time_aggregate to round-trip, got %v", back[0].TimeAggregate)
+	}
+}
+
+func TestDashboardVisualizationSchemaMatchesVisualizationAttrTypes(t *testing.T) {
+	ctx := context.Background()
+	graphs := resource_dashboard.DashboardResourceSchema(ctx).Attributes["graphs"].(schema.ListNestedAttribute)
+	visualization := graphs.NestedObject.Attributes["visualization"].(schema.SingleNestedAttribute)
+
+	attrTypes := resource_dashboard.VisualizationAttrTypes()
+	if len(visualization.Attributes) != len(attrTypes) {
+		t.Errorf("visualization schema has %d types, attr types has %d", len(visualization.Attributes), len(attrTypes))
+	}
+	for name, attrType := range attrTypes {
+		a, ok := visualization.Attributes[name]
+		if !ok {
+			t.Errorf("visualization schema is missing %q", name)
+			continue
+		}
+		if got := a.GetType(); !got.Equal(attrType) {
+			t.Errorf("%s schema type %s does not match attr type %s", name, got, attrType)
+		}
+	}
+}
+
+func loadDashboardExportFixture(t *testing.T, name string) []byte {
+	t.Helper()
+	data, err := os.ReadFile("testdata/terraform-export/fixtures.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fixtures []terraformExportFixture
+	if err := json.Unmarshal(data, &fixtures); err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range fixtures {
+		if f.Name == name {
+			return f.Resource
+		}
+	}
+	t.Fatalf("fixture %q not found", name)
+	return nil
+}
+
+// TestDashboardGraphs_APIRoundTrip reads every widget type from an API
+// payload into state, rebuilds the request from that state, and checks the
+// request matches the payload and reads back to the same state, so neither
+// direction drops a field or causes a perpetual diff.
+func TestDashboardGraphs_APIRoundTrip(t *testing.T) {
+	ctx := context.Background()
+	payload := loadDashboardExportFixture(t, "dashboard-widgets")
+
+	var data dashboardAPIData
+	if err := json.Unmarshal(payload, &data); err != nil {
+		t.Fatal(err)
+	}
+	state, diags := flattenDashboard(ctx, data)
+	if diags.HasError() {
+		t.Fatalf("flatten: %v", diags)
+	}
+
+	graphs, diags := expandDashboardsGraphs(ctx, state.Graphs)
+	if diags.HasError() {
+		t.Fatalf("expand: %v", diags)
+	}
+	sent, err := json.Marshal(graphs)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	type rawGraph struct {
+		Visualization json.RawMessage `json:"visualization"`
+	}
+	var raw struct {
+		Graphs []rawGraph `json:"graphs"`
+	}
+	if err := json.Unmarshal(payload, &raw); err != nil {
+		t.Fatal(err)
+	}
+	var sentGraphs []rawGraph
+	if err := json.Unmarshal(sent, &sentGraphs); err != nil {
+		t.Fatal(err)
+	}
+	if len(sentGraphs) != len(raw.Graphs) {
+		t.Fatalf("expected %d graphs, got %d", len(raw.Graphs), len(sentGraphs))
+	}
+	for i := range raw.Graphs {
+		var want, got interface{}
+		if err := json.Unmarshal(raw.Graphs[i].Visualization, &want); err != nil {
+			t.Fatal(err)
+		}
+		if err := json.Unmarshal(sentGraphs[i].Visualization, &got); err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(want, got) {
+			t.Errorf("graph %d visualization request differs from API payload:\nwant %s\ngot  %s", i, raw.Graphs[i].Visualization, sentGraphs[i].Visualization)
+		}
+	}
+
+	var again []dashboardAPIGraph
+	if err := json.Unmarshal(sent, &again); err != nil {
+		t.Fatal(err)
+	}
+	reread, diags := flattenDashboardGraphs(ctx, again)
+	if diags.HasError() {
+		t.Fatalf("re-flatten: %v", diags)
+	}
+	if !reread.Equal(state.Graphs) {
+		t.Fatal("state read back from the request differs from the original state")
+	}
+}
+
+func TestValidateVisualization_CountsNewVisualizationTypes(t *testing.T) {
+	r := &dashboardResource{}
+	ctx := context.Background()
+	sloID := &resource_dashboard.SloIdVisualization{SloId: types.StringValue("slo-123")}
+
+	if diags := r.validateVisualization(ctx, resource_dashboard.VisualizationModel{SloUptime: sloID}, "vis"); diags.HasError() {
+		t.Fatalf("expected a single slo_uptime to be valid, got %v", diags)
+	}
+	if diags := r.validateVisualization(ctx, resource_dashboard.VisualizationModel{SloUptime: sloID, SloOverTime: sloID}, "vis"); !diags.HasError() {
+		t.Fatal("expected two visualization types to be rejected")
+	}
+}
+
+func TestCustomLinkURLPattern(t *testing.T) {
+	for url, valid := range map[string]bool{
+		"https://example.com/services/{{group.service.name}}": true,
+		"http://example.com/?q=a":                             true,
+		"ftp://example.com":                                   false,
+		"https://example.com/{service}":                       false,
+		"https://example.com/{{service}}":                     false,
+		"https://example.com/a b":                             false,
+		"https://example.com/{{group.a{b}}":                   false,
+	} {
+		if got := resource_dashboard.CustomLinkURLPattern.MatchString(url); got != valid {
+			t.Errorf("%q: expected match=%v, got %v", url, valid, got)
+		}
 	}
 }

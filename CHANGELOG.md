@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `tsuga_dashboard`: new widget types `timeseries_promql`, `bar_promql`, `pie_promql`, `query_value_promql`, `top_list_promql`, `list_rum`, `slo`, `slo_over_time` and `slo_uptime`.
+- `tsuga_dashboard`: queries accept `source = "rum"`, the `cumsum` function, `fill` and `metric_kind`.
+- `tsuga_dashboard`: new widget settings `custom_link` and `group_by_mode` (bar, pie, top list, timeseries, table), `thresholds` (bar, timeseries), `line_style_options` (timeseries, timeseries connection), `legend_mode` (top list), `column_sizes` and `default_sorting` (table), `group` (heatmap, distribution) and `y_axis_settings` (heatmap).
+- `tsuga_dashboard`: `time_preset` accepts `past-15-days`.
+
 ## [2.14.0] - 2026-10-20
 
 ### Fixed

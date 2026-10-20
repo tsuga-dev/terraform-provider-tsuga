@@ -578,6 +578,110 @@ resource "tsuga_dashboard" "dashboard" {
           background_mode = "background"
         }
       }
+    },
+    {
+      id   = "top-namespaces-by-errors"
+      name = "Top Namespaces by Errors"
+      layout = {
+        x = 0
+        y = 36
+        w = 6
+        h = 5
+      }
+      visualization = {
+        top_list = {
+          source        = "logs"
+          legend_mode   = "table"
+          group_by_mode = "relative"
+          queries = [
+            {
+              filter = "level:ERROR"
+              aggregate = {
+                count = {}
+              }
+            }
+          ]
+          group_by = [
+            {
+              limit  = 10
+              fields = ["context.k8s.namespace.name"]
+            }
+          ]
+          custom_link = {
+            label = "Open namespace"
+            url   = "https://example.com/namespaces/{{group.context.k8s.namespace.name}}"
+          }
+        }
+      }
+    },
+    {
+      id   = "pod-cpu-promql"
+      name = "Pod CPU (PromQL)"
+      layout = {
+        x = 6
+        y = 36
+        w = 6
+        h = 5
+      }
+      visualization = {
+        timeseries_promql = {
+          queries     = ["sum by (k8s_namespace_name) (k8s_pod_cpu_usage)"]
+          legend_mode = "legend-only"
+          thresholds = [
+            {
+              value = 0.8
+              level = "warning"
+            }
+          ]
+          line_style_options = {
+            "1" = {
+              group_id   = "1"
+              line_style = "dashed"
+            }
+          }
+        }
+      }
+    },
+    {
+      id   = "rum-errors"
+      name = "RUM Errors"
+      layout = {
+        x = 0
+        y = 41
+        w = 6
+        h = 5
+      }
+      visualization = {
+        list_rum = {
+          query = "exceptions.message:*"
+          list_columns = [
+            {
+              attribute = "view.name"
+            }
+          ]
+        }
+      }
+    },
+    {
+      id   = "breached-slos"
+      name = "Breached SLOs"
+      layout = {
+        x = 6
+        y = 41
+        w = 6
+        h = 5
+      }
+      visualization = {
+        slo = {
+          display     = ["summary", "table"]
+          organize_by = "team"
+          filters = {
+            statuses = {
+              values = ["breached"]
+            }
+          }
+        }
+      }
     }
   ]
   tags = [
