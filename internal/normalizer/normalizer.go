@@ -2,12 +2,13 @@ package normalizer
 
 import (
 	"fmt"
+	"slices"
+	"strings"
+	"unicode/utf8"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -17,17 +18,15 @@ func Schema() schema.Attribute {
 		Optional: true,
 		Attributes: map[string]schema.Attribute{
 			"type": schema.StringAttribute{
-				Required: true,
-				Validators: []validator.String{
-					stringvalidator.OneOf("duration", "data", "percent", "percent-fraction", "date", "level", "cpu", "none", "custom"),
-				},
+				Required:   true,
+				Validators: normalizerTypeValidators(),
 			},
 			"unit": schema.StringAttribute{
-				Optional:    true,
-				Description: "Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)",
-				Validators: []validator.String{
-					stringvalidator.LengthAtMost(20),
-				},
+				Optional: true,
+				Description: fmt.Sprintf(
+					"Unit label. Required for duration (one of %s), data (one of %s) and custom (%d-%d characters) normalizers; unset otherwise.",
+					strings.Join(durationUnits, ", "), strings.Join(dataUnits, ", "), customUnitMinLength, customUnitMaxLength,
+				),
 			},
 		},
 	}
@@ -52,12 +51,46 @@ func Validate(m *Model, pathPrefix string) diag.Diagnostics {
 	if m == nil {
 		return diags
 	}
-	switch m.Type.ValueString() {
+
+	unitType := m.Type.ValueString()
+	switch unitType {
 	case "duration", "data", "custom":
-		if m.Unit.IsNull() || m.Unit.IsUnknown() || m.Unit.ValueString() == "" {
+		if m.Unit.IsUnknown() {
+			return diags
+		}
+		if m.Unit.IsNull() || m.Unit.ValueString() == "" {
 			diags.AddError(
 				"Invalid normalizer configuration",
-				fmt.Sprintf("%s.normalizer: the %q normalizer requires \"unit\".", pathPrefix, m.Type.ValueString()),
+				fmt.Sprintf("%s.normalizer: the %q normalizer requires \"unit\".", pathPrefix, unitType),
+			)
+			return diags
+		}
+	default:
+		return diags
+	}
+
+	unit := m.Unit.ValueString()
+	switch unitType {
+	case "duration":
+		if !slices.Contains(durationUnits, unit) {
+			diags.AddError(
+				"Invalid normalizer configuration",
+				fmt.Sprintf("%s.normalizer: unit %q is not valid for the \"duration\" normalizer; must be one of %v.", pathPrefix, unit, durationUnits),
+			)
+		}
+	case "data":
+		if !slices.Contains(dataUnits, unit) {
+			diags.AddError(
+				"Invalid normalizer configuration",
+				fmt.Sprintf("%s.normalizer: unit %q is not valid for the \"data\" normalizer; must be one of %v.", pathPrefix, unit, dataUnits),
+			)
+		}
+	case "custom":
+		n := utf8.RuneCountInString(unit)
+		if n < customUnitMinLength || n > customUnitMaxLength {
+			diags.AddError(
+				"Invalid normalizer configuration",
+				fmt.Sprintf("%s.normalizer: the \"custom\" normalizer unit must be between %d and %d characters, got %d.", pathPrefix, customUnitMinLength, customUnitMaxLength, n),
 			)
 		}
 	}

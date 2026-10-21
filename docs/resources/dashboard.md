@@ -919,7 +919,7 @@ Optional:
 - `base` (Number) Base of the logarithm for the log function
 - `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
-- `window` (String)
+- `window` (String) Duration of the rolling window for the rolling function
 
 
 
@@ -967,7 +967,7 @@ Required:
 
 Optional:
 
-- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+- `unit` (String) Unit label. Required for duration (one of ns, us, ms, s, m, h, days), data (one of B, KB, MB, GB, TB, PB, bit, Kibit, Mibit, Gibit, Tibit, Pibit) and custom (1-20 characters) normalizers; unset otherwise.
 
 
 <a id="nestedatt--graphs--visualization--bar--thresholds"></a>
@@ -1150,7 +1150,7 @@ Required:
 
 Optional:
 
-- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+- `unit` (String) Unit label. Required for duration (one of ns, us, ms, s, m, h, days), data (one of B, KB, MB, GB, TB, PB, bit, Kibit, Mibit, Gibit, Tibit, Pibit) and custom (1-20 characters) normalizers; unset otherwise.
 
 
 <a id="nestedatt--graphs--visualization--bar_promql--thresholds"></a>
@@ -1357,7 +1357,7 @@ Optional:
 - `base` (Number) Base of the logarithm for the log function
 - `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
-- `window` (String)
+- `window` (String) Duration of the rolling window for the rolling function
 
 
 
@@ -1393,7 +1393,7 @@ Required:
 
 Optional:
 
-- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+- `unit` (String) Unit label. Required for duration (one of ns, us, ms, s, m, h, days), data (one of B, KB, MB, GB, TB, PB, bit, Kibit, Mibit, Gibit, Tibit, Pibit) and custom (1-20 characters) normalizers; unset otherwise.
 
 
 
@@ -1533,7 +1533,7 @@ Optional:
 - `base` (Number) Base of the logarithm for the log function
 - `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
-- `window` (String)
+- `window` (String) Duration of the rolling window for the rolling function
 
 
 
@@ -1564,7 +1564,7 @@ Required:
 
 Optional:
 
-- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+- `unit` (String) Unit label. Required for duration (one of ns, us, ms, s, m, h, days), data (one of B, KB, MB, GB, TB, PB, bit, Kibit, Mibit, Gibit, Tibit, Pibit) and custom (1-20 characters) normalizers; unset otherwise.
 
 
 
@@ -1706,7 +1706,7 @@ Optional:
 - `base` (Number) Base of the logarithm for the log function
 - `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
-- `window` (String)
+- `window` (String) Duration of the rolling window for the rolling function
 
 
 
@@ -1742,7 +1742,7 @@ Required:
 
 Optional:
 
-- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+- `unit` (String) Unit label. Required for duration (one of ns, us, ms, s, m, h, days), data (one of B, KB, MB, GB, TB, PB, bit, Kibit, Mibit, Gibit, Tibit, Pibit) and custom (1-20 characters) normalizers; unset otherwise.
 
 
 <a id="nestedatt--graphs--visualization--heatmap--y_axis_settings"></a>
@@ -1840,7 +1840,7 @@ Required:
 
 Optional:
 
-- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+- `unit` (String) Unit label. Required for duration (one of ns, us, ms, s, m, h, days), data (one of B, KB, MB, GB, TB, PB, bit, Kibit, Mibit, Gibit, Tibit, Pibit) and custom (1-20 characters) normalizers; unset otherwise.
 
 
 
@@ -1893,7 +1893,7 @@ Required:
 
 Optional:
 
-- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+- `unit` (String) Unit label. Required for duration (one of ns, us, ms, s, m, h, days), data (one of B, KB, MB, GB, TB, PB, bit, Kibit, Mibit, Gibit, Tibit, Pibit) and custom (1-20 characters) normalizers; unset otherwise.
 
 
 
@@ -1961,7 +1961,7 @@ Required:
 
 Optional:
 
-- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+- `unit` (String) Unit label. Required for duration (one of ns, us, ms, s, m, h, days), data (one of B, KB, MB, GB, TB, PB, bit, Kibit, Mibit, Gibit, Tibit, Pibit) and custom (1-20 characters) normalizers; unset otherwise.
 
 
 
@@ -2013,7 +2013,7 @@ Required:
 
 Optional:
 
-- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+- `unit` (String) Unit label. Required for duration (one of ns, us, ms, s, m, h, days), data (one of B, KB, MB, GB, TB, PB, bit, Kibit, Mibit, Gibit, Tibit, Pibit) and custom (1-20 characters) normalizers; unset otherwise.
 
 
 
@@ -2174,7 +2174,7 @@ Optional:
 - `base` (Number) Base of the logarithm for the log function
 - `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
-- `window` (String)
+- `window` (String) Duration of the rolling window for the rolling function
 
 
 
@@ -2222,7 +2222,7 @@ Required:
 
 Optional:
 
-- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+- `unit` (String) Unit label. Required for duration (one of ns, us, ms, s, m, h, days), data (one of B, KB, MB, GB, TB, PB, bit, Kibit, Mibit, Gibit, Tibit, Pibit) and custom (1-20 characters) normalizers; unset otherwise.
 
 
 
@@ -2279,7 +2279,7 @@ Required:
 
 Optional:
 
-- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+- `unit` (String) Unit label. Required for duration (one of ns, us, ms, s, m, h, days), data (one of B, KB, MB, GB, TB, PB, bit, Kibit, Mibit, Gibit, Tibit, Pibit) and custom (1-20 characters) normalizers; unset otherwise.
 
 
 
@@ -2420,7 +2420,7 @@ Optional:
 - `base` (Number) Base of the logarithm for the log function
 - `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
-- `window` (String)
+- `window` (String) Duration of the rolling window for the rolling function
 
 
 
@@ -2452,7 +2452,7 @@ Required:
 
 Optional:
 
-- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+- `unit` (String) Unit label. Required for duration (one of ns, us, ms, s, m, h, days), data (one of B, KB, MB, GB, TB, PB, bit, Kibit, Mibit, Gibit, Tibit, Pibit) and custom (1-20 characters) normalizers; unset otherwise.
 
 
 
@@ -2495,7 +2495,7 @@ Required:
 
 Optional:
 
-- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+- `unit` (String) Unit label. Required for duration (one of ns, us, ms, s, m, h, days), data (one of B, KB, MB, GB, TB, PB, bit, Kibit, Mibit, Gibit, Tibit, Pibit) and custom (1-20 characters) normalizers; unset otherwise.
 
 
 
@@ -2547,7 +2547,7 @@ Required:
 
 Optional:
 
-- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+- `unit` (String) Unit label. Required for duration (one of ns, us, ms, s, m, h, days), data (one of B, KB, MB, GB, TB, PB, bit, Kibit, Mibit, Gibit, Tibit, Pibit) and custom (1-20 characters) normalizers; unset otherwise.
 
 
 
@@ -2798,7 +2798,7 @@ Optional:
 - `base` (Number) Base of the logarithm for the log function
 - `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
-- `window` (String)
+- `window` (String) Duration of the rolling window for the rolling function
 
 
 
@@ -2820,7 +2820,7 @@ Required:
 
 Optional:
 
-- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+- `unit` (String) Unit label. Required for duration (one of ns, us, ms, s, m, h, days), data (one of B, KB, MB, GB, TB, PB, bit, Kibit, Mibit, Gibit, Tibit, Pibit) and custom (1-20 characters) normalizers; unset otherwise.
 
 
 
@@ -3003,7 +3003,7 @@ Optional:
 - `base` (Number) Base of the logarithm for the log function
 - `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
-- `window` (String)
+- `window` (String) Duration of the rolling window for the rolling function
 
 
 
@@ -3060,7 +3060,7 @@ Required:
 
 Optional:
 
-- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+- `unit` (String) Unit label. Required for duration (one of ns, us, ms, s, m, h, days), data (one of B, KB, MB, GB, TB, PB, bit, Kibit, Mibit, Gibit, Tibit, Pibit) and custom (1-20 characters) normalizers; unset otherwise.
 
 
 <a id="nestedatt--graphs--visualization--timeseries--thresholds"></a>
@@ -3264,7 +3264,7 @@ Required:
 
 Optional:
 
-- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+- `unit` (String) Unit label. Required for duration (one of ns, us, ms, s, m, h, days), data (one of B, KB, MB, GB, TB, PB, bit, Kibit, Mibit, Gibit, Tibit, Pibit) and custom (1-20 characters) normalizers; unset otherwise.
 
 
 <a id="nestedatt--graphs--visualization--timeseries_promql--thresholds"></a>
@@ -3473,7 +3473,7 @@ Optional:
 - `base` (Number) Base of the logarithm for the log function
 - `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
-- `window` (String)
+- `window` (String) Duration of the rolling window for the rolling function
 
 
 
@@ -3531,7 +3531,7 @@ Required:
 
 Optional:
 
-- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+- `unit` (String) Unit label. Required for duration (one of ns, us, ms, s, m, h, days), data (one of B, KB, MB, GB, TB, PB, bit, Kibit, Mibit, Gibit, Tibit, Pibit) and custom (1-20 characters) normalizers; unset otherwise.
 
 
 
@@ -3594,7 +3594,7 @@ Required:
 
 Optional:
 
-- `unit` (String) Unit label (required for duration, data, and custom normalizers; custom unit label limited to 20 characters)
+- `unit` (String) Unit label. Required for duration (one of ns, us, ms, s, m, h, days), data (one of B, KB, MB, GB, TB, PB, bit, Kibit, Mibit, Gibit, Tibit, Pibit) and custom (1-20 characters) normalizers; unset otherwise.
 
 
 

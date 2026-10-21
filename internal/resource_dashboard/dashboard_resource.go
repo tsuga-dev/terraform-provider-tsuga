@@ -4,7 +4,6 @@ import (
 	"context"
 	"regexp"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
@@ -32,47 +31,35 @@ func DashboardResourceSchema(ctx context.Context) schema.Schema {
 			"name": schema.StringAttribute{
 				Required:    true,
 				Description: "Display name of the dashboard",
-				Validators: []validator.String{
-					stringvalidator.LengthAtMost(250),
-				},
+				Validators:  dashboardNameValidators(),
 			},
 			"owner": schema.StringAttribute{
 				Required:    true,
 				Description: "Team ID that owns and manages the dashboard",
-				Validators: []validator.String{
-					stringvalidator.LengthAtMost(250),
-				},
+				Validators:  ownerValidators(),
 			},
 			"folder_id": schema.StringAttribute{
 				Optional:    true,
 				Description: "ID of the dashboard folder holding the dashboard. Omit to leave the dashboard outside any folder.",
-				Validators: []validator.String{
-					stringvalidator.LengthAtMost(250),
-				},
+				Validators:  folderIdValidators(),
 			},
 			"filters": schema.ListNestedAttribute{
 				Optional:    true,
 				Description: "Filters applied to every widget on the dashboard",
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(10),
-				},
+				Validators:  filtersListValidators(),
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"key": schema.StringAttribute{
 							Required:    true,
 							Description: "Filter key",
-							Validators: []validator.String{
-								stringvalidator.LengthAtMost(250),
-							},
+							Validators:  filterKeyValidators(),
 						},
 						"values": schema.ListAttribute{
 							Required:    true,
 							Description: "Filter values",
 							ElementType: types.StringType,
 							Validators: []validator.List{
-								listvalidator.ValueStringsAre(
-									stringvalidator.LengthAtMost(250),
-								),
+								listvalidator.ValueStringsAre(filterValueValidators()...),
 							},
 						},
 						"exclude": schema.BoolAttribute{
@@ -86,9 +73,7 @@ func DashboardResourceSchema(ctx context.Context) schema.Schema {
 				Optional:    true,
 				Computed:    true,
 				Description: "List of key/value tags applied to the resource",
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(50),
-				},
+				Validators:  tagsListValidators(),
 				NestedObject: schema.NestedAttributeObject{
 					CustomType: resource_team.TagsType{
 						ObjectType: types.ObjectType{
@@ -97,16 +82,12 @@ func DashboardResourceSchema(ctx context.Context) schema.Schema {
 					},
 					Attributes: map[string]schema.Attribute{
 						"key": schema.StringAttribute{
-							Required: true,
-							Validators: []validator.String{
-								stringvalidator.LengthAtMost(128),
-							},
+							Required:   true,
+							Validators: tagKeyValidators(),
 						},
 						"value": schema.StringAttribute{
-							Required: true,
-							Validators: []validator.String{
-								stringvalidator.LengthAtMost(256),
-							},
+							Required:   true,
+							Validators: tagValueValidators(),
 						},
 					},
 				},
@@ -115,34 +96,7 @@ func DashboardResourceSchema(ctx context.Context) schema.Schema {
 				Optional:    true,
 				Computed:    true,
 				Description: "Preset time range for dashboard queries",
-				Validators: []validator.String{
-					stringvalidator.OneOf(
-						"past-5-minutes",
-						"past-15-minutes",
-						"past-30-minutes",
-						"past-1-hour",
-						"past-2-hours",
-						"past-4-hours",
-						"past-6-hours",
-						"past-12-hours",
-						"past-24-hours",
-						"past-2-days",
-						"past-3-days",
-						"past-7-days",
-						"past-15-days",
-						"past-30-days",
-						"past-3-months",
-						"current-day",
-						"current-week",
-						"current-month",
-						"current-year",
-						"previous-day",
-						"previous-week",
-						"previous-month",
-						"previous-3-months",
-						"previous-year",
-					),
-				},
+				Validators:  timePresetValidators(),
 			},
 			"graphs": schema.ListNestedAttribute{
 				Required:    true,
@@ -152,37 +106,27 @@ func DashboardResourceSchema(ctx context.Context) schema.Schema {
 						"id": schema.StringAttribute{
 							Required:    true,
 							Description: "Identifier of the graph widget",
-							Validators: []validator.String{
-								stringvalidator.LengthAtMost(250),
-							},
+							Validators:  graphIdValidators(),
 						},
 						"name": schema.StringAttribute{
 							Optional:    true,
 							Description: "Display name of the graph widget",
-							Validators: []validator.String{
-								stringvalidator.LengthAtMost(250),
-							},
+							Validators:  graphNameValidators(),
 						},
 						"description": schema.StringAttribute{
 							Optional:    true,
 							Description: "Description of the graph widget",
-							Validators: []validator.String{
-								stringvalidator.LengthBetween(1, 800),
-							},
+							Validators:  graphDescriptionValidators(),
 						},
 						"description_align": schema.StringAttribute{
 							Optional:    true,
 							Description: "Flex alignment keyword used for widget layout",
-							Validators: []validator.String{
-								stringvalidator.OneOf("flex-start", "center", "flex-end"),
-							},
+							Validators:  flexAlignValidators(),
 						},
 						"description_justify_content": schema.StringAttribute{
 							Optional:    true,
 							Description: "Flex alignment keyword used for widget layout",
-							Validators: []validator.String{
-								stringvalidator.OneOf("flex-start", "center", "flex-end"),
-							},
+							Validators:  flexAlignValidators(),
 						},
 						"layout": schema.SingleNestedAttribute{
 							Optional:    true,
@@ -254,10 +198,8 @@ func visualizationSeriesSchema() schema.Attribute {
 				Computed: true,
 			},
 			"source": schema.StringAttribute{
-				Required: true,
-				Validators: []validator.String{
-					stringvalidator.OneOf("logs", "metrics", "traces", "rum"),
-				},
+				Required:   true,
+				Validators: sourceValidators(),
 			},
 			"queries":        queriesSchema(),
 			"formula":        formulaSchema(),
@@ -373,10 +315,8 @@ func yAxisSettingsSchema() schema.Attribute {
 				Required: true,
 				Attributes: map[string]schema.Attribute{
 					"type": schema.StringAttribute{
-						Required: true,
-						Validators: []validator.String{
-							stringvalidator.OneOf("auto", "number"),
-						},
+						Required:   true,
+						Validators: yAxisBoundTypeValidators(),
 					},
 					"value": schema.Float64Attribute{
 						Optional: true,
@@ -387,10 +327,8 @@ func yAxisSettingsSchema() schema.Attribute {
 				Required: true,
 				Attributes: map[string]schema.Attribute{
 					"type": schema.StringAttribute{
-						Required: true,
-						Validators: []validator.String{
-							stringvalidator.OneOf("auto", "number"),
-						},
+						Required:   true,
+						Validators: yAxisBoundTypeValidators(),
 					},
 					"value": schema.Float64Attribute{
 						Optional: true,
@@ -401,13 +339,12 @@ func yAxisSettingsSchema() schema.Attribute {
 				Required: true,
 				Attributes: map[string]schema.Attribute{
 					"type": schema.StringAttribute{
-						Required: true,
-						Validators: []validator.String{
-							stringvalidator.OneOf("linear", "log", "sqrt", "pow"),
-						},
+						Required:   true,
+						Validators: yAxisScaleTypeValidators(),
 					},
 					"exponent": schema.Float64Attribute{
-						Optional: true,
+						Optional:   true,
+						Validators: yAxisScaleExponentValidators(),
 					},
 				},
 			},
@@ -435,20 +372,17 @@ func visualizationTableSchema() schema.Attribute {
 				Computed: true,
 			},
 			"columns": schema.ListNestedAttribute{
-				Required: true,
+				Required:   true,
+				Validators: tableColumnsListValidators(),
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
-							Required: true,
-							Validators: []validator.String{
-								stringvalidator.LengthAtMost(250),
-							},
+							Required:   true,
+							Validators: tableColumnNameValidators(),
 						},
 						"source": schema.StringAttribute{
-							Required: true,
-							Validators: []validator.String{
-								stringvalidator.OneOf("logs", "metrics", "traces", "rum"),
-							},
+							Required:   true,
+							Validators: sourceValidators(),
 						},
 						"queries":        queriesSchema(),
 						"formula":        formulaSchema(),
@@ -479,10 +413,8 @@ func visualizationTableSchema() schema.Attribute {
 
 func queriesSchema() schema.Attribute {
 	return schema.ListNestedAttribute{
-		Required: true,
-		Validators: []validator.List{
-			listvalidator.SizeAtMost(15),
-		},
+		Required:   true,
+		Validators: queriesListValidators(),
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
 				"aggregate": aggregate.Schema(),
@@ -533,27 +465,23 @@ func queriesSchema() schema.Attribute {
 					NestedObject: schema.NestedAttributeObject{
 						Attributes: map[string]schema.Attribute{
 							"type": schema.StringAttribute{
-								Required: true,
-								Validators: []validator.String{
-									stringvalidator.OneOf("per-second", "per-minute", "per-hour", "rate", "increase", "rolling", "log", "power", "sqrt", "last", "time-offset", "cumsum"),
-								},
+								Required:   true,
+								Validators: functionTypeValidators(),
 							},
 							"window": schema.StringAttribute{
-								Optional: true,
+								Optional:    true,
+								Description: "Duration of the rolling window for the rolling function",
+								Validators:  functionWindowValidators(),
 							},
 							"seconds": schema.Int64Attribute{
 								Optional:    true,
 								Description: "Number of seconds to offset for the time-offset function",
-								Validators: []validator.Int64{
-									int64validator.AtLeast(1),
-								},
+								Validators:  functionSecondsValidators(),
 							},
 							"base": schema.Int64Attribute{
 								Optional:    true,
 								Description: "Base of the logarithm for the log function",
-								Validators: []validator.Int64{
-									int64validator.AtLeast(2),
-								},
+								Validators:  functionBaseValidators(),
 							},
 							"exponent": schema.Int64Attribute{
 								Optional:    true,
@@ -569,10 +497,8 @@ func queriesSchema() schema.Attribute {
 
 func formulaSchema() schema.Attribute {
 	return schema.StringAttribute{
-		Optional: true,
-		Validators: []validator.String{
-			stringvalidator.LengthAtMost(250),
-		},
+		Optional:   true,
+		Validators: formulaValidators(),
 	}
 }
 
@@ -581,14 +507,15 @@ func aliasesSchema() schema.Attribute {
 		Optional: true,
 		Attributes: map[string]schema.Attribute{
 			"formula": schema.StringAttribute{
-				Optional: true,
-				Validators: []validator.String{
-					stringvalidator.LengthAtMost(250),
-				},
+				Optional:   true,
+				Validators: aliasesFormulaValidators(),
 			},
 			"queries": schema.MapAttribute{
 				Optional:    true,
 				ElementType: types.StringType,
+				Validators: []validator.Map{
+					mapvalidator.ValueStringsAre(aliasesQueriesValueValidators()...),
+				},
 			},
 		},
 	}
@@ -603,34 +530,26 @@ func visibleSeriesSchema() schema.Attribute {
 
 func groupBySchema() schema.Attribute {
 	return schema.ListNestedAttribute{
-		Optional: true,
-		Validators: []validator.List{
-			listvalidator.SizeAtMost(3),
-		},
+		Optional:   true,
+		Validators: groupByListValidators(),
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
 				"fields": schema.ListAttribute{
 					Required:    true,
 					ElementType: types.StringType,
-					Validators: []validator.List{
-						listvalidator.SizeAtMost(1),
-					},
+					Validators:  groupByFieldsValidators(),
 				},
 				"limit": schema.Int64Attribute{
 					Required: true,
 				},
 				"sort_order": schema.StringAttribute{
-					Optional: true,
-					Validators: []validator.String{
-						stringvalidator.OneOf("asc", "desc"),
-					},
+					Optional:    true,
+					Validators:  []validator.String{stringvalidator.OneOf("asc", "desc")},
 					Description: "Sort direction applied to groups: 'asc' or 'desc'.",
 				},
 				"replace_null_with": schema.StringAttribute{
-					Optional: true,
-					Validators: []validator.String{
-						stringvalidator.LengthAtLeast(1),
-					},
+					Optional:    true,
+					Validators:  groupByReplaceNullWithValidators(),
 					Description: "Value used to group documents that have no value for a grouped field.",
 				},
 			},
@@ -644,19 +563,15 @@ func conditionsSchema() schema.Attribute {
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
 				"operator": schema.StringAttribute{
-					Required: true,
-					Validators: []validator.String{
-						stringvalidator.OneOf("greater_than", "less_than", "equal", "not_equal", "greater_than_or_equal", "less_than_or_equal"),
-					},
+					Required:   true,
+					Validators: conditionsOperatorValidators(),
 				},
 				"value": schema.Float64Attribute{
 					Required: true,
 				},
 				"color": schema.StringAttribute{
-					Required: true,
-					Validators: []validator.String{
-						stringvalidator.OneOf("alert", "warning", "success"),
-					},
+					Required:   true,
+					Validators: conditionsColorValidators(),
 				},
 			},
 		},
@@ -692,10 +607,8 @@ func visualizationQueryValueSchema() schema.Attribute {
 	delete(attr.Attributes, "y_axis_settings")
 	attr.Attributes["legend_mode"] = legendModeSchema()
 	attr.Attributes["background_mode"] = schema.StringAttribute{
-		Optional: true,
-		Validators: []validator.String{
-			stringvalidator.OneOf("background", "no-background"),
-		},
+		Optional:   true,
+		Validators: backgroundModeValidators(),
 	}
 	attr.Attributes["conditions"] = conditionsSchema()
 	return attr
@@ -732,9 +645,7 @@ func visualizationGaugeSchema() schema.Attribute {
 				"color": schema.StringAttribute{
 					Required:    true,
 					Description: "Color applied to the band starting at this value",
-					Validators: []validator.String{
-						stringvalidator.OneOf("red", "pink", "violet", "blue", "cyan", "green", "yellow", "orange"),
-					},
+					Validators:  paletteColorValidators(),
 				},
 			},
 		},
@@ -747,19 +658,15 @@ func visualizationDistributionSchema() schema.Attribute {
 	attr.Description = "Displays the aggregation as a distribution chart"
 	delete(attr.Attributes, "y_axis_settings")
 	attr.Attributes["bounds_scale"] = schema.StringAttribute{
-		Optional: true,
-		Validators: []validator.String{
-			stringvalidator.OneOf("linear", "log"),
-		},
+		Optional:   true,
+		Validators: boundsScaleValidators(),
 	}
 	attr.Attributes["percentile_markers"] = schema.ListAttribute{
 		Optional:    true,
 		ElementType: types.Int64Type,
 		Description: "Percentile markers (0-100) displayed on top of the distribution chart",
 		Validators: []validator.List{
-			listvalidator.ValueInt64sAre(
-				int64validator.Between(0, 100),
-			),
+			listvalidator.ValueInt64sAre(percentileMarkerValidators()...),
 		},
 	}
 	attr.Attributes["group"] = groupSchema()
@@ -783,9 +690,7 @@ func visualizationHeatmapSchema() schema.Attribute {
 	attr.Attributes["palette"] = schema.StringAttribute{
 		Optional:    true,
 		Description: "Color palette used to render the heatmap intensity gradient",
-		Validators: []validator.String{
-			stringvalidator.OneOf("red", "pink", "violet", "blue", "cyan", "green", "yellow", "orange"),
-		},
+		Validators:  paletteColorValidators(),
 	}
 	return attr
 }
@@ -801,16 +706,12 @@ func visualizationListLogPatternsSchema() schema.Attribute {
 			"query": schema.StringAttribute{
 				Required:    true,
 				Description: "Tsuga query that selects logs to cluster into patterns",
-				Validators: []validator.String{
-					stringvalidator.LengthAtMost(10000),
-				},
+				Validators:  listQueryValidators(),
 			},
 			"layout": schema.StringAttribute{
 				Optional:    true,
 				Description: "Layout used to render log patterns",
-				Validators: []validator.String{
-					stringvalidator.OneOf("horizontal", "vertical"),
-				},
+				Validators:  listLogPatternsLayoutValidators(),
 			},
 		},
 	}
@@ -823,12 +724,9 @@ func connectionSqlQueriesSchema() schema.Attribute {
 		Required:    true,
 		ElementType: types.StringType,
 		Description: "Read-only SQL queries to execute against the connection",
-		Validators: []validator.List{
-			listvalidator.SizeAtLeast(1),
-			listvalidator.ValueStringsAre(
-				stringvalidator.LengthBetween(1, 50000),
-			),
-		},
+		Validators: append(connectionSqlQueriesListValidators(),
+			listvalidator.ValueStringsAre(connectionSqlQueryValidators()...),
+		),
 	}
 }
 
@@ -836,9 +734,7 @@ func connectionIdSchema() schema.Attribute {
 	return schema.StringAttribute{
 		Required:    true,
 		Description: "The ID of the connection to use to query the datastore",
-		Validators: []validator.String{
-			stringvalidator.LengthBetween(1, 250),
-		},
+		Validators:  connectionIdValidators(),
 	}
 }
 
@@ -846,9 +742,7 @@ func legendModeSchema() schema.Attribute {
 	return schema.StringAttribute{
 		Optional:    true,
 		Description: "Controls whether and how the widget displays legend or series details; must be table, legend-only, or no-legend",
-		Validators: []validator.String{
-			stringvalidator.OneOf("table", "legend-only", "no-legend"),
-		},
+		Validators:  legendModeValidators(),
 	}
 }
 
@@ -902,10 +796,8 @@ func visualizationQueryValueConnectionSchema() schema.Attribute {
 			"queries":       connectionSqlQueriesSchema(),
 			"legend_mode":   legendModeSchema(),
 			"background_mode": schema.StringAttribute{
-				Optional: true,
-				Validators: []validator.String{
-					stringvalidator.OneOf("background", "no-background"),
-				},
+				Optional:   true,
+				Validators: backgroundModeValidators(),
 			},
 			"conditions": conditionsSchema(),
 			"normalizer": normalizer.Schema(),
@@ -925,10 +817,8 @@ func visualizationListSchema() schema.Attribute {
 				Computed: true,
 			},
 			"query": schema.StringAttribute{
-				Required: true,
-				Validators: []validator.String{
-					stringvalidator.LengthAtMost(10000),
-				},
+				Required:   true,
+				Validators: listQueryValidators(),
 			},
 			"list_columns": listColumnsSchema(),
 			"list_columns_size": schema.MapAttribute{
@@ -954,10 +844,8 @@ func visualizationListSpansSchema() schema.Attribute {
 				Computed: true,
 			},
 			"query": schema.StringAttribute{
-				Required: true,
-				Validators: []validator.String{
-					stringvalidator.LengthAtMost(10000),
-				},
+				Required:   true,
+				Validators: listQueryValidators(),
 			},
 			"list_columns": listColumnsSchema(),
 			"list_columns_size": schema.MapAttribute{
@@ -1029,9 +917,7 @@ func thresholdsSchema() schema.Attribute {
 				"level": schema.StringAttribute{
 					Required:    true,
 					Description: "Level applied to the threshold marker",
-					Validators: []validator.String{
-						stringvalidator.OneOf("alert", "warning", "success"),
-					},
+					Validators:  conditionsColorValidators(),
 				},
 			},
 		},
@@ -1049,20 +935,15 @@ func visualizationTimeseriesConnectionSchema() schema.Attribute {
 			"connection_id": schema.StringAttribute{
 				Required:    true,
 				Description: "The ID of the connection to use to query the datastore",
-				Validators: []validator.String{
-					stringvalidator.LengthBetween(1, 250),
-				},
+				Validators:  connectionIdValidators(),
 			},
 			"queries": schema.ListAttribute{
 				Required:    true,
 				ElementType: types.StringType,
 				Description: "Read-only SQL queries to execute against the connection",
-				Validators: []validator.List{
-					listvalidator.SizeAtLeast(1),
-					listvalidator.ValueStringsAre(
-						stringvalidator.LengthBetween(1, 50000),
-					),
-				},
+				Validators: append(connectionSqlQueriesListValidators(),
+					listvalidator.ValueStringsAre(connectionSqlQueryValidators()...),
+				),
 			},
 			"legend_mode":        legendModeSchema(),
 			"thresholds":         thresholdsSchema(),
@@ -1083,16 +964,12 @@ func visualizationListConnectionSchema() schema.Attribute {
 			"connection_id": schema.StringAttribute{
 				Required:    true,
 				Description: "The ID of the connection to use to query the datastore",
-				Validators: []validator.String{
-					stringvalidator.LengthBetween(1, 250),
-				},
+				Validators:  connectionIdValidators(),
 			},
 			"query": schema.StringAttribute{
 				Required:    true,
 				Description: "Read-only SQL query to execute against the connection",
-				Validators: []validator.String{
-					stringvalidator.LengthBetween(1, 50000),
-				},
+				Validators:  listConnectionQueryValidators(),
 			},
 			"list_columns": listColumnsSchema(),
 			"list_columns_size": schema.MapAttribute{
@@ -1117,40 +994,20 @@ func visualizationNoteSchema() schema.Attribute {
 				Computed: true,
 			},
 			"note": schema.StringAttribute{
-				Required: true,
-				Validators: []validator.String{
-					stringvalidator.LengthAtMost(50000),
-				},
+				Required:   true,
+				Validators: noteValidators(),
 			},
 			"note_align": schema.StringAttribute{
-				Optional: true,
-				Validators: []validator.String{
-					stringvalidator.OneOf("flex-start", "center", "flex-end"),
-				},
+				Optional:   true,
+				Validators: flexAlignValidators(),
 			},
 			"note_justify_content": schema.StringAttribute{
-				Optional: true,
-				Validators: []validator.String{
-					stringvalidator.OneOf("flex-start", "center", "flex-end"),
-				},
+				Optional:   true,
+				Validators: flexAlignValidators(),
 			},
 			"note_color": schema.StringAttribute{
-				Optional: true,
-				Validators: []validator.String{
-					stringvalidator.OneOf(
-						"white",
-						"gray.100",
-						"amber.200",
-						"lime.200",
-						"emerald.200",
-						"cyan.200",
-						"blue.200",
-						"violet.200",
-						"fuchsia.200",
-						"pink.200",
-						"red.200",
-					),
-				},
+				Optional:   true,
+				Validators: noteColorValidators(),
 			},
 		},
 	}

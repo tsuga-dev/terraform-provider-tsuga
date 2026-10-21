@@ -24,6 +24,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Plan-time validation of TQL queries on:
+  - `tsuga_route`
+  - `tsuga_metric_route`
+  - `tsuga_monitor`
+  - `tsuga_slo`
+  - `tsuga_dashboard`
+  - `tsuga_notification_rule`
+  - `tsuga_notification_silence`.
+- `tsuga_dashboard`: widget attributes are now validated:
+  - `layout`
+  - graph `id` uniqueness
+  - `formula` query references (`q1`..`qN`)
+  - `rolling`/`time-offset` query functions
+  - `y_axis_settings` (`number` bound requires `value`, `pow` scale requires `exponent`).
+- `tsuga_dashboard`: validate `normalizer.unit` per-type unit list (`duration`, `data`) or length bound (`custom`).
+
+### Changed
+
+- **Breaking:** `tsuga_dashboard` widgets that violate the validations above now fail at plan time instead of being accepted.
+
+### Added
+
 - Requests now include the `x-tsuga-source-terraform-version` header, set to the Terraform version reported by the CLI, when it is known.
 
 ## [2.13.0] - 2026-10-19

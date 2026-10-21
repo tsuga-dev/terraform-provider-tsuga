@@ -3,16 +3,21 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"math/big"
 	"os"
 	"reflect"
+	"strings"
 	"terraform-provider-tsuga/internal/aggregate"
 	"terraform-provider-tsuga/internal/resource_dashboard"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 func TestDashboardVisualizationSchemasMatchAttrTypes(t *testing.T) {
@@ -583,5 +588,286 @@ func TestCustomLinkURLPattern(t *testing.T) {
 		if got := resource_dashboard.CustomLinkURLPattern.MatchString(url); got != valid {
 			t.Errorf("%q: expected match=%v, got %v", url, valid, got)
 		}
+	}
+}
+
+func TestValidateQueryFunctions_RollingRequiresWindow(t *testing.T) {
+	r := &dashboardResource{}
+
+	missing := functionsList(functionValue("rolling", nil))
+	if diags := r.validateQueryFunctions(context.Background(), missing, "v"); !diags.HasError() {
+		t.Fatalf("expected error when rolling function omits window")
+	}
+
+	present := functionsList(functionValue("rolling", map[string]attr.Value{"window": types.StringValue("5m")}))
+	if diags := r.validateQueryFunctions(context.Background(), present, "v"); diags.HasError() {
+		t.Fatalf("unexpected error for rolling function with window: %v", diags)
+	}
+}
+
+func TestValidateQueryFunctions_TimeOffsetRequiresSeconds(t *testing.T) {
+	r := &dashboardResource{}
+
+	missing := functionsList(functionValue("time-offset", nil))
+	if diags := r.validateQueryFunctions(context.Background(), missing, "v"); !diags.HasError() {
+		t.Fatalf("expected error when time-offset function omits seconds")
+	}
+
+	present := functionsList(functionValue("time-offset", map[string]attr.Value{"seconds": types.Int64Value(3600)}))
+	if diags := r.validateQueryFunctions(context.Background(), present, "v"); diags.HasError() {
+		t.Fatalf("unexpected error for time-offset function with seconds: %v", diags)
+	}
+}
+
+func TestValidateFormulaReferences_RejectsOutOfRangeReference(t *testing.T) {
+	diags := validateFormulaReferences(types.StringValue("q1 + q2"), 1, "v")
+	if !diags.HasError() {
+		t.Fatal("expected error for formula referencing a query beyond the submitted count")
+	}
+}
+
+func TestValidateFormulaReferences_AllowsInRangeReference(t *testing.T) {
+	diags := validateFormulaReferences(types.StringValue("q1 + q2"), 2, "v")
+	if diags.HasError() {
+		t.Fatalf("unexpected error for in-range formula reference: %v", diags)
+	}
+}
+
+func TestValidateFormulaReferences_NullFormulaSkipsCheck(t *testing.T) {
+	diags := validateFormulaReferences(types.StringNull(), 0, "v")
+	if diags.HasError() {
+		t.Fatalf("unexpected error for null formula: %v", diags)
+	}
+}
+
+func yAxisBound(boundType string, value *float64) resource_dashboard.YAxisBoundModel {
+	v := types.Float64Null()
+	if value != nil {
+		v = types.Float64Value(*value)
+	}
+	return resource_dashboard.YAxisBoundModel{Type: types.StringValue(boundType), Value: v}
+}
+
+func TestValidateYAxisSettings_NumberRequiresValue(t *testing.T) {
+	y := &resource_dashboard.YAxisSettingsModel{
+		Min:   yAxisBound("number", nil),
+		Max:   yAxisBound("auto", nil),
+		Scale: resource_dashboard.YAxisScaleModel{Type: types.StringValue("linear")},
+	}
+	if diags := validateYAxisSettings(y, "v"); !diags.HasError() {
+		t.Fatal("expected error when min type is number without value")
+	}
+
+	v := 1.0
+	y.Min = yAxisBound("number", &v)
+	if diags := validateYAxisSettings(y, "v"); diags.HasError() {
+		t.Fatalf("unexpected error when number bound has a value: %v", diags)
+	}
+}
+
+func TestValidateYAxisSettings_PowRequiresExponent(t *testing.T) {
+	y := &resource_dashboard.YAxisSettingsModel{
+		Min:   yAxisBound("auto", nil),
+		Max:   yAxisBound("auto", nil),
+		Scale: resource_dashboard.YAxisScaleModel{Type: types.StringValue("pow"), Exponent: types.Float64Null()},
+	}
+	if diags := validateYAxisSettings(y, "v"); !diags.HasError() {
+		t.Fatal("expected error when scale type is pow without exponent")
+	}
+
+	y.Scale.Exponent = types.Float64Value(2)
+	if diags := validateYAxisSettings(y, "v"); diags.HasError() {
+		t.Fatalf("unexpected error when pow scale has an exponent: %v", diags)
+	}
+}
+
+func TestValidateFormulaReferences_IgnoresEmbeddedIdentifiers(t *testing.T) {
+	if diags := validateFormulaReferences(types.StringValue("freq2 + q1"), 1, "v"); diags.HasError() {
+		t.Fatalf("unexpected error for identifier containing q<n>: %v", diags)
+	}
+}
+
+func TestValidate_UnknownValuesSkipRequiredChecks(t *testing.T) {
+	r := &dashboardResource{}
+	fns := functionsList(
+		functionValue("rolling", map[string]attr.Value{"window": types.StringUnknown()}),
+		functionValue("time-offset", map[string]attr.Value{"seconds": types.Int64Unknown()}),
+		functionValue("log", map[string]attr.Value{"base": types.Int64Unknown()}),
+	)
+	if diags := r.validateQueryFunctions(context.Background(), fns, "v"); diags.HasError() {
+		t.Fatalf("unexpected error for unknown function parameters: %v", diags)
+	}
+
+	y := &resource_dashboard.YAxisSettingsModel{
+		Min:   resource_dashboard.YAxisBoundModel{Type: types.StringValue("number"), Value: types.Float64Unknown()},
+		Max:   yAxisBound("auto", nil),
+		Scale: resource_dashboard.YAxisScaleModel{Type: types.StringValue("pow"), Exponent: types.Float64Unknown()},
+	}
+	if diags := validateYAxisSettings(y, "v"); diags.HasError() {
+		t.Fatalf("unexpected error for unknown y-axis values: %v", diags)
+	}
+}
+
+func TestValidateYAxisSettings_NilIsNoop(t *testing.T) {
+	if diags := validateYAxisSettings(nil, "v"); diags.HasError() {
+		t.Fatalf("unexpected error for nil y-axis settings: %v", diags)
+	}
+}
+
+func layoutGraph(x, y, w, h float64, note bool) resource_dashboard.GraphModel {
+	g := resource_dashboard.GraphModel{
+		Id: types.StringValue("g1"),
+		Layout: &resource_dashboard.GraphLayoutModel{
+			X: types.Float64Value(x),
+			Y: types.Float64Value(y),
+			W: types.Float64Value(w),
+			H: types.Float64Value(h),
+		},
+	}
+	if note {
+		g.Visualization.Note = &resource_dashboard.NoteVisualizationModel{Note: types.StringValue("n")}
+	}
+	return g
+}
+
+func TestValidateGraphLayout_XPlusWMustFitGrid(t *testing.T) {
+	r := &dashboardResource{}
+	if diags := r.validateGraphLayout(layoutGraph(11, 0, 5, 2, false), "graphs[0]"); !diags.HasError() {
+		t.Fatal("expected error when x+w exceeds 12")
+	}
+}
+
+func TestValidateGraphLayout_MinimumSizeTwoByTwo(t *testing.T) {
+	r := &dashboardResource{}
+	if diags := r.validateGraphLayout(layoutGraph(0, 0, 1, 1, false), "graphs[0]"); !diags.HasError() {
+		t.Fatal("expected error for a non-note widget smaller than 2x2")
+	}
+}
+
+func TestValidateGraphLayout_NoteWidgetAllowsOneByOne(t *testing.T) {
+	r := &dashboardResource{}
+	if diags := r.validateGraphLayout(layoutGraph(0, 0, 1, 1, true), "graphs[0]"); diags.HasError() {
+		t.Fatalf("unexpected error for a 1x1 note widget: %v", diags)
+	}
+}
+
+func TestValidateGraphLayout_NegativeCoordinatesRejected(t *testing.T) {
+	r := &dashboardResource{}
+	if diags := r.validateGraphLayout(layoutGraph(-1, 0, 2, 2, false), "graphs[0]"); !diags.HasError() {
+		t.Fatal("expected error for negative x")
+	}
+}
+
+func TestValidateGraphLayout_UnknownFieldWithInvalidKnownFieldReported(t *testing.T) {
+	r := &dashboardResource{}
+	g := layoutGraph(0, 0, 1, 1, false)
+	g.Layout.X = types.Float64Unknown()
+	if diags := r.validateGraphLayout(g, "graphs[0]"); !diags.HasError() {
+		t.Fatal("expected error for an invalid known field alongside an unknown field")
+	}
+}
+
+func TestValidateGraphLayout_AllUnknownIsNoop(t *testing.T) {
+	r := &dashboardResource{}
+	g := layoutGraph(0, 0, 1, 1, false)
+	g.Layout.X = types.Float64Unknown()
+	g.Layout.Y = types.Float64Unknown()
+	g.Layout.W = types.Float64Unknown()
+	g.Layout.H = types.Float64Unknown()
+	if diags := r.validateGraphLayout(g, "graphs[0]"); diags.HasError() {
+		t.Fatalf("unexpected error when every layout field is unknown: %v", diags)
+	}
+}
+
+func TestValidateGraphLayout_NilLayoutIsNoop(t *testing.T) {
+	r := &dashboardResource{}
+	if diags := r.validateGraphLayout(resource_dashboard.GraphModel{Id: types.StringValue("g1")}, "graphs[0]"); diags.HasError() {
+		t.Fatalf("unexpected error for a graph without layout: %v", diags)
+	}
+}
+
+// nullValue builds a fully-populated null tftypes.Value for the given type,
+// recursing into object attributes so every nested attribute is present
+// (tftypes requires a value, possibly null, for every object attribute).
+func nullValue(typ tftypes.Type) tftypes.Value {
+	if obj, ok := typ.(tftypes.Object); ok {
+		return nullObjectValue(obj, nil)
+	}
+	return tftypes.NewValue(typ, nil)
+}
+
+func nullObjectValue(obj tftypes.Object, overrides map[string]tftypes.Value) tftypes.Value {
+	attrs := make(map[string]tftypes.Value, len(obj.AttributeTypes))
+	for name, at := range obj.AttributeTypes {
+		if v, ok := overrides[name]; ok {
+			attrs[name] = v
+			continue
+		}
+		attrs[name] = nullValue(at)
+	}
+	return tftypes.NewValue(obj, attrs)
+}
+
+// TestValidateConfig_RejectsLayoutViolation exercises the full
+// ResourceWithValidateConfig path (schema -> tfsdk.Config -> ValidateConfig)
+// with a graph whose layout violates x+w<=12, built straight from the
+// resource's own schema type like internal/provider/terraform_export.go does.
+func TestValidateConfig_RejectsLayoutViolation(t *testing.T) {
+	ctx := context.Background()
+	r := &dashboardResource{}
+
+	var sr resource.SchemaResponse
+	r.Schema(ctx, resource.SchemaRequest{}, &sr)
+
+	objectType, ok := sr.Schema.Type().TerraformType(ctx).(tftypes.Object)
+	if !ok {
+		t.Fatal("dashboard schema type must be an object")
+	}
+
+	graphsListType := objectType.AttributeTypes["graphs"].(tftypes.List)
+	graphObjType := graphsListType.ElementType.(tftypes.Object)
+	layoutObjType := graphObjType.AttributeTypes["layout"].(tftypes.Object)
+	visObjType := graphObjType.AttributeTypes["visualization"].(tftypes.Object)
+	noteObjType := visObjType.AttributeTypes["note"].(tftypes.Object)
+
+	noteVal := nullObjectValue(noteObjType, map[string]tftypes.Value{
+		"note": tftypes.NewValue(tftypes.String, "hello"),
+	})
+	visVal := nullObjectValue(visObjType, map[string]tftypes.Value{"note": noteVal})
+	layoutVal := nullObjectValue(layoutObjType, map[string]tftypes.Value{
+		"x": tftypes.NewValue(tftypes.Number, big.NewFloat(11)),
+		"y": tftypes.NewValue(tftypes.Number, big.NewFloat(0)),
+		"w": tftypes.NewValue(tftypes.Number, big.NewFloat(5)),
+		"h": tftypes.NewValue(tftypes.Number, big.NewFloat(2)),
+	})
+	graphVal := nullObjectValue(graphObjType, map[string]tftypes.Value{
+		"id":            tftypes.NewValue(tftypes.String, "g1"),
+		"layout":        layoutVal,
+		"visualization": visVal,
+	})
+	graphsVal := tftypes.NewValue(graphsListType, []tftypes.Value{graphVal})
+
+	topVal := nullObjectValue(objectType, map[string]tftypes.Value{
+		"name":   tftypes.NewValue(tftypes.String, "dash"),
+		"owner":  tftypes.NewValue(tftypes.String, "team-1"),
+		"graphs": graphsVal,
+	})
+
+	var resp resource.ValidateConfigResponse
+	r.ValidateConfig(ctx, resource.ValidateConfigRequest{
+		Config: tfsdk.Config{Schema: sr.Schema, Raw: topVal},
+	}, &resp)
+
+	if !resp.Diagnostics.HasError() {
+		t.Fatal("expected a layout validation error")
+	}
+	found := false
+	for _, d := range resp.Diagnostics {
+		if strings.Contains(d.Detail(), "x+w must be <= 12") {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected an x+w layout diagnostic, got: %v", resp.Diagnostics)
 	}
 }

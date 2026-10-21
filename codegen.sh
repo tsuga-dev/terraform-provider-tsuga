@@ -27,3 +27,8 @@ go tool -modfile=tools/go.mod tfplugingen-framework generate resources \
 go tool -modfile=tools/go.mod tfplugingen-framework generate data-sources \
   --input ./provider-code-spec.json \
   --output ./internal
+
+# tsuga_dashboard is hand-written (absent from generator_config.yml), so it gets
+# no spec-derived validators from tfplugingen: generate them from the spec here.
+node ./tools/gen-dashboard-validators.js ./public-open-api.json
+gofmt -w ./internal/resource_dashboard/validators_gen.go ./internal/normalizer/units_gen.go

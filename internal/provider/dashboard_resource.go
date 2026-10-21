@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"reflect"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"terraform-provider-tsuga/internal/aggregate"
@@ -74,11 +76,71 @@ func (r *dashboardResource) ValidateConfig(ctx context.Context, req resource.Val
 			return
 		}
 
+		seenIds := make(map[string]int, len(graphs))
 		for i, graph := range graphs {
+			if id := graph.Id.ValueString(); !graph.Id.IsNull() && !graph.Id.IsUnknown() {
+				if j, ok := seenIds[id]; ok {
+					resp.Diagnostics.AddError(
+						"Duplicate graph id",
+						fmt.Sprintf("graphs[%d].id and graphs[%d].id are both %q; graph ids must be unique within a dashboard.", j, i, id),
+					)
+				} else {
+					seenIds[id] = i
+				}
+			}
+
+			resp.Diagnostics.Append(r.validateGraphLayout(graph, fmt.Sprintf("graphs[%d]", i))...)
+
 			diags := r.validateVisualization(ctx, graph.Visualization, fmt.Sprintf("graphs[%d].visualization", i))
 			resp.Diagnostics.Append(diags...)
 		}
 	}
+}
+
+// validateGraphLayout enforces the grid-layout constraints documented by the
+// API but not expressible in the schema: 0 <= x, 0 <= y, 1 <= w <= 12,
+// 1 <= h, x+w <= 12, and a 2x2 minimum size except for note widgets which may
+// go down to 1x1.
+func (r *dashboardResource) validateGraphLayout(graph resource_dashboard.GraphModel, pathPrefix string) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if graph.Layout == nil {
+		return diags
+	}
+
+	l := graph.Layout
+	known := func(v types.Float64) bool { return !v.IsNull() && !v.IsUnknown() }
+
+	x, y, w, h := l.X.ValueFloat64(), l.Y.ValueFloat64(), l.W.ValueFloat64(), l.H.ValueFloat64()
+	path := pathPrefix + ".layout"
+
+	if known(l.X) && x < 0 {
+		diags.AddError("Invalid layout configuration", fmt.Sprintf("%s.x: must be >= 0, got %v.", path, x))
+	}
+	if known(l.Y) && y < 0 {
+		diags.AddError("Invalid layout configuration", fmt.Sprintf("%s.y: must be >= 0, got %v.", path, y))
+	}
+	if known(l.W) && (w < 1 || w > 12) {
+		diags.AddError("Invalid layout configuration", fmt.Sprintf("%s.w: must be between 1 and 12, got %v.", path, w))
+	}
+	if known(l.H) && h < 1 {
+		diags.AddError("Invalid layout configuration", fmt.Sprintf("%s.h: must be >= 1, got %v.", path, h))
+	}
+	if known(l.X) && known(l.W) && x+w > 12 {
+		diags.AddError("Invalid layout configuration", fmt.Sprintf("%s: x+w must be <= 12, got x=%v w=%v.", path, x, w))
+	}
+
+	minSize := 2.0
+	if graph.Visualization.Note != nil {
+		minSize = 1.0
+	}
+	if known(l.W) && w < minSize {
+		diags.AddError("Invalid layout configuration", fmt.Sprintf("%s.w: widget size must be at least %v, got %v.", path, minSize, w))
+	}
+	if known(l.H) && h < minSize {
+		diags.AddError("Invalid layout configuration", fmt.Sprintf("%s.h: widget size must be at least %v, got %v.", path, minSize, h))
+	}
+
+	return diags
 }
 
 func (r *dashboardResource) validateVisualization(ctx context.Context, vis resource_dashboard.VisualizationModel, pathPrefix string) diag.Diagnostics {
@@ -94,6 +156,7 @@ func (r *dashboardResource) validateVisualization(ctx context.Context, vis resou
 	// Validate nested aggregates in queries for series visualizations
 	if vis.Timeseries != nil {
 		diags.Append(r.validateSeriesVisualization(ctx, &vis.Timeseries.SeriesBase, fmt.Sprintf("%s.timeseries", pathPrefix))...)
+		diags.Append(validateYAxisSettings(vis.Timeseries.YAxisSettings, fmt.Sprintf("%s.timeseries", pathPrefix))...)
 	}
 	if vis.TopList != nil {
 		diags.Append(r.validateSeriesVisualization(ctx, &vis.TopList.SeriesBase, fmt.Sprintf("%s.top_list", pathPrefix))...)
@@ -106,6 +169,7 @@ func (r *dashboardResource) validateVisualization(ctx context.Context, vis resou
 	}
 	if vis.Bar != nil {
 		diags.Append(r.validateSeriesVisualization(ctx, &vis.Bar.SeriesBase, fmt.Sprintf("%s.bar", pathPrefix))...)
+		diags.Append(validateYAxisSettings(vis.Bar.YAxisSettings, fmt.Sprintf("%s.bar", pathPrefix))...)
 	}
 	if vis.Gauge != nil {
 		diags.Append(r.validateSeriesVisualization(ctx, &vis.Gauge.SeriesBase, fmt.Sprintf("%s.gauge", pathPrefix))...)
@@ -118,6 +182,12 @@ func (r *dashboardResource) validateVisualization(ctx context.Context, vis resou
 	}
 	if vis.Table != nil {
 		diags.Append(r.validateTableVisualization(ctx, vis.Table, fmt.Sprintf("%s.table", pathPrefix))...)
+	}
+	if vis.TimeseriesConnection != nil {
+		diags.Append(validateYAxisSettings(vis.TimeseriesConnection.YAxisSettings, fmt.Sprintf("%s.timeseries_connection", pathPrefix))...)
+	}
+	if vis.BarConnection != nil {
+		diags.Append(validateYAxisSettings(vis.BarConnection.YAxisSettings, fmt.Sprintf("%s.bar_connection", pathPrefix))...)
 	}
 	if vis.QueryValueConnection != nil {
 		diags.Append(normalizer.Validate(vis.QueryValueConnection.Normalizer, fmt.Sprintf("%s.query_value_connection", pathPrefix))...)
@@ -150,6 +220,28 @@ func (r *dashboardResource) validateVisualization(ctx context.Context, vis resou
 		diags.Append(normalizer.Validate(vis.TopListPromql.Normalizer, fmt.Sprintf("%s.top_list_promql", pathPrefix))...)
 	}
 
+	return diags
+}
+
+// validateYAxisSettings enforces the required-value pairs the schema cannot
+// express: a "number" bound requires "value", and a "pow" scale requires
+// "exponent".
+func validateYAxisSettings(y *resource_dashboard.YAxisSettingsModel, pathPrefix string) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if y == nil {
+		return diags
+	}
+
+	path := pathPrefix + ".y_axis_settings"
+	if y.Min.Type.ValueString() == "number" && y.Min.Value.IsNull() {
+		diags.AddError("Invalid y-axis configuration", fmt.Sprintf("%s.min: type \"number\" requires \"value\".", path))
+	}
+	if y.Max.Type.ValueString() == "number" && y.Max.Value.IsNull() {
+		diags.AddError("Invalid y-axis configuration", fmt.Sprintf("%s.max: type \"number\" requires \"value\".", path))
+	}
+	if y.Scale.Type.ValueString() == "pow" && y.Scale.Exponent.IsNull() {
+		diags.AddError("Invalid y-axis configuration", fmt.Sprintf("%s.scale: type \"pow\" requires \"exponent\".", path))
+	}
 	return diags
 }
 
@@ -200,6 +292,7 @@ func (r *dashboardResource) validateTableVisualization(ctx context.Context, tabl
 				diags.Append(aggDiags...)
 				diags.Append(r.validateQueryFunctions(ctx, query.Functions, fmt.Sprintf("%s.columns[%d].queries[%d]", pathPrefix, i, j))...)
 			}
+			diags.Append(validateFormulaReferences(col.Formula, len(queries), fmt.Sprintf("%s.columns[%d]", pathPrefix, i))...)
 		}
 		diags.Append(normalizer.Validate(col.Normalizer, fmt.Sprintf("%s.columns[%d]", pathPrefix, i))...)
 	}
@@ -223,10 +316,37 @@ func (r *dashboardResource) validateSeriesVisualization(ctx context.Context, sv 
 			diags.Append(aggDiags...)
 			diags.Append(r.validateQueryFunctions(ctx, query.Functions, fmt.Sprintf("%s.queries[%d]", pathPrefix, i))...)
 		}
+		diags.Append(validateFormulaReferences(sv.Formula, len(queries), pathPrefix)...)
 	}
 
 	diags.Append(normalizer.Validate(sv.Normalizer, pathPrefix)...)
 
+	return diags
+}
+
+// validateFormulaReferences enforces that a formula may only reference
+// submitted queries (q1..qN where N is the number of queries), matching the
+// API's `tsuga-formula` format rule.
+var formulaQueryRefPattern = regexp.MustCompile(`\bq(\d+)\b`)
+
+func validateFormulaReferences(formula types.String, numQueries int, pathPrefix string) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if formula.IsNull() || formula.IsUnknown() {
+		return diags
+	}
+
+	for _, m := range formulaQueryRefPattern.FindAllStringSubmatch(formula.ValueString(), -1) {
+		n, err := strconv.Atoi(m[1])
+		if err != nil {
+			continue
+		}
+		if n < 1 || n > numQueries {
+			diags.AddError(
+				"Invalid formula configuration",
+				fmt.Sprintf("%s.formula: references \"q%s\" but only %d queries were submitted (q1..q%d).", pathPrefix, m[1], numQueries, numQueries),
+			)
+		}
+	}
 	return diags
 }
 
@@ -249,17 +369,31 @@ func (r *dashboardResource) validateQueryFunctions(ctx context.Context, function
 	for i, fn := range fns {
 		switch fn.Type.ValueString() {
 		case "log":
-			if fn.Base.IsNull() || fn.Base.IsUnknown() {
+			if fn.Base.IsNull() {
 				diags.AddError(
 					"Invalid query function configuration",
 					fmt.Sprintf("%s.functions[%d]: the \"log\" function requires \"base\".", pathPrefix, i),
 				)
 			}
 		case "power":
-			if fn.Exponent.IsNull() || fn.Exponent.IsUnknown() {
+			if fn.Exponent.IsNull() {
 				diags.AddError(
 					"Invalid query function configuration",
 					fmt.Sprintf("%s.functions[%d]: the \"power\" function requires \"exponent\".", pathPrefix, i),
+				)
+			}
+		case "rolling":
+			if !fn.Window.IsUnknown() && (fn.Window.IsNull() || fn.Window.ValueString() == "") {
+				diags.AddError(
+					"Invalid query function configuration",
+					fmt.Sprintf("%s.functions[%d]: the \"rolling\" function requires \"window\".", pathPrefix, i),
+				)
+			}
+		case "time-offset":
+			if fn.Seconds.IsNull() {
+				diags.AddError(
+					"Invalid query function configuration",
+					fmt.Sprintf("%s.functions[%d]: the \"time-offset\" function requires \"seconds\".", pathPrefix, i),
 				)
 			}
 		}
