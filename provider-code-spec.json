@@ -96,6 +96,13 @@
             }
           },
           {
+            "name": "custom_role_id",
+            "string": {
+              "computed_optional_required": "computed",
+              "description": "Identifier of the custom role held by the user, when `role` is `custom`. Use it with the custom role endpoints to read what the role grants."
+            }
+          },
+          {
             "name": "email",
             "string": {
               "computed_optional_required": "computed",

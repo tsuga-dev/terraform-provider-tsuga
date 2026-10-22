@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsuga Public API",
     "description": "Public HTTP API for Tsuga customers and customer-operated tools. Use these endpoints to query observability data, manage customer-owned Tsuga resources, and retrieve documentation or API-reference content. Public API requests authenticate with Bearer tokens such as operation keys. See [API reference](/documentation/api).",
-    "version": "20261018.1.0+9ef6059",
+    "version": "20261021.21.0+838201c",
     "contact": {
       "name": "Tsuga",
       "url": "https://tsuga.com"
@@ -944,7 +944,11 @@
               "CLUSTER_DB_QUERY_QUERY_TIMEOUT",
               "CLUSTER_DB_QUERY_CONNECTION_TIMEOUT",
               "CLUSTER_DB_QUERY_CONNECTION_POOL_TIMEOUT",
+              "CLUSTER_AGGREGATION_BUCKET_LIMIT_EXCEEDED",
+              "CLUSTER_AGGREGATION_FORMULA",
+              "CLUSTER_AGGREGATION_INTERVAL_PARSE_ERROR",
               "CLUSTER_AGGREGATION_STRUCTURE",
+              "CLUSTER_AGGREGATION_SYNTAX",
               "ABORT_ERROR",
               "BAD_REQUEST",
               "CUSTOM_ROLE_IN_USE",
@@ -1731,6 +1735,13 @@
                 ],
                 "description": "Cloud accounts Tsuga scans to discover resources."
               },
+              "custom-role": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Custom global roles, which define what their holders can access across the organization."
+              },
               "logs": {
                 "type": "string",
                 "description": "Ingested log events, through search and aggregation endpoints.",
@@ -2114,6 +2125,13 @@
                       "write"
                     ],
                     "description": "Cloud accounts Tsuga scans to discover resources."
+                  },
+                  "custom-role": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Custom global roles, which define what their holders can access across the organization."
                   },
                   "logs": {
                     "type": "string",
@@ -2684,6 +2702,558 @@
             "items": {
               "$ref": "#/components/schemas/Cluster"
             }
+          }
+        }
+      },
+      "CustomRole": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "teamScope",
+          "assets",
+          "telemetry"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Tsuga-generated custom role ID assigned at creation."
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable custom role name, unique across the account."
+          },
+          "description": {
+            "type": "string",
+            "description": "Free-form description of the custom role. Absent when not set."
+          },
+          "teamScope": {
+            "description": "Teams the role grants its asset permissions on. `all` covers every team, `public` covers public teams only, `specific` covers the listed teams, and `all-except` covers every team but the listed ones.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type"
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "all"
+                    ]
+                  }
+                },
+                "title": "CustomRoleAllTeams"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "public"
+                    ]
+                  }
+                },
+                "title": "CustomRolePublicTeams"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "type",
+                  "teamIds"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "specific"
+                    ]
+                  },
+                  "teamIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Team IDs the scope applies to."
+                  }
+                },
+                "title": "CustomRoleSpecificTeams"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "type",
+                  "teamIds"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "all-except"
+                    ]
+                  },
+                  "teamIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Team IDs the scope applies to."
+                  }
+                },
+                "title": "CustomRoleAllTeamsExcept"
+              }
+            ]
+          },
+          "assets": {
+            "type": "object",
+            "required": [
+              "team"
+            ],
+            "properties": {
+              "database": {
+                "enum": [
+                  "read"
+                ],
+                "description": "Access granted on this resource type."
+              },
+              "inventory": {
+                "enum": [
+                  "read"
+                ],
+                "description": "Access granted on this resource type."
+              },
+              "queue": {
+                "enum": [
+                  "read"
+                ],
+                "description": "Access granted on this resource type."
+              },
+              "service": {
+                "enum": [
+                  "read"
+                ],
+                "description": "Access granted on this resource type."
+              },
+              "audit-log": {
+                "enum": [
+                  "read"
+                ],
+                "description": "Access granted on this resource type."
+              },
+              "allowed-domains": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "audit-log-stream-destination": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "cluster-integration-config": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "custom-usage-tag": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "databricks-connection": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "github-connection": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "llm-provider": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "retention-policy": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "saml-config": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "sensitive-data-scanner-rule": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "service-target": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "team-remap-config": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "adaptive-notification-rule": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "cloud-account": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "dashboard-folder": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "monitor-folder": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "dashboard-report": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "dashboard-share": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "dashboard": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "ingestion-api-key": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "investigation": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "log-route": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "metric-route": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "monitor": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "notebook": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "notification-integration": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "notification-rule": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "notification-silence": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "operation-api-key": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "quality-report": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "rum-public-token": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "sandbox-configuration": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "slo": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "tag-policy": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "user-invitation": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              },
+              "team": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`."
+              }
+            },
+            "description": "Access level granted per resource type, within the role team scope. An omitted resource type grants no access."
+          },
+          "telemetry": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "log",
+                "metric",
+                "trace",
+                "rum"
+              ]
+            },
+            "description": "Telemetry signals the role can read. An empty array grants no telemetry access."
+          },
+          "telemetryQuery": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "values"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "Attribute key matched against telemetry data points, such as `env` or `service.name`."
+                },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Values the attribute must equal for a data point to be kept. A data point matching any of them is kept."
+                }
+              }
+            },
+            "description": "Additional restriction applied cluster-side to every telemetry query the role holder runs. Each entry keeps only the data points whose `key` matches one of `values`, and entries are combined with AND."
+          }
+        },
+        "description": "Global role defined by the organization. It sets which teams its holders reach, which telemetry signals they can query, and which resource types they can read or write. See [Custom global roles](/documentation/account-and-settings/roles-and-permissions#custom-global-roles).",
+        "example": {
+          "id": "123-456-abc",
+          "name": "Platform on-call",
+          "description": "Edits monitors and dashboards of the platform teams.",
+          "teamScope": {
+            "type": "specific",
+            "teamIds": [
+              "team-123-abc"
+            ]
+          },
+          "assets": {
+            "dashboard": "write",
+            "monitor": "write",
+            "team": "read"
+          },
+          "telemetry": [
+            "log",
+            "metric",
+            "trace"
+          ],
+          "telemetryQuery": [
+            {
+              "key": "context.env",
+              "values": [
+                "production"
+              ]
+            }
+          ]
+        }
+      },
+      "ListCustomRolesResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomRole"
+            }
+          }
+        }
+      },
+      "GetCustomRoleResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/CustomRole"
+          }
+        }
+      },
+      "CreateCustomRoleResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/CustomRole"
+          }
+        }
+      },
+      "UpdateCustomRoleResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/CustomRole"
+          }
+        }
+      },
+      "DeleteCustomRoleResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DeleteResponse"
           }
         }
       },
@@ -9746,7 +10316,8 @@
                 "log-error-pattern": "#/components/schemas/MonitorConfigurationLogErrorPattern",
                 "log-error-pattern-increase": "#/components/schemas/MonitorConfigurationLogErrorPatternIncrease",
                 "anomaly-trace": "#/components/schemas/MonitorConfigurationAnomalyTrace",
-                "certificate-expiry": "#/components/schemas/MonitorConfigurationCertificateExpiry"
+                "certificate-expiry": "#/components/schemas/MonitorConfigurationCertificateExpiry",
+                "k8s-faulty-deployment": "#/components/schemas/MonitorConfigurationK8sFaultyDeployment"
               }
             },
             "required": [
@@ -9779,6 +10350,9 @@
               },
               {
                 "$ref": "#/components/schemas/MonitorConfigurationCertificateExpiry"
+              },
+              {
+                "$ref": "#/components/schemas/MonitorConfigurationK8sFaultyDeployment"
               }
             ]
           },
@@ -16018,6 +16592,10 @@
               "custom"
             ],
             "description": "Organization role for the user: `admin`, `public_editor`, `public_viewer`, `teams_only`, or `custom` when the user holds a custom role."
+          },
+          "customRoleId": {
+            "type": "string",
+            "description": "Identifier of the custom role held by the user, when `role` is `custom`. Use it with the custom role endpoints to read what the role grants."
           }
         },
         "description": "User account in the authenticated organization. See [Members](/documentation/account-and-settings/members).",
@@ -19012,6 +19590,57 @@
           }
         }
       },
+      "MonitorConfigurationK8sFaultyDeployment": {
+        "type": "object",
+        "required": [
+          "type",
+          "aggregationAlertLogic",
+          "filter"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Monitor that alerts when a Kubernetes workload (Deployment, StatefulSet, or DaemonSet) keeps failing right after a rollout.",
+            "enum": [
+              "k8s-faulty-deployment"
+            ]
+          },
+          "aggregationAlertLogic": {
+            "type": "string",
+            "description": "Fixed aggregation logic for Kubernetes faulty deployment monitors. Each faulty workload revision is evaluated as its own alert group.",
+            "enum": [
+              "each"
+            ]
+          },
+          "filter": {
+            "type": "object",
+            "properties": {
+              "clusterNames": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Kubernetes cluster names to watch. Omit to watch every cluster."
+              },
+              "namespaces": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Kubernetes namespaces to watch. Omit to watch every namespace."
+              },
+              "envs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Environments to watch. Omit to watch every environment."
+              }
+            },
+            "description": "Workload selection used for faulty deployment detection. All configured fields must match for a workload to be watched."
+          }
+        }
+      },
       "InputMonitorConfigurationMetric": {
         "type": "object",
         "required": [
@@ -21028,6 +21657,66 @@
             "enum": [
               "resolve"
             ]
+          }
+        }
+      },
+      "InputMonitorConfigurationK8sFaultyDeployment": {
+        "type": "object",
+        "required": [
+          "type",
+          "aggregationAlertLogic",
+          "filter"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Monitor that alerts when a Kubernetes workload (Deployment, StatefulSet, or DaemonSet) keeps failing right after a rollout.",
+            "enum": [
+              "k8s-faulty-deployment"
+            ]
+          },
+          "aggregationAlertLogic": {
+            "type": "string",
+            "description": "Fixed aggregation logic for Kubernetes faulty deployment monitors. Each faulty workload revision is evaluated as its own alert group.",
+            "enum": [
+              "each"
+            ]
+          },
+          "filter": {
+            "type": "object",
+            "properties": {
+              "clusterNames": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 250
+                },
+                "minItems": 1,
+                "description": "Kubernetes cluster names to watch. Omit to watch every cluster."
+              },
+              "namespaces": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 250
+                },
+                "minItems": 1,
+                "description": "Kubernetes namespaces to watch. Omit to watch every namespace."
+              },
+              "envs": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 250
+                },
+                "minItems": 1,
+                "description": "Environments to watch. Omit to watch every environment."
+              }
+            },
+            "description": "Workload selection used for faulty deployment detection. All configured fields must match for a workload to be watched. Send an empty object to watch every workload."
           }
         }
       },
@@ -36735,7 +37424,8 @@
                     "anomaly-metric": "#/components/schemas/MonitorConfigurationAnomalyMetric",
                     "anomaly-trace": "#/components/schemas/MonitorConfigurationAnomalyTrace",
                     "certificate-expiry": "#/components/schemas/MonitorConfigurationCertificateExpiry",
-                    "log-error-pattern-increase": "#/components/schemas/MonitorConfigurationLogErrorPatternIncrease"
+                    "log-error-pattern-increase": "#/components/schemas/MonitorConfigurationLogErrorPatternIncrease",
+                    "k8s-faulty-deployment": "#/components/schemas/MonitorConfigurationK8sFaultyDeployment"
                   }
                 },
                 "required": [
@@ -36765,6 +37455,9 @@
                   },
                   {
                     "$ref": "#/components/schemas/MonitorConfigurationLogErrorPatternIncrease"
+                  },
+                  {
+                    "$ref": "#/components/schemas/MonitorConfigurationK8sFaultyDeployment"
                   }
                 ]
               },
@@ -38237,6 +38930,13 @@
                   "write"
                 ],
                 "description": "Cloud accounts Tsuga scans to discover resources."
+              },
+              "custom-role": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Custom global roles, which define what their holders can access across the organization."
               },
               "logs": {
                 "type": "string",
@@ -40420,6 +41120,13 @@
                         ],
                         "description": "Cloud accounts Tsuga scans to discover resources."
                       },
+                      "custom-role": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Custom global roles, which define what their holders can access across the organization."
+                      },
                       "logs": {
                         "type": "string",
                         "description": "Ingested log events, through search and aggregation endpoints.",
@@ -40902,6 +41609,13 @@
                           "write"
                         ],
                         "description": "Cloud accounts Tsuga scans to discover resources."
+                      },
+                      "custom-role": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Custom global roles, which define what their holders can access across the organization."
                       },
                       "logs": {
                         "type": "string",
@@ -42094,6 +42808,1378 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ListClustersResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/custom-roles": {
+      "get": {
+        "operationId": "listCustomRoles",
+        "tags": [
+          "custom-roles"
+        ],
+        "description": "Lists every custom global role of the organization, ordered by name, with what each role grants.",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListCustomRolesResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createCustomRole",
+        "tags": [
+          "custom-roles"
+        ],
+        "description": "Creates a custom global role. The name must be unique across the organization. Grants on resource types a custom role cannot configure are dropped. Requires write access on custom roles, which only an operation key scoped to all teams can hold. Only a Global admin can first grant it to a key; a key holding it and write access on operation API keys can then pass it on to the keys it creates or updates.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "teamScope",
+                  "assets",
+                  "telemetry"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "description": "Human-readable custom role name."
+                  },
+                  "description": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 250
+                      }
+                    ],
+                    "description": "Free-form description of the custom role. Omit on update to keep the current description, or pass null to remove it."
+                  },
+                  "teamScope": {
+                    "description": "Teams the role grants its asset permissions on. `all` covers every team, `public` covers public teams only, `specific` covers the listed teams, and `all-except` covers every team but the listed ones.",
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type"
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "type"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "type"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "public"
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "type",
+                          "teamIds"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "specific"
+                            ]
+                          },
+                          "teamIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 250
+                            },
+                            "minItems": 1,
+                            "maxItems": 50,
+                            "uniqueItems": true,
+                            "description": "Team IDs the scope applies to."
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "type",
+                          "teamIds"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "all-except"
+                            ]
+                          },
+                          "teamIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 250
+                            },
+                            "minItems": 1,
+                            "maxItems": 50,
+                            "uniqueItems": true,
+                            "description": "Team IDs the scope applies to."
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "assets": {
+                    "type": "object",
+                    "required": [
+                      "team"
+                    ],
+                    "properties": {
+                      "database": {
+                        "enum": [
+                          "read"
+                        ],
+                        "description": "Access granted on this resource type."
+                      },
+                      "inventory": {
+                        "enum": [
+                          "read"
+                        ],
+                        "description": "Access granted on this resource type."
+                      },
+                      "queue": {
+                        "enum": [
+                          "read"
+                        ],
+                        "description": "Access granted on this resource type."
+                      },
+                      "service": {
+                        "enum": [
+                          "read"
+                        ],
+                        "description": "Access granted on this resource type."
+                      },
+                      "audit-log": {
+                        "enum": [
+                          "read"
+                        ],
+                        "description": "Access granted on this resource type."
+                      },
+                      "allowed-domains": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "audit-log-stream-destination": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "cluster-integration-config": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "custom-usage-tag": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "databricks-connection": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "github-connection": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "llm-provider": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "retention-policy": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "saml-config": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "sensitive-data-scanner-rule": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "service-target": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "team-remap-config": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "adaptive-notification-rule": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "cloud-account": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "dashboard-folder": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "monitor-folder": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "dashboard-report": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "dashboard-share": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "dashboard": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "ingestion-api-key": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "investigation": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "log-route": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "metric-route": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "monitor": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "notebook": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "notification-integration": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "notification-rule": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "notification-silence": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "operation-api-key": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "quality-report": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "rum-public-token": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "sandbox-configuration": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "slo": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "tag-policy": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "user-invitation": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "team": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      }
+                    },
+                    "description": "Access level granted per resource type, within the role team scope. An omitted resource type grants no access."
+                  },
+                  "telemetry": {
+                    "type": "array",
+                    "items": {
+                      "enum": [
+                        "log",
+                        "metric",
+                        "trace",
+                        "rum"
+                      ]
+                    },
+                    "description": "Telemetry signals the role can read. An empty array grants no telemetry access."
+                  },
+                  "telemetryQuery": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "key",
+                            "values"
+                          ],
+                          "properties": {
+                            "key": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 250,
+                              "description": "Attribute key matched against telemetry data points, such as `env` or `service.name`."
+                            },
+                            "values": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 250,
+                                "pattern": "^(?!\\*$)",
+                                "errorMessage": {
+                                  "pattern": "Must not be '*'."
+                                }
+                              },
+                              "minItems": 1,
+                              "maxItems": 20,
+                              "description": "Values the attribute must equal for a data point to be kept. A data point matching any of them is kept."
+                            }
+                          }
+                        },
+                        "maxItems": 3,
+                        "description": "Additional restriction applied cluster-side to every telemetry query the role holder runs. Each entry keeps only the data points whose `key` matches one of `values`, and entries are combined with AND."
+                      }
+                    ],
+                    "description": "Additional restriction applied cluster-side to every telemetry query the role holder runs. Each entry keeps only the data points whose `key` matches one of `values`, and entries are combined with AND. Omit on update to keep the current restriction, or pass null to remove it."
+                  }
+                },
+                "description": "Custom role create or update request. Provide the role name, optional description, team scope, resource type grants, readable telemetry signals, and optional telemetry restriction."
+              },
+              "example": {
+                "name": "Platform on-call",
+                "description": "Edits monitors and dashboards of the platform teams.",
+                "teamScope": {
+                  "type": "specific",
+                  "teamIds": [
+                    "team-123-abc"
+                  ]
+                },
+                "assets": {
+                  "dashboard": "write",
+                  "monitor": "write",
+                  "team": "read"
+                },
+                "telemetry": [
+                  "log",
+                  "metric",
+                  "trace"
+                ],
+                "telemetryQuery": [
+                  {
+                    "key": "context.env",
+                    "values": [
+                      "production"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "description": "Custom role create or update request. Provide the role name, optional description, team scope, resource type grants, readable telemetry signals, and optional telemetry restriction."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCustomRoleResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/custom-roles/{id}": {
+      "get": {
+        "operationId": "getCustomRole",
+        "tags": [
+          "custom-roles"
+        ],
+        "description": "Retrieves one custom global role by ID.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identifier of the custom role to retrieve. Use the `id` returned by custom role list, create, or update responses."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetCustomRoleResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateCustomRole",
+        "tags": [
+          "custom-roles"
+        ],
+        "description": "Replaces the name, team scope, resource type grants, and telemetry signals of a custom global role by ID. The new grants apply to every user holding the role. Requires write access on custom roles, which only an operation key scoped to all teams can hold.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "teamScope",
+                  "assets",
+                  "telemetry"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "description": "Human-readable custom role name."
+                  },
+                  "description": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 250
+                      }
+                    ],
+                    "description": "Free-form description of the custom role. Omit on update to keep the current description, or pass null to remove it."
+                  },
+                  "teamScope": {
+                    "description": "Teams the role grants its asset permissions on. `all` covers every team, `public` covers public teams only, `specific` covers the listed teams, and `all-except` covers every team but the listed ones.",
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type"
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "type"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "type"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "public"
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "type",
+                          "teamIds"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "specific"
+                            ]
+                          },
+                          "teamIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 250
+                            },
+                            "minItems": 1,
+                            "maxItems": 50,
+                            "uniqueItems": true,
+                            "description": "Team IDs the scope applies to."
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "type",
+                          "teamIds"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "all-except"
+                            ]
+                          },
+                          "teamIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 250
+                            },
+                            "minItems": 1,
+                            "maxItems": 50,
+                            "uniqueItems": true,
+                            "description": "Team IDs the scope applies to."
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "assets": {
+                    "type": "object",
+                    "required": [
+                      "team"
+                    ],
+                    "properties": {
+                      "database": {
+                        "enum": [
+                          "read"
+                        ],
+                        "description": "Access granted on this resource type."
+                      },
+                      "inventory": {
+                        "enum": [
+                          "read"
+                        ],
+                        "description": "Access granted on this resource type."
+                      },
+                      "queue": {
+                        "enum": [
+                          "read"
+                        ],
+                        "description": "Access granted on this resource type."
+                      },
+                      "service": {
+                        "enum": [
+                          "read"
+                        ],
+                        "description": "Access granted on this resource type."
+                      },
+                      "audit-log": {
+                        "enum": [
+                          "read"
+                        ],
+                        "description": "Access granted on this resource type."
+                      },
+                      "allowed-domains": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "audit-log-stream-destination": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "cluster-integration-config": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "custom-usage-tag": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "databricks-connection": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "github-connection": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "llm-provider": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "retention-policy": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "saml-config": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "sensitive-data-scanner-rule": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "service-target": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "team-remap-config": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "adaptive-notification-rule": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "cloud-account": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "dashboard-folder": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "monitor-folder": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "dashboard-report": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "dashboard-share": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "dashboard": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "ingestion-api-key": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "investigation": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "log-route": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "metric-route": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "monitor": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "notebook": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "notification-integration": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "notification-rule": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "notification-silence": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "operation-api-key": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "quality-report": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "rum-public-token": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "sandbox-configuration": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "slo": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "tag-policy": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "user-invitation": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      },
+                      "team": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`."
+                      }
+                    },
+                    "description": "Access level granted per resource type, within the role team scope. An omitted resource type grants no access."
+                  },
+                  "telemetry": {
+                    "type": "array",
+                    "items": {
+                      "enum": [
+                        "log",
+                        "metric",
+                        "trace",
+                        "rum"
+                      ]
+                    },
+                    "description": "Telemetry signals the role can read. An empty array grants no telemetry access."
+                  },
+                  "telemetryQuery": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "key",
+                            "values"
+                          ],
+                          "properties": {
+                            "key": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 250,
+                              "description": "Attribute key matched against telemetry data points, such as `env` or `service.name`."
+                            },
+                            "values": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 250,
+                                "pattern": "^(?!\\*$)",
+                                "errorMessage": {
+                                  "pattern": "Must not be '*'."
+                                }
+                              },
+                              "minItems": 1,
+                              "maxItems": 20,
+                              "description": "Values the attribute must equal for a data point to be kept. A data point matching any of them is kept."
+                            }
+                          }
+                        },
+                        "maxItems": 3,
+                        "description": "Additional restriction applied cluster-side to every telemetry query the role holder runs. Each entry keeps only the data points whose `key` matches one of `values`, and entries are combined with AND."
+                      }
+                    ],
+                    "description": "Additional restriction applied cluster-side to every telemetry query the role holder runs. Each entry keeps only the data points whose `key` matches one of `values`, and entries are combined with AND. Omit on update to keep the current restriction, or pass null to remove it."
+                  }
+                },
+                "description": "Custom role create or update request. Provide the role name, optional description, team scope, resource type grants, readable telemetry signals, and optional telemetry restriction."
+              },
+              "example": {
+                "name": "Platform on-call",
+                "description": "Edits monitors and dashboards of the platform teams.",
+                "teamScope": {
+                  "type": "specific",
+                  "teamIds": [
+                    "team-123-abc"
+                  ]
+                },
+                "assets": {
+                  "dashboard": "write",
+                  "monitor": "write",
+                  "team": "read"
+                },
+                "telemetry": [
+                  "log",
+                  "metric",
+                  "trace"
+                ],
+                "telemetryQuery": [
+                  {
+                    "key": "context.env",
+                    "values": [
+                      "production"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "description": "Custom role create or update request. Provide the role name, optional description, team scope, resource type grants, readable telemetry signals, and optional telemetry restriction."
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identifier of the custom role to update. Use the `id` returned by custom role list, get, or create responses."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateCustomRoleResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteCustomRole",
+        "tags": [
+          "custom-roles"
+        ],
+        "description": "Deletes a custom global role by ID. Fails while a user still holds the role; change their global role first. Pending invitations that carry the role are deleted with it. Requires write access on custom roles, which only an operation key scoped to all teams can hold.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identifier of the custom role to delete. Use the `id` returned by custom role list, get, create, or update responses."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteCustomRoleResponse"
                 }
               }
             }
@@ -46101,7 +48187,7 @@
         "tags": [
           "invitations"
         ],
-        "description": "Creates up to 10 invitations to join the organization. Each invitation assigns an organization role and initial team membership after acceptance.",
+        "description": "Creates up to 10 invitations to join the organization. Each invitation assigns an organization role and initial team membership after acceptance. Only an operation key scoped to all teams can invite with a custom role; invitations it is not allowed to send are skipped and listed in the response message.",
         "requestBody": {
           "required": true,
           "content": {
@@ -46110,47 +48196,107 @@
                 "type": "array",
                 "items": {
                   "type": "object",
+                  "discriminator": {
+                    "propertyName": "userRole"
+                  },
                   "required": [
-                    "email",
-                    "teamId",
-                    "teamRole",
                     "userRole"
                   ],
-                  "properties": {
-                    "email": {
-                      "type": "string",
-                      "format": "lowercase-email",
-                      "minLength": 0,
-                      "maxLength": 254,
-                      "errorMessage": {
-                        "format": "Must be a valid lowercase email address."
-                      },
-                      "description": "Lowercase email address to invite into the organization."
-                    },
-                    "teamId": {
-                      "type": "string",
-                      "minLength": 0,
-                      "maxLength": 250,
-                      "description": "Team ID to add the invited user to after acceptance."
-                    },
-                    "teamRole": {
-                      "enum": [
-                        "admin",
-                        "editor",
-                        "viewer"
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "required": [
+                        "email",
+                        "teamId",
+                        "teamRole",
+                        "userRole"
                       ],
-                      "description": "Role the invited user receives in the target team once accepted: `admin`, `editor`, or `viewer`."
+                      "properties": {
+                        "email": {
+                          "type": "string",
+                          "format": "lowercase-email",
+                          "minLength": 0,
+                          "maxLength": 254,
+                          "errorMessage": {
+                            "format": "Must be a valid lowercase email address."
+                          },
+                          "description": "Lowercase email address to invite into the organization."
+                        },
+                        "teamId": {
+                          "type": "string",
+                          "minLength": 0,
+                          "maxLength": 250,
+                          "description": "Team ID to add the invited user to after acceptance."
+                        },
+                        "teamRole": {
+                          "enum": [
+                            "admin",
+                            "editor",
+                            "viewer"
+                          ],
+                          "description": "Role the invited user receives in the target team once accepted: `admin`, `editor`, or `viewer`."
+                        },
+                        "userRole": {
+                          "enum": [
+                            "admin",
+                            "public_editor",
+                            "public_viewer",
+                            "teams_only"
+                          ],
+                          "description": "Organization role the invited user receives after acceptance: `admin`, `public_editor`, `public_viewer`, or `teams_only`."
+                        }
+                      }
                     },
-                    "userRole": {
-                      "enum": [
-                        "admin",
-                        "public_editor",
-                        "public_viewer",
-                        "teams_only"
+                    {
+                      "type": "object",
+                      "required": [
+                        "email",
+                        "teamId",
+                        "teamRole",
+                        "userRole",
+                        "customRoleId"
                       ],
-                      "description": "Organization role the invited user receives after acceptance: `admin`, `public_editor`, `public_viewer`, or `teams_only`."
+                      "properties": {
+                        "email": {
+                          "type": "string",
+                          "format": "lowercase-email",
+                          "minLength": 0,
+                          "maxLength": 254,
+                          "errorMessage": {
+                            "format": "Must be a valid lowercase email address."
+                          },
+                          "description": "Lowercase email address to invite into the organization."
+                        },
+                        "teamId": {
+                          "type": "string",
+                          "minLength": 0,
+                          "maxLength": 250,
+                          "description": "Team ID to add the invited user to after acceptance."
+                        },
+                        "teamRole": {
+                          "enum": [
+                            "admin",
+                            "editor",
+                            "viewer"
+                          ],
+                          "description": "Role the invited user receives in the target team once accepted: `admin`, `editor`, or `viewer`."
+                        },
+                        "userRole": {
+                          "type": "string",
+                          "description": "Assigns the custom role identified by `customRoleId` after acceptance.",
+                          "enum": [
+                            "custom"
+                          ]
+                        },
+                        "customRoleId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 250,
+                          "description": "Identifier of the custom role to assign. Use the `id` returned by the custom role endpoints."
+                        }
+                      }
                     }
-                  }
+                  ]
                 },
                 "maxItems": 10,
                 "description": "Invitations to create. Up to 10 invitations are accepted per request."
@@ -50733,10 +52879,11 @@
                                 "certificate-expiry",
                                 "anomaly-detection",
                                 "log-error-pattern",
-                                "log-error-pattern-increase"
+                                "log-error-pattern-increase",
+                                "k8s-faulty-deployment"
                               ]
                             },
-                            "maxItems": 5,
+                            "maxItems": 6,
                             "description": "Values compared by this filter. When `exclude` is omitted or false, rows matching any value are kept; when `exclude` is true, matching rows are removed."
                           },
                           "exclude": {
@@ -51075,7 +53222,8 @@
                         "anomaly-trace": "#/components/schemas/InputMonitorConfigurationAnomalyTrace",
                         "log-error-pattern": "#/components/schemas/InputMonitorConfigurationLogErrorPattern",
                         "log-error-pattern-increase": "#/components/schemas/InputMonitorConfigurationLogErrorPatternIncrease",
-                        "certificate-expiry": "#/components/schemas/InputMonitorConfigurationCertificateExpiry"
+                        "certificate-expiry": "#/components/schemas/InputMonitorConfigurationCertificateExpiry",
+                        "k8s-faulty-deployment": "#/components/schemas/InputMonitorConfigurationK8sFaultyDeployment"
                       }
                     },
                     "required": [
@@ -51108,6 +53256,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/InputMonitorConfigurationCertificateExpiry"
+                      },
+                      {
+                        "$ref": "#/components/schemas/InputMonitorConfigurationK8sFaultyDeployment"
                       }
                     ]
                   },
@@ -51365,6 +53516,37 @@
                     "permissions": "all",
                     "clusterIds": []
                   }
+                },
+                "example6": {
+                  "value": {
+                    "name": "Faulty Deployment Detector",
+                    "message": "A workload keeps failing after its last rollout.",
+                    "tags": [
+                      {
+                        "key": "team",
+                        "value": "platform"
+                      }
+                    ],
+                    "configuration": {
+                      "type": "k8s-faulty-deployment",
+                      "aggregationAlertLogic": "each",
+                      "filter": {
+                        "clusterNames": [
+                          "prod-eu-west-1"
+                        ],
+                        "namespaces": [
+                          "checkout"
+                        ],
+                        "envs": [
+                          "production"
+                        ]
+                      }
+                    },
+                    "priority": 2,
+                    "owner": "team-123-abc",
+                    "permissions": "all",
+                    "clusterIds": []
+                  }
                 }
               }
             }
@@ -51524,7 +53706,7 @@
         "tags": [
           "monitors"
         ],
-        "description": "Creates a monitor owned by the specified team. The monitor can evaluate logs, metrics, traces, anomaly behavior, certificate expiry, new error patterns, or error pattern increases depending on its configuration.",
+        "description": "Creates a monitor owned by the specified team. The monitor can evaluate logs, metrics, traces, anomaly behavior, certificate expiry, new error patterns, error pattern increases, or Kubernetes faulty deployments depending on its configuration.",
         "requestBody": {
           "required": true,
           "content": {
@@ -51599,7 +53781,8 @@
                         "anomaly-trace": "#/components/schemas/InputMonitorConfigurationAnomalyTrace",
                         "log-error-pattern": "#/components/schemas/InputMonitorConfigurationLogErrorPattern",
                         "log-error-pattern-increase": "#/components/schemas/InputMonitorConfigurationLogErrorPatternIncrease",
-                        "certificate-expiry": "#/components/schemas/InputMonitorConfigurationCertificateExpiry"
+                        "certificate-expiry": "#/components/schemas/InputMonitorConfigurationCertificateExpiry",
+                        "k8s-faulty-deployment": "#/components/schemas/InputMonitorConfigurationK8sFaultyDeployment"
                       }
                     },
                     "required": [
@@ -51632,6 +53815,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/InputMonitorConfigurationCertificateExpiry"
+                      },
+                      {
+                        "$ref": "#/components/schemas/InputMonitorConfigurationK8sFaultyDeployment"
                       }
                     ]
                   },
@@ -51886,6 +54072,37 @@
                     "owner": "team-123-abc",
                     "dashboardId": "789-abc-def",
                     "folderId": "folder-123-abc",
+                    "permissions": "all",
+                    "clusterIds": []
+                  }
+                },
+                "example6": {
+                  "value": {
+                    "name": "Faulty Deployment Detector",
+                    "message": "A workload keeps failing after its last rollout.",
+                    "tags": [
+                      {
+                        "key": "team",
+                        "value": "platform"
+                      }
+                    ],
+                    "configuration": {
+                      "type": "k8s-faulty-deployment",
+                      "aggregationAlertLogic": "each",
+                      "filter": {
+                        "clusterNames": [
+                          "prod-eu-west-1"
+                        ],
+                        "namespaces": [
+                          "checkout"
+                        ],
+                        "envs": [
+                          "production"
+                        ]
+                      }
+                    },
+                    "priority": 2,
+                    "owner": "team-123-abc",
                     "permissions": "all",
                     "clusterIds": []
                   }
@@ -62666,6 +64883,17 @@
             "name": "offset",
             "required": false,
             "description": "Zero-based index of the first matching item to return. Increase it with `limit` to request later pages. If `limit` is provided without `offset`, the offset defaults to 0."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "name",
+            "required": false,
+            "description": "Exact team name to look up. Returns at most one team, since team names are unique."
           }
         ],
         "responses": {
@@ -64879,6 +67107,10 @@
     {
       "name": "clusters",
       "description": "Operations for listing Tsuga clusters that hold observability data. Use these endpoints to choose cluster scope for telemetry queries. See [Clusters](/documentation/account-and-settings/clusters)."
+    },
+    {
+      "name": "custom-roles",
+      "description": "Operations for custom global roles. Use these endpoints to define which teams, telemetry signals, and resource types the holders of a role can access. See [Custom global roles](/documentation/account-and-settings/roles-and-permissions#custom-global-roles)."
     },
     {
       "name": "custom-usage-tags",

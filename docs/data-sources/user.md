@@ -27,6 +27,7 @@ data "tsuga_user" "jane" {
 
 ### Read-Only
 
+- `custom_role_id` (String) Identifier of the custom role held by the user, when `role` is `custom`. Use it with the custom role endpoints to read what the role grants.
 - `email` (String) Lowercase email address for the user. Use this for display and invitation matching, not as a stable identifier.
 - `name` (String) Display name of the user.
 - `role` (String) Organization role for the user: `admin`, `public_editor`, `public_viewer`, `teams_only`, or `custom` when the user holds a custom role.

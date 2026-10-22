@@ -14,6 +14,11 @@ import (
 func UserDataSourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"custom_role_id": schema.StringAttribute{
+				Computed:            true,
+				Description:         "Identifier of the custom role held by the user, when `role` is `custom`. Use it with the custom role endpoints to read what the role grants.",
+				MarkdownDescription: "Identifier of the custom role held by the user, when `role` is `custom`. Use it with the custom role endpoints to read what the role grants.",
+			},
 			"email": schema.StringAttribute{
 				Computed:            true,
 				Description:         "Lowercase email address for the user. Use this for display and invitation matching, not as a stable identifier.",
@@ -42,8 +47,9 @@ func UserDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type UserModel struct {
-	Email types.String `tfsdk:"email"`
-	Id    types.String `tfsdk:"id"`
-	Name  types.String `tfsdk:"name"`
-	Role  types.String `tfsdk:"role"`
+	CustomRoleId types.String `tfsdk:"custom_role_id"`
+	Email        types.String `tfsdk:"email"`
+	Id           types.String `tfsdk:"id"`
+	Name         types.String `tfsdk:"name"`
+	Role         types.String `tfsdk:"role"`
 }
