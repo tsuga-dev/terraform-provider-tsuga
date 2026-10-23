@@ -688,8 +688,10 @@ resource "tsuga_dashboard" "dashboard" {
       }
       visualization = {
         slo = {
-          display     = ["summary", "table"]
-          organize_by = "team"
+          display = ["summary", "table"]
+          organize_by = {
+            type = "team"
+          }
           filters = {
             statuses = {
               values = ["breached"]
@@ -2561,7 +2563,7 @@ Required:
 Optional:
 
 - `filters` (Attributes) Narrows the SLOs the widget covers. Omit it, or any of its fields, to apply no filter. (see [below for nested schema](#nestedatt--graphs--visualization--slo--filters))
-- `organize_by` (String) Groups the results by owning team or by cluster. Omit it to list results ungrouped.
+- `organize_by` (Attributes) Groups the results by owning team, or by the value of a tag key or group-by field. Omit it to list results ungrouped. (see [below for nested schema](#nestedatt--graphs--visualization--slo--organize_by))
 - `slo_id` (String) Id of the SLO to display. Omit it to cover every SLO that matches `filters`.
 
 Read-Only:
@@ -2621,6 +2623,18 @@ Required:
 - `value` (String) Tag value. Leading or trailing whitespace is rejected.
 
 
+
+
+<a id="nestedatt--graphs--visualization--slo--organize_by"></a>
+### Nested Schema for `graphs.visualization.slo.organize_by`
+
+Required:
+
+- `type` (String) `team` groups the results by the team owning their SLO. `key` groups them by the value of `key`.
+
+Optional:
+
+- `key` (String) Tag key or group-by field to group by, such as `env` or `context.team`. Required when `type` is `key`, and not allowed otherwise. A result falls under each value it has for this key: its group-by value when its SLO groups by this field, and its SLO's tag values for this key. Results with no value for the key are not shown.
 
 
 

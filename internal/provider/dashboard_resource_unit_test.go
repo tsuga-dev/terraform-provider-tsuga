@@ -681,6 +681,26 @@ func TestValidateYAxisSettings_PowRequiresExponent(t *testing.T) {
 	}
 }
 
+func TestValidateSloOrganizeBy_KeyPairing(t *testing.T) {
+	for name, tc := range map[string]struct {
+		organizeBy *resource_dashboard.SloOrganizeByModel
+		wantErr    bool
+	}{
+		"key with key":      {&resource_dashboard.SloOrganizeByModel{Type: types.StringValue("key"), Key: types.StringValue("env")}, false},
+		"key without key":   {&resource_dashboard.SloOrganizeByModel{Type: types.StringValue("key"), Key: types.StringNull()}, true},
+		"team without key":  {&resource_dashboard.SloOrganizeByModel{Type: types.StringValue("team"), Key: types.StringNull()}, false},
+		"team with key":     {&resource_dashboard.SloOrganizeByModel{Type: types.StringValue("team"), Key: types.StringValue("env")}, true},
+		"unknown key":       {&resource_dashboard.SloOrganizeByModel{Type: types.StringValue("team"), Key: types.StringUnknown()}, false},
+		"organize_by unset": {nil, false},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if diags := validateSloOrganizeBy(tc.organizeBy, "v"); diags.HasError() != tc.wantErr {
+				t.Fatalf("expected error=%v, got %v", tc.wantErr, diags)
+			}
+		})
+	}
+}
+
 func TestValidateFormulaReferences_IgnoresEmbeddedIdentifiers(t *testing.T) {
 	if diags := validateFormulaReferences(types.StringValue("freq2 + q1"), 1, "v"); diags.HasError() {
 		t.Fatalf("unexpected error for identifier containing q<n>: %v", diags)

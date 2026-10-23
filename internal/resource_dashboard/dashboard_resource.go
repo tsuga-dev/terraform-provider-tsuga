@@ -1140,11 +1140,24 @@ func visualizationSloSchema() schema.Attribute {
 					),
 				},
 			},
-			"organize_by": schema.StringAttribute{
+			"organize_by": schema.SingleNestedAttribute{
 				Optional:    true,
-				Description: "Groups the results by owning team or by cluster. Omit it to list results ungrouped.",
-				Validators: []validator.String{
-					stringvalidator.OneOf("team", "cluster"),
+				Description: "Groups the results by owning team, or by the value of a tag key or group-by field. Omit it to list results ungrouped.",
+				Attributes: map[string]schema.Attribute{
+					"type": schema.StringAttribute{
+						Required:    true,
+						Description: "`team` groups the results by the team owning their SLO. `key` groups them by the value of `key`.",
+						Validators: []validator.String{
+							stringvalidator.OneOf("team", "key"),
+						},
+					},
+					"key": schema.StringAttribute{
+						Optional:    true,
+						Description: "Tag key or group-by field to group by, such as `env` or `context.team`. Required when `type` is `key`, and not allowed otherwise. A result falls under each value it has for this key: its group-by value when its SLO groups by this field, and its SLO's tag values for this key. Results with no value for the key are not shown.",
+						Validators: []validator.String{
+							stringvalidator.LengthBetween(1, 250),
+						},
+					},
 				},
 			},
 			"filters": schema.SingleNestedAttribute{
@@ -1559,11 +1572,16 @@ type TopListPromqlVisualization struct {
 }
 
 type SloVisualization struct {
-	Type       types.String     `tfsdk:"type"`
-	SloId      types.String     `tfsdk:"slo_id"`
-	Display    types.List       `tfsdk:"display"`
-	OrganizeBy types.String     `tfsdk:"organize_by"`
-	Filters    *SloFiltersModel `tfsdk:"filters"`
+	Type       types.String        `tfsdk:"type"`
+	SloId      types.String        `tfsdk:"slo_id"`
+	Display    types.List          `tfsdk:"display"`
+	OrganizeBy *SloOrganizeByModel `tfsdk:"organize_by"`
+	Filters    *SloFiltersModel    `tfsdk:"filters"`
+}
+
+type SloOrganizeByModel struct {
+	Type types.String `tfsdk:"type"`
+	Key  types.String `tfsdk:"key"`
 }
 
 type SloFiltersModel struct {
@@ -2031,6 +2049,13 @@ func SloTagAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"key":   types.StringType,
 		"value": types.StringType,
+	}
+}
+
+func SloOrganizeByAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"type": types.StringType,
+		"key":  types.StringType,
 	}
 }
 

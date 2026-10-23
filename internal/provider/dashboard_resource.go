@@ -219,7 +219,30 @@ func (r *dashboardResource) validateVisualization(ctx context.Context, vis resou
 	if vis.TopListPromql != nil {
 		diags.Append(normalizer.Validate(vis.TopListPromql.Normalizer, fmt.Sprintf("%s.top_list_promql", pathPrefix))...)
 	}
+	if vis.Slo != nil {
+		diags.Append(validateSloOrganizeBy(vis.Slo.OrganizeBy, fmt.Sprintf("%s.slo", pathPrefix))...)
+	}
 
+	return diags
+}
+
+func validateSloOrganizeBy(o *resource_dashboard.SloOrganizeByModel, pathPrefix string) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if o == nil || o.Type.IsUnknown() || o.Key.IsUnknown() {
+		return diags
+	}
+
+	path := pathPrefix + ".organize_by"
+	switch o.Type.ValueString() {
+	case "key":
+		if o.Key.IsNull() {
+			diags.AddError("Invalid SLO organize_by configuration", fmt.Sprintf("%s: type \"key\" requires \"key\".", path))
+		}
+	case "team":
+		if !o.Key.IsNull() {
+			diags.AddError("Invalid SLO organize_by configuration", fmt.Sprintf("%s: type \"team\" does not accept \"key\".", path))
+		}
+	}
 	return diags
 }
 
@@ -720,7 +743,7 @@ type dashboardVisualization struct {
 	Group            string                        `json:"group,omitempty"`
 	SloId            string                        `json:"sloId,omitempty"`
 	SloFilters       *dashboardSloFilters          `json:"filters,omitempty"`
-	OrganizeBy       string                        `json:"organizeBy,omitempty"`
+	OrganizeBy       *dashboardSloOrganizeBy       `json:"organizeBy,omitempty"`
 	Display          []string                      `json:"display,omitempty"`
 }
 
@@ -750,6 +773,11 @@ type dashboardSloFilter[T any] struct {
 type dashboardTag struct {
 	Key   string `json:"key" tfsdk:"key"`
 	Value string `json:"value" tfsdk:"value"`
+}
+
+type dashboardSloOrganizeBy struct {
+	Type string `json:"type"`
+	Key  string `json:"key,omitempty"`
 }
 
 type dashboardGaugeColor struct {
@@ -1383,7 +1411,7 @@ func expandVisualization(ctx context.Context, v resource_dashboard.Visualization
 			Type:       "slo",
 			SloId:      stringValue(v.Slo.SloId),
 			Display:    display,
-			OrganizeBy: stringValue(v.Slo.OrganizeBy),
+			OrganizeBy: expandSloOrganizeBy(v.Slo.OrganizeBy),
 			SloFilters: filters,
 		}
 	}
@@ -1732,7 +1760,7 @@ func flattenVisualization(ctx context.Context, vis dashboardVisualization) (attr
 			"type":        types.StringValue("slo"),
 			"slo_id":      stringValueOrNull(vis.SloId),
 			"display":     display,
-			"organize_by": stringValueOrNull(vis.OrganizeBy),
+			"organize_by": flattenSloOrganizeBy(vis.OrganizeBy),
 			"filters":     filters,
 		})
 		return types.ObjectValueMust(resource_dashboard.VisualizationAttrTypes(), obj), diags
@@ -2753,6 +2781,24 @@ func flattenSloFilters(ctx context.Context, f *dashboardSloFilters) (attr.Value,
 		"statuses": statuses,
 		"tags":     tags,
 	}), diags
+}
+
+func expandSloOrganizeBy(o *resource_dashboard.SloOrganizeByModel) *dashboardSloOrganizeBy {
+	if o == nil {
+		return nil
+	}
+	return &dashboardSloOrganizeBy{Type: o.Type.ValueString(), Key: stringValue(o.Key)}
+}
+
+func flattenSloOrganizeBy(o *dashboardSloOrganizeBy) attr.Value {
+	attrTypes := resource_dashboard.SloOrganizeByAttrTypes()
+	if o == nil {
+		return types.ObjectNull(attrTypes)
+	}
+	return types.ObjectValueMust(attrTypes, map[string]attr.Value{
+		"type": types.StringValue(o.Type),
+		"key":  stringValueOrNull(o.Key),
+	})
 }
 
 func flattenSloFilter[T any](ctx context.Context, f *dashboardSloFilter[T], elemType attr.Type) (attr.Value, diag.Diagnostics) {

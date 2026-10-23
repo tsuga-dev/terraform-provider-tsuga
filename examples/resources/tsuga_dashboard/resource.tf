@@ -673,8 +673,10 @@ resource "tsuga_dashboard" "dashboard" {
       }
       visualization = {
         slo = {
-          display     = ["summary", "table"]
-          organize_by = "team"
+          display = ["summary", "table"]
+          organize_by = {
+            type = "team"
+          }
           filters = {
             statuses = {
               values = ["breached"]

@@ -968,7 +968,10 @@
               "summary",
               "table"
             ],
-            "organizeBy": "team",
+            "organizeBy": {
+              "type": "key",
+              "key": "env"
+            },
             "filters": {
               "owners": {
                 "values": [

@@ -321,7 +321,10 @@ resource "tsuga_dashboard" "dashboard_widgets" {
             }]
           }
         }
-        organize_by = "team"
+        organize_by = {
+          key  = "env"
+          type = "key"
+        }
       }
     }
     }, {
