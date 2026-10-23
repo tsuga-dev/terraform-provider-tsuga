@@ -78,6 +78,39 @@
     }
   },
   {
+    "name": "custom-role",
+    "resourceType": "tsuga_custom_role",
+    "resource": {
+      "id": "resource-123",
+      "name": "platform-on-call",
+      "description": "Edits monitors and dashboards of the platform team.",
+      "teamScope": {
+        "type": "specific",
+        "teamIds": [
+          "team-123"
+        ]
+      },
+      "assets": {
+        "team": "read",
+        "dashboard": "write",
+        "monitor-folder": "read"
+      },
+      "telemetry": [
+        "log",
+        "metric",
+        "trace"
+      ],
+      "telemetryQuery": [
+        {
+          "key": "context.env",
+          "values": [
+            "production"
+          ]
+        }
+      ]
+    }
+  },
+  {
     "name": "rum-public-token",
     "resourceType": "tsuga_rum_public_token",
     "resource": {

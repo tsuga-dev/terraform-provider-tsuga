@@ -32,3 +32,8 @@ go tool -modfile=tools/go.mod tfplugingen-framework generate data-sources \
 # no spec-derived validators from tfplugingen: generate them from the spec here.
 node ./tools/gen-dashboard-validators.js ./public-open-api.json
 gofmt -w ./internal/resource_dashboard/validators_gen.go ./internal/normalizer/units_gen.go
+
+# tsuga_custom_role is hand-written as well: generate the asset type lists its
+# schema validates against from the spec.
+node ./tools/gen-custom-role-validators.js ./public-open-api.json
+gofmt -w ./internal/resource_custom_role/validators_gen.go

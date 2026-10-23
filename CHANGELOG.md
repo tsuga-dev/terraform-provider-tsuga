@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `tsuga_custom_role`: new resource managing custom global roles.
+
 ## [2.15.0] - 2026-10-20
 
 ### Added

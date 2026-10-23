@@ -125,6 +125,7 @@ func (p *tsugaProvider) Resources(_ context.Context) []func() resource.Resource 
 		NewIngestionApiKeyResource,
 		NewRumPublicTokenResource,
 		NewOperationApiKeyResource,
+		NewCustomRoleResource,
 		NewTeamResource,
 		NewTeamMembershipResource,
 		NewNotificationRuleResource,

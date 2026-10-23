@@ -38,6 +38,18 @@ func expandStringList(ctx context.Context, value types.List) ([]string, diag.Dia
 	return result, diags
 }
 
+// Returns nil, not an empty slice, when the set is null or unknown.
+func expandStringSet(ctx context.Context, value types.Set) ([]string, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	if value.IsNull() || value.IsUnknown() {
+		return nil, diags
+	}
+
+	var result []string
+	diags.Append(value.ElementsAs(ctx, &result, false)...)
+	return result, diags
+}
+
 // expandIntList converts a types.List to a []int64.
 // Returns nil (not an empty slice) if the list is null or unknown.
 func expandIntList(ctx context.Context, value types.List) ([]int64, diag.Diagnostics) {

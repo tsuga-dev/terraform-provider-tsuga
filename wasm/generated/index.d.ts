@@ -1,5 +1,5 @@
 // Generated from the Terraform provider resource registry.
-export type ResourceType = "tsuga_adaptive_notification_rule" | "tsuga_cloud_account" | "tsuga_custom_usage_tag" | "tsuga_dashboard" | "tsuga_dashboard_folder" | "tsuga_ingestion_api_key" | "tsuga_metric_route" | "tsuga_monitor" | "tsuga_monitor_folder" | "tsuga_notification_integration" | "tsuga_notification_rule" | "tsuga_notification_silence" | "tsuga_operation_api_key" | "tsuga_retention_policy" | "tsuga_route" | "tsuga_rum_public_token" | "tsuga_slo" | "tsuga_tag_policy" | "tsuga_team" | "tsuga_team_membership";
+export type ResourceType = "tsuga_adaptive_notification_rule" | "tsuga_cloud_account" | "tsuga_custom_role" | "tsuga_custom_usage_tag" | "tsuga_dashboard" | "tsuga_dashboard_folder" | "tsuga_ingestion_api_key" | "tsuga_metric_route" | "tsuga_monitor" | "tsuga_monitor_folder" | "tsuga_notification_integration" | "tsuga_notification_rule" | "tsuga_notification_silence" | "tsuga_operation_api_key" | "tsuga_retention_policy" | "tsuga_route" | "tsuga_rum_public_token" | "tsuga_slo" | "tsuga_tag_policy" | "tsuga_team" | "tsuga_team_membership";
 export declare const resourceTypes: readonly ResourceType[];
 
 export interface ExportOptions {
@@ -27,6 +27,7 @@ export interface TerraformExporter {
   close(): Promise<void>;
   exportAdaptiveNotificationRule(resource: object | string, options?: ExportOptions): ExportResult;
   exportCloudAccount(resource: object | string, options?: ExportOptions): ExportResult;
+  exportCustomRole(resource: object | string, options?: ExportOptions): ExportResult;
   exportCustomUsageTag(resource: object | string, options?: ExportOptions): ExportResult;
   exportDashboard(resource: object | string, options?: ExportOptions): ExportResult;
   exportDashboardFolder(resource: object | string, options?: ExportOptions): ExportResult;
