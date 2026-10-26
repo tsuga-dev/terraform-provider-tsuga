@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsuga Public API",
     "description": "Public HTTP API for Tsuga customers and customer-operated tools. Use these endpoints to query observability data, manage customer-owned Tsuga resources, and retrieve documentation or API-reference content. Public API requests authenticate with Bearer tokens such as operation keys. See [API reference](/documentation/api).",
-    "version": "20261026.6.0+7c99ff3",
+    "version": "20261026.43.0+e28513c",
     "contact": {
       "name": "Tsuga",
       "url": "https://tsuga.com"
@@ -4787,40 +4787,6 @@
             "items": {
               "$ref": "#/components/schemas/DocSearchResult"
             }
-          }
-        }
-      },
-      "CliRunRecorded": {
-        "type": "object",
-        "required": [
-          "id"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "API request ID the run was recorded under."
-          }
-        },
-        "description": "Acknowledgement of a recorded CLI run",
-        "examples": [
-          {
-            "id": "request-123-abc"
-          }
-        ]
-      },
-      "RecordCliRunResponse": {
-        "type": "object",
-        "required": [
-          "requestId",
-          "data"
-        ],
-        "properties": {
-          "requestId": {
-            "type": "string",
-            "description": "Identifier used to trace the lifecycle of this API request"
-          },
-          "data": {
-            "$ref": "#/components/schemas/CliRunRecorded"
           }
         }
       },
@@ -10619,7 +10585,8 @@
                 "log-error-pattern-increase": "#/components/schemas/MonitorConfigurationLogErrorPatternIncrease",
                 "anomaly-trace": "#/components/schemas/MonitorConfigurationAnomalyTrace",
                 "certificate-expiry": "#/components/schemas/MonitorConfigurationCertificateExpiry",
-                "k8s-faulty-deployment": "#/components/schemas/MonitorConfigurationK8sFaultyDeployment"
+                "k8s-faulty-deployment": "#/components/schemas/MonitorConfigurationK8sFaultyDeployment",
+                "faulty-deployment": "#/components/schemas/MonitorConfigurationFaultyDeployment"
               }
             },
             "required": [
@@ -10655,6 +10622,9 @@
               },
               {
                 "$ref": "#/components/schemas/MonitorConfigurationK8sFaultyDeployment"
+              },
+              {
+                "$ref": "#/components/schemas/MonitorConfigurationFaultyDeployment"
               }
             ]
           },
@@ -10894,6 +10864,33 @@
                 ],
                 "namespaces": [
                   "checkout"
+                ],
+                "envs": [
+                  "production"
+                ]
+              }
+            },
+            "priority": 2,
+            "owner": "team-123-abc",
+            "permissions": "all",
+            "clusterIds": []
+          },
+          {
+            "id": "789-012-abc",
+            "name": "Service Faulty Deployment Detector",
+            "message": "A newly deployed service version is faulty.",
+            "tags": [
+              {
+                "key": "team",
+                "value": "platform"
+              }
+            ],
+            "configuration": {
+              "type": "faulty-deployment",
+              "aggregationAlertLogic": "each",
+              "filter": {
+                "services": [
+                  "checkout-api"
                 ],
                 "envs": [
                   "production"
@@ -14687,7 +14684,6 @@
                                     "per-hour": "#/components/schemas/FunctionPerHour",
                                     "rate": "#/components/schemas/FunctionRate",
                                     "increase": "#/components/schemas/FunctionIncrease",
-                                    "rolling": "#/components/schemas/FunctionRolling",
                                     "log": "#/components/schemas/FunctionLog",
                                     "power": "#/components/schemas/FunctionPower",
                                     "sqrt": "#/components/schemas/FunctionSqrt",
@@ -14714,9 +14710,6 @@
                                   },
                                   {
                                     "$ref": "#/components/schemas/FunctionIncrease"
-                                  },
-                                  {
-                                    "$ref": "#/components/schemas/FunctionRolling"
                                   },
                                   {
                                     "$ref": "#/components/schemas/FunctionLog"
@@ -14774,7 +14767,7 @@
                                 "max",
                                 "last"
                               ],
-                              "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                              "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                               "type": "string"
                             },
                             "metricKind": {
@@ -14880,7 +14873,6 @@
                                     "per-hour": "#/components/schemas/FunctionPerHour",
                                     "rate": "#/components/schemas/FunctionRate",
                                     "increase": "#/components/schemas/FunctionIncrease",
-                                    "rolling": "#/components/schemas/FunctionRolling",
                                     "log": "#/components/schemas/FunctionLog",
                                     "power": "#/components/schemas/FunctionPower",
                                     "sqrt": "#/components/schemas/FunctionSqrt",
@@ -14907,9 +14899,6 @@
                                   },
                                   {
                                     "$ref": "#/components/schemas/FunctionIncrease"
-                                  },
-                                  {
-                                    "$ref": "#/components/schemas/FunctionRolling"
                                   },
                                   {
                                     "$ref": "#/components/schemas/FunctionLog"
@@ -14967,7 +14956,7 @@
                                 "max",
                                 "last"
                               ],
-                              "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                              "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                               "type": "string"
                             },
                             "metricKind": {
@@ -15149,7 +15138,6 @@
                                     "per-hour": "#/components/schemas/FunctionPerHour",
                                     "rate": "#/components/schemas/FunctionRate",
                                     "increase": "#/components/schemas/FunctionIncrease",
-                                    "rolling": "#/components/schemas/FunctionRolling",
                                     "log": "#/components/schemas/FunctionLog",
                                     "power": "#/components/schemas/FunctionPower",
                                     "sqrt": "#/components/schemas/FunctionSqrt",
@@ -15176,9 +15164,6 @@
                                   },
                                   {
                                     "$ref": "#/components/schemas/FunctionIncrease"
-                                  },
-                                  {
-                                    "$ref": "#/components/schemas/FunctionRolling"
                                   },
                                   {
                                     "$ref": "#/components/schemas/FunctionLog"
@@ -15236,7 +15221,7 @@
                                 "max",
                                 "last"
                               ],
-                              "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                              "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                               "type": "string"
                             },
                             "metricKind": {
@@ -18466,27 +18451,6 @@
         },
         "title": "Increase"
       },
-      "FunctionRolling": {
-        "type": "object",
-        "required": [
-          "type",
-          "window"
-        ],
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "Computes a rolling window aggregate",
-            "enum": [
-              "rolling"
-            ]
-          },
-          "window": {
-            "type": "string",
-            "description": "Duration of the rolling window"
-          }
-        },
-        "title": "Rolling"
-      },
       "FunctionLog": {
         "type": "object",
         "required": [
@@ -18597,29 +18561,6 @@
           }
         },
         "title": "Cumsum"
-      },
-      "InputFunctionRolling": {
-        "type": "object",
-        "required": [
-          "type",
-          "window"
-        ],
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "Computes a rolling window aggregate",
-            "enum": [
-              "rolling"
-            ]
-          },
-          "window": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 250,
-            "description": "Duration of the rolling window"
-          }
-        },
-        "title": "Rolling"
       },
       "InputFunctionLog": {
         "type": "object",
@@ -18983,7 +18924,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -19010,9 +18950,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/FunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionLog"
@@ -19070,7 +19007,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -19280,7 +19217,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -19307,9 +19243,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/FunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionLog"
@@ -19367,7 +19300,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -19577,7 +19510,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -19604,9 +19536,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/FunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionLog"
@@ -19664,7 +19593,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -19864,7 +19793,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -19891,9 +19819,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/FunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionLog"
@@ -19951,7 +19876,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -20151,7 +20076,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -20178,9 +20102,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/FunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionLog"
@@ -20238,7 +20159,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -20560,7 +20481,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -20587,9 +20507,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/FunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionLog"
@@ -20647,7 +20564,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -20765,6 +20682,50 @@
               }
             },
             "description": "Workload selection used for faulty deployment detection. All configured fields must match for a workload to be watched."
+          }
+        }
+      },
+      "MonitorConfigurationFaultyDeployment": {
+        "type": "object",
+        "required": [
+          "type",
+          "aggregationAlertLogic",
+          "filter"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Monitor that alerts when Tsuga faulty deployment detection flags a newly deployed service version as faulty.",
+            "enum": [
+              "faulty-deployment"
+            ]
+          },
+          "aggregationAlertLogic": {
+            "type": "string",
+            "description": "Fixed aggregation logic for faulty deployment monitors. Each faulty service version in an environment is evaluated as its own alert group.",
+            "enum": [
+              "each"
+            ]
+          },
+          "filter": {
+            "type": "object",
+            "properties": {
+              "services": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Service names to watch. Omit to watch every service."
+              },
+              "envs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Environments to watch. Omit to watch every environment."
+              }
+            },
+            "description": "Deployment selection used for faulty deployment detection. All configured fields must match for a deployment to be watched."
           }
         }
       },
@@ -20967,7 +20928,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/InputFunctionRolling",
                         "log": "#/components/schemas/InputFunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -20994,9 +20954,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/InputFunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/InputFunctionLog"
@@ -21055,7 +21012,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -21286,7 +21243,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/InputFunctionRolling",
                         "log": "#/components/schemas/InputFunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -21313,9 +21269,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/InputFunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/InputFunctionLog"
@@ -21374,7 +21327,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -21605,7 +21558,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/InputFunctionRolling",
                         "log": "#/components/schemas/InputFunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -21632,9 +21584,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/InputFunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/InputFunctionLog"
@@ -21693,7 +21642,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -21913,7 +21862,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/InputFunctionRolling",
                         "log": "#/components/schemas/InputFunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -21940,9 +21888,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/InputFunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/InputFunctionLog"
@@ -22001,7 +21946,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -22221,7 +22166,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/InputFunctionRolling",
                         "log": "#/components/schemas/InputFunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -22248,9 +22192,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/InputFunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/InputFunctionLog"
@@ -22309,7 +22250,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -22529,7 +22470,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/InputFunctionRolling",
                         "log": "#/components/schemas/InputFunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -22556,9 +22496,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/InputFunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/InputFunctionLog"
@@ -22617,7 +22554,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -22890,6 +22827,56 @@
               }
             },
             "description": "Workload selection used for faulty deployment detection. All configured fields must match for a workload to be watched. Send an empty object to watch every workload."
+          }
+        }
+      },
+      "InputMonitorConfigurationFaultyDeployment": {
+        "type": "object",
+        "required": [
+          "type",
+          "aggregationAlertLogic",
+          "filter"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Monitor that alerts when Tsuga faulty deployment detection flags a newly deployed service version as faulty.",
+            "enum": [
+              "faulty-deployment"
+            ]
+          },
+          "aggregationAlertLogic": {
+            "type": "string",
+            "description": "Fixed aggregation logic for faulty deployment monitors. Each faulty service version in an environment is evaluated as its own alert group.",
+            "enum": [
+              "each"
+            ]
+          },
+          "filter": {
+            "type": "object",
+            "properties": {
+              "services": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 250
+                },
+                "minItems": 1,
+                "description": "Service names to watch. Omit to watch every service."
+              },
+              "envs": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 250
+                },
+                "minItems": 1,
+                "description": "Environments to watch. Omit to watch every environment."
+              }
+            },
+            "description": "Deployment selection used for faulty deployment detection. All configured fields must match for a deployment to be watched. Send an empty object to watch every deployment."
           }
         }
       },
@@ -24795,6 +24782,282 @@
         },
         "title": "Custom"
       },
+      "WidgetServiceDeploymentsOverlay": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Draws the deployments contained in the time range over the chart",
+            "enum": [
+              "service-deployments"
+            ]
+          },
+          "teams": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "IDs of the teams whose services are drawn. The set is resolved when the widget renders, so a service joining one of these teams later is picked up automatically. Every service is drawn when omitted."
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "OpenTelemetry service names to draw, narrowing `teams` down to an explicit list. Every service matching `teams` is drawn when omitted."
+          },
+          "env": {
+            "type": "string",
+            "description": "Environment whose deployments are drawn. Deployments from every environment are drawn when omitted."
+          }
+        },
+        "title": "ServiceDeploymentsOverlay"
+      },
+      "WidgetLogsOverlay": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Draws log events over the chart",
+            "enum": [
+              "logs"
+            ]
+          },
+          "query": {
+            "type": "string",
+            "description": "Tsuga query selecting the log events drawn over the chart. All log events in the time range are drawn when omitted."
+          }
+        },
+        "title": "LogsOverlay"
+      },
+      "WidgetOngoingAlertsOverlay": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Draws monitor and SLO alerts over the chart",
+            "enum": [
+              "ongoing-alerts"
+            ]
+          },
+          "alertTypes": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "monitor",
+                "slo"
+              ],
+              "type": "string"
+            },
+            "description": "Kinds of alert drawn over the chart. Both monitor and SLO alerts are drawn when omitted."
+          },
+          "query": {
+            "type": "string",
+            "description": "Case-insensitive substring matched against the alert, the same way the Ongoing alerts page matches its search box. Every alert is drawn when omitted."
+          },
+          "filters": {
+            "type": "object",
+            "properties": {
+              "team": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Names of the teams owning the monitor, or the SLO for an SLO alert. Names rather than IDs, matching how the Ongoing alerts page filters by owner."
+              },
+              "triggeredBy": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Group-by dimensions that raised the alert, each formatted as `key:value`. An alert matches when any of its triggering dimensions is listed."
+              },
+              "priority": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                  ],
+                  "type": "integer"
+                },
+                "description": "Priorities the alert was raised at. A monitor alert takes its priority from the monitor, an SLO alert from the SLO alert that fired."
+              },
+              "cluster": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "IDs of the clusters the alert was raised on. Alerts raised on no cluster are always drawn."
+              }
+            },
+            "description": "Narrows the drawn alerts. An alert must match every listed filter, and a filter matches when the alert has any of its values."
+          }
+        },
+        "title": "OngoingAlertsOverlay"
+      },
+      "InputWidgetServiceDeploymentsOverlay": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Draws the deployments contained in the time range over the chart",
+            "enum": [
+              "service-deployments"
+            ]
+          },
+          "teams": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "maxItems": 50,
+            "description": "IDs of the teams whose services are drawn. The set is resolved when the widget renders, so a service joining one of these teams later is picked up automatically. Every service is drawn when omitted."
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "maxItems": 200,
+            "description": "OpenTelemetry service names to draw, narrowing `teams` down to an explicit list. Every service matching `teams` is drawn when omitted."
+          },
+          "env": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250,
+            "description": "Environment whose deployments are drawn. Deployments from every environment are drawn when omitted."
+          }
+        },
+        "title": "ServiceDeploymentsOverlay"
+      },
+      "InputWidgetLogsOverlay": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Draws log events over the chart",
+            "enum": [
+              "logs"
+            ]
+          },
+          "query": {
+            "type": "string",
+            "format": "tsuga-query",
+            "minLength": 0,
+            "maxLength": 10000,
+            "description": "Tsuga query selecting the log events drawn over the chart. All log events in the time range are drawn when omitted."
+          }
+        },
+        "title": "LogsOverlay"
+      },
+      "InputWidgetOngoingAlertsOverlay": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Draws monitor and SLO alerts over the chart",
+            "enum": [
+              "ongoing-alerts"
+            ]
+          },
+          "alertTypes": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "monitor",
+                "slo"
+              ],
+              "type": "string"
+            },
+            "maxItems": 2,
+            "description": "Kinds of alert drawn over the chart. Both monitor and SLO alerts are drawn when omitted."
+          },
+          "query": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 250,
+            "description": "Case-insensitive substring matched against the alert, the same way the Ongoing alerts page matches its search box. Every alert is drawn when omitted."
+          },
+          "filters": {
+            "type": "object",
+            "properties": {
+              "team": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 250
+                },
+                "maxItems": 50,
+                "description": "Names of the teams owning the monitor, or the SLO for an SLO alert. Names rather than IDs, matching how the Ongoing alerts page filters by owner."
+              },
+              "triggeredBy": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 250
+                },
+                "maxItems": 50,
+                "description": "Group-by dimensions that raised the alert, each formatted as `key:value`. An alert matches when any of its triggering dimensions is listed."
+              },
+              "priority": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                  ],
+                  "type": "integer"
+                },
+                "maxItems": 5,
+                "description": "Priorities the alert was raised at. A monitor alert takes its priority from the monitor, an SLO alert from the SLO alert that fired."
+              },
+              "cluster": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 250
+                },
+                "maxItems": 50,
+                "description": "IDs of the clusters the alert was raised on. Alerts raised on no cluster are always drawn."
+              }
+            },
+            "description": "Narrows the drawn alerts. An alert must match every listed filter, and a filter matches when the alert has any of its values."
+          }
+        },
+        "title": "OngoingAlertsOverlay"
+      },
       "SloWidgetOrganizeByTeam": {
         "type": "object",
         "required": [
@@ -25099,6 +25362,84 @@
                 }
               }
             }
+          },
+          "normalizer": {
+            "title": "Normalizer",
+            "description": "Display-value formatter for widget values or list/table columns.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "duration": "#/components/schemas/DataNormalizerDuration",
+                "data": "#/components/schemas/DataNormalizerData",
+                "percent": "#/components/schemas/DataNormalizerPercent",
+                "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                "date": "#/components/schemas/DataNormalizerDate",
+                "level": "#/components/schemas/DataNormalizerLevel",
+                "cpu": "#/components/schemas/DataNormalizerCpu",
+                "none": "#/components/schemas/DataNormalizerNone",
+                "custom": "#/components/schemas/DataNormalizerCustom"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DataNormalizerDuration"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerData"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercent"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerDate"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerLevel"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCpu"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerNone"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCustom"
+              }
+            ]
+          },
+          "eventsOverlay": {
+            "title": "EventsOverlay",
+            "description": "Events displayed on top of the chart, over its time axis, so they can be correlated with the plotted data. A widget carries at most one overlay, and each kind of overlay carries its own settings.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "service-deployments": "#/components/schemas/WidgetServiceDeploymentsOverlay",
+                "logs": "#/components/schemas/WidgetLogsOverlay",
+                "ongoing-alerts": "#/components/schemas/WidgetOngoingAlertsOverlay"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/WidgetServiceDeploymentsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/WidgetLogsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/WidgetOngoingAlertsOverlay"
+              }
+            ]
           }
         },
         "title": "TimeseriesConnection"
@@ -25257,6 +25598,57 @@
               "type": "string",
               "description": "The read-only SQL query to execute against the connection."
             }
+          },
+          "normalizer": {
+            "title": "Normalizer",
+            "description": "Display-value formatter for widget values or list/table columns.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "duration": "#/components/schemas/DataNormalizerDuration",
+                "data": "#/components/schemas/DataNormalizerData",
+                "percent": "#/components/schemas/DataNormalizerPercent",
+                "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                "date": "#/components/schemas/DataNormalizerDate",
+                "level": "#/components/schemas/DataNormalizerLevel",
+                "cpu": "#/components/schemas/DataNormalizerCpu",
+                "none": "#/components/schemas/DataNormalizerNone",
+                "custom": "#/components/schemas/DataNormalizerCustom"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DataNormalizerDuration"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerData"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercent"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerDate"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerLevel"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCpu"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerNone"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCustom"
+              }
+            ]
           }
         },
         "title": "TopListConnection"
@@ -25295,6 +25687,57 @@
             ],
             "description": "Controls whether and how the widget displays legend or series details (e.g. table, legend-only, or no legend)",
             "type": "string"
+          },
+          "normalizer": {
+            "title": "Normalizer",
+            "description": "Display-value formatter for widget values or list/table columns.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "duration": "#/components/schemas/DataNormalizerDuration",
+                "data": "#/components/schemas/DataNormalizerData",
+                "percent": "#/components/schemas/DataNormalizerPercent",
+                "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                "date": "#/components/schemas/DataNormalizerDate",
+                "level": "#/components/schemas/DataNormalizerLevel",
+                "cpu": "#/components/schemas/DataNormalizerCpu",
+                "none": "#/components/schemas/DataNormalizerNone",
+                "custom": "#/components/schemas/DataNormalizerCustom"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DataNormalizerDuration"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerData"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercent"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerDate"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerLevel"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCpu"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerNone"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCustom"
+              }
+            ]
           }
         },
         "title": "PieConnection"
@@ -25520,6 +25963,84 @@
               }
             },
             "description": "Y-axis bounds and scale configuration for chart widgets."
+          },
+          "normalizer": {
+            "title": "Normalizer",
+            "description": "Display-value formatter for widget values or list/table columns.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "duration": "#/components/schemas/DataNormalizerDuration",
+                "data": "#/components/schemas/DataNormalizerData",
+                "percent": "#/components/schemas/DataNormalizerPercent",
+                "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                "date": "#/components/schemas/DataNormalizerDate",
+                "level": "#/components/schemas/DataNormalizerLevel",
+                "cpu": "#/components/schemas/DataNormalizerCpu",
+                "none": "#/components/schemas/DataNormalizerNone",
+                "custom": "#/components/schemas/DataNormalizerCustom"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DataNormalizerDuration"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerData"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercent"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerDate"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerLevel"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCpu"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerNone"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCustom"
+              }
+            ]
+          },
+          "eventsOverlay": {
+            "title": "EventsOverlay",
+            "description": "Events displayed on top of the chart, over its time axis, so they can be correlated with the plotted data. A widget carries at most one overlay, and each kind of overlay carries its own settings.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "service-deployments": "#/components/schemas/WidgetServiceDeploymentsOverlay",
+                "logs": "#/components/schemas/WidgetLogsOverlay",
+                "ongoing-alerts": "#/components/schemas/WidgetOngoingAlertsOverlay"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/WidgetServiceDeploymentsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/WidgetLogsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/WidgetOngoingAlertsOverlay"
+              }
+            ]
           }
         },
         "title": "BarConnection"
@@ -26027,6 +26548,33 @@
                 }
               }
             }
+          },
+          "eventsOverlay": {
+            "title": "EventsOverlay",
+            "description": "Events displayed on top of the chart, over its time axis, so they can be correlated with the plotted data. A widget carries at most one overlay, and each kind of overlay carries its own settings.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "service-deployments": "#/components/schemas/WidgetServiceDeploymentsOverlay",
+                "logs": "#/components/schemas/WidgetLogsOverlay",
+                "ongoing-alerts": "#/components/schemas/WidgetOngoingAlertsOverlay"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/WidgetServiceDeploymentsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/WidgetLogsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/WidgetOngoingAlertsOverlay"
+              }
+            ]
           }
         },
         "title": "TimeseriesPromql"
@@ -26787,6 +27335,33 @@
               }
             },
             "description": "Y-axis bounds and scale configuration for chart widgets."
+          },
+          "eventsOverlay": {
+            "title": "EventsOverlay",
+            "description": "Events displayed on top of the chart, over its time axis, so they can be correlated with the plotted data. A widget carries at most one overlay, and each kind of overlay carries its own settings.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "service-deployments": "#/components/schemas/WidgetServiceDeploymentsOverlay",
+                "logs": "#/components/schemas/WidgetLogsOverlay",
+                "ongoing-alerts": "#/components/schemas/WidgetOngoingAlertsOverlay"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/WidgetServiceDeploymentsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/WidgetLogsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/WidgetOngoingAlertsOverlay"
+              }
+            ]
           }
         },
         "title": "BarPromql"
@@ -26881,7 +27456,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -26908,9 +27482,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/FunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionLog"
@@ -26968,7 +27539,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -27394,6 +27965,33 @@
               }
             },
             "title": "CustomLink"
+          },
+          "eventsOverlay": {
+            "title": "EventsOverlay",
+            "description": "Events displayed on top of the chart, over its time axis, so they can be correlated with the plotted data. A widget carries at most one overlay, and each kind of overlay carries its own settings.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "service-deployments": "#/components/schemas/WidgetServiceDeploymentsOverlay",
+                "logs": "#/components/schemas/WidgetLogsOverlay",
+                "ongoing-alerts": "#/components/schemas/WidgetOngoingAlertsOverlay"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/WidgetServiceDeploymentsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/WidgetLogsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/WidgetOngoingAlertsOverlay"
+              }
+            ]
           }
         },
         "title": "Timeseries"
@@ -27505,7 +28103,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -27532,9 +28129,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/FunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionLog"
@@ -27592,7 +28186,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -27919,7 +28513,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -27946,9 +28539,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/FunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionLog"
@@ -28006,7 +28596,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -28288,7 +28878,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -28315,9 +28904,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/FunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionLog"
@@ -28375,7 +28961,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -28644,7 +29230,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -28671,9 +29256,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/FunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionLog"
@@ -28731,7 +29313,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -28979,7 +29561,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -29006,9 +29587,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/FunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionLog"
@@ -29066,7 +29644,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -29465,6 +30043,33 @@
               }
             },
             "title": "CustomLink"
+          },
+          "eventsOverlay": {
+            "title": "EventsOverlay",
+            "description": "Events displayed on top of the chart, over its time axis, so they can be correlated with the plotted data. A widget carries at most one overlay, and each kind of overlay carries its own settings.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "service-deployments": "#/components/schemas/WidgetServiceDeploymentsOverlay",
+                "logs": "#/components/schemas/WidgetLogsOverlay",
+                "ongoing-alerts": "#/components/schemas/WidgetOngoingAlertsOverlay"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/WidgetServiceDeploymentsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/WidgetLogsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/WidgetOngoingAlertsOverlay"
+              }
+            ]
           }
         },
         "title": "Bar"
@@ -29559,7 +30164,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -29586,9 +30190,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/FunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionLog"
@@ -29646,7 +30247,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -29914,7 +30515,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/FunctionRolling",
                         "log": "#/components/schemas/FunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -29941,9 +30541,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/FunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/FunctionLog"
@@ -30001,7 +30598,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -30332,6 +30929,33 @@
               }
             },
             "description": "Y-axis bounds and scale configuration for chart widgets."
+          },
+          "eventsOverlay": {
+            "title": "EventsOverlay",
+            "description": "Events displayed on top of the chart, over its time axis, so they can be correlated with the plotted data. A widget carries at most one overlay, and each kind of overlay carries its own settings.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "service-deployments": "#/components/schemas/WidgetServiceDeploymentsOverlay",
+                "logs": "#/components/schemas/WidgetLogsOverlay",
+                "ongoing-alerts": "#/components/schemas/WidgetOngoingAlertsOverlay"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/WidgetServiceDeploymentsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/WidgetLogsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/WidgetOngoingAlertsOverlay"
+              }
+            ]
           }
         },
         "title": "Heatmap"
@@ -30439,7 +31063,6 @@
                               "per-hour": "#/components/schemas/FunctionPerHour",
                               "rate": "#/components/schemas/FunctionRate",
                               "increase": "#/components/schemas/FunctionIncrease",
-                              "rolling": "#/components/schemas/FunctionRolling",
                               "log": "#/components/schemas/FunctionLog",
                               "power": "#/components/schemas/FunctionPower",
                               "sqrt": "#/components/schemas/FunctionSqrt",
@@ -30466,9 +31089,6 @@
                             },
                             {
                               "$ref": "#/components/schemas/FunctionIncrease"
-                            },
-                            {
-                              "$ref": "#/components/schemas/FunctionRolling"
                             },
                             {
                               "$ref": "#/components/schemas/FunctionLog"
@@ -30526,7 +31146,7 @@
                           "max",
                           "last"
                         ],
-                        "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                        "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                         "type": "string"
                       },
                       "metricKind": {
@@ -31635,6 +32255,84 @@
                 }
               }
             }
+          },
+          "normalizer": {
+            "title": "Normalizer",
+            "description": "Display-value formatter for widget values or list/table columns.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "duration": "#/components/schemas/DataNormalizerDuration",
+                "data": "#/components/schemas/DataNormalizerData",
+                "percent": "#/components/schemas/DataNormalizerPercent",
+                "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                "date": "#/components/schemas/DataNormalizerDate",
+                "level": "#/components/schemas/DataNormalizerLevel",
+                "cpu": "#/components/schemas/DataNormalizerCpu",
+                "none": "#/components/schemas/DataNormalizerNone",
+                "custom": "#/components/schemas/InputDataNormalizerCustom"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DataNormalizerDuration"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerData"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercent"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerDate"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerLevel"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCpu"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerNone"
+              },
+              {
+                "$ref": "#/components/schemas/InputDataNormalizerCustom"
+              }
+            ]
+          },
+          "eventsOverlay": {
+            "title": "EventsOverlay",
+            "description": "Events displayed on top of the chart, over its time axis, so they can be correlated with the plotted data. A widget carries at most one overlay, and each kind of overlay carries its own settings.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "service-deployments": "#/components/schemas/InputWidgetServiceDeploymentsOverlay",
+                "logs": "#/components/schemas/InputWidgetLogsOverlay",
+                "ongoing-alerts": "#/components/schemas/InputWidgetOngoingAlertsOverlay"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/InputWidgetServiceDeploymentsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/InputWidgetLogsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/InputWidgetOngoingAlertsOverlay"
+              }
+            ]
           }
         },
         "title": "TimeseriesConnection"
@@ -31812,6 +32510,57 @@
               "description": "The read-only SQL query to execute against the connection."
             },
             "minItems": 1
+          },
+          "normalizer": {
+            "title": "Normalizer",
+            "description": "Display-value formatter for widget values or list/table columns.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "duration": "#/components/schemas/DataNormalizerDuration",
+                "data": "#/components/schemas/DataNormalizerData",
+                "percent": "#/components/schemas/DataNormalizerPercent",
+                "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                "date": "#/components/schemas/DataNormalizerDate",
+                "level": "#/components/schemas/DataNormalizerLevel",
+                "cpu": "#/components/schemas/DataNormalizerCpu",
+                "none": "#/components/schemas/DataNormalizerNone",
+                "custom": "#/components/schemas/InputDataNormalizerCustom"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DataNormalizerDuration"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerData"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercent"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerDate"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerLevel"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCpu"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerNone"
+              },
+              {
+                "$ref": "#/components/schemas/InputDataNormalizerCustom"
+              }
+            ]
           }
         },
         "title": "TopListConnection"
@@ -31859,6 +32608,57 @@
             ],
             "description": "Controls whether and how the widget displays legend or series details (e.g. table, legend-only, or no legend)",
             "type": "string"
+          },
+          "normalizer": {
+            "title": "Normalizer",
+            "description": "Display-value formatter for widget values or list/table columns.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "duration": "#/components/schemas/DataNormalizerDuration",
+                "data": "#/components/schemas/DataNormalizerData",
+                "percent": "#/components/schemas/DataNormalizerPercent",
+                "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                "date": "#/components/schemas/DataNormalizerDate",
+                "level": "#/components/schemas/DataNormalizerLevel",
+                "cpu": "#/components/schemas/DataNormalizerCpu",
+                "none": "#/components/schemas/DataNormalizerNone",
+                "custom": "#/components/schemas/InputDataNormalizerCustom"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DataNormalizerDuration"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerData"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercent"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerDate"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerLevel"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCpu"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerNone"
+              },
+              {
+                "$ref": "#/components/schemas/InputDataNormalizerCustom"
+              }
+            ]
           }
         },
         "title": "PieConnection"
@@ -32094,6 +32894,84 @@
               }
             },
             "description": "Y-axis bounds and scale configuration for chart widgets. Optional on create or update."
+          },
+          "normalizer": {
+            "title": "Normalizer",
+            "description": "Display-value formatter for widget values or list/table columns.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "duration": "#/components/schemas/DataNormalizerDuration",
+                "data": "#/components/schemas/DataNormalizerData",
+                "percent": "#/components/schemas/DataNormalizerPercent",
+                "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                "date": "#/components/schemas/DataNormalizerDate",
+                "level": "#/components/schemas/DataNormalizerLevel",
+                "cpu": "#/components/schemas/DataNormalizerCpu",
+                "none": "#/components/schemas/DataNormalizerNone",
+                "custom": "#/components/schemas/InputDataNormalizerCustom"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DataNormalizerDuration"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerData"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercent"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerDate"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerLevel"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCpu"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerNone"
+              },
+              {
+                "$ref": "#/components/schemas/InputDataNormalizerCustom"
+              }
+            ]
+          },
+          "eventsOverlay": {
+            "title": "EventsOverlay",
+            "description": "Events displayed on top of the chart, over its time axis, so they can be correlated with the plotted data. A widget carries at most one overlay, and each kind of overlay carries its own settings.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "service-deployments": "#/components/schemas/InputWidgetServiceDeploymentsOverlay",
+                "logs": "#/components/schemas/InputWidgetLogsOverlay",
+                "ongoing-alerts": "#/components/schemas/InputWidgetOngoingAlertsOverlay"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/InputWidgetServiceDeploymentsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/InputWidgetLogsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/InputWidgetOngoingAlertsOverlay"
+              }
+            ]
           }
         },
         "title": "BarConnection"
@@ -32618,6 +33496,33 @@
                 }
               }
             }
+          },
+          "eventsOverlay": {
+            "title": "EventsOverlay",
+            "description": "Events displayed on top of the chart, over its time axis, so they can be correlated with the plotted data. A widget carries at most one overlay, and each kind of overlay carries its own settings.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "service-deployments": "#/components/schemas/InputWidgetServiceDeploymentsOverlay",
+                "logs": "#/components/schemas/InputWidgetLogsOverlay",
+                "ongoing-alerts": "#/components/schemas/InputWidgetOngoingAlertsOverlay"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/InputWidgetServiceDeploymentsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/InputWidgetLogsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/InputWidgetOngoingAlertsOverlay"
+              }
+            ]
           }
         },
         "title": "TimeseriesPromql"
@@ -33407,6 +34312,33 @@
               }
             },
             "description": "Y-axis bounds and scale configuration for chart widgets. Optional on create or update."
+          },
+          "eventsOverlay": {
+            "title": "EventsOverlay",
+            "description": "Events displayed on top of the chart, over its time axis, so they can be correlated with the plotted data. A widget carries at most one overlay, and each kind of overlay carries its own settings.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "service-deployments": "#/components/schemas/InputWidgetServiceDeploymentsOverlay",
+                "logs": "#/components/schemas/InputWidgetLogsOverlay",
+                "ongoing-alerts": "#/components/schemas/InputWidgetOngoingAlertsOverlay"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/InputWidgetServiceDeploymentsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/InputWidgetLogsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/InputWidgetOngoingAlertsOverlay"
+              }
+            ]
           }
         },
         "title": "BarPromql"
@@ -33501,7 +34433,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/InputFunctionRolling",
                         "log": "#/components/schemas/InputFunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -33528,9 +34459,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/InputFunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/InputFunctionLog"
@@ -33589,7 +34517,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -34041,6 +34969,33 @@
               }
             },
             "title": "CustomLink"
+          },
+          "eventsOverlay": {
+            "title": "EventsOverlay",
+            "description": "Events displayed on top of the chart, over its time axis, so they can be correlated with the plotted data. A widget carries at most one overlay, and each kind of overlay carries its own settings.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "service-deployments": "#/components/schemas/InputWidgetServiceDeploymentsOverlay",
+                "logs": "#/components/schemas/InputWidgetLogsOverlay",
+                "ongoing-alerts": "#/components/schemas/InputWidgetOngoingAlertsOverlay"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/InputWidgetServiceDeploymentsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/InputWidgetLogsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/InputWidgetOngoingAlertsOverlay"
+              }
+            ]
           }
         },
         "title": "Timeseries"
@@ -34156,7 +35111,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/InputFunctionRolling",
                         "log": "#/components/schemas/InputFunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -34183,9 +35137,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/InputFunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/InputFunctionLog"
@@ -34244,7 +35195,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -34596,7 +35547,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/InputFunctionRolling",
                         "log": "#/components/schemas/InputFunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -34623,9 +35573,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/InputFunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/InputFunctionLog"
@@ -34684,7 +35631,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -34991,7 +35938,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/InputFunctionRolling",
                         "log": "#/components/schemas/InputFunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -35018,9 +35964,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/InputFunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/InputFunctionLog"
@@ -35079,7 +36022,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -35363,7 +36306,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/InputFunctionRolling",
                         "log": "#/components/schemas/InputFunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -35390,9 +36332,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/InputFunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/InputFunctionLog"
@@ -35451,7 +36390,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -35714,7 +36653,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/InputFunctionRolling",
                         "log": "#/components/schemas/InputFunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -35741,9 +36679,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/InputFunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/InputFunctionLog"
@@ -35802,7 +36737,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -36227,6 +37162,33 @@
               }
             },
             "title": "CustomLink"
+          },
+          "eventsOverlay": {
+            "title": "EventsOverlay",
+            "description": "Events displayed on top of the chart, over its time axis, so they can be correlated with the plotted data. A widget carries at most one overlay, and each kind of overlay carries its own settings.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "service-deployments": "#/components/schemas/InputWidgetServiceDeploymentsOverlay",
+                "logs": "#/components/schemas/InputWidgetLogsOverlay",
+                "ongoing-alerts": "#/components/schemas/InputWidgetOngoingAlertsOverlay"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/InputWidgetServiceDeploymentsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/InputWidgetLogsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/InputWidgetOngoingAlertsOverlay"
+              }
+            ]
           }
         },
         "title": "Bar"
@@ -36321,7 +37283,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/InputFunctionRolling",
                         "log": "#/components/schemas/InputFunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -36348,9 +37309,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/InputFunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/InputFunctionLog"
@@ -36409,7 +37367,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -36702,7 +37660,6 @@
                         "per-hour": "#/components/schemas/FunctionPerHour",
                         "rate": "#/components/schemas/FunctionRate",
                         "increase": "#/components/schemas/FunctionIncrease",
-                        "rolling": "#/components/schemas/InputFunctionRolling",
                         "log": "#/components/schemas/InputFunctionLog",
                         "power": "#/components/schemas/FunctionPower",
                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -36729,9 +37686,6 @@
                       },
                       {
                         "$ref": "#/components/schemas/FunctionIncrease"
-                      },
-                      {
-                        "$ref": "#/components/schemas/InputFunctionRolling"
                       },
                       {
                         "$ref": "#/components/schemas/InputFunctionLog"
@@ -36790,7 +37744,7 @@
                     "max",
                     "last"
                   ],
-                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                   "type": "string"
                 },
                 "metricKind": {
@@ -37145,6 +38099,33 @@
               }
             },
             "description": "Y-axis bounds and scale configuration for chart widgets. Optional on create or update."
+          },
+          "eventsOverlay": {
+            "title": "EventsOverlay",
+            "description": "Events displayed on top of the chart, over its time axis, so they can be correlated with the plotted data. A widget carries at most one overlay, and each kind of overlay carries its own settings.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "service-deployments": "#/components/schemas/InputWidgetServiceDeploymentsOverlay",
+                "logs": "#/components/schemas/InputWidgetLogsOverlay",
+                "ongoing-alerts": "#/components/schemas/InputWidgetOngoingAlertsOverlay"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/InputWidgetServiceDeploymentsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/InputWidgetLogsOverlay"
+              },
+              {
+                "$ref": "#/components/schemas/InputWidgetOngoingAlertsOverlay"
+              }
+            ]
           }
         },
         "title": "Heatmap"
@@ -37254,7 +38235,6 @@
                               "per-hour": "#/components/schemas/FunctionPerHour",
                               "rate": "#/components/schemas/FunctionRate",
                               "increase": "#/components/schemas/FunctionIncrease",
-                              "rolling": "#/components/schemas/InputFunctionRolling",
                               "log": "#/components/schemas/InputFunctionLog",
                               "power": "#/components/schemas/FunctionPower",
                               "sqrt": "#/components/schemas/FunctionSqrt",
@@ -37281,9 +38261,6 @@
                             },
                             {
                               "$ref": "#/components/schemas/FunctionIncrease"
-                            },
-                            {
-                              "$ref": "#/components/schemas/InputFunctionRolling"
                             },
                             {
                               "$ref": "#/components/schemas/InputFunctionLog"
@@ -37342,7 +38319,7 @@
                           "max",
                           "last"
                         ],
-                        "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                        "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                         "type": "string"
                       },
                       "metricKind": {
@@ -38919,7 +39896,8 @@
                     "anomaly-trace": "#/components/schemas/MonitorConfigurationAnomalyTrace",
                     "certificate-expiry": "#/components/schemas/MonitorConfigurationCertificateExpiry",
                     "log-error-pattern-increase": "#/components/schemas/MonitorConfigurationLogErrorPatternIncrease",
-                    "k8s-faulty-deployment": "#/components/schemas/MonitorConfigurationK8sFaultyDeployment"
+                    "k8s-faulty-deployment": "#/components/schemas/MonitorConfigurationK8sFaultyDeployment",
+                    "faulty-deployment": "#/components/schemas/MonitorConfigurationFaultyDeployment"
                   }
                 },
                 "required": [
@@ -38952,6 +39930,9 @@
                   },
                   {
                     "$ref": "#/components/schemas/MonitorConfigurationK8sFaultyDeployment"
+                  },
+                  {
+                    "$ref": "#/components/schemas/MonitorConfigurationFaultyDeployment"
                   }
                 ]
               },
@@ -39270,7 +40251,6 @@
                                         "per-hour": "#/components/schemas/FunctionPerHour",
                                         "rate": "#/components/schemas/FunctionRate",
                                         "increase": "#/components/schemas/FunctionIncrease",
-                                        "rolling": "#/components/schemas/FunctionRolling",
                                         "log": "#/components/schemas/FunctionLog",
                                         "power": "#/components/schemas/FunctionPower",
                                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -39297,9 +40277,6 @@
                                       },
                                       {
                                         "$ref": "#/components/schemas/FunctionIncrease"
-                                      },
-                                      {
-                                        "$ref": "#/components/schemas/FunctionRolling"
                                       },
                                       {
                                         "$ref": "#/components/schemas/FunctionLog"
@@ -39357,7 +40334,7 @@
                                     "max",
                                     "last"
                                   ],
-                                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                                   "type": "string"
                                 },
                                 "metricKind": {
@@ -39463,7 +40440,6 @@
                                         "per-hour": "#/components/schemas/FunctionPerHour",
                                         "rate": "#/components/schemas/FunctionRate",
                                         "increase": "#/components/schemas/FunctionIncrease",
-                                        "rolling": "#/components/schemas/FunctionRolling",
                                         "log": "#/components/schemas/FunctionLog",
                                         "power": "#/components/schemas/FunctionPower",
                                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -39490,9 +40466,6 @@
                                       },
                                       {
                                         "$ref": "#/components/schemas/FunctionIncrease"
-                                      },
-                                      {
-                                        "$ref": "#/components/schemas/FunctionRolling"
                                       },
                                       {
                                         "$ref": "#/components/schemas/FunctionLog"
@@ -39550,7 +40523,7 @@
                                     "max",
                                     "last"
                                   ],
-                                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                                   "type": "string"
                                 },
                                 "metricKind": {
@@ -39732,7 +40705,6 @@
                                         "per-hour": "#/components/schemas/FunctionPerHour",
                                         "rate": "#/components/schemas/FunctionRate",
                                         "increase": "#/components/schemas/FunctionIncrease",
-                                        "rolling": "#/components/schemas/FunctionRolling",
                                         "log": "#/components/schemas/FunctionLog",
                                         "power": "#/components/schemas/FunctionPower",
                                         "sqrt": "#/components/schemas/FunctionSqrt",
@@ -39759,9 +40731,6 @@
                                       },
                                       {
                                         "$ref": "#/components/schemas/FunctionIncrease"
-                                      },
-                                      {
-                                        "$ref": "#/components/schemas/FunctionRolling"
                                       },
                                       {
                                         "$ref": "#/components/schemas/FunctionLog"
@@ -39819,7 +40788,7 @@
                                     "max",
                                     "last"
                                   ],
-                                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                                   "type": "string"
                                 },
                                 "metricKind": {
@@ -40897,7 +41866,6 @@
                                 "per-hour": "#/components/schemas/FunctionPerHour",
                                 "rate": "#/components/schemas/FunctionRate",
                                 "increase": "#/components/schemas/FunctionIncrease",
-                                "rolling": "#/components/schemas/InputFunctionRolling",
                                 "log": "#/components/schemas/InputFunctionLog",
                                 "power": "#/components/schemas/FunctionPower",
                                 "sqrt": "#/components/schemas/FunctionSqrt",
@@ -40924,9 +41892,6 @@
                               },
                               {
                                 "$ref": "#/components/schemas/FunctionIncrease"
-                              },
-                              {
-                                "$ref": "#/components/schemas/InputFunctionRolling"
                               },
                               {
                                 "$ref": "#/components/schemas/InputFunctionLog"
@@ -40959,7 +41924,7 @@
                             "max",
                             "last"
                           ],
-                          "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                          "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                           "type": "string"
                         },
                         "metricKind": {
@@ -41274,7 +42239,6 @@
                                 "per-hour": "#/components/schemas/FunctionPerHour",
                                 "rate": "#/components/schemas/FunctionRate",
                                 "increase": "#/components/schemas/FunctionIncrease",
-                                "rolling": "#/components/schemas/InputFunctionRolling",
                                 "log": "#/components/schemas/InputFunctionLog",
                                 "power": "#/components/schemas/FunctionPower",
                                 "sqrt": "#/components/schemas/FunctionSqrt",
@@ -41301,9 +42265,6 @@
                               },
                               {
                                 "$ref": "#/components/schemas/FunctionIncrease"
-                              },
-                              {
-                                "$ref": "#/components/schemas/InputFunctionRolling"
                               },
                               {
                                 "$ref": "#/components/schemas/InputFunctionLog"
@@ -41336,7 +42297,7 @@
                             "max",
                             "last"
                           ],
-                          "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                          "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                           "type": "string"
                         },
                         "metricKind": {
@@ -49696,150 +50657,6 @@
         }
       }
     },
-    "/v1/cli-runs": {
-      "post": {
-        "operationId": "recordCliRun",
-        "tags": [
-          "cli"
-        ],
-        "description": "Record one Tsuga CLI run, sent only by CLIs that opted in with `TSUGA_TELEMETRY=1`. Unauthenticated, so that runs which failed before or during authentication are recorded too.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "cliVersion",
-                  "command",
-                  "durationMs",
-                  "exitCode",
-                  "osType",
-                  "nodeVersion",
-                  "traceId",
-                  "spanId"
-                ],
-                "properties": {
-                  "cliVersion": {
-                    "type": "string",
-                    "pattern": "^[0-9A-Za-z.+-]{1,40}$",
-                    "description": "Version of the CLI that ran."
-                  },
-                  "command": {
-                    "type": "string",
-                    "pattern": "^[a-z0-9 -]{0,120}$",
-                    "description": "Command path without its arguments, e.g. `monitors list`."
-                  },
-                  "durationMs": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 86400000,
-                    "description": "Run duration."
-                  },
-                  "exitCode": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 255,
-                    "description": "Process exit code."
-                  },
-                  "errorType": {
-                    "type": "string",
-                    "pattern": "^[A-Za-z]{1,64}$",
-                    "description": "Kind of failure, e.g. `TransportError`."
-                  },
-                  "osType": {
-                    "type": "string",
-                    "pattern": "^[a-z0-9]{1,20}$",
-                    "description": "e.g. `darwin`."
-                  },
-                  "nodeVersion": {
-                    "type": "string",
-                    "pattern": "^[0-9.]{1,20}$",
-                    "description": "e.g. `24.1.0`."
-                  },
-                  "traceId": {
-                    "type": "string",
-                    "pattern": "^(?!0+$)[0-9a-f]{32}$",
-                    "description": "W3C trace ID the CLI sent with its API calls during the run."
-                  },
-                  "spanId": {
-                    "type": "string",
-                    "pattern": "^(?!0+$)[0-9a-f]{16}$",
-                    "description": "W3C span ID the CLI named as the parent of its API calls."
-                  }
-                }
-              },
-              "example": {
-                "cliVersion": "1.40.0",
-                "command": "monitors list",
-                "durationMs": 412,
-                "exitCode": 0,
-                "osType": "darwin",
-                "nodeVersion": "24.1.0",
-                "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
-                "spanId": "00f067aa0ba902b7"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "headers": {
-              "x-request-id": {
-                "schema": {
-                  "type": "string"
-                },
-                "description": "Unique identifier for this API request, useful for debugging and support"
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RecordCliRunResponse"
-                }
-              }
-            }
-          },
-          "4XX": {
-            "description": "Client error",
-            "headers": {
-              "x-request-id": {
-                "schema": {
-                  "type": "string"
-                },
-                "description": "Unique identifier for this API request, useful for debugging and support"
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClientErrorEnvelope"
-                }
-              }
-            }
-          },
-          "5XX": {
-            "description": "Server error",
-            "headers": {
-              "x-request-id": {
-                "schema": {
-                  "type": "string"
-                },
-                "description": "Unique identifier for this API request, useful for debugging and support"
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServerErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v1/feedback": {
       "post": {
         "operationId": "createFeedback",
@@ -54798,11 +55615,12 @@
                                 "anomaly-detection",
                                 "log-error-pattern",
                                 "log-error-pattern-increase",
-                                "k8s-faulty-deployment"
+                                "k8s-faulty-deployment",
+                                "faulty-deployment"
                               ],
                               "type": "string"
                             },
-                            "maxItems": 6,
+                            "maxItems": 7,
                             "description": "Values compared by this filter. When `exclude` is omitted or false, rows matching any value are kept; when `exclude` is true, matching rows are removed."
                           },
                           "exclude": {
@@ -55145,7 +55963,8 @@
                         "log-error-pattern": "#/components/schemas/InputMonitorConfigurationLogErrorPattern",
                         "log-error-pattern-increase": "#/components/schemas/InputMonitorConfigurationLogErrorPatternIncrease",
                         "certificate-expiry": "#/components/schemas/InputMonitorConfigurationCertificateExpiry",
-                        "k8s-faulty-deployment": "#/components/schemas/InputMonitorConfigurationK8sFaultyDeployment"
+                        "k8s-faulty-deployment": "#/components/schemas/InputMonitorConfigurationK8sFaultyDeployment",
+                        "faulty-deployment": "#/components/schemas/InputMonitorConfigurationFaultyDeployment"
                       }
                     },
                     "required": [
@@ -55181,6 +56000,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/InputMonitorConfigurationK8sFaultyDeployment"
+                      },
+                      {
+                        "$ref": "#/components/schemas/InputMonitorConfigurationFaultyDeployment"
                       }
                     ]
                   },
@@ -55471,6 +56293,34 @@
                     "permissions": "all",
                     "clusterIds": []
                   }
+                },
+                "example7": {
+                  "value": {
+                    "name": "Service Faulty Deployment Detector",
+                    "message": "A newly deployed service version is faulty.",
+                    "tags": [
+                      {
+                        "key": "team",
+                        "value": "platform"
+                      }
+                    ],
+                    "configuration": {
+                      "type": "faulty-deployment",
+                      "aggregationAlertLogic": "each",
+                      "filter": {
+                        "services": [
+                          "checkout-api"
+                        ],
+                        "envs": [
+                          "production"
+                        ]
+                      }
+                    },
+                    "priority": 2,
+                    "owner": "team-123-abc",
+                    "permissions": "all",
+                    "clusterIds": []
+                  }
                 }
               }
             }
@@ -55630,7 +56480,7 @@
         "tags": [
           "monitors"
         ],
-        "description": "Creates a monitor owned by the specified team. The monitor can evaluate logs, metrics, traces, anomaly behavior, certificate expiry, new error patterns, error pattern increases, or Kubernetes faulty deployments depending on its configuration.",
+        "description": "Creates a monitor owned by the specified team. The monitor can evaluate logs, metrics, traces, anomaly behavior, certificate expiry, new error patterns, error pattern increases, Kubernetes faulty deployments, or faulty service deployments depending on its configuration.",
         "requestBody": {
           "required": true,
           "content": {
@@ -55706,7 +56556,8 @@
                         "log-error-pattern": "#/components/schemas/InputMonitorConfigurationLogErrorPattern",
                         "log-error-pattern-increase": "#/components/schemas/InputMonitorConfigurationLogErrorPatternIncrease",
                         "certificate-expiry": "#/components/schemas/InputMonitorConfigurationCertificateExpiry",
-                        "k8s-faulty-deployment": "#/components/schemas/InputMonitorConfigurationK8sFaultyDeployment"
+                        "k8s-faulty-deployment": "#/components/schemas/InputMonitorConfigurationK8sFaultyDeployment",
+                        "faulty-deployment": "#/components/schemas/InputMonitorConfigurationFaultyDeployment"
                       }
                     },
                     "required": [
@@ -55742,6 +56593,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/InputMonitorConfigurationK8sFaultyDeployment"
+                      },
+                      {
+                        "$ref": "#/components/schemas/InputMonitorConfigurationFaultyDeployment"
                       }
                     ]
                   },
@@ -56021,6 +56875,34 @@
                         ],
                         "namespaces": [
                           "checkout"
+                        ],
+                        "envs": [
+                          "production"
+                        ]
+                      }
+                    },
+                    "priority": 2,
+                    "owner": "team-123-abc",
+                    "permissions": "all",
+                    "clusterIds": []
+                  }
+                },
+                "example7": {
+                  "value": {
+                    "name": "Service Faulty Deployment Detector",
+                    "message": "A newly deployed service version is faulty.",
+                    "tags": [
+                      {
+                        "key": "team",
+                        "value": "platform"
+                      }
+                    ],
+                    "configuration": {
+                      "type": "faulty-deployment",
+                      "aggregationAlertLogic": "each",
+                      "filter": {
+                        "services": [
+                          "checkout-api"
                         ],
                         "envs": [
                           "production"
@@ -63884,7 +64766,6 @@
                                             "per-hour": "#/components/schemas/FunctionPerHour",
                                             "rate": "#/components/schemas/FunctionRate",
                                             "increase": "#/components/schemas/FunctionIncrease",
-                                            "rolling": "#/components/schemas/InputFunctionRolling",
                                             "log": "#/components/schemas/InputFunctionLog",
                                             "power": "#/components/schemas/FunctionPower",
                                             "sqrt": "#/components/schemas/FunctionSqrt",
@@ -63911,9 +64792,6 @@
                                           },
                                           {
                                             "$ref": "#/components/schemas/FunctionIncrease"
-                                          },
-                                          {
-                                            "$ref": "#/components/schemas/InputFunctionRolling"
                                           },
                                           {
                                             "$ref": "#/components/schemas/InputFunctionLog"
@@ -63946,7 +64824,7 @@
                                         "max",
                                         "last"
                                       ],
-                                      "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                                      "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                                       "type": "string"
                                     },
                                     "metricKind": {
@@ -64063,7 +64941,6 @@
                                             "per-hour": "#/components/schemas/FunctionPerHour",
                                             "rate": "#/components/schemas/FunctionRate",
                                             "increase": "#/components/schemas/FunctionIncrease",
-                                            "rolling": "#/components/schemas/InputFunctionRolling",
                                             "log": "#/components/schemas/InputFunctionLog",
                                             "power": "#/components/schemas/FunctionPower",
                                             "sqrt": "#/components/schemas/FunctionSqrt",
@@ -64090,9 +64967,6 @@
                                           },
                                           {
                                             "$ref": "#/components/schemas/FunctionIncrease"
-                                          },
-                                          {
-                                            "$ref": "#/components/schemas/InputFunctionRolling"
                                           },
                                           {
                                             "$ref": "#/components/schemas/InputFunctionLog"
@@ -64125,7 +64999,7 @@
                                         "max",
                                         "last"
                                       ],
-                                      "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                                      "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                                       "type": "string"
                                     },
                                     "metricKind": {
@@ -64324,7 +65198,6 @@
                                             "per-hour": "#/components/schemas/FunctionPerHour",
                                             "rate": "#/components/schemas/FunctionRate",
                                             "increase": "#/components/schemas/FunctionIncrease",
-                                            "rolling": "#/components/schemas/InputFunctionRolling",
                                             "log": "#/components/schemas/InputFunctionLog",
                                             "power": "#/components/schemas/FunctionPower",
                                             "sqrt": "#/components/schemas/FunctionSqrt",
@@ -64351,9 +65224,6 @@
                                           },
                                           {
                                             "$ref": "#/components/schemas/FunctionIncrease"
-                                          },
-                                          {
-                                            "$ref": "#/components/schemas/InputFunctionRolling"
                                           },
                                           {
                                             "$ref": "#/components/schemas/InputFunctionLog"
@@ -64386,7 +65256,7 @@
                                         "max",
                                         "last"
                                       ],
-                                      "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                                      "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                                       "type": "string"
                                     },
                                     "metricKind": {
@@ -65079,7 +65949,6 @@
                                             "per-hour": "#/components/schemas/FunctionPerHour",
                                             "rate": "#/components/schemas/FunctionRate",
                                             "increase": "#/components/schemas/FunctionIncrease",
-                                            "rolling": "#/components/schemas/InputFunctionRolling",
                                             "log": "#/components/schemas/InputFunctionLog",
                                             "power": "#/components/schemas/FunctionPower",
                                             "sqrt": "#/components/schemas/FunctionSqrt",
@@ -65106,9 +65975,6 @@
                                           },
                                           {
                                             "$ref": "#/components/schemas/FunctionIncrease"
-                                          },
-                                          {
-                                            "$ref": "#/components/schemas/InputFunctionRolling"
                                           },
                                           {
                                             "$ref": "#/components/schemas/InputFunctionLog"
@@ -65141,7 +66007,7 @@
                                         "max",
                                         "last"
                                       ],
-                                      "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                                      "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                                       "type": "string"
                                     },
                                     "metricKind": {
@@ -65258,7 +66124,6 @@
                                             "per-hour": "#/components/schemas/FunctionPerHour",
                                             "rate": "#/components/schemas/FunctionRate",
                                             "increase": "#/components/schemas/FunctionIncrease",
-                                            "rolling": "#/components/schemas/InputFunctionRolling",
                                             "log": "#/components/schemas/InputFunctionLog",
                                             "power": "#/components/schemas/FunctionPower",
                                             "sqrt": "#/components/schemas/FunctionSqrt",
@@ -65285,9 +66150,6 @@
                                           },
                                           {
                                             "$ref": "#/components/schemas/FunctionIncrease"
-                                          },
-                                          {
-                                            "$ref": "#/components/schemas/InputFunctionRolling"
                                           },
                                           {
                                             "$ref": "#/components/schemas/InputFunctionLog"
@@ -65320,7 +66182,7 @@
                                         "max",
                                         "last"
                                       ],
-                                      "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                                      "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                                       "type": "string"
                                     },
                                     "metricKind": {
@@ -65519,7 +66381,6 @@
                                             "per-hour": "#/components/schemas/FunctionPerHour",
                                             "rate": "#/components/schemas/FunctionRate",
                                             "increase": "#/components/schemas/FunctionIncrease",
-                                            "rolling": "#/components/schemas/InputFunctionRolling",
                                             "log": "#/components/schemas/InputFunctionLog",
                                             "power": "#/components/schemas/FunctionPower",
                                             "sqrt": "#/components/schemas/FunctionSqrt",
@@ -65546,9 +66407,6 @@
                                           },
                                           {
                                             "$ref": "#/components/schemas/FunctionIncrease"
-                                          },
-                                          {
-                                            "$ref": "#/components/schemas/InputFunctionRolling"
                                           },
                                           {
                                             "$ref": "#/components/schemas/InputFunctionLog"
@@ -65581,7 +66439,7 @@
                                         "max",
                                         "last"
                                       ],
-                                      "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, `last`, or `rolling` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                                      "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
                                       "type": "string"
                                     },
                                     "metricKind": {

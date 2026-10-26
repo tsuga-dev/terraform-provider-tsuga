@@ -538,9 +538,8 @@ type monitorAPIAggregate struct {
 }
 
 type monitorAPIFunction struct {
-	Type    string  `json:"type"`
-	Window  *string `json:"window,omitempty"`
-	Seconds *int64  `json:"seconds,omitempty"`
+	Type    string `json:"type"`
+	Seconds *int64 `json:"seconds,omitempty"`
 }
 
 type monitorAPIFill struct {
@@ -814,16 +813,6 @@ func expandAggregationFunctions(ctx context.Context, functions types.List) ([]mo
 			setCount++
 			apiFn.Type = "last"
 		}
-		if fn.Rolling != nil {
-			setCount++
-			if fn.Rolling.Window.IsNull() || fn.Rolling.Window.IsUnknown() {
-				diags.AddError("Invalid functions", fmt.Sprintf("functions[%d].rolling.window is required", i))
-				continue
-			}
-			window := fn.Rolling.Window.ValueString()
-			apiFn.Type = "rolling"
-			apiFn.Window = &window
-		}
 		if fn.TimeOffset != nil {
 			setCount++
 			if fn.TimeOffset.Seconds.IsNull() || fn.TimeOffset.Seconds.IsUnknown() {
@@ -836,7 +825,7 @@ func expandAggregationFunctions(ctx context.Context, functions types.List) ([]mo
 		}
 
 		if setCount != 1 {
-			diags.AddError("Invalid functions", fmt.Sprintf("functions[%d]: exactly one of per_second, per_minute, per_hour, rate, increase, last, rolling, or time_offset must be set", i))
+			diags.AddError("Invalid functions", fmt.Sprintf("functions[%d]: exactly one of per_second, per_minute, per_hour, rate, increase, last, or time_offset must be set", i))
 			continue
 		}
 
@@ -1249,7 +1238,6 @@ func flattenAggregationFunctions(functions []monitorAPIFunction) (types.List, di
 		rate := types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes())
 		increase := types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes())
 		last := types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes())
-		rolling := types.ObjectNull(resource_monitor.AggregationFunctionRollingAttrTypes())
 		timeOffset := types.ObjectNull(resource_monitor.AggregationFunctionTimeOffsetAttrTypes())
 
 		switch fn.Type {
@@ -1265,14 +1253,6 @@ func flattenAggregationFunctions(functions []monitorAPIFunction) (types.List, di
 			increase = types.ObjectValueMust(resource_monitor.AggregationFunctionEmptyAttrTypes(), map[string]attr.Value{})
 		case "last":
 			last = types.ObjectValueMust(resource_monitor.AggregationFunctionEmptyAttrTypes(), map[string]attr.Value{})
-		case "rolling":
-			window := types.StringNull()
-			if fn.Window != nil {
-				window = types.StringValue(*fn.Window)
-			}
-			rolling = types.ObjectValueMust(resource_monitor.AggregationFunctionRollingAttrTypes(), map[string]attr.Value{
-				"window": window,
-			})
 		case "time-offset":
 			seconds := types.Int64Null()
 			if fn.Seconds != nil {
@@ -1290,7 +1270,6 @@ func flattenAggregationFunctions(functions []monitorAPIFunction) (types.List, di
 			"rate":        rate,
 			"increase":    increase,
 			"last":        last,
-			"rolling":     rolling,
 			"time_offset": timeOffset,
 		}))
 	}

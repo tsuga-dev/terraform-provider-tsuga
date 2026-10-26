@@ -921,7 +921,6 @@ Optional:
 - `base` (Number) Base of the logarithm for the log function
 - `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
-- `window` (String) Duration of the rolling window for the rolling function
 
 
 
@@ -1359,7 +1358,6 @@ Optional:
 - `base` (Number) Base of the logarithm for the log function
 - `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
-- `window` (String) Duration of the rolling window for the rolling function
 
 
 
@@ -1535,7 +1533,6 @@ Optional:
 - `base` (Number) Base of the logarithm for the log function
 - `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
-- `window` (String) Duration of the rolling window for the rolling function
 
 
 
@@ -1708,7 +1705,6 @@ Optional:
 - `base` (Number) Base of the logarithm for the log function
 - `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
-- `window` (String) Duration of the rolling window for the rolling function
 
 
 
@@ -2176,7 +2172,6 @@ Optional:
 - `base` (Number) Base of the logarithm for the log function
 - `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
-- `window` (String) Duration of the rolling window for the rolling function
 
 
 
@@ -2422,7 +2417,6 @@ Optional:
 - `base` (Number) Base of the logarithm for the log function
 - `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
-- `window` (String) Duration of the rolling window for the rolling function
 
 
 
@@ -2812,7 +2806,6 @@ Optional:
 - `base` (Number) Base of the logarithm for the log function
 - `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
-- `window` (String) Duration of the rolling window for the rolling function
 
 
 
@@ -3017,7 +3010,6 @@ Optional:
 - `base` (Number) Base of the logarithm for the log function
 - `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
-- `window` (String) Duration of the rolling window for the rolling function
 
 
 
@@ -3487,7 +3479,6 @@ Optional:
 - `base` (Number) Base of the logarithm for the log function
 - `exponent` (Number) Exponent to raise values to for the power function
 - `seconds` (Number) Number of seconds to offset for the time-offset function
-- `window` (String) Duration of the rolling window for the rolling function
 
 
 

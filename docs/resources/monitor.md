@@ -274,7 +274,6 @@ Optional:
 - `per_minute` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--functions--per_minute))
 - `per_second` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--functions--per_second))
 - `rate` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--functions--rate))
-- `rolling` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--functions--rolling))
 - `time_offset` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log--queries--functions--time_offset))
 
 <a id="nestedatt--configuration--anomaly_log--queries--functions--increase"></a>
@@ -299,14 +298,6 @@ Optional:
 
 <a id="nestedatt--configuration--anomaly_log--queries--functions--rate"></a>
 ### Nested Schema for `configuration.anomaly_log.queries.functions.rate`
-
-
-<a id="nestedatt--configuration--anomaly_log--queries--functions--rolling"></a>
-### Nested Schema for `configuration.anomaly_log.queries.functions.rolling`
-
-Required:
-
-- `window` (String)
 
 
 <a id="nestedatt--configuration--anomaly_log--queries--functions--time_offset"></a>
@@ -470,7 +461,6 @@ Optional:
 - `per_minute` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--functions--per_minute))
 - `per_second` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--functions--per_second))
 - `rate` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--functions--rate))
-- `rolling` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--functions--rolling))
 - `time_offset` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric--queries--functions--time_offset))
 
 <a id="nestedatt--configuration--anomaly_metric--queries--functions--increase"></a>
@@ -495,14 +485,6 @@ Optional:
 
 <a id="nestedatt--configuration--anomaly_metric--queries--functions--rate"></a>
 ### Nested Schema for `configuration.anomaly_metric.queries.functions.rate`
-
-
-<a id="nestedatt--configuration--anomaly_metric--queries--functions--rolling"></a>
-### Nested Schema for `configuration.anomaly_metric.queries.functions.rolling`
-
-Required:
-
-- `window` (String)
 
 
 <a id="nestedatt--configuration--anomaly_metric--queries--functions--time_offset"></a>
@@ -666,7 +648,6 @@ Optional:
 - `per_minute` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_trace--queries--functions--per_minute))
 - `per_second` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_trace--queries--functions--per_second))
 - `rate` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_trace--queries--functions--rate))
-- `rolling` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_trace--queries--functions--rolling))
 - `time_offset` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_trace--queries--functions--time_offset))
 
 <a id="nestedatt--configuration--anomaly_trace--queries--functions--increase"></a>
@@ -691,14 +672,6 @@ Optional:
 
 <a id="nestedatt--configuration--anomaly_trace--queries--functions--rate"></a>
 ### Nested Schema for `configuration.anomaly_trace.queries.functions.rate`
-
-
-<a id="nestedatt--configuration--anomaly_trace--queries--functions--rolling"></a>
-### Nested Schema for `configuration.anomaly_trace.queries.functions.rolling`
-
-Required:
-
-- `window` (String)
 
 
 <a id="nestedatt--configuration--anomaly_trace--queries--functions--time_offset"></a>
@@ -879,7 +852,6 @@ Optional:
 - `per_minute` (Attributes) (see [below for nested schema](#nestedatt--configuration--log--queries--functions--per_minute))
 - `per_second` (Attributes) (see [below for nested schema](#nestedatt--configuration--log--queries--functions--per_second))
 - `rate` (Attributes) (see [below for nested schema](#nestedatt--configuration--log--queries--functions--rate))
-- `rolling` (Attributes) (see [below for nested schema](#nestedatt--configuration--log--queries--functions--rolling))
 - `time_offset` (Attributes) (see [below for nested schema](#nestedatt--configuration--log--queries--functions--time_offset))
 
 <a id="nestedatt--configuration--log--queries--functions--increase"></a>
@@ -904,14 +876,6 @@ Optional:
 
 <a id="nestedatt--configuration--log--queries--functions--rate"></a>
 ### Nested Schema for `configuration.log.queries.functions.rate`
-
-
-<a id="nestedatt--configuration--log--queries--functions--rolling"></a>
-### Nested Schema for `configuration.log.queries.functions.rolling`
-
-Required:
-
-- `window` (String)
 
 
 <a id="nestedatt--configuration--log--queries--functions--time_offset"></a>
@@ -1111,7 +1075,6 @@ Optional:
 - `per_minute` (Attributes) (see [below for nested schema](#nestedatt--configuration--metric--queries--functions--per_minute))
 - `per_second` (Attributes) (see [below for nested schema](#nestedatt--configuration--metric--queries--functions--per_second))
 - `rate` (Attributes) (see [below for nested schema](#nestedatt--configuration--metric--queries--functions--rate))
-- `rolling` (Attributes) (see [below for nested schema](#nestedatt--configuration--metric--queries--functions--rolling))
 - `time_offset` (Attributes) (see [below for nested schema](#nestedatt--configuration--metric--queries--functions--time_offset))
 
 <a id="nestedatt--configuration--metric--queries--functions--increase"></a>
@@ -1136,14 +1099,6 @@ Optional:
 
 <a id="nestedatt--configuration--metric--queries--functions--rate"></a>
 ### Nested Schema for `configuration.metric.queries.functions.rate`
-
-
-<a id="nestedatt--configuration--metric--queries--functions--rolling"></a>
-### Nested Schema for `configuration.metric.queries.functions.rolling`
-
-Required:
-
-- `window` (String)
 
 
 <a id="nestedatt--configuration--metric--queries--functions--time_offset"></a>
@@ -1320,7 +1275,6 @@ Optional:
 - `per_minute` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace--queries--functions--per_minute))
 - `per_second` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace--queries--functions--per_second))
 - `rate` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace--queries--functions--rate))
-- `rolling` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace--queries--functions--rolling))
 - `time_offset` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace--queries--functions--time_offset))
 
 <a id="nestedatt--configuration--trace--queries--functions--increase"></a>
@@ -1345,14 +1299,6 @@ Optional:
 
 <a id="nestedatt--configuration--trace--queries--functions--rate"></a>
 ### Nested Schema for `configuration.trace.queries.functions.rate`
-
-
-<a id="nestedatt--configuration--trace--queries--functions--rolling"></a>
-### Nested Schema for `configuration.trace.queries.functions.rolling`
-
-Required:
-
-- `window` (String)
 
 
 <a id="nestedatt--configuration--trace--queries--functions--time_offset"></a>

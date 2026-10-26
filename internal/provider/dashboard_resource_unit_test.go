@@ -79,7 +79,6 @@ func TestDashboardTimeBucketAllowsSubUnitTime(t *testing.T) {
 func functionValue(funcType string, extra map[string]attr.Value) attr.Value {
 	attrs := map[string]attr.Value{
 		"type":     types.StringValue(funcType),
-		"window":   types.StringNull(),
 		"seconds":  types.Int64Null(),
 		"base":     types.Int64Null(),
 		"exponent": types.Int64Null(),
@@ -591,20 +590,6 @@ func TestCustomLinkURLPattern(t *testing.T) {
 	}
 }
 
-func TestValidateQueryFunctions_RollingRequiresWindow(t *testing.T) {
-	r := &dashboardResource{}
-
-	missing := functionsList(functionValue("rolling", nil))
-	if diags := r.validateQueryFunctions(context.Background(), missing, "v"); !diags.HasError() {
-		t.Fatalf("expected error when rolling function omits window")
-	}
-
-	present := functionsList(functionValue("rolling", map[string]attr.Value{"window": types.StringValue("5m")}))
-	if diags := r.validateQueryFunctions(context.Background(), present, "v"); diags.HasError() {
-		t.Fatalf("unexpected error for rolling function with window: %v", diags)
-	}
-}
-
 func TestValidateQueryFunctions_TimeOffsetRequiresSeconds(t *testing.T) {
 	r := &dashboardResource{}
 
@@ -710,7 +695,6 @@ func TestValidateFormulaReferences_IgnoresEmbeddedIdentifiers(t *testing.T) {
 func TestValidate_UnknownValuesSkipRequiredChecks(t *testing.T) {
 	r := &dashboardResource{}
 	fns := functionsList(
-		functionValue("rolling", map[string]attr.Value{"window": types.StringUnknown()}),
 		functionValue("time-offset", map[string]attr.Value{"seconds": types.Int64Unknown()}),
 		functionValue("log", map[string]attr.Value{"base": types.Int64Unknown()}),
 	)

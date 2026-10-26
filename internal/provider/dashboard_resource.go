@@ -405,13 +405,6 @@ func (r *dashboardResource) validateQueryFunctions(ctx context.Context, function
 					fmt.Sprintf("%s.functions[%d]: the \"power\" function requires \"exponent\".", pathPrefix, i),
 				)
 			}
-		case "rolling":
-			if !fn.Window.IsUnknown() && (fn.Window.IsNull() || fn.Window.ValueString() == "") {
-				diags.AddError(
-					"Invalid query function configuration",
-					fmt.Sprintf("%s.functions[%d]: the \"rolling\" function requires \"window\".", pathPrefix, i),
-				)
-			}
 		case "time-offset":
 			if fn.Seconds.IsNull() {
 				diags.AddError(
@@ -885,7 +878,6 @@ type dashboardAggregate struct {
 
 type dashboardFunction struct {
 	Type     string `json:"type"`
-	Window   string `json:"window,omitempty"`
 	Seconds  *int64 `json:"seconds,omitempty"`
 	Base     *int64 `json:"base,omitempty"`
 	Exponent *int64 `json:"exponent,omitempty"`
@@ -2065,7 +2057,6 @@ func flattenFunctions(funcs []dashboardFunction) (types.List, diag.Diagnostics) 
 		}
 		values = append(values, types.ObjectValueMust(resource_dashboard.FunctionAttrTypes(), map[string]attr.Value{
 			"type":     types.StringValue(f.Type),
-			"window":   stringValueOrNull(f.Window),
 			"seconds":  secondsVal,
 			"base":     baseVal,
 			"exponent": exponentVal,
@@ -2269,9 +2260,6 @@ func expandFunctions(ctx context.Context, funcs types.List) ([]dashboardFunction
 	for _, f := range fModels {
 		fn := dashboardFunction{
 			Type: f.Type.ValueString(),
-		}
-		if !f.Window.IsNull() && !f.Window.IsUnknown() {
-			fn.Window = f.Window.ValueString()
 		}
 		if !f.Seconds.IsNull() && !f.Seconds.IsUnknown() {
 			s := f.Seconds.ValueInt64()

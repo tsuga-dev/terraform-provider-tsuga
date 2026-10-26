@@ -281,7 +281,6 @@ func aggregationFunctionsSchema() schema.Attribute {
 				"rate":        aggregationFunctionEmptySchema(),
 				"increase":    aggregationFunctionEmptySchema(),
 				"last":        aggregationFunctionEmptySchema(),
-				"rolling":     aggregationFunctionRollingSchema(),
 				"time_offset": aggregationFunctionTimeOffsetSchema(),
 			},
 		},
@@ -292,20 +291,6 @@ func aggregationFunctionEmptySchema() schema.Attribute {
 	return schema.SingleNestedAttribute{
 		Optional:   true,
 		Attributes: map[string]schema.Attribute{},
-	}
-}
-
-func aggregationFunctionRollingSchema() schema.Attribute {
-	return schema.SingleNestedAttribute{
-		Optional: true,
-		Attributes: map[string]schema.Attribute{
-			"window": schema.StringAttribute{
-				Required: true,
-				Validators: []validator.String{
-					stringvalidator.LengthBetween(1, 250),
-				},
-			},
-		},
 	}
 }
 
@@ -569,15 +554,10 @@ type AggregationFunctionModel struct {
 	Rate       *AggregationFunctionEmptyModel      `tfsdk:"rate"`
 	Increase   *AggregationFunctionEmptyModel      `tfsdk:"increase"`
 	Last       *AggregationFunctionEmptyModel      `tfsdk:"last"`
-	Rolling    *AggregationFunctionRollingModel    `tfsdk:"rolling"`
 	TimeOffset *AggregationFunctionTimeOffsetModel `tfsdk:"time_offset"`
 }
 
 type AggregationFunctionEmptyModel struct{}
-
-type AggregationFunctionRollingModel struct {
-	Window types.String `tfsdk:"window"`
-}
 
 type AggregationFunctionTimeOffsetModel struct {
 	Seconds types.Int64 `tfsdk:"seconds"`
@@ -617,19 +597,12 @@ func AggregationFunctionAttrTypes() map[string]attr.Type {
 		"rate":        types.ObjectType{AttrTypes: AggregationFunctionEmptyAttrTypes()},
 		"increase":    types.ObjectType{AttrTypes: AggregationFunctionEmptyAttrTypes()},
 		"last":        types.ObjectType{AttrTypes: AggregationFunctionEmptyAttrTypes()},
-		"rolling":     types.ObjectType{AttrTypes: AggregationFunctionRollingAttrTypes()},
 		"time_offset": types.ObjectType{AttrTypes: AggregationFunctionTimeOffsetAttrTypes()},
 	}
 }
 
 func AggregationFunctionEmptyAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{}
-}
-
-func AggregationFunctionRollingAttrTypes() map[string]attr.Type {
-	return map[string]attr.Type{
-		"window": types.StringType,
-	}
 }
 
 func AggregationFunctionTimeOffsetAttrTypes() map[string]attr.Type {

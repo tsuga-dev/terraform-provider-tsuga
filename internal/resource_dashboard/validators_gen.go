@@ -192,14 +192,7 @@ func percentileMarkerValidators() []validator.Int64 {
 
 func functionTypeValidators() []validator.String {
 	return []validator.String{
-		stringvalidator.OneOf("per-second", "per-minute", "per-hour", "rate", "increase", "rolling", "log", "power", "sqrt", "last", "time-offset", "cumsum"),
-	}
-}
-
-func functionWindowValidators() []validator.String {
-	return []validator.String{
-		stringvalidator.LengthAtLeast(1),
-		stringvalidator.LengthAtMost(250),
+		stringvalidator.OneOf("per-second", "per-minute", "per-hour", "rate", "increase", "log", "power", "sqrt", "last", "time-offset", "cumsum"),
 	}
 }
 

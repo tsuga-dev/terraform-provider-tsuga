@@ -107,7 +107,6 @@ func TestExpandAggregationFunctions_SupportsLastAndTimeOffset(t *testing.T) {
 				"rate":        types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes()),
 				"increase":    types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes()),
 				"last":        types.ObjectValueMust(resource_monitor.AggregationFunctionEmptyAttrTypes(), map[string]attr.Value{}),
-				"rolling":     types.ObjectNull(resource_monitor.AggregationFunctionRollingAttrTypes()),
 				"time_offset": types.ObjectNull(resource_monitor.AggregationFunctionTimeOffsetAttrTypes()),
 			}),
 			types.ObjectValueMust(resource_monitor.AggregationFunctionAttrTypes(), map[string]attr.Value{
@@ -117,7 +116,6 @@ func TestExpandAggregationFunctions_SupportsLastAndTimeOffset(t *testing.T) {
 				"rate":       types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes()),
 				"increase":   types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes()),
 				"last":       types.ObjectNull(resource_monitor.AggregationFunctionEmptyAttrTypes()),
-				"rolling":    types.ObjectNull(resource_monitor.AggregationFunctionRollingAttrTypes()),
 				"time_offset": types.ObjectValueMust(resource_monitor.AggregationFunctionTimeOffsetAttrTypes(), map[string]attr.Value{
 					"seconds": types.Int64Value(3600),
 				}),

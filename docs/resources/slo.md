@@ -276,7 +276,6 @@ Optional:
 - `per_minute` (Attributes) (see [below for nested schema](#nestedatt--configuration--event--good_query--queries--functions--per_minute))
 - `per_second` (Attributes) (see [below for nested schema](#nestedatt--configuration--event--good_query--queries--functions--per_second))
 - `rate` (Attributes) (see [below for nested schema](#nestedatt--configuration--event--good_query--queries--functions--rate))
-- `rolling` (Attributes) (see [below for nested schema](#nestedatt--configuration--event--good_query--queries--functions--rolling))
 - `time_offset` (Attributes) (see [below for nested schema](#nestedatt--configuration--event--good_query--queries--functions--time_offset))
 
 <a id="nestedatt--configuration--event--good_query--queries--functions--increase"></a>
@@ -301,14 +300,6 @@ Optional:
 
 <a id="nestedatt--configuration--event--good_query--queries--functions--rate"></a>
 ### Nested Schema for `configuration.event.good_query.queries.functions.rate`
-
-
-<a id="nestedatt--configuration--event--good_query--queries--functions--rolling"></a>
-### Nested Schema for `configuration.event.good_query.queries.functions.rolling`
-
-Required:
-
-- `window` (String)
 
 
 <a id="nestedatt--configuration--event--good_query--queries--functions--time_offset"></a>
@@ -425,7 +416,6 @@ Optional:
 - `per_minute` (Attributes) (see [below for nested schema](#nestedatt--configuration--event--total_query--queries--functions--per_minute))
 - `per_second` (Attributes) (see [below for nested schema](#nestedatt--configuration--event--total_query--queries--functions--per_second))
 - `rate` (Attributes) (see [below for nested schema](#nestedatt--configuration--event--total_query--queries--functions--rate))
-- `rolling` (Attributes) (see [below for nested schema](#nestedatt--configuration--event--total_query--queries--functions--rolling))
 - `time_offset` (Attributes) (see [below for nested schema](#nestedatt--configuration--event--total_query--queries--functions--time_offset))
 
 <a id="nestedatt--configuration--event--total_query--queries--functions--increase"></a>
@@ -450,14 +440,6 @@ Optional:
 
 <a id="nestedatt--configuration--event--total_query--queries--functions--rate"></a>
 ### Nested Schema for `configuration.event.total_query.queries.functions.rate`
-
-
-<a id="nestedatt--configuration--event--total_query--queries--functions--rolling"></a>
-### Nested Schema for `configuration.event.total_query.queries.functions.rolling`
-
-Required:
-
-- `window` (String)
 
 
 <a id="nestedatt--configuration--event--total_query--queries--functions--time_offset"></a>
@@ -604,7 +586,6 @@ Optional:
 - `per_minute` (Attributes) (see [below for nested schema](#nestedatt--configuration--time--query--queries--functions--per_minute))
 - `per_second` (Attributes) (see [below for nested schema](#nestedatt--configuration--time--query--queries--functions--per_second))
 - `rate` (Attributes) (see [below for nested schema](#nestedatt--configuration--time--query--queries--functions--rate))
-- `rolling` (Attributes) (see [below for nested schema](#nestedatt--configuration--time--query--queries--functions--rolling))
 - `time_offset` (Attributes) (see [below for nested schema](#nestedatt--configuration--time--query--queries--functions--time_offset))
 
 <a id="nestedatt--configuration--time--query--queries--functions--increase"></a>
@@ -629,14 +610,6 @@ Optional:
 
 <a id="nestedatt--configuration--time--query--queries--functions--rate"></a>
 ### Nested Schema for `configuration.time.query.queries.functions.rate`
-
-
-<a id="nestedatt--configuration--time--query--queries--functions--rolling"></a>
-### Nested Schema for `configuration.time.query.queries.functions.rolling`
-
-Required:
-
-- `window` (String)
 
 
 <a id="nestedatt--configuration--time--query--queries--functions--time_offset"></a>

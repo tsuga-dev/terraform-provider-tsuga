@@ -338,7 +338,6 @@ const ATTRS = {
     mode: "enumMapping",
     paths: ["InputGraphVisualizationTimeseries.properties.queries.items.properties.functions.items"],
   },
-  functionWindowValidators: { mode: "string", paths: ["InputFunctionRolling.properties.window"] },
   functionSecondsValidators: { mode: "int64", paths: ["InputFunctionTimeOffset.properties.seconds"] },
   functionBaseValidators: { mode: "int64", paths: ["InputFunctionLog.properties.base"] },
 

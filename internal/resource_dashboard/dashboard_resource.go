@@ -468,11 +468,6 @@ func queriesSchema() schema.Attribute {
 								Required:   true,
 								Validators: functionTypeValidators(),
 							},
-							"window": schema.StringAttribute{
-								Optional:    true,
-								Description: "Duration of the rolling window for the rolling function",
-								Validators:  functionWindowValidators(),
-							},
 							"seconds": schema.Int64Attribute{
 								Optional:    true,
 								Description: "Number of seconds to offset for the time-offset function",
@@ -1654,7 +1649,6 @@ type AggregateModel struct {
 
 type FunctionModel struct {
 	Type     types.String `tfsdk:"type"`
-	Window   types.String `tfsdk:"window"`
 	Seconds  types.Int64  `tfsdk:"seconds"`
 	Base     types.Int64  `tfsdk:"base"`
 	Exponent types.Int64  `tfsdk:"exponent"`
@@ -2111,7 +2105,6 @@ func QueryFillModeAttrTypes() map[string]attr.Type {
 func FunctionAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"type":     types.StringType,
-		"window":   types.StringType,
 		"seconds":  types.Int64Type,
 		"base":     types.Int64Type,
 		"exponent": types.Int64Type,
