@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-10-26
+
 ### Removed
 
 - **Breaking:** the `rolling` query function was removed from the Tsuga API. `tsuga_dashboard` no longer accepts `type = "rolling"` or `window` in query `functions`; `tsuga_monitor` and `tsuga_slo` no longer accept the `rolling` function block.
