@@ -8,9 +8,9 @@ node ./tools/flatten-data.js ./public-open-api.json >"$TMP_SPEC"
 
 # Generate the provider code spec
 go tool -modfile=tools/go.mod tfplugingen-openapi generate \
-  --config ./generator_config.yml \
-  --output ./provider-code-spec.json \
-  "$TMP_SPEC"
+	--config ./generator_config.yml \
+	--output ./provider-code-spec.json \
+	"$TMP_SPEC"
 
 rm -f "$TMP_SPEC"
 
@@ -20,13 +20,13 @@ node ./tools/patch-provider-code-spec.js ./provider-code-spec.json
 
 # Generate the resources code
 go tool -modfile=tools/go.mod tfplugingen-framework generate resources \
-  --input ./provider-code-spec.json \
-  --output ./internal
+	--input ./provider-code-spec.json \
+	--output ./internal
 
 # Generate the data sources code
 go tool -modfile=tools/go.mod tfplugingen-framework generate data-sources \
-  --input ./provider-code-spec.json \
-  --output ./internal
+	--input ./provider-code-spec.json \
+	--output ./internal
 
 # tsuga_dashboard is hand-written (absent from generator_config.yml), so it gets
 # no spec-derived validators from tfplugingen: generate them from the spec here.
