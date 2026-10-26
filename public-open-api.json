@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsuga Public API",
     "description": "Public HTTP API for Tsuga customers and customer-operated tools. Use these endpoints to query observability data, manage customer-owned Tsuga resources, and retrieve documentation or API-reference content. Public API requests authenticate with Bearer tokens such as operation keys. See [API reference](/documentation/api).",
-    "version": "20261022.56.0+f473d96",
+    "version": "20261023.8.0+12f457a",
     "contact": {
       "name": "Tsuga",
       "url": "https://tsuga.com"
@@ -13787,7 +13787,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "Unique identifier of this service. Use it with service detail and graph endpoints."
+            "description": "Unique identifier of this service. Use it with service detail and graph endpoints. Absent until the hourly service catalog task records the service."
           },
           "serviceName": {
             "type": "string",
@@ -13811,7 +13811,7 @@
               "properties": {
                 "team": {
                   "type": "string",
-                  "description": "Team name observed on telemetry for this service. The emitting service sets it through telemetry attributes. Returned when Tsuga has observed a team value for the service; metadata refreshes weekly or when a new service version appears."
+                  "description": "Team name observed on telemetry for this service. The emitting service sets it through telemetry attributes. Returned when Tsuga has observed a team value for the service; metadata refreshes weekly or when a new service version appears. For a service the service catalog has not recorded yet, it comes from the trace span metrics of the queried window."
                 }
               },
               "description": "A team name observed on telemetry for this service."
@@ -13968,11 +13968,11 @@
             "description": "Cloud providers this service is running on. Absent or empty when Tsuga has not observed provider metadata for the service; treat both the same."
           },
           "lastSeenAt": {
-            "description": "Most recent time Tsuga observed telemetry for this service.",
+            "description": "Most recent time Tsuga observed telemetry for this service. Absent until the hourly service catalog task records the service.",
             "type": "string"
           },
           "firstSeenAt": {
-            "description": "First time Tsuga observed telemetry for this service.",
+            "description": "First time Tsuga observed telemetry for this service. Absent until the hourly service catalog task records the service.",
             "type": "string"
           },
           "traceRequestRate": {
@@ -62166,7 +62166,7 @@
         "tags": [
           "services"
         ],
-        "description": "Queries services inferred from telemetry. Use this endpoint to inventory service ownership, environments, versions, runtimes, and recent activity. Filters and sorting narrow the results, and pagination fields limit the returned page.",
+        "description": "Queries services inferred from telemetry. Use this endpoint to inventory service ownership, environments, versions, runtimes, and recent activity. A service is returned for each environment where its trace span metrics have data in `statsWindow`, including services the service catalog has not recorded yet; those carry no `id`, `firstSeenAt`, or `lastSeenAt`, and empty observed-metadata arrays other than `teams`. At most 1000 service names are returned per query, keeping those with the most span calls. Use `filters.searchQuery` and the other filters to narrow the results, and pagination fields to limit the returned page.",
         "requestBody": {
           "required": true,
           "content": {
@@ -62331,7 +62331,7 @@
                       "4h",
                       "24h"
                     ],
-                    "description": "Lookback used to compute the trace request rate and trace error rate fields, and the span-call totals that pick each service's primary environment. Defaults to `1h`.",
+                    "description": "Lookback used to select the services returned, which are those with trace span metrics in it, and to compute the trace request rate and trace error rate fields and the span-call totals that pick each service's primary environment. Defaults to `1h`.",
                     "type": "string"
                   },
                   "limit": {
@@ -62452,7 +62452,7 @@
             "in": "path",
             "name": "serviceId",
             "required": true,
-            "description": "Identifier of the service to retrieve. Use the `id` returned by service list responses."
+            "description": "Identifier of the service to retrieve. Use the `id` returned by service query responses."
           }
         ],
         "responses": {
