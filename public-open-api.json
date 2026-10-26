@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsuga Public API",
     "description": "Public HTTP API for Tsuga customers and customer-operated tools. Use these endpoints to query observability data, manage customer-owned Tsuga resources, and retrieve documentation or API-reference content. Public API requests authenticate with Bearer tokens such as operation keys. See [API reference](/documentation/api).",
-    "version": "20261023.8.0+12f457a",
+    "version": "20261026.6.0+7c99ff3",
     "contact": {
       "name": "Tsuga",
       "url": "https://tsuga.com"
@@ -1004,6 +1004,14 @@
                 "$ref": "#/components/schemas/GrokRuleErrorDetails"
               }
             ]
+          },
+          "hint": {
+            "type": "string",
+            "description": "One next step that fixes the error, such as the field to change or how long to wait. Omitted when the code covers too many cases for one step, and the message then says what to change."
+          },
+          "docUrl": {
+            "type": "string",
+            "description": "Absolute URL of the public documentation section that explains this error and how to fix it."
           }
         },
         "description": "Standard envelope for client (4XX) API errors"
@@ -1031,6 +1039,14 @@
           "statusCode": {
             "type": "number",
             "description": "HTTP status code that was returned"
+          },
+          "hint": {
+            "type": "string",
+            "description": "One next step that fixes the error, such as the field to change or how long to wait. Omitted when the code covers too many cases for one step, and the message then says what to change."
+          },
+          "docUrl": {
+            "type": "string",
+            "description": "Absolute URL of the public documentation section that explains this error and how to fix it."
           }
         },
         "description": "Standard envelope for server (5XX) API errors"
@@ -9925,6 +9941,9 @@
                 }
               ]
             }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
           }
         }
       },
@@ -20302,6 +20321,10 @@
               }
             },
             "description": "Log selection used for new error pattern detection. All configured fields must match for logs to be included, so sending both teams and services searches only the listed services owned by the listed teams. Send a non-empty `teamIds`, a non-empty `services`, or both."
+          },
+          "alertOnFirstOccurrence": {
+            "type": "boolean",
+            "description": "When `true`, every new error pattern alerts on the next evaluation, even if it appeared in a single log. When `false` or omitted, a new pattern alerts only once it has lasted at least 5 minutes and matched at least 20 logs, which filters out one-off errors."
           }
         }
       },
@@ -22690,6 +22713,10 @@
               }
             },
             "description": "Log selection used for new error pattern detection. All configured fields must match for logs to be included, so sending both teams and services searches only the listed services owned by the listed teams. Send a non-empty `teamIds`, a non-empty `services`, or both."
+          },
+          "alertOnFirstOccurrence": {
+            "type": "boolean",
+            "description": "When `true`, every new error pattern alerts on the next evaluation, even if it appeared in a single log. When `false` or omitted, a new pattern alerts only once it has lasted at least 5 minutes and matched at least 20 logs, which filters out one-off errors."
           }
         }
       },
@@ -52963,7 +52990,7 @@
         "tags": [
           "metrics"
         ],
-        "description": "Lists metric names with metadata such as type, unit, temporality, capabilities, and attributes. Use this to discover metric names before querying or graphing them. This reads a cluster-wide catalog of names rather than the window: `from` and `to` are accepted but do not scope the result, and a name stays listed after the metric stops reporting. To find out whether a metric has data in a window, run a `count` aggregation over it. See [Metrics](/documentation/explore/metrics/index).",
+        "description": "Lists metric names with metadata such as type, unit, temporality, capabilities, and attributes. Use this to discover metric names before querying or graphing them. Results are sorted by name and paged, 100 per page by default; when `totalCount` exceeds the page, narrow them with `search` or page through them with `limit` and `offset`. This reads a cluster-wide catalog of names rather than the window: `from` and `to` are accepted but do not scope the result, and a name stays listed after the metric stops reporting. To find out whether a metric has data in a window, run a `count` aggregation over it. See [Metrics](/documentation/explore/metrics/index).",
         "parameters": [
           {
             "schema": {
@@ -53001,6 +53028,39 @@
             "name": "clusterId",
             "required": false,
             "description": "Telemetry cluster to target. Required when the organization has multiple clusters; omit only for single-cluster organizations."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Maximum number of items to return in this page. Omit to use the public API default of 100."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "description": "Zero-based index of the first matching item to return. Increase it with `limit` to request later pages. If `limit` is provided without `offset`, the offset defaults to 0."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "description": "Keep only metric names containing this value, matched case-insensitively."
           }
         ],
         "responses": {
