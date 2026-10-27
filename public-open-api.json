@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsuga Public API",
     "description": "Public HTTP API for Tsuga customers and customer-operated tools. Use these endpoints to query observability data, manage customer-owned Tsuga resources, and retrieve documentation or API-reference content. Public API requests authenticate with Bearer tokens such as operation keys. See [API reference](/documentation/api).",
-    "version": "20261026.43.0+e28513c",
+    "version": "20261026.52.0+a50cd2b",
     "contact": {
       "name": "Tsuga",
       "url": "https://tsuga.com"
@@ -3556,9 +3556,12 @@
                       "query-value-connection": "#/components/schemas/GraphVisualizationQueryValueConnection",
                       "timeseries-promql": "#/components/schemas/GraphVisualizationTimeseriesPromql",
                       "query-value-promql": "#/components/schemas/GraphVisualizationQueryValuePromql",
+                      "gauge-promql": "#/components/schemas/GraphVisualizationGaugePromql",
                       "top-list-promql": "#/components/schemas/GraphVisualizationTopListPromql",
                       "pie-promql": "#/components/schemas/GraphVisualizationPiePromql",
                       "bar-promql": "#/components/schemas/GraphVisualizationBarPromql",
+                      "distribution-promql": "#/components/schemas/GraphVisualizationDistributionPromql",
+                      "heatmap-promql": "#/components/schemas/GraphVisualizationHeatmapPromql",
                       "timeseries": "#/components/schemas/GraphVisualizationTimeseries",
                       "top-list": "#/components/schemas/GraphVisualizationTopList",
                       "pie": "#/components/schemas/GraphVisualizationPie",
@@ -3607,6 +3610,9 @@
                       "$ref": "#/components/schemas/GraphVisualizationQueryValuePromql"
                     },
                     {
+                      "$ref": "#/components/schemas/GraphVisualizationGaugePromql"
+                    },
+                    {
                       "$ref": "#/components/schemas/GraphVisualizationTopListPromql"
                     },
                     {
@@ -3614,6 +3620,12 @@
                     },
                     {
                       "$ref": "#/components/schemas/GraphVisualizationBarPromql"
+                    },
+                    {
+                      "$ref": "#/components/schemas/GraphVisualizationDistributionPromql"
+                    },
+                    {
+                      "$ref": "#/components/schemas/GraphVisualizationHeatmapPromql"
                     },
                     {
                       "$ref": "#/components/schemas/GraphVisualizationTimeseries"
@@ -3971,9 +3983,12 @@
                     "query-value-connection": "#/components/schemas/GraphVisualizationQueryValueConnection",
                     "timeseries-promql": "#/components/schemas/GraphVisualizationTimeseriesPromql",
                     "query-value-promql": "#/components/schemas/GraphVisualizationQueryValuePromql",
+                    "gauge-promql": "#/components/schemas/GraphVisualizationGaugePromql",
                     "top-list-promql": "#/components/schemas/GraphVisualizationTopListPromql",
                     "pie-promql": "#/components/schemas/GraphVisualizationPiePromql",
                     "bar-promql": "#/components/schemas/GraphVisualizationBarPromql",
+                    "distribution-promql": "#/components/schemas/GraphVisualizationDistributionPromql",
+                    "heatmap-promql": "#/components/schemas/GraphVisualizationHeatmapPromql",
                     "timeseries": "#/components/schemas/GraphVisualizationTimeseries",
                     "top-list": "#/components/schemas/GraphVisualizationTopList",
                     "pie": "#/components/schemas/GraphVisualizationPie",
@@ -4022,6 +4037,9 @@
                     "$ref": "#/components/schemas/GraphVisualizationQueryValuePromql"
                   },
                   {
+                    "$ref": "#/components/schemas/GraphVisualizationGaugePromql"
+                  },
+                  {
                     "$ref": "#/components/schemas/GraphVisualizationTopListPromql"
                   },
                   {
@@ -4029,6 +4047,12 @@
                   },
                   {
                     "$ref": "#/components/schemas/GraphVisualizationBarPromql"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GraphVisualizationDistributionPromql"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GraphVisualizationHeatmapPromql"
                   },
                   {
                     "$ref": "#/components/schemas/GraphVisualizationTimeseries"
@@ -10867,6 +10891,10 @@
                 ],
                 "envs": [
                   "production"
+                ],
+                "workloadTypes": [
+                  "replicaSet",
+                  "statefulSet"
                 ]
               }
             },
@@ -18606,141 +18634,6 @@
         },
         "title": "TimeOffset"
       },
-      "AwsConnectionSettings": {
-        "type": "object",
-        "required": [
-          "type",
-          "accountId",
-          "externalId",
-          "roleArn"
-        ],
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "Discriminator identifying AWS connection settings.",
-            "enum": [
-              "aws"
-            ]
-          },
-          "accountId": {
-            "type": "string",
-            "pattern": "^[0-9]{12}$",
-            "description": "AWS account ID that Tsuga scans.",
-            "errorMessage": {
-              "pattern": "Must be a 12-digit AWS account ID."
-            }
-          },
-          "externalId": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 250,
-            "description": "External ID Tsuga passes when assuming the cross-account IAM role."
-          },
-          "roleArn": {
-            "type": "string",
-            "pattern": "^arn:aws[a-z-]*:iam::[0-9]{12}:role/.+$",
-            "minLength": 1,
-            "maxLength": 2048,
-            "description": "ARN of the IAM role Tsuga assumes to read inventory in the account.",
-            "errorMessage": {
-              "pattern": "Must be an IAM role ARN, e.g. arn:aws:iam::123456789012:role/MyRole."
-            }
-          }
-        }
-      },
-      "GcpConnectionSettings": {
-        "type": "object",
-        "required": [
-          "type",
-          "projectId",
-          "serviceAccountId",
-          "workloadIdentityProvider"
-        ],
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "Discriminator identifying GCP connection settings.",
-            "enum": [
-              "gcp"
-            ]
-          },
-          "projectId": {
-            "type": "string",
-            "pattern": "^[a-z][a-z0-9-]{4,28}[a-z0-9]$",
-            "minLength": 6,
-            "maxLength": 30,
-            "description": "GCP project ID that Tsuga scans.",
-            "errorMessage": {
-              "pattern": "Must be a GCP project ID (6-30 chars: lowercase letters, digits, hyphens)."
-            }
-          },
-          "serviceAccountId": {
-            "type": "string",
-            "pattern": "^[^@\\s]+@[^@\\s]+\\.iam\\.gserviceaccount\\.com$",
-            "minLength": 1,
-            "maxLength": 128,
-            "description": "Service account Tsuga impersonates to read inventory.",
-            "errorMessage": {
-              "pattern": "Must be a service account email, e.g. name@project.iam.gserviceaccount.com."
-            }
-          },
-          "workloadIdentityProvider": {
-            "type": "string",
-            "pattern": "^//iam\\.googleapis\\.com/projects/[0-9]+/locations/global/workloadIdentityPools/[^/]+/providers/[^/]+$",
-            "minLength": 1,
-            "maxLength": 256,
-            "description": "Full resource name of the workload identity provider used for federated authentication, e.g. //iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider.",
-            "errorMessage": {
-              "pattern": "Must be the full provider resource name: //iam.googleapis.com/projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/<POOL_ID>/providers/<PROVIDER_ID>."
-            }
-          }
-        }
-      },
-      "AzureConnectionSettings": {
-        "type": "object",
-        "required": [
-          "type",
-          "clientId",
-          "subscriptionId",
-          "tenantId"
-        ],
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "Discriminator identifying Azure connection settings.",
-            "enum": [
-              "azure"
-            ]
-          },
-          "clientId": {
-            "type": "string",
-            "pattern": "^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$",
-            "minLength": 1,
-            "description": "Client ID of the Azure application Tsuga authenticates as (GUID).",
-            "errorMessage": {
-              "pattern": "Must be a GUID."
-            }
-          },
-          "subscriptionId": {
-            "type": "string",
-            "pattern": "^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$",
-            "minLength": 1,
-            "description": "Azure subscription ID that Tsuga scans (GUID).",
-            "errorMessage": {
-              "pattern": "Must be a GUID."
-            }
-          },
-          "tenantId": {
-            "type": "string",
-            "pattern": "^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$",
-            "minLength": 1,
-            "description": "Azure tenant ID that owns the subscription (GUID).",
-            "errorMessage": {
-              "pattern": "Must be a GUID."
-            }
-          }
-        }
-      },
       "MonitorConfigurationMetric": {
         "type": "object",
         "required": [
@@ -20679,6 +20572,19 @@
                   "type": "string"
                 },
                 "description": "Environments to watch. Omit to watch every environment."
+              },
+              "workloadTypes": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "replicaSet",
+                    "statefulSet",
+                    "daemonSet"
+                  ],
+                  "description": "Kubernetes workload type: `replicaSet` (Deployment rollouts), `statefulSet`, or `daemonSet`.",
+                  "type": "string"
+                },
+                "description": "Kubernetes workload types to watch. Omit to watch every workload type."
               }
             },
             "description": "Workload selection used for faulty deployment detection. All configured fields must match for a workload to be watched."
@@ -22824,6 +22730,21 @@
                 },
                 "minItems": 1,
                 "description": "Environments to watch. Omit to watch every environment."
+              },
+              "workloadTypes": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "replicaSet",
+                    "statefulSet",
+                    "daemonSet"
+                  ],
+                  "description": "Kubernetes workload type: `replicaSet` (Deployment rollouts), `statefulSet`, or `daemonSet`.",
+                  "type": "string"
+                },
+                "minItems": 1,
+                "uniqueItems": true,
+                "description": "Kubernetes workload types to watch. Omit to watch every workload type."
               }
             },
             "description": "Workload selection used for faulty deployment detection. All configured fields must match for a workload to be watched. Send an empty object to watch every workload."
@@ -22877,6 +22798,141 @@
               }
             },
             "description": "Deployment selection used for faulty deployment detection. All configured fields must match for a deployment to be watched. Send an empty object to watch every deployment."
+          }
+        }
+      },
+      "AwsConnectionSettings": {
+        "type": "object",
+        "required": [
+          "type",
+          "accountId",
+          "externalId",
+          "roleArn"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Discriminator identifying AWS connection settings.",
+            "enum": [
+              "aws"
+            ]
+          },
+          "accountId": {
+            "type": "string",
+            "pattern": "^[0-9]{12}$",
+            "description": "AWS account ID that Tsuga scans.",
+            "errorMessage": {
+              "pattern": "Must be a 12-digit AWS account ID."
+            }
+          },
+          "externalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250,
+            "description": "External ID Tsuga passes when assuming the cross-account IAM role."
+          },
+          "roleArn": {
+            "type": "string",
+            "pattern": "^arn:aws[a-z-]*:iam::[0-9]{12}:role/.+$",
+            "minLength": 1,
+            "maxLength": 2048,
+            "description": "ARN of the IAM role Tsuga assumes to read inventory in the account.",
+            "errorMessage": {
+              "pattern": "Must be an IAM role ARN, e.g. arn:aws:iam::123456789012:role/MyRole."
+            }
+          }
+        }
+      },
+      "GcpConnectionSettings": {
+        "type": "object",
+        "required": [
+          "type",
+          "projectId",
+          "serviceAccountId",
+          "workloadIdentityProvider"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Discriminator identifying GCP connection settings.",
+            "enum": [
+              "gcp"
+            ]
+          },
+          "projectId": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{4,28}[a-z0-9]$",
+            "minLength": 6,
+            "maxLength": 30,
+            "description": "GCP project ID that Tsuga scans.",
+            "errorMessage": {
+              "pattern": "Must be a GCP project ID (6-30 chars: lowercase letters, digits, hyphens)."
+            }
+          },
+          "serviceAccountId": {
+            "type": "string",
+            "pattern": "^[^@\\s]+@[^@\\s]+\\.iam\\.gserviceaccount\\.com$",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "Service account Tsuga impersonates to read inventory.",
+            "errorMessage": {
+              "pattern": "Must be a service account email, e.g. name@project.iam.gserviceaccount.com."
+            }
+          },
+          "workloadIdentityProvider": {
+            "type": "string",
+            "pattern": "^//iam\\.googleapis\\.com/projects/[0-9]+/locations/global/workloadIdentityPools/[^/]+/providers/[^/]+$",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "Full resource name of the workload identity provider used for federated authentication, e.g. //iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider.",
+            "errorMessage": {
+              "pattern": "Must be the full provider resource name: //iam.googleapis.com/projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/<POOL_ID>/providers/<PROVIDER_ID>."
+            }
+          }
+        }
+      },
+      "AzureConnectionSettings": {
+        "type": "object",
+        "required": [
+          "type",
+          "clientId",
+          "subscriptionId",
+          "tenantId"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Discriminator identifying Azure connection settings.",
+            "enum": [
+              "azure"
+            ]
+          },
+          "clientId": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$",
+            "minLength": 1,
+            "description": "Client ID of the Azure application Tsuga authenticates as (GUID).",
+            "errorMessage": {
+              "pattern": "Must be a GUID."
+            }
+          },
+          "subscriptionId": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$",
+            "minLength": 1,
+            "description": "Azure subscription ID that Tsuga scans (GUID).",
+            "errorMessage": {
+              "pattern": "Must be a GUID."
+            }
+          },
+          "tenantId": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$",
+            "minLength": 1,
+            "description": "Azure tenant ID that owns the subscription (GUID).",
+            "errorMessage": {
+              "pattern": "Must be a GUID."
+            }
           }
         }
       },
@@ -26745,6 +26801,151 @@
         },
         "title": "QueryValuePromql"
       },
+      "GraphVisualizationGaugePromql": {
+        "type": "object",
+        "required": [
+          "type",
+          "queries"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Configures a PromQL metrics query-based aggregation as a gauge",
+            "enum": [
+              "gauge-promql"
+            ]
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Raw PromQL expression for this widget, returned exactly as stored."
+            },
+            "description": "PromQL expressions configured for this widget. PromQL-backed widgets require at least one query."
+          },
+          "aliases": {
+            "type": "object",
+            "properties": {
+              "formula": {
+                "type": "string",
+                "description": "Optional alias for formula (only used for display in the UI)"
+              },
+              "queries": {
+                "type": "object",
+                "description": "Display names for individual query series, keyed by the zero-based query index as a string.",
+                "additionalProperties": {
+                  "type": "string",
+                  "description": "Display name for this query series in the legend, keyed by the zero-based query index as a string (\"0\" = first query, \"1\" = second, and so on). This differs from `formula`, which references queries as \"q1\", \"q2\". Omit to fall back to an auto-generated label like \"Count on <filter>\"."
+                }
+              }
+            },
+            "description": "Display names used for the formula series and the individual query series instead of auto-generated labels."
+          },
+          "max": {
+            "type": "number",
+            "description": "Gauge maximum value, on the raw query value before the unit is applied"
+          },
+          "colorThresholds": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "from",
+                "color"
+              ],
+              "properties": {
+                "from": {
+                  "type": "number",
+                  "description": "Lower bound of the Gauge color threshold; runs up to the next threshold or the max"
+                },
+                "color": {
+                  "enum": [
+                    "red",
+                    "pink",
+                    "violet",
+                    "blue",
+                    "cyan",
+                    "green",
+                    "yellow",
+                    "orange"
+                  ],
+                  "description": "Color applied to the band starting at this value",
+                  "type": "string"
+                }
+              },
+              "title": "GaugeColorThreshold",
+              "description": "Color band of the gauge range. Bands are ordered by `from`, so entries may be listed in any order."
+            },
+            "description": "Color thresholds inside the gauge range, on the raw query value before the unit is applied"
+          },
+          "precision": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "max"
+                ]
+              }
+            ],
+            "description": "Display precision for numeric labels, tooltips, tables, and scalar values. Use a number of decimal places to round displayed values, or `max` to display the full submitted precision."
+          },
+          "normalizer": {
+            "title": "Normalizer",
+            "description": "Display-value formatter for widget values or list/table columns.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "duration": "#/components/schemas/DataNormalizerDuration",
+                "data": "#/components/schemas/DataNormalizerData",
+                "percent": "#/components/schemas/DataNormalizerPercent",
+                "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                "date": "#/components/schemas/DataNormalizerDate",
+                "level": "#/components/schemas/DataNormalizerLevel",
+                "cpu": "#/components/schemas/DataNormalizerCpu",
+                "none": "#/components/schemas/DataNormalizerNone",
+                "custom": "#/components/schemas/DataNormalizerCustom"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DataNormalizerDuration"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerData"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercent"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerDate"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerLevel"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCpu"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerNone"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCustom"
+              }
+            ]
+          }
+        },
+        "title": "GaugePromql"
+      },
       "GraphVisualizationTopListPromql": {
         "type": "object",
         "required": [
@@ -27365,6 +27566,367 @@
           }
         },
         "title": "BarPromql"
+      },
+      "GraphVisualizationDistributionPromql": {
+        "type": "object",
+        "required": [
+          "type",
+          "queries"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Displays a PromQL histogram query grouped by `le` as a distribution chart, e.g. `sum by (le) (rate(http_duration_bucket[5m]))`",
+            "enum": [
+              "distribution-promql"
+            ]
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Raw PromQL expression for this widget, returned exactly as stored."
+            },
+            "description": "PromQL expressions configured for this widget. PromQL-backed widgets require at least one query."
+          },
+          "precision": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "max"
+                ]
+              }
+            ],
+            "description": "Display precision for numeric labels, tooltips, tables, and scalar values. Use a number of decimal places to round displayed values, or `max` to display the full submitted precision."
+          },
+          "normalizer": {
+            "title": "Normalizer",
+            "description": "Display-value formatter for widget values or list/table columns.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "duration": "#/components/schemas/DataNormalizerDuration",
+                "data": "#/components/schemas/DataNormalizerData",
+                "percent": "#/components/schemas/DataNormalizerPercent",
+                "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                "date": "#/components/schemas/DataNormalizerDate",
+                "level": "#/components/schemas/DataNormalizerLevel",
+                "cpu": "#/components/schemas/DataNormalizerCpu",
+                "none": "#/components/schemas/DataNormalizerNone",
+                "custom": "#/components/schemas/DataNormalizerCustom"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DataNormalizerDuration"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerData"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercent"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerDate"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerLevel"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCpu"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerNone"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCustom"
+              }
+            ]
+          },
+          "percentileMarkers": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "description": "Marker value expressed as a percentage between 0 and 100"
+            },
+            "description": "Percentile markers displayed on top of the distribution chart"
+          }
+        },
+        "title": "DistributionPromql"
+      },
+      "GraphVisualizationHeatmapPromql": {
+        "type": "object",
+        "required": [
+          "type",
+          "queries"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Displays a PromQL histogram query grouped by `le` as a heatmap chart, e.g. `sum by (le) (rate(http_duration_bucket[5m]))`",
+            "enum": [
+              "heatmap-promql"
+            ]
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Raw PromQL expression for this widget, returned exactly as stored."
+            },
+            "description": "PromQL expressions configured for this widget. PromQL-backed widgets require at least one query."
+          },
+          "precision": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "max"
+                ]
+              }
+            ],
+            "description": "Display precision for numeric labels, tooltips, tables, and scalar values. Use a number of decimal places to round displayed values, or `max` to display the full submitted precision."
+          },
+          "normalizer": {
+            "title": "Normalizer",
+            "description": "Display-value formatter for widget values or list/table columns.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "duration": "#/components/schemas/DataNormalizerDuration",
+                "data": "#/components/schemas/DataNormalizerData",
+                "percent": "#/components/schemas/DataNormalizerPercent",
+                "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                "date": "#/components/schemas/DataNormalizerDate",
+                "level": "#/components/schemas/DataNormalizerLevel",
+                "cpu": "#/components/schemas/DataNormalizerCpu",
+                "none": "#/components/schemas/DataNormalizerNone",
+                "custom": "#/components/schemas/DataNormalizerCustom"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DataNormalizerDuration"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerData"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercent"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerDate"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerLevel"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCpu"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerNone"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCustom"
+              }
+            ]
+          },
+          "palette": {
+            "enum": [
+              "red",
+              "pink",
+              "violet",
+              "blue",
+              "cyan",
+              "green",
+              "yellow",
+              "orange"
+            ],
+            "description": "Color palette used to render the heatmap intensity gradient",
+            "type": "string"
+          },
+          "yAxisSettings": {
+            "type": "object",
+            "required": [
+              "min",
+              "max",
+              "scale",
+              "alwaysIncludeZero"
+            ],
+            "properties": {
+              "min": {
+                "description": "Axis bound mode: automatic or fixed numeric value",
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Automatically choose this axis bound",
+                        "enum": [
+                          "auto"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "value"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Use a fixed numeric axis bound",
+                        "enum": [
+                          "number"
+                        ]
+                      },
+                      "value": {
+                        "type": "number",
+                        "description": "Fixed numeric axis bound value"
+                      }
+                    }
+                  }
+                ]
+              },
+              "max": {
+                "description": "Axis bound mode: automatic or fixed numeric value",
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Automatically choose this axis bound",
+                        "enum": [
+                          "auto"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "value"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Use a fixed numeric axis bound",
+                        "enum": [
+                          "number"
+                        ]
+                      },
+                      "value": {
+                        "type": "number",
+                        "description": "Fixed numeric axis bound value"
+                      }
+                    }
+                  }
+                ]
+              },
+              "scale": {
+                "description": "Y-axis scale mode",
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "exponent"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Power scale",
+                        "enum": [
+                          "pow"
+                        ]
+                      },
+                      "exponent": {
+                        "type": "number",
+                        "description": "Exponent used by the power scale"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "linear",
+                          "log",
+                          "sqrt"
+                        ],
+                        "description": "Built-in axis scale",
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
+              },
+              "alwaysIncludeZero": {
+                "type": "boolean",
+                "description": "Whether the rendered Y axis should always include zero"
+              }
+            },
+            "description": "Y-axis bounds and scale configuration for chart widgets."
+          }
+        },
+        "title": "HeatmapPromql"
       },
       "GraphVisualizationTimeseries": {
         "type": "object",
@@ -33700,6 +34262,158 @@
         },
         "title": "QueryValuePromql"
       },
+      "InputGraphVisualizationGaugePromql": {
+        "type": "object",
+        "required": [
+          "type",
+          "queries"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Configures a PromQL metrics query-based aggregation as a gauge",
+            "enum": [
+              "gauge-promql"
+            ]
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50000,
+              "description": "Raw PromQL expression for this widget."
+            },
+            "minItems": 1,
+            "description": "PromQL expressions configured for this widget."
+          },
+          "aliases": {
+            "type": "object",
+            "properties": {
+              "formula": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 250,
+                "description": "Optional alias for formula (only used for display in the UI)"
+              },
+              "queries": {
+                "type": "object",
+                "description": "Display names for individual query series, keyed by the zero-based query index as a string.",
+                "additionalProperties": {
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 250,
+                  "description": "Display name for this query series in the legend, keyed by the zero-based query index as a string (\"0\" = first query, \"1\" = second, and so on). This differs from `formula`, which references queries as \"q1\", \"q2\". Omit to fall back to an auto-generated label like \"Count on <filter>\"."
+                }
+              }
+            },
+            "description": "Display names used for the formula series and the individual query series instead of auto-generated labels."
+          },
+          "max": {
+            "type": "number",
+            "description": "Gauge maximum value, on the raw query value before the unit is applied"
+          },
+          "colorThresholds": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "from",
+                "color"
+              ],
+              "properties": {
+                "from": {
+                  "type": "number",
+                  "description": "Lower bound of the Gauge color threshold; runs up to the next threshold or the max"
+                },
+                "color": {
+                  "enum": [
+                    "red",
+                    "pink",
+                    "violet",
+                    "blue",
+                    "cyan",
+                    "green",
+                    "yellow",
+                    "orange"
+                  ],
+                  "description": "Color applied to the band starting at this value",
+                  "type": "string"
+                }
+              },
+              "title": "GaugeColorThreshold",
+              "description": "Color band of the gauge range. Bands are ordered by `from`, so entries may be listed in any order."
+            },
+            "description": "Color thresholds inside the gauge range, on the raw query value before the unit is applied"
+          },
+          "precision": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "max"
+                ]
+              }
+            ],
+            "description": "Display precision for numeric labels, tooltips, tables, and scalar values. Use a number of decimal places to round displayed values, or `max` to display the full submitted precision."
+          },
+          "normalizer": {
+            "title": "Normalizer",
+            "description": "Display-value formatter for widget values or list/table columns.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "duration": "#/components/schemas/DataNormalizerDuration",
+                "data": "#/components/schemas/DataNormalizerData",
+                "percent": "#/components/schemas/DataNormalizerPercent",
+                "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                "date": "#/components/schemas/DataNormalizerDate",
+                "level": "#/components/schemas/DataNormalizerLevel",
+                "cpu": "#/components/schemas/DataNormalizerCpu",
+                "none": "#/components/schemas/DataNormalizerNone",
+                "custom": "#/components/schemas/InputDataNormalizerCustom"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DataNormalizerDuration"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerData"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercent"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerDate"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerLevel"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCpu"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerNone"
+              },
+              {
+                "$ref": "#/components/schemas/InputDataNormalizerCustom"
+              }
+            ]
+          }
+        },
+        "title": "GaugePromql"
+      },
       "InputGraphVisualizationTopListPromql": {
         "type": "object",
         "required": [
@@ -34342,6 +35056,376 @@
           }
         },
         "title": "BarPromql"
+      },
+      "InputGraphVisualizationDistributionPromql": {
+        "type": "object",
+        "required": [
+          "type",
+          "queries"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Displays a PromQL histogram query grouped by `le` as a distribution chart, e.g. `sum by (le) (rate(http_duration_bucket[5m]))`",
+            "enum": [
+              "distribution-promql"
+            ]
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50000,
+              "description": "Raw PromQL expression for this widget."
+            },
+            "minItems": 1,
+            "description": "PromQL expressions configured for this widget."
+          },
+          "precision": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "max"
+                ]
+              }
+            ],
+            "description": "Display precision for numeric labels, tooltips, tables, and scalar values. Use a number of decimal places to round displayed values, or `max` to display the full submitted precision."
+          },
+          "normalizer": {
+            "title": "Normalizer",
+            "description": "Display-value formatter for widget values or list/table columns.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "duration": "#/components/schemas/DataNormalizerDuration",
+                "data": "#/components/schemas/DataNormalizerData",
+                "percent": "#/components/schemas/DataNormalizerPercent",
+                "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                "date": "#/components/schemas/DataNormalizerDate",
+                "level": "#/components/schemas/DataNormalizerLevel",
+                "cpu": "#/components/schemas/DataNormalizerCpu",
+                "none": "#/components/schemas/DataNormalizerNone",
+                "custom": "#/components/schemas/InputDataNormalizerCustom"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DataNormalizerDuration"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerData"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercent"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerDate"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerLevel"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCpu"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerNone"
+              },
+              {
+                "$ref": "#/components/schemas/InputDataNormalizerCustom"
+              }
+            ]
+          },
+          "percentileMarkers": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Marker value expressed as a percentage between 0 and 100"
+            },
+            "description": "Percentile markers displayed on top of the distribution chart"
+          }
+        },
+        "title": "DistributionPromql"
+      },
+      "InputGraphVisualizationHeatmapPromql": {
+        "type": "object",
+        "required": [
+          "type",
+          "queries"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Displays a PromQL histogram query grouped by `le` as a heatmap chart, e.g. `sum by (le) (rate(http_duration_bucket[5m]))`",
+            "enum": [
+              "heatmap-promql"
+            ]
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50000,
+              "description": "Raw PromQL expression for this widget."
+            },
+            "minItems": 1,
+            "description": "PromQL expressions configured for this widget."
+          },
+          "precision": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "max"
+                ]
+              }
+            ],
+            "description": "Display precision for numeric labels, tooltips, tables, and scalar values. Use a number of decimal places to round displayed values, or `max` to display the full submitted precision."
+          },
+          "normalizer": {
+            "title": "Normalizer",
+            "description": "Display-value formatter for widget values or list/table columns.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "duration": "#/components/schemas/DataNormalizerDuration",
+                "data": "#/components/schemas/DataNormalizerData",
+                "percent": "#/components/schemas/DataNormalizerPercent",
+                "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                "date": "#/components/schemas/DataNormalizerDate",
+                "level": "#/components/schemas/DataNormalizerLevel",
+                "cpu": "#/components/schemas/DataNormalizerCpu",
+                "none": "#/components/schemas/DataNormalizerNone",
+                "custom": "#/components/schemas/InputDataNormalizerCustom"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DataNormalizerDuration"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerData"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercent"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerDate"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerLevel"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCpu"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerNone"
+              },
+              {
+                "$ref": "#/components/schemas/InputDataNormalizerCustom"
+              }
+            ]
+          },
+          "palette": {
+            "enum": [
+              "red",
+              "pink",
+              "violet",
+              "blue",
+              "cyan",
+              "green",
+              "yellow",
+              "orange"
+            ],
+            "description": "Color palette used to render the heatmap intensity gradient",
+            "type": "string"
+          },
+          "yAxisSettings": {
+            "type": "object",
+            "required": [
+              "min",
+              "max",
+              "scale",
+              "alwaysIncludeZero"
+            ],
+            "properties": {
+              "min": {
+                "description": "Axis bound mode: automatic or fixed numeric value",
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Automatically choose this axis bound",
+                        "enum": [
+                          "auto"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "value"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Use a fixed numeric axis bound",
+                        "enum": [
+                          "number"
+                        ]
+                      },
+                      "value": {
+                        "type": "number",
+                        "description": "Fixed numeric axis bound value"
+                      }
+                    }
+                  }
+                ]
+              },
+              "max": {
+                "description": "Axis bound mode: automatic or fixed numeric value",
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Automatically choose this axis bound",
+                        "enum": [
+                          "auto"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "value"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Use a fixed numeric axis bound",
+                        "enum": [
+                          "number"
+                        ]
+                      },
+                      "value": {
+                        "type": "number",
+                        "description": "Fixed numeric axis bound value"
+                      }
+                    }
+                  }
+                ]
+              },
+              "scale": {
+                "description": "Y-axis scale mode",
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "exponent"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Power scale",
+                        "enum": [
+                          "pow"
+                        ]
+                      },
+                      "exponent": {
+                        "type": "number",
+                        "minimum": 0,
+                        "description": "Exponent used by the power scale"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "linear",
+                          "log",
+                          "sqrt"
+                        ],
+                        "description": "Built-in axis scale",
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
+              },
+              "alwaysIncludeZero": {
+                "type": "boolean",
+                "description": "Whether the rendered Y axis should always include zero"
+              }
+            },
+            "description": "Y-axis bounds and scale configuration for chart widgets. Optional on create or update."
+          }
+        },
+        "title": "HeatmapPromql"
       },
       "InputGraphVisualizationTimeseries": {
         "type": "object",
@@ -47613,9 +48697,12 @@
                               "query-value-connection": "#/components/schemas/InputGraphVisualizationQueryValueConnection",
                               "timeseries-promql": "#/components/schemas/InputGraphVisualizationTimeseriesPromql",
                               "query-value-promql": "#/components/schemas/InputGraphVisualizationQueryValuePromql",
+                              "gauge-promql": "#/components/schemas/InputGraphVisualizationGaugePromql",
                               "top-list-promql": "#/components/schemas/InputGraphVisualizationTopListPromql",
                               "pie-promql": "#/components/schemas/InputGraphVisualizationPiePromql",
                               "bar-promql": "#/components/schemas/InputGraphVisualizationBarPromql",
+                              "distribution-promql": "#/components/schemas/InputGraphVisualizationDistributionPromql",
+                              "heatmap-promql": "#/components/schemas/InputGraphVisualizationHeatmapPromql",
                               "timeseries": "#/components/schemas/InputGraphVisualizationTimeseries",
                               "top-list": "#/components/schemas/InputGraphVisualizationTopList",
                               "pie": "#/components/schemas/InputGraphVisualizationPie",
@@ -47664,6 +48751,9 @@
                               "$ref": "#/components/schemas/InputGraphVisualizationQueryValuePromql"
                             },
                             {
+                              "$ref": "#/components/schemas/InputGraphVisualizationGaugePromql"
+                            },
+                            {
                               "$ref": "#/components/schemas/InputGraphVisualizationTopListPromql"
                             },
                             {
@@ -47671,6 +48761,12 @@
                             },
                             {
                               "$ref": "#/components/schemas/InputGraphVisualizationBarPromql"
+                            },
+                            {
+                              "$ref": "#/components/schemas/InputGraphVisualizationDistributionPromql"
+                            },
+                            {
+                              "$ref": "#/components/schemas/InputGraphVisualizationHeatmapPromql"
                             },
                             {
                               "$ref": "#/components/schemas/InputGraphVisualizationTimeseries"
@@ -48151,9 +49247,12 @@
                               "query-value-connection": "#/components/schemas/InputGraphVisualizationQueryValueConnection",
                               "timeseries-promql": "#/components/schemas/InputGraphVisualizationTimeseriesPromql",
                               "query-value-promql": "#/components/schemas/InputGraphVisualizationQueryValuePromql",
+                              "gauge-promql": "#/components/schemas/InputGraphVisualizationGaugePromql",
                               "top-list-promql": "#/components/schemas/InputGraphVisualizationTopListPromql",
                               "pie-promql": "#/components/schemas/InputGraphVisualizationPiePromql",
                               "bar-promql": "#/components/schemas/InputGraphVisualizationBarPromql",
+                              "distribution-promql": "#/components/schemas/InputGraphVisualizationDistributionPromql",
+                              "heatmap-promql": "#/components/schemas/InputGraphVisualizationHeatmapPromql",
                               "timeseries": "#/components/schemas/InputGraphVisualizationTimeseries",
                               "top-list": "#/components/schemas/InputGraphVisualizationTopList",
                               "pie": "#/components/schemas/InputGraphVisualizationPie",
@@ -48202,6 +49301,9 @@
                               "$ref": "#/components/schemas/InputGraphVisualizationQueryValuePromql"
                             },
                             {
+                              "$ref": "#/components/schemas/InputGraphVisualizationGaugePromql"
+                            },
+                            {
                               "$ref": "#/components/schemas/InputGraphVisualizationTopListPromql"
                             },
                             {
@@ -48209,6 +49311,12 @@
                             },
                             {
                               "$ref": "#/components/schemas/InputGraphVisualizationBarPromql"
+                            },
+                            {
+                              "$ref": "#/components/schemas/InputGraphVisualizationDistributionPromql"
+                            },
+                            {
+                              "$ref": "#/components/schemas/InputGraphVisualizationHeatmapPromql"
                             },
                             {
                               "$ref": "#/components/schemas/InputGraphVisualizationTimeseries"
@@ -48600,9 +49708,12 @@
                         "query-value-connection": "#/components/schemas/InputGraphVisualizationQueryValueConnection",
                         "timeseries-promql": "#/components/schemas/InputGraphVisualizationTimeseriesPromql",
                         "query-value-promql": "#/components/schemas/InputGraphVisualizationQueryValuePromql",
+                        "gauge-promql": "#/components/schemas/InputGraphVisualizationGaugePromql",
                         "top-list-promql": "#/components/schemas/InputGraphVisualizationTopListPromql",
                         "pie-promql": "#/components/schemas/InputGraphVisualizationPiePromql",
                         "bar-promql": "#/components/schemas/InputGraphVisualizationBarPromql",
+                        "distribution-promql": "#/components/schemas/InputGraphVisualizationDistributionPromql",
+                        "heatmap-promql": "#/components/schemas/InputGraphVisualizationHeatmapPromql",
                         "timeseries": "#/components/schemas/InputGraphVisualizationTimeseries",
                         "top-list": "#/components/schemas/InputGraphVisualizationTopList",
                         "pie": "#/components/schemas/InputGraphVisualizationPie",
@@ -48651,6 +49762,9 @@
                         "$ref": "#/components/schemas/InputGraphVisualizationQueryValuePromql"
                       },
                       {
+                        "$ref": "#/components/schemas/InputGraphVisualizationGaugePromql"
+                      },
+                      {
                         "$ref": "#/components/schemas/InputGraphVisualizationTopListPromql"
                       },
                       {
@@ -48658,6 +49772,12 @@
                       },
                       {
                         "$ref": "#/components/schemas/InputGraphVisualizationBarPromql"
+                      },
+                      {
+                        "$ref": "#/components/schemas/InputGraphVisualizationDistributionPromql"
+                      },
+                      {
+                        "$ref": "#/components/schemas/InputGraphVisualizationHeatmapPromql"
                       },
                       {
                         "$ref": "#/components/schemas/InputGraphVisualizationTimeseries"
@@ -56285,6 +57405,10 @@
                         ],
                         "envs": [
                           "production"
+                        ],
+                        "workloadTypes": [
+                          "replicaSet",
+                          "statefulSet"
                         ]
                       }
                     },
@@ -56878,6 +58002,10 @@
                         ],
                         "envs": [
                           "production"
+                        ],
+                        "workloadTypes": [
+                          "replicaSet",
+                          "statefulSet"
                         ]
                       }
                     },
