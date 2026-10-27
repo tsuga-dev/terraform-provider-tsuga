@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsuga Public API",
     "description": "Public HTTP API for Tsuga customers and customer-operated tools. Use these endpoints to query observability data, manage customer-owned Tsuga resources, and retrieve documentation or API-reference content. Public API requests authenticate with Bearer tokens such as operation keys. See [API reference](/documentation/api).",
-    "version": "20261026.52.0+a50cd2b",
+    "version": "20261027.9.0+da24613",
     "contact": {
       "name": "Tsuga",
       "url": "https://tsuga.com"
