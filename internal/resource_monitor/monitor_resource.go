@@ -332,6 +332,13 @@ func thresholdMonitorConfigurationSchema() schema.Attribute {
 	attrs["conditions"] = monitorConditionSchema()
 	attrs["no_data_behavior"] = monitorNoDataBehaviorSchema(true)
 	attrs["queries"] = QueriesSchema()
+	attrs["consecutive_windows"] = schema.Int64Attribute{
+		Optional:    true,
+		Description: "Number of consecutive timeframe windows that must all meet the conditions before the monitor alerts. Omit or set to 1 for single-window evaluation. At most 10, and above 1, consecutive_windows × timeframe must not exceed 4320 minutes (3 days).",
+		Validators: []validator.Int64{
+			int64validator.Between(1, 10),
+		},
+	}
 	// The Pulumi terraform-provider bridge singularizes list attributes, inferring
 	// a "condition" field from "conditions". Adding it as Optional
 	// prevents null/unknown deserialization errors during refresh and apply.
@@ -499,6 +506,7 @@ type MonitorConfigurationDetailsModel struct {
 	GroupByFields            types.List   `tfsdk:"group_by_fields"`
 	AggregationAlertLogic    types.String `tfsdk:"aggregation_alert_logic"`
 	ProportionAlertThreshold types.Int64  `tfsdk:"proportion_alert_threshold"`
+	ConsecutiveWindows       types.Int64  `tfsdk:"consecutive_windows"`
 	Queries                  types.List   `tfsdk:"queries"`
 }
 

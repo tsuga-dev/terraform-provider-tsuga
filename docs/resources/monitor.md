@@ -714,6 +714,7 @@ Required:
 Optional:
 
 - `condition` (Attributes, Deprecated) (see [below for nested schema](#nestedatt--configuration--log--condition))
+- `consecutive_windows` (Number) Number of consecutive timeframe windows that must all meet the conditions before the monitor alerts. Omit or set to 1 for single-window evaluation. At most 10, and above 1, consecutive_windows × timeframe must not exceed 4320 minutes (3 days).
 - `proportion_alert_threshold` (Number)
 
 <a id="nestedatt--configuration--log--conditions"></a>
@@ -937,6 +938,7 @@ Required:
 Optional:
 
 - `condition` (Attributes, Deprecated) (see [below for nested schema](#nestedatt--configuration--metric--condition))
+- `consecutive_windows` (Number) Number of consecutive timeframe windows that must all meet the conditions before the monitor alerts. Omit or set to 1 for single-window evaluation. At most 10, and above 1, consecutive_windows × timeframe must not exceed 4320 minutes (3 days).
 - `proportion_alert_threshold` (Number)
 
 <a id="nestedatt--configuration--metric--conditions"></a>
@@ -1137,6 +1139,7 @@ Required:
 Optional:
 
 - `condition` (Attributes, Deprecated) (see [below for nested schema](#nestedatt--configuration--trace--condition))
+- `consecutive_windows` (Number) Number of consecutive timeframe windows that must all meet the conditions before the monitor alerts. Omit or set to 1 for single-window evaluation. At most 10, and above 1, consecutive_windows × timeframe must not exceed 4320 minutes (3 days).
 - `proportion_alert_threshold` (Number)
 
 <a id="nestedatt--configuration--trace--conditions"></a>

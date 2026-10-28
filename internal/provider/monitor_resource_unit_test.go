@@ -73,6 +73,83 @@ func TestFlattenThresholdMonitorConfiguration_ConditionIsNull(t *testing.T) {
 	}
 }
 
+func TestExpandFlattenThresholdMonitor_ConsecutiveWindows(t *testing.T) {
+	ctx := context.Background()
+	threshold := 10.0
+	apiConfig := func(consecutiveWindows *float64) monitorAPIConfiguration {
+		return monitorAPIConfiguration{
+			Type: "log",
+			Conditions: []monitorAPICondition{
+				{Formula: "q1", Operator: "greater_than", Threshold: &threshold},
+			},
+			NoDataBehavior:        "resolve",
+			Timeframe:             5,
+			AggregationAlertLogic: "no_aggregation",
+			ConsecutiveWindows:    consecutiveWindows,
+			Queries: []monitorAPIQuery{
+				{Filter: "level:error", Aggregate: monitorAPIAggregate{Type: "count"}},
+			},
+		}
+	}
+
+	three := 3.0
+	set, diags := flattenMonitorConfiguration(ctx, apiConfig(&three))
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if set.Log.ConsecutiveWindows.ValueInt64() != 3 {
+		t.Fatalf("expected consecutive_windows 3, got %v", set.Log.ConsecutiveWindows)
+	}
+	expanded, diags := expandMonitorConfiguration(ctx, set)
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if expanded["consecutiveWindows"] != 3.0 {
+		t.Fatalf("expected consecutiveWindows 3 to be sent, got %#v", expanded["consecutiveWindows"])
+	}
+
+	// Leaving the attribute out sends no value, which the API reads as a single window.
+	unset, diags := flattenMonitorConfiguration(ctx, apiConfig(nil))
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if !unset.Log.ConsecutiveWindows.IsNull() {
+		t.Fatalf("expected consecutive_windows to be null, got %v", unset.Log.ConsecutiveWindows)
+	}
+	expanded, diags = expandMonitorConfiguration(ctx, unset)
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if _, ok := expanded["consecutiveWindows"]; ok {
+		t.Fatalf("expected consecutiveWindows to be omitted, got %#v", expanded["consecutiveWindows"])
+	}
+}
+
+func TestValidateConsecutiveWindowsSpan(t *testing.T) {
+	r := &monitorResource{}
+	cases := []struct {
+		name               string
+		consecutiveWindows types.Int64
+		timeframe          types.Int64
+		wantError          bool
+	}{
+		{"unset", types.Int64Null(), types.Int64Value(1440), false},
+		{"single window keeps any timeframe", types.Int64Value(1), types.Int64Value(1440), false},
+		{"span at the limit", types.Int64Value(3), types.Int64Value(1440), false},
+		{"span above the limit", types.Int64Value(4), types.Int64Value(1440), true},
+		{"max windows above the limit", types.Int64Value(10), types.Int64Value(433), true},
+		{"unknown timeframe", types.Int64Value(10), types.Int64Unknown(), false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			diags := r.validateConsecutiveWindowsSpan(tc.consecutiveWindows, tc.timeframe, "configuration.log")
+			if diags.HasError() != tc.wantError {
+				t.Fatalf("expected error %v, got diagnostics: %v", tc.wantError, diags)
+			}
+		})
+	}
+}
+
 func TestExpandMonitorConfigurationCertificateExpiry_OmitsEmptyCloudAccounts(t *testing.T) {
 	emptyList, diags := types.ListValueFrom(context.Background(), types.StringType, []string{})
 	if diags.HasError() {

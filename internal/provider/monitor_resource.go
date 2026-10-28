@@ -109,14 +109,17 @@ func (r *monitorResource) ValidateConfig(ctx context.Context, req resource.Valid
 	if config.Configuration.Metric != nil {
 		diags.Append(r.validateProportionAlertConfig(config.Configuration.Metric.AggregationAlertLogic, config.Configuration.Metric.ProportionAlertThreshold, "configuration.metric")...)
 		diags.Append(r.validateQueries(ctx, config.Configuration.Metric.Queries, "configuration.metric.queries")...)
+		diags.Append(r.validateConsecutiveWindowsSpan(config.Configuration.Metric.ConsecutiveWindows, config.Configuration.Metric.Timeframe, "configuration.metric")...)
 	}
 	if config.Configuration.Log != nil {
 		diags.Append(r.validateProportionAlertConfig(config.Configuration.Log.AggregationAlertLogic, config.Configuration.Log.ProportionAlertThreshold, "configuration.log")...)
 		diags.Append(r.validateQueries(ctx, config.Configuration.Log.Queries, "configuration.log.queries")...)
+		diags.Append(r.validateConsecutiveWindowsSpan(config.Configuration.Log.ConsecutiveWindows, config.Configuration.Log.Timeframe, "configuration.log")...)
 	}
 	if config.Configuration.Trace != nil {
 		diags.Append(r.validateProportionAlertConfig(config.Configuration.Trace.AggregationAlertLogic, config.Configuration.Trace.ProportionAlertThreshold, "configuration.trace")...)
 		diags.Append(r.validateQueries(ctx, config.Configuration.Trace.Queries, "configuration.trace.queries")...)
+		diags.Append(r.validateConsecutiveWindowsSpan(config.Configuration.Trace.ConsecutiveWindows, config.Configuration.Trace.Timeframe, "configuration.trace")...)
 	}
 	if config.Configuration.AnomalyMetric != nil {
 		diags.Append(r.validateProportionAlertConfig(config.Configuration.AnomalyMetric.AggregationAlertLogic, config.Configuration.AnomalyMetric.ProportionAlertThreshold, "configuration.anomaly_metric")...)
@@ -155,6 +158,28 @@ func (r *monitorResource) validateProportionAlertConfig(aggregationAlertLogic ty
 				)
 			}
 		}
+	}
+
+	return diags
+}
+
+// maxConsecutiveWindowsSpanMinutes mirrors the API's limit of 3 days, which only applies above 1 window.
+const maxConsecutiveWindowsSpanMinutes = 3 * 24 * 60
+
+func (r *monitorResource) validateConsecutiveWindowsSpan(consecutiveWindows types.Int64, timeframe types.Int64, pathPrefix string) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if consecutiveWindows.IsNull() || consecutiveWindows.IsUnknown() || timeframe.IsNull() || timeframe.IsUnknown() {
+		return diags
+	}
+	if consecutiveWindows.ValueInt64() <= 1 {
+		return diags
+	}
+	if span := consecutiveWindows.ValueInt64() * timeframe.ValueInt64(); span > maxConsecutiveWindowsSpanMinutes {
+		diags.AddError(
+			"Invalid configuration",
+			fmt.Sprintf("%s.consecutive_windows × %s.timeframe must not exceed %d minutes (3 days) when consecutive_windows is above 1, got %d minutes", pathPrefix, pathPrefix, maxConsecutiveWindowsSpanMinutes, span),
+		)
 	}
 
 	return diags
@@ -499,6 +524,7 @@ type monitorAPIConfiguration struct {
 	WarnBeforeInDays         *float64                         `json:"warnBeforeInDays,omitempty"`
 	CloudAccounts            []string                         `json:"cloudAccounts,omitempty"`
 	ProportionAlertThreshold *float64                         `json:"proportionAlertThreshold,omitempty"`
+	ConsecutiveWindows       *float64                         `json:"consecutiveWindows,omitempty"`
 	Queries                  []monitorAPIQuery                `json:"queries"`
 	Filter                   *monitorAPILogErrorPatternFilter `json:"filter,omitempty"`
 }
@@ -609,6 +635,9 @@ func expandThresholdMonitorConfiguration(ctx context.Context, monitorType string
 
 	if !config.ProportionAlertThreshold.IsNull() && !config.ProportionAlertThreshold.IsUnknown() {
 		result["proportionAlertThreshold"] = float64(config.ProportionAlertThreshold.ValueInt64())
+	}
+	if !config.ConsecutiveWindows.IsNull() && !config.ConsecutiveWindows.IsUnknown() {
+		result["consecutiveWindows"] = float64(config.ConsecutiveWindows.ValueInt64())
 	}
 
 	return result, diags
@@ -1060,6 +1089,9 @@ func flattenThresholdMonitorConfiguration(ctx context.Context, config monitorAPI
 
 	if config.ProportionAlertThreshold != nil {
 		result.ProportionAlertThreshold = types.Int64Value(int64(*config.ProportionAlertThreshold))
+	}
+	if config.ConsecutiveWindows != nil {
+		result.ConsecutiveWindows = types.Int64Value(int64(*config.ConsecutiveWindows))
 	}
 
 	return result, diags

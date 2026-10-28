@@ -36,6 +36,7 @@ resource "tsuga_monitor" "test" {
       }]
       no_data_behavior        = "alert"
       timeframe               = 5
+      consecutive_windows     = 3
       group_by_fields = [{
         fields = ["service"]
         limit  = 10
@@ -73,6 +74,7 @@ resource "tsuga_monitor" "test" {
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.conditions.0.operator", "greater_than"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.conditions.0.threshold", "10"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.timeframe", "5"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.consecutive_windows", "3"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.queries.#", "1"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.queries.0.functions.#", "2"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.metric.queries.0.functions.1.time_offset.seconds", "3600"),
@@ -136,6 +138,7 @@ resource "tsuga_monitor" "test" {
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log.conditions.0.operator", "less_than"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log.conditions.0.threshold", "5"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log.timeframe", "10"),
+					resource.TestCheckNoResourceAttr("tsuga_monitor.test", "configuration.log.consecutive_windows"),
 					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.log.queries.#", "2"),
 				),
 			},
