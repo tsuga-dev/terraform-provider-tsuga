@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-10-28
+
 ### Added
 
 - `tsuga_monitor`: `consecutive_windows` on `log`, `metric` and `trace` configurations: the number of consecutive `timeframe` windows that must all meet the conditions before the monitor alerts, at most 10. Leaving it out, or setting it to 1, keeps single-window evaluation, and removing it from a monitor returns it to single-window evaluation.
