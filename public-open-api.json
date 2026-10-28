@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsuga Public API",
     "description": "Public HTTP API for Tsuga customers and customer-operated tools. Use these endpoints to query observability data, manage customer-owned Tsuga resources, and retrieve documentation or API-reference content. Public API requests authenticate with Bearer tokens such as operation keys. See [API reference](/documentation/api).",
-    "version": "20261027.32.0+ae0d554",
+    "version": "20261028.16.0+33881f3",
     "contact": {
       "name": "Tsuga",
       "url": "https://tsuga.com"
@@ -1778,6 +1778,14 @@
                 "description": "Custom global roles, which define what their holders can access across the organization.",
                 "type": "string"
               },
+              "data-deletion-request": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Data deletion requests, which delete the telemetry events matching a query on a cluster.",
+                "type": "string"
+              },
               "logs": {
                 "type": "string",
                 "description": "Ingested log events, through search and aggregation endpoints.",
@@ -2195,6 +2203,14 @@
                       "write"
                     ],
                     "description": "Custom global roles, which define what their holders can access across the organization.",
+                    "type": "string"
+                  },
+                  "data-deletion-request": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Data deletion requests, which delete the telemetry events matching a query on a cluster.",
                     "type": "string"
                   },
                   "logs": {
@@ -3210,6 +3226,14 @@
                 "description": "Access granted on this resource type. `write` implies `read`.",
                 "type": "string"
               },
+              "synthetic-test": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`.",
+                "type": "string"
+              },
               "tag-policy": {
                 "enum": [
                   "read",
@@ -3479,6 +3503,194 @@
           },
           "data": {
             "$ref": "#/components/schemas/DeleteResponse"
+          }
+        }
+      },
+      "DataDeletionRequest": {
+        "type": "object",
+        "required": [
+          "id",
+          "clusterId",
+          "dataSource",
+          "query",
+          "from",
+          "to",
+          "reason",
+          "dryRun",
+          "status",
+          "matchedEventCount",
+          "dueAt",
+          "owner"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the deletion request."
+          },
+          "clusterId": {
+            "type": "string",
+            "description": "ID of the cluster the request deletes events from."
+          },
+          "dataSource": {
+            "enum": [
+              "logs",
+              "traces",
+              "rum"
+            ],
+            "description": "Telemetry signal the request deletes events from.",
+            "type": "string"
+          },
+          "query": {
+            "type": "string",
+            "description": "Tsuga query selecting the events the request deletes."
+          },
+          "from": {
+            "description": "Inclusive start of the event time range.",
+            "type": "string"
+          },
+          "to": {
+            "description": "Exclusive end of the event time range.",
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why the deletion was requested, kept for audit."
+          },
+          "dryRun": {
+            "type": "boolean",
+            "description": "Whether the cluster only counts the events the request matches, without deleting them."
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "running",
+              "done",
+              "failed",
+              "cancelled"
+            ],
+            "description": "Status of the request: `cancelled` once cancelled, which is final. Otherwise the status the cluster executes it with: `pending` until the cluster starts it, then `running`, then `done`, or `failed` if it cannot be executed. A `done` request goes back to `running` when late events arrive. Also `pending` when the cluster could not be reached.",
+            "type": "string"
+          },
+          "execution": {
+            "type": "object",
+            "required": [
+              "progress"
+            ],
+            "properties": {
+              "failureReason": {
+                "type": "string",
+                "description": "Why the cluster could not execute the request, when its status is `failed`."
+              },
+              "startedAt": {
+                "description": "When the cluster started executing the request.",
+                "type": "string"
+              },
+              "completedAt": {
+                "description": "When the execution last reached `done`, `failed` or `cancelled`.",
+                "type": "string"
+              },
+              "progress": {
+                "type": "object",
+                "required": [
+                  "matchedRows",
+                  "scannedRows"
+                ],
+                "properties": {
+                  "matchedRows": {
+                    "type": "integer",
+                    "description": "Events matching the request. A dry run counts them without deleting them."
+                  },
+                  "scannedRows": {
+                    "type": "integer",
+                    "description": "Events the cluster scanned for matching ones."
+                  }
+                }
+              }
+            },
+            "description": "How the cluster is executing the request, as it answered when the request was read. Absent until the cluster takes the request on (once due), or when the cluster could not be reached."
+          },
+          "matchedEventCount": {
+            "type": "integer",
+            "description": "Number of events the request matched at creation. The cluster deletes the events matching when it executes the request, which can differ."
+          },
+          "dueAt": {
+            "description": "Time from which the cluster executes the request. Cancelling before then prevents any deletion; cancelling later stops the remaining work, and events already deleted stay deleted.",
+            "type": "string"
+          },
+          "owner": {
+            "type": "string",
+            "description": "ID of the team that owns the request."
+          }
+        },
+        "description": "Request to delete the events of one telemetry signal that match a query in a time range, for example to answer a GDPR erasure request.",
+        "examples": [
+          {
+            "id": "ddr-123-abc",
+            "clusterId": "cluster-123-abc",
+            "dataSource": "logs",
+            "query": "user.id:123",
+            "from": "2026-01-01T00:00:00.000Z",
+            "to": "2026-02-01T00:00:00.000Z",
+            "reason": "GDPR request #42",
+            "dryRun": false,
+            "status": "pending",
+            "matchedEventCount": 12,
+            "dueAt": "2026-02-02T10:30:00.000Z",
+            "owner": "team-123-abc"
+          }
+        ]
+      },
+      "ListDataDeletionRequestsResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DataDeletionRequest"
+            }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
+          }
+        }
+      },
+      "CreateDataDeletionRequestResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DataDeletionRequest"
+          }
+        }
+      },
+      "CancelDataDeletionRequestResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DataDeletionRequest"
           }
         }
       },
@@ -9258,6 +9470,13 @@
                       "description": "ReplicaSet metadata.creationTimestamp from the latest observed ReplicaSet object. Present when creation time is observed.",
                       "type": "string"
                     },
+                    "faultyReasons": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Container status reasons the Kubernetes faulty deployment monitor reported for this revision within the revisions lookback. Present only when the revision was flagged as faulty."
+                    },
                     "logsSearchFilter": {
                       "type": "string",
                       "description": "TQL log search filter scoped to this ReplicaSet revision. Built from cluster, namespace, and ReplicaSet identifiers."
@@ -9504,7 +9723,7 @@
               },
               "sampleSize": {
                 "type": "number",
-                "description": "Number of logs sampled while computing patterns."
+                "description": "Sum of the returned patterns' `size` values. It is not the number of logs matching the query: logs outside the returned patterns are not counted."
               }
             },
             "examples": [
@@ -9525,7 +9744,7 @@
                     ]
                   }
                 ],
-                "sampleSize": 100
+                "sampleSize": 37004
               }
             ]
           }
@@ -10707,6 +10926,7 @@
             "configuration": {
               "type": "log",
               "timeframe": 5,
+              "consecutiveWindows": 1,
               "groupByFields": [],
               "aggregationAlertLogic": "no_aggregation",
               "queries": [
@@ -10736,7 +10956,7 @@
           {
             "id": "234-567-bcd",
             "name": "High CPU Utilization By Service",
-            "message": "More than half of grouped services are above the CPU threshold.",
+            "message": "More than half of grouped services have been above the CPU threshold for 2 consecutive 10-minute windows.",
             "tags": [
               {
                 "key": "severity",
@@ -10746,6 +10966,7 @@
             "configuration": {
               "type": "metric",
               "timeframe": 10,
+              "consecutiveWindows": 2,
               "groupByFields": [
                 {
                   "fields": [
@@ -14657,7 +14878,7 @@
                           "properties": {
                             "aggregate": {
                               "title": "Aggregate",
-                              "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                              "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                               "type": "object",
                               "discriminator": {
                                 "propertyName": "type",
@@ -14846,7 +15067,7 @@
                           "properties": {
                             "aggregate": {
                               "title": "Aggregate",
-                              "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                              "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                               "type": "object",
                               "discriminator": {
                                 "propertyName": "type",
@@ -15111,7 +15332,7 @@
                           "properties": {
                             "aggregate": {
                               "title": "Aggregate",
-                              "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                              "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                               "type": "object",
                               "discriminator": {
                                 "propertyName": "type",
@@ -18251,7 +18472,7 @@
             "type": "string",
             "minLength": 0,
             "maxLength": 250,
-            "description": "Attribute containing the values to aggregate"
+            "description": "Metric to count when `dataSource` is `metrics`, where it is required: without it the query fails with `count aggregate requires a non-empty field`. On `logs`, `traces` and `rum`, `count` counts records and ignores this field."
           }
         },
         "title": "Count"
@@ -18751,6 +18972,10 @@
             "type": "integer",
             "description": "Percentage threshold used when `aggregationAlertLogic` is `proportion`."
           },
+          "consecutiveWindows": {
+            "type": "integer",
+            "description": "Number of consecutive `timeframe`-minute windows that must all meet the conditions before the monitor alerts. 1 or omitted is the standard threshold behavior: one window ending at evaluation time. Above 1, each evaluation checks the last `consecutiveWindows` windows and alerts only when every one meets the conditions, per group for grouped monitors. A window that does not meet the conditions breaks the run, and so does a window with no data unless `noDataBehavior` is `consider_zero`, which evaluates it as 0. At most 10, and above 1, `consecutiveWindows` × `timeframe` must not exceed 4320 minutes (3 days)."
+          },
           "queries": {
             "type": "array",
             "items": {
@@ -18762,7 +18987,7 @@
               "properties": {
                 "aggregate": {
                   "title": "Aggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -19044,6 +19269,10 @@
             "type": "integer",
             "description": "Percentage threshold used when `aggregationAlertLogic` is `proportion`."
           },
+          "consecutiveWindows": {
+            "type": "integer",
+            "description": "Number of consecutive `timeframe`-minute windows that must all meet the conditions before the monitor alerts. 1 or omitted is the standard threshold behavior: one window ending at evaluation time. Above 1, each evaluation checks the last `consecutiveWindows` windows and alerts only when every one meets the conditions, per group for grouped monitors. A window that does not meet the conditions breaks the run, and so does a window with no data unless `noDataBehavior` is `consider_zero`, which evaluates it as 0. At most 10, and above 1, `consecutiveWindows` × `timeframe` must not exceed 4320 minutes (3 days)."
+          },
           "queries": {
             "type": "array",
             "items": {
@@ -19055,7 +19284,7 @@
               "properties": {
                 "aggregate": {
                   "title": "Aggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -19337,6 +19566,10 @@
             "type": "integer",
             "description": "Percentage threshold used when `aggregationAlertLogic` is `proportion`."
           },
+          "consecutiveWindows": {
+            "type": "integer",
+            "description": "Number of consecutive `timeframe`-minute windows that must all meet the conditions before the monitor alerts. 1 or omitted is the standard threshold behavior: one window ending at evaluation time. Above 1, each evaluation checks the last `consecutiveWindows` windows and alerts only when every one meets the conditions, per group for grouped monitors. A window that does not meet the conditions breaks the run, and so does a window with no data unless `noDataBehavior` is `consider_zero`, which evaluates it as 0. At most 10, and above 1, `consecutiveWindows` × `timeframe` must not exceed 4320 minutes (3 days)."
+          },
           "queries": {
             "type": "array",
             "items": {
@@ -19348,7 +19581,7 @@
               "properties": {
                 "aggregate": {
                   "title": "Aggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -19631,7 +19864,7 @@
               "properties": {
                 "aggregate": {
                   "title": "Aggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -19914,7 +20147,7 @@
               "properties": {
                 "aggregate": {
                   "title": "Aggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -20319,7 +20552,7 @@
               "properties": {
                 "aggregate": {
                   "title": "Aggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -20759,7 +20992,7 @@
               "each",
               "proportion"
             ],
-            "description": "How grouped results are combined into alert state. Use `no_aggregation` only when `groupByFields` is empty; use `all`, `any`, `each`, or `proportion` with non-empty `groupByFields`. `proportion` also requires `proportionAlertThreshold`. On create, omitted query-monitor values default to `no_aggregation`; on update, omitted values keep the existing aggregation logic.",
+            "description": "How grouped results are combined into alert state. Use `no_aggregation` only when `groupByFields` is empty; use `all`, `any`, `each`, or `proportion` with non-empty `groupByFields`. `proportion` also requires `proportionAlertThreshold`. With `groupByFields`, send `each` so every group opens and resolves its own alert, as the app does by default; `all`, `any`, and `proportion` raise one alert for the whole monitor. On create, omitted query-monitor values default to `no_aggregation`; on update, omitted values keep the existing aggregation logic.",
             "type": "string"
           },
           "proportionAlertThreshold": {
@@ -20767,6 +21000,12 @@
             "minimum": 1,
             "maximum": 99,
             "description": "Percentage threshold used when `aggregationAlertLogic` is `proportion`."
+          },
+          "consecutiveWindows": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "description": "Number of consecutive `timeframe`-minute windows that must all meet the conditions before the monitor alerts. 1 or omitted is the standard threshold behavior: one window ending at evaluation time. Above 1, each evaluation checks the last `consecutiveWindows` windows and alerts only when every one meets the conditions, per group for grouped monitors. A window that does not meet the conditions breaks the run, and so does a window with no data unless `noDataBehavior` is `consider_zero`, which evaluates it as 0. At most 10, and above 1, `consecutiveWindows` × `timeframe` must not exceed 4320 minutes (3 days)."
           },
           "queries": {
             "type": "array",
@@ -20779,7 +21018,7 @@
               "properties": {
                 "aggregate": {
                   "title": "InputAggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -21074,7 +21313,7 @@
               "each",
               "proportion"
             ],
-            "description": "How grouped results are combined into alert state. Use `no_aggregation` only when `groupByFields` is empty; use `all`, `any`, `each`, or `proportion` with non-empty `groupByFields`. `proportion` also requires `proportionAlertThreshold`. On create, omitted query-monitor values default to `no_aggregation`; on update, omitted values keep the existing aggregation logic.",
+            "description": "How grouped results are combined into alert state. Use `no_aggregation` only when `groupByFields` is empty; use `all`, `any`, `each`, or `proportion` with non-empty `groupByFields`. `proportion` also requires `proportionAlertThreshold`. With `groupByFields`, send `each` so every group opens and resolves its own alert, as the app does by default; `all`, `any`, and `proportion` raise one alert for the whole monitor. On create, omitted query-monitor values default to `no_aggregation`; on update, omitted values keep the existing aggregation logic.",
             "type": "string"
           },
           "proportionAlertThreshold": {
@@ -21082,6 +21321,12 @@
             "minimum": 1,
             "maximum": 99,
             "description": "Percentage threshold used when `aggregationAlertLogic` is `proportion`."
+          },
+          "consecutiveWindows": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "description": "Number of consecutive `timeframe`-minute windows that must all meet the conditions before the monitor alerts. 1 or omitted is the standard threshold behavior: one window ending at evaluation time. Above 1, each evaluation checks the last `consecutiveWindows` windows and alerts only when every one meets the conditions, per group for grouped monitors. A window that does not meet the conditions breaks the run, and so does a window with no data unless `noDataBehavior` is `consider_zero`, which evaluates it as 0. At most 10, and above 1, `consecutiveWindows` × `timeframe` must not exceed 4320 minutes (3 days)."
           },
           "queries": {
             "type": "array",
@@ -21094,7 +21339,7 @@
               "properties": {
                 "aggregate": {
                   "title": "InputAggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -21389,7 +21634,7 @@
               "each",
               "proportion"
             ],
-            "description": "How grouped results are combined into alert state. Use `no_aggregation` only when `groupByFields` is empty; use `all`, `any`, `each`, or `proportion` with non-empty `groupByFields`. `proportion` also requires `proportionAlertThreshold`. On create, omitted query-monitor values default to `no_aggregation`; on update, omitted values keep the existing aggregation logic.",
+            "description": "How grouped results are combined into alert state. Use `no_aggregation` only when `groupByFields` is empty; use `all`, `any`, `each`, or `proportion` with non-empty `groupByFields`. `proportion` also requires `proportionAlertThreshold`. With `groupByFields`, send `each` so every group opens and resolves its own alert, as the app does by default; `all`, `any`, and `proportion` raise one alert for the whole monitor. On create, omitted query-monitor values default to `no_aggregation`; on update, omitted values keep the existing aggregation logic.",
             "type": "string"
           },
           "proportionAlertThreshold": {
@@ -21397,6 +21642,12 @@
             "minimum": 1,
             "maximum": 99,
             "description": "Percentage threshold used when `aggregationAlertLogic` is `proportion`."
+          },
+          "consecutiveWindows": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "description": "Number of consecutive `timeframe`-minute windows that must all meet the conditions before the monitor alerts. 1 or omitted is the standard threshold behavior: one window ending at evaluation time. Above 1, each evaluation checks the last `consecutiveWindows` windows and alerts only when every one meets the conditions, per group for grouped monitors. A window that does not meet the conditions breaks the run, and so does a window with no data unless `noDataBehavior` is `consider_zero`, which evaluates it as 0. At most 10, and above 1, `consecutiveWindows` × `timeframe` must not exceed 4320 minutes (3 days)."
           },
           "queries": {
             "type": "array",
@@ -21409,7 +21660,7 @@
               "properties": {
                 "aggregate": {
                   "title": "InputAggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -21693,7 +21944,7 @@
               "each",
               "proportion"
             ],
-            "description": "How grouped results are combined into alert state. Use `no_aggregation` only when `groupByFields` is empty; use `all`, `any`, `each`, or `proportion` with non-empty `groupByFields`. `proportion` also requires `proportionAlertThreshold`. On create, omitted query-monitor values default to `no_aggregation`; on update, omitted values keep the existing aggregation logic.",
+            "description": "How grouped results are combined into alert state. Use `no_aggregation` only when `groupByFields` is empty; use `all`, `any`, `each`, or `proportion` with non-empty `groupByFields`. `proportion` also requires `proportionAlertThreshold`. With `groupByFields`, send `each` so every group opens and resolves its own alert, as the app does by default; `all`, `any`, and `proportion` raise one alert for the whole monitor. On create, omitted query-monitor values default to `no_aggregation`; on update, omitted values keep the existing aggregation logic.",
             "type": "string"
           },
           "proportionAlertThreshold": {
@@ -21713,7 +21964,7 @@
               "properties": {
                 "aggregate": {
                   "title": "InputAggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -21997,7 +22248,7 @@
               "each",
               "proportion"
             ],
-            "description": "How grouped results are combined into alert state. Use `no_aggregation` only when `groupByFields` is empty; use `all`, `any`, `each`, or `proportion` with non-empty `groupByFields`. `proportion` also requires `proportionAlertThreshold`. On create, omitted query-monitor values default to `no_aggregation`; on update, omitted values keep the existing aggregation logic.",
+            "description": "How grouped results are combined into alert state. Use `no_aggregation` only when `groupByFields` is empty; use `all`, `any`, `each`, or `proportion` with non-empty `groupByFields`. `proportion` also requires `proportionAlertThreshold`. With `groupByFields`, send `each` so every group opens and resolves its own alert, as the app does by default; `all`, `any`, and `proportion` raise one alert for the whole monitor. On create, omitted query-monitor values default to `no_aggregation`; on update, omitted values keep the existing aggregation logic.",
             "type": "string"
           },
           "proportionAlertThreshold": {
@@ -22017,7 +22268,7 @@
               "properties": {
                 "aggregate": {
                   "title": "InputAggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -22301,7 +22552,7 @@
               "each",
               "proportion"
             ],
-            "description": "How grouped results are combined into alert state. Use `no_aggregation` only when `groupByFields` is empty; use `all`, `any`, `each`, or `proportion` with non-empty `groupByFields`. `proportion` also requires `proportionAlertThreshold`. On create, omitted query-monitor values default to `no_aggregation`; on update, omitted values keep the existing aggregation logic.",
+            "description": "How grouped results are combined into alert state. Use `no_aggregation` only when `groupByFields` is empty; use `all`, `any`, `each`, or `proportion` with non-empty `groupByFields`. `proportion` also requires `proportionAlertThreshold`. With `groupByFields`, send `each` so every group opens and resolves its own alert, as the app does by default; `all`, `any`, and `proportion` raise one alert for the whole monitor. On create, omitted query-monitor values default to `no_aggregation`; on update, omitted values keep the existing aggregation logic.",
             "type": "string"
           },
           "proportionAlertThreshold": {
@@ -22321,7 +22572,7 @@
               "properties": {
                 "aggregate": {
                   "title": "InputAggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -25398,7 +25649,7 @@
           },
           "lineStyleOptions": {
             "type": "object",
-            "description": "Line style of each series, keyed by 1-based query index. The last index is the formula when there is one. For widgets with a single query, only the `1` entry is read and it applies to every series. Defaults to regular.",
+            "description": "Line style of each series, keyed by 1-based query index. The last index is the formula when there is one. Each entry is `{groupId, lineStyle}`, where `groupId` is `_q<n>` for query n or `_value` for the formula. For widgets with a single query, only the `1` entry is read and it applies to every series. Defaults to regular.",
             "additionalProperties": {
               "type": "object",
               "required": [
@@ -26584,7 +26835,7 @@
           },
           "lineStyleOptions": {
             "type": "object",
-            "description": "Line style of each series, keyed by 1-based query index. The last index is the formula when there is one. For widgets with a single query, only the `1` entry is read and it applies to every series. Defaults to regular.",
+            "description": "Line style of each series, keyed by 1-based query index. The last index is the formula when there is one. Each entry is `{groupId, lineStyle}`, where `groupId` is `_q<n>` for query n or `_value` for the formula. For widgets with a single query, only the `1` entry is read and it applies to every series. Defaults to regular.",
             "additionalProperties": {
               "type": "object",
               "required": [
@@ -27963,7 +28214,7 @@
               "properties": {
                 "aggregate": {
                   "title": "Aggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -28490,7 +28741,7 @@
           },
           "lineStyleOptions": {
             "type": "object",
-            "description": "Line style of each series, keyed by 1-based query index. The last index is the formula when there is one. For widgets with a single query, only the `1` entry is read and it applies to every series. Defaults to regular.",
+            "description": "Line style of each series, keyed by 1-based query index. The last index is the formula when there is one. Each entry is `{groupId, lineStyle}`, where `groupId` is `_q<n>` for query n or `_value` for the formula. For widgets with a single query, only the `1` entry is read and it applies to every series. Defaults to regular.",
             "additionalProperties": {
               "type": "object",
               "required": [
@@ -28610,7 +28861,7 @@
               "properties": {
                 "aggregate": {
                   "title": "Aggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -29020,7 +29271,7 @@
               "properties": {
                 "aggregate": {
                   "title": "Aggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -29385,7 +29636,7 @@
               "properties": {
                 "aggregate": {
                   "title": "Aggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -29737,7 +29988,7 @@
               "properties": {
                 "aggregate": {
                   "title": "Aggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -30068,7 +30319,7 @@
               "properties": {
                 "aggregate": {
                   "title": "Aggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -30671,7 +30922,7 @@
               "properties": {
                 "aggregate": {
                   "title": "Aggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -31022,7 +31273,7 @@
               "properties": {
                 "aggregate": {
                   "title": "Aggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -31570,7 +31821,7 @@
                     "properties": {
                       "aggregate": {
                         "title": "Aggregate",
-                        "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                        "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                         "type": "object",
                         "discriminator": {
                           "propertyName": "type",
@@ -32522,6 +32773,34 @@
                   }
                 },
                 "description": "Keep only the results whose status is one of these values. A result is one cluster of an ungrouped SLO, or one group of a grouped SLO."
+              },
+              "keys": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "key",
+                    "values"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "description": "Group-by field or tag key to filter on, such as `context.team`"
+                    },
+                    "values": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Values compared with the result's group-by value and its SLO's tag values for `key`"
+                    },
+                    "exclude": {
+                      "type": "boolean",
+                      "description": "If true, keep the results with none of these values instead of those with at least one"
+                    }
+                  }
+                },
+                "description": "Keep only the results matching every key filter. A result's values for a key are its group-by value when its SLO groups by that field, and its SLO's tag values for that key. A result matches when one of its values is in `values`, or, with `exclude: true`, when none is; a result with no value for the key only matches an exclusion."
               }
             },
             "description": "Narrows the SLOs the widget covers. Omit it, or any of its fields, to apply no filter."
@@ -32797,7 +33076,7 @@
           },
           "lineStyleOptions": {
             "type": "object",
-            "description": "Line style of each series, keyed by 1-based query index. The last index is the formula when there is one. For widgets with a single query, only the `1` entry is read and it applies to every series. Defaults to regular.",
+            "description": "Line style of each series, keyed by 1-based query index. The last index is the formula when there is one. Each entry is `{groupId, lineStyle}`, where `groupId` is `_q<n>` for query n or `_value` for the formula. For widgets with a single query, only the `1` entry is read and it applies to every series. Defaults to regular.",
             "additionalProperties": {
               "type": "object",
               "required": [
@@ -32997,7 +33276,7 @@
               "title": "WidgetListColumn",
               "description": "List column pairing a displayed attribute with the formatting applied to its values."
             },
-            "description": "Custom columns to display for each database row"
+            "description": "Custom columns to display for each database row. Omit it and the list renders no columns: there is no default set."
           },
           "listColumnsSize": {
             "type": "object",
@@ -33722,7 +34001,7 @@
               "description": "Raw PromQL expression for this widget."
             },
             "minItems": 1,
-            "description": "PromQL expressions configured for this widget."
+            "description": "PromQL expressions configured for this widget. Only the first expression is rendered; later entries are stored and ignored."
           },
           "aliases": {
             "type": "object",
@@ -34038,7 +34317,7 @@
           },
           "lineStyleOptions": {
             "type": "object",
-            "description": "Line style of each series, keyed by 1-based query index. The last index is the formula when there is one. For widgets with a single query, only the `1` entry is read and it applies to every series. Defaults to regular.",
+            "description": "Line style of each series, keyed by 1-based query index. The last index is the formula when there is one. Each entry is `{groupId, lineStyle}`, where `groupId` is `_q<n>` for query n or `_value` for the formula. For widgets with a single query, only the `1` entry is read and it applies to every series. Defaults to regular.",
             "additionalProperties": {
               "type": "object",
               "required": [
@@ -34112,7 +34391,7 @@
               "description": "Raw PromQL expression for this widget."
             },
             "minItems": 1,
-            "description": "PromQL expressions configured for this widget."
+            "description": "PromQL expressions configured for this widget. Only the first expression is rendered; later entries are stored and ignored."
           },
           "aliases": {
             "type": "object",
@@ -34285,7 +34564,7 @@
               "description": "Raw PromQL expression for this widget."
             },
             "minItems": 1,
-            "description": "PromQL expressions configured for this widget."
+            "description": "PromQL expressions configured for this widget. Only the first expression is rendered; later entries are stored and ignored."
           },
           "aliases": {
             "type": "object",
@@ -34437,7 +34716,7 @@
               "description": "Raw PromQL expression for this widget."
             },
             "minItems": 1,
-            "description": "PromQL expressions configured for this widget."
+            "description": "PromQL expressions configured for this widget. Only the first expression is rendered; later entries are stored and ignored."
           },
           "aliases": {
             "type": "object",
@@ -34593,7 +34872,7 @@
               "description": "Raw PromQL expression for this widget."
             },
             "minItems": 1,
-            "description": "PromQL expressions configured for this widget."
+            "description": "PromQL expressions configured for this widget. Only the first expression is rendered; later entries are stored and ignored."
           },
           "aliases": {
             "type": "object",
@@ -34717,7 +34996,7 @@
               "description": "Raw PromQL expression for this widget."
             },
             "minItems": 1,
-            "description": "PromQL expressions configured for this widget."
+            "description": "PromQL expressions configured for this widget. Only the first expression is rendered; later entries are stored and ignored."
           },
           "aliases": {
             "type": "object",
@@ -35080,7 +35359,7 @@
               "description": "Raw PromQL expression for this widget."
             },
             "minItems": 1,
-            "description": "PromQL expressions configured for this widget."
+            "description": "PromQL expressions configured for this widget. Only the first expression is rendered; later entries are stored and ignored."
           },
           "precision": {
             "anyOf": [
@@ -35183,7 +35462,7 @@
               "description": "Raw PromQL expression for this widget."
             },
             "minItems": 1,
-            "description": "PromQL expressions configured for this widget."
+            "description": "PromQL expressions configured for this widget. Only the first expression is rendered; later entries are stored and ignored."
           },
           "precision": {
             "anyOf": [
@@ -35462,7 +35741,7 @@
               "properties": {
                 "aggregate": {
                   "title": "InputAggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -35638,7 +35917,7 @@
             "errorMessage": {
               "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
             },
-            "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400."
+            "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
           },
           "aliases": {
             "type": "object",
@@ -36012,7 +36291,7 @@
           },
           "lineStyleOptions": {
             "type": "object",
-            "description": "Line style of each series, keyed by 1-based query index. The last index is the formula when there is one. For widgets with a single query, only the `1` entry is read and it applies to every series. Defaults to regular.",
+            "description": "Line style of each series, keyed by 1-based query index. The last index is the formula when there is one. Each entry is `{groupId, lineStyle}`, where `groupId` is `_q<n>` for query n or `_value` for the formula. For widgets with a single query, only the `1` entry is read and it applies to every series. Defaults to regular.",
             "additionalProperties": {
               "type": "object",
               "required": [
@@ -36140,7 +36419,7 @@
               "properties": {
                 "aggregate": {
                   "title": "InputAggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -36316,7 +36595,7 @@
             "errorMessage": {
               "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
             },
-            "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400."
+            "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
           },
           "aliases": {
             "type": "object",
@@ -36576,7 +36855,7 @@
               "properties": {
                 "aggregate": {
                   "title": "InputAggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -36752,7 +37031,7 @@
             "errorMessage": {
               "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
             },
-            "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400."
+            "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
           },
           "aliases": {
             "type": "object",
@@ -36967,7 +37246,7 @@
               "properties": {
                 "aggregate": {
                   "title": "InputAggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -37143,7 +37422,7 @@
             "errorMessage": {
               "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
             },
-            "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400."
+            "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
           },
           "aliases": {
             "type": "object",
@@ -37335,7 +37614,7 @@
               "properties": {
                 "aggregate": {
                   "title": "InputAggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -37511,7 +37790,7 @@
             "errorMessage": {
               "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
             },
-            "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400."
+            "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
           },
           "aliases": {
             "type": "object",
@@ -37544,7 +37823,7 @@
           },
           "max": {
             "type": "number",
-            "description": "Gauge maximum value, on the raw query value before the unit is applied"
+            "description": "Gauge maximum value, on the raw query value before the unit is applied. Defaults to 100 when omitted."
           },
           "colorThresholds": {
             "type": "array",
@@ -37682,7 +37961,7 @@
               "properties": {
                 "aggregate": {
                   "title": "InputAggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -37858,7 +38137,7 @@
             "errorMessage": {
               "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
             },
-            "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400."
+            "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
           },
           "aliases": {
             "type": "object",
@@ -38312,7 +38591,7 @@
               "properties": {
                 "aggregate": {
                   "title": "InputAggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -38488,7 +38767,7 @@
             "errorMessage": {
               "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
             },
-            "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400."
+            "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
           },
           "aliases": {
             "type": "object",
@@ -38689,7 +38968,7 @@
               "properties": {
                 "aggregate": {
                   "title": "InputAggregate",
-                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                   "type": "object",
                   "discriminator": {
                     "propertyName": "type",
@@ -38865,7 +39144,7 @@
             "errorMessage": {
               "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
             },
-            "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400."
+            "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
           },
           "aliases": {
             "type": "object",
@@ -39264,7 +39543,7 @@
                     "properties": {
                       "aggregate": {
                         "title": "InputAggregate",
-                        "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                        "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                         "type": "object",
                         "discriminator": {
                           "propertyName": "type",
@@ -39440,7 +39719,7 @@
                   "errorMessage": {
                     "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
                   },
-                  "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400."
+                  "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
                 },
                 "aliases": {
                   "type": "object",
@@ -39607,7 +39886,7 @@
                   "type": "string",
                   "minLength": 0,
                   "maxLength": 250,
-                  "description": "ID of the column to sort by"
+                  "description": "ID of the column to sort by: `label` for the grouping column, or `col-<index>` with the zero-based position of the entry in `columns`."
                 },
                 "desc": {
                   "type": "boolean",
@@ -39620,7 +39899,7 @@
           },
           "columnSizes": {
             "type": "object",
-            "description": "Table column widths in pixels, keyed by column id: `label` for the grouping column and `col-<index>` for each entry in `columns`. Columns without an entry keep their default width.",
+            "description": "Table column widths in pixels, keyed by column id: `label` for the grouping column and `col-<index>` for each entry in `columns`, counting from 0. Columns without an entry keep their default width.",
             "additionalProperties": {
               "type": "number",
               "description": "Column width by column id"
@@ -39738,7 +40017,7 @@
               "title": "WidgetListColumn",
               "description": "List column pairing a displayed attribute with the formatting applied to its values."
             },
-            "description": "Custom columns to display for each log"
+            "description": "Custom columns to display for each log. Omit it and the list renders no columns: there is no default set."
           },
           "listColumnsSize": {
             "type": "object",
@@ -39956,7 +40235,7 @@
               "title": "WidgetListColumn",
               "description": "List column pairing a displayed attribute with the formatting applied to its values."
             },
-            "description": "Custom columns to display for each span"
+            "description": "Custom columns to display for each span. Omit it and the list renders no columns: there is no default set."
           },
           "listColumnsSize": {
             "type": "object",
@@ -40085,7 +40364,7 @@
               "title": "WidgetListColumn",
               "description": "List column pairing a displayed attribute with the formatting applied to its values."
             },
-            "description": "Custom columns to display for each RUM event. Set attributes without their stream prefix, e.g. `view.name` rather than `events.view.name`."
+            "description": "Custom columns to display for each RUM event. Set attributes without their stream prefix, e.g. `view.name` rather than `events.view.name`. Omit it and the list renders no columns: there is no default set."
           },
           "listColumnsSize": {
             "type": "object",
@@ -40283,6 +40562,40 @@
                   }
                 },
                 "description": "Keep only the results whose status is one of these values. A result is one cluster of an ungrouped SLO, or one group of a grouped SLO."
+              },
+              "keys": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "key",
+                    "values"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 250,
+                      "description": "Group-by field or tag key to filter on, such as `context.team`"
+                    },
+                    "values": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 250
+                      },
+                      "maxItems": 50,
+                      "description": "Values compared with the result's group-by value and its SLO's tag values for `key`"
+                    },
+                    "exclude": {
+                      "type": "boolean",
+                      "description": "If true, keep the results with none of these values instead of those with at least one"
+                    }
+                  }
+                },
+                "maxItems": 50,
+                "description": "Keep only the results matching every key filter. A result's values for a key are its group-by value when its SLO groups by that field, and its SLO's tag values for that key. A result matches when one of its values is in `values`, or, with `exclude: true`, when none is; a result with no value for the key only matches an exclusion."
               }
             },
             "description": "Narrows the SLOs the widget covers. Omit it, or any of its fields, to apply no filter."
@@ -41280,7 +41593,7 @@
                               "properties": {
                                 "aggregate": {
                                   "title": "Aggregate",
-                                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                                   "type": "object",
                                   "discriminator": {
                                     "propertyName": "type",
@@ -41469,7 +41782,7 @@
                               "properties": {
                                 "aggregate": {
                                   "title": "Aggregate",
-                                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                                   "type": "object",
                                   "discriminator": {
                                     "propertyName": "type",
@@ -41734,7 +42047,7 @@
                               "properties": {
                                 "aggregate": {
                                   "title": "Aggregate",
-                                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                                   "type": "object",
                                   "discriminator": {
                                     "propertyName": "type",
@@ -42520,6 +42833,14 @@
                 "description": "Custom global roles, which define what their holders can access across the organization.",
                 "type": "string"
               },
+              "data-deletion-request": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Data deletion requests, which delete the telemetry events matching a query on a cluster.",
+                "type": "string"
+              },
               "logs": {
                 "type": "string",
                 "description": "Ingested log events, through search and aggregation endpoints.",
@@ -42895,7 +43216,7 @@
                       "properties": {
                         "aggregate": {
                           "title": "InputAggregate",
-                          "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                          "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                           "type": "object",
                           "discriminator": {
                             "propertyName": "type",
@@ -43098,7 +43419,7 @@
                     "errorMessage": {
                       "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
                     },
-                    "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400."
+                    "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
                   }
                 },
                 "description": "Scalar aggregation request. Provide a time range, one or more queries, a telemetry data source, and optional grouping or formula. Omit `groupBy` for ungrouped results. Send `clusterId` as a query parameter, not in the JSON body."
@@ -43268,7 +43589,7 @@
                       "properties": {
                         "aggregate": {
                           "title": "InputAggregate",
-                          "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                          "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                           "type": "object",
                           "discriminator": {
                             "propertyName": "type",
@@ -43471,7 +43792,7 @@
                     "errorMessage": {
                       "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
                     },
-                    "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400."
+                    "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
                   },
                   "aggregationWindow": {
                     "type": "string",
@@ -44756,6 +45077,14 @@
                         "description": "Custom global roles, which define what their holders can access across the organization.",
                         "type": "string"
                       },
+                      "data-deletion-request": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Data deletion requests, which delete the telemetry events matching a query on a cluster.",
+                        "type": "string"
+                      },
                       "logs": {
                         "type": "string",
                         "description": "Ingested log events, through search and aggregation endpoints.",
@@ -45270,6 +45599,14 @@
                           "write"
                         ],
                         "description": "Custom global roles, which define what their holders can access across the organization.",
+                        "type": "string"
+                      },
+                      "data-deletion-request": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Data deletion requests, which delete the telemetry events matching a query on a cluster.",
                         "type": "string"
                       },
                       "logs": {
@@ -47026,6 +47363,14 @@
                         "description": "Access granted on this resource type. `write` implies `read`.",
                         "type": "string"
                       },
+                      "synthetic-test": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`.",
+                        "type": "string"
+                      },
                       "tag-policy": {
                         "enum": [
                           "read",
@@ -47717,6 +48062,14 @@
                         "description": "Access granted on this resource type. `write` implies `read`.",
                         "type": "string"
                       },
+                      "synthetic-test": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`.",
+                        "type": "string"
+                      },
                       "tag-policy": {
                         "enum": [
                           "read",
@@ -48290,6 +48643,379 @@
         }
       }
     },
+    "/v1/data-deletion-requests": {
+      "get": {
+        "operationId": "listDataDeletionRequests",
+        "tags": [
+          "data-deletion-requests"
+        ],
+        "description": "Lists the data deletion requests of the organization, with the status the cluster executes each one with.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Maximum number of items to return in this page. Omit to use the public API default of 100."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "description": "Zero-based index of the first matching item to return. Increase it with `limit` to request later pages. If `limit` is provided without `offset`, the offset defaults to 0."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "clusterId",
+            "required": false,
+            "description": "Set to only return the requests of this cluster."
+          },
+          {
+            "schema": {
+              "enum": [
+                "logs",
+                "traces",
+                "rum"
+              ],
+              "type": "string"
+            },
+            "in": "query",
+            "name": "dataSource",
+            "required": false,
+            "description": "Set to only return the requests deleting from this telemetry signal."
+          },
+          {
+            "schema": {
+              "enum": [
+                "updatedAt",
+                "matchedEventCount"
+              ],
+              "type": "string"
+            },
+            "in": "query",
+            "name": "sortBy",
+            "required": false,
+            "description": "Field to sort the requests by. Omit to sort by creation time, newest first."
+          },
+          {
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            },
+            "in": "query",
+            "name": "sortDirection",
+            "required": false,
+            "description": "Sort direction: ascending or descending."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListDataDeletionRequestsResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createDataDeletionRequest",
+        "tags": [
+          "data-deletion-requests"
+        ],
+        "description": "Creates a request to delete the events matching a query in a time range. The cluster executes it 30 minutes after creation, leaving time to cancel it. Deleted events cannot be restored. Use `dryRun` to count the matching events first.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "clusterId",
+                  "dataSource",
+                  "query",
+                  "from",
+                  "to",
+                  "reason",
+                  "dryRun",
+                  "owner"
+                ],
+                "properties": {
+                  "clusterId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "description": "ID of the cluster to delete the events from."
+                  },
+                  "dataSource": {
+                    "enum": [
+                      "logs",
+                      "traces",
+                      "rum"
+                    ],
+                    "description": "Telemetry signal to delete events from.",
+                    "type": "string"
+                  },
+                  "query": {
+                    "type": "string",
+                    "format": "tsuga-query",
+                    "minLength": 1,
+                    "maxLength": 10000,
+                    "description": "Tsuga query selecting the events to delete. Queries matching every event, full-text searches and queries that only exclude events (`NOT user.id:123`) are rejected: select events by attribute."
+                  },
+                  "from": {
+                    "type": "integer",
+                    "description": "Start of the query window as a Unix timestamp in seconds",
+                    "examples": [
+                      1704067200
+                    ],
+                    "minimum": 1456444800,
+                    "maximum": 4927737600,
+                    "format": "int64"
+                  },
+                  "to": {
+                    "type": "integer",
+                    "description": "End of the query window as a Unix timestamp in seconds",
+                    "examples": [
+                      1704067200
+                    ],
+                    "minimum": 1456444800,
+                    "maximum": 4927737600,
+                    "format": "int64"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50000,
+                    "description": "Why the deletion is requested, for example the reference of a GDPR request. Kept for audit."
+                  },
+                  "dryRun": {
+                    "type": "boolean",
+                    "description": "Set to true to only count the events the request matches, without deleting them."
+                  },
+                  "owner": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "description": "ID of the team that owns the request."
+                  }
+                },
+                "description": "Data deletion request to create: the cluster and telemetry signal to delete from, the query and time range selecting the events, the reason kept for audit, and the owning team."
+              },
+              "example": {
+                "clusterId": "cluster-123-abc",
+                "dataSource": "logs",
+                "query": "user.id:123",
+                "from": 1767225600,
+                "to": 1769904000,
+                "reason": "GDPR request #42",
+                "dryRun": true,
+                "owner": "team-123-abc"
+              }
+            }
+          },
+          "description": "Data deletion request to create: the cluster and telemetry signal to delete from, the query and time range selecting the events, the reason kept for audit, and the owning team."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateDataDeletionRequestResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/data-deletion-requests/{id}/cancel": {
+      "post": {
+        "operationId": "cancelDataDeletionRequest",
+        "tags": [
+          "data-deletion-requests"
+        ],
+        "description": "Cancels a data deletion request. Before `dueAt`, no event is deleted; after, the remaining work stops and events already deleted stay deleted.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "ID of the deletion request to cancel."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelDataDeletionRequestResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/dashboards/query": {
       "post": {
         "operationId": "queryDashboards",
@@ -48618,7 +49344,7 @@
         "tags": [
           "dashboards"
         ],
-        "description": "Updates an existing dashboard by ID. Fields are patched from the request body; omitted fields keep their current values.",
+        "description": "Updates an existing dashboard by ID. Top-level fields are patched from the request body and omitted ones keep their current values, but a sent array replaces the stored one whole: a `graphs` array missing a widget deletes that widget. Read the dashboard first and send back every widget you keep, or use `updateDashboardGraph` to change one widget.",
         "requestBody": {
           "required": true,
           "content": {
@@ -49626,7 +50352,7 @@
         "tags": [
           "dashboards"
         ],
-        "description": "Updates one graph inside a dashboard without replacing the full dashboard. Use this for targeted widget edits when you already know the dashboard ID and graph ID. Fields are patched from the request body; omitted fields keep their current values and null clears them.",
+        "description": "Updates one graph inside a dashboard without replacing the full dashboard. Use this for targeted widget edits when you already know the dashboard ID and graph ID. Fields are patched from the request body; omitted fields keep their current values and null clears them. A sent `visualization` or `layout` replaces the stored one whole rather than merging into it.",
         "requestBody": {
           "required": true,
           "content": {
@@ -54927,7 +55653,7 @@
         "tags": [
           "metrics"
         ],
-        "description": "Lists metric names with metadata such as type, unit, temporality, capabilities, and attributes. Use this to discover metric names before querying or graphing them. Results are sorted by name and paged, 100 per page by default; when `totalCount` exceeds the page, narrow them with `search` or page through them with `limit` and `offset`. This reads a cluster-wide catalog of names rather than the window: `from` and `to` are accepted but do not scope the result, and a name stays listed after the metric stops reporting. To find out whether a metric has data in a window, run a `count` aggregation over it. See [Metrics](/documentation/explore/metrics/index).",
+        "description": "Lists metric names with metadata such as type, unit, temporality, capabilities, and attributes. Use this to discover metric names before querying or graphing them. Results are sorted by name and paged, 100 per page by default; when `totalCount` exceeds the page, narrow them with `search` or page through them with `limit` and `offset`. This reads a cluster-wide catalog of names rather than the window: `from` and `to` are required but do not scope the result, and a name stays listed after the metric stops reporting. To find out whether a metric has data in a window, run a `count` aggregation over it. See [Metrics](/documentation/explore/metrics/index).",
         "parameters": [
           {
             "schema": {
@@ -55064,7 +55790,7 @@
         "tags": [
           "metrics"
         ],
-        "description": "Retrieves metadata for one metric name. Use this to inspect available dimensions and supported query behavior for a metric. Like the list endpoint, this answers from a cluster-wide catalog rather than the window: `from` and `to` are accepted but do not scope the result. See [Metric details](/documentation/explore/metrics/metric-details).",
+        "description": "Retrieves metadata for one metric name. Use this to inspect available dimensions and supported query behavior for a metric. Like the list endpoint, this answers from a cluster-wide catalog rather than the window: `from` and `to` are required but do not scope the result. See [Metric details](/documentation/explore/metrics/metric-details).",
         "parameters": [
           {
             "schema": {
@@ -57007,7 +57733,7 @@
         "tags": [
           "monitors"
         ],
-        "description": "Updates an existing monitor definition by ID. Required fields and the submitted configuration are overwritten; omitted `message`, `tags`, `clusterIds`, `pauseUntil`, and `folderId` keep their existing values. Omitting `dashboardId` clears the dashboard link.",
+        "description": "Updates an existing monitor definition by ID. Required fields and the submitted configuration are overwritten; omitted `message`, `tags`, `clusterIds`, `pauseUntil`, and `folderId` keep their existing values. Omitted `dashboardId` keeps the dashboard link; send `null` to clear it.",
         "requestBody": {
           "required": true,
           "content": {
@@ -57200,7 +57926,7 @@
                     "description": "Cluster IDs where the monitor should be deployed. Empty or omitted means all eligible clusters for cluster-deployed monitor types."
                   }
                 },
-                "description": "Monitor update request. Required fields and the submitted configuration are overwritten; omitted `message`, `tags`, `clusterIds`, `pauseUntil`, and `folderId` keep their existing values. Omitting `dashboardId` clears the dashboard link."
+                "description": "Monitor update request. Required fields and the submitted configuration are overwritten; omitted `message`, `tags`, `clusterIds`, `pauseUntil`, and `folderId` keep their existing values. Omitted `dashboardId` keeps the dashboard link; send `null` to clear it."
               },
               "examples": {
                 "example1": {
@@ -57216,6 +57942,7 @@
                     "configuration": {
                       "type": "log",
                       "timeframe": 5,
+                      "consecutiveWindows": 1,
                       "groupByFields": [],
                       "aggregationAlertLogic": "no_aggregation",
                       "queries": [
@@ -57246,7 +57973,7 @@
                 "example2": {
                   "value": {
                     "name": "High CPU Utilization By Service",
-                    "message": "More than half of grouped services are above the CPU threshold.",
+                    "message": "More than half of grouped services have been above the CPU threshold for 2 consecutive 10-minute windows.",
                     "tags": [
                       {
                         "key": "severity",
@@ -57256,6 +57983,7 @@
                     "configuration": {
                       "type": "metric",
                       "timeframe": 10,
+                      "consecutiveWindows": 2,
                       "groupByFields": [
                         {
                           "fields": [
@@ -57449,7 +58177,7 @@
               }
             }
           },
-          "description": "Monitor update request. Required fields and the submitted configuration are overwritten; omitted `message`, `tags`, `clusterIds`, `pauseUntil`, and `folderId` keep their existing values. Omitting `dashboardId` clears the dashboard link."
+          "description": "Monitor update request. Required fields and the submitted configuration are overwritten; omitted `message`, `tags`, `clusterIds`, `pauseUntil`, and `folderId` keep their existing values. Omitted `dashboardId` keeps the dashboard link; send `null` to clear it."
         },
         "parameters": [
           {
@@ -57813,6 +58541,7 @@
                     "configuration": {
                       "type": "log",
                       "timeframe": 5,
+                      "consecutiveWindows": 1,
                       "groupByFields": [],
                       "aggregationAlertLogic": "no_aggregation",
                       "queries": [
@@ -57843,7 +58572,7 @@
                 "example2": {
                   "value": {
                     "name": "High CPU Utilization By Service",
-                    "message": "More than half of grouped services are above the CPU threshold.",
+                    "message": "More than half of grouped services have been above the CPU threshold for 2 consecutive 10-minute windows.",
                     "tags": [
                       {
                         "key": "severity",
@@ -57853,6 +58582,7 @@
                     "configuration": {
                       "type": "metric",
                       "timeframe": 10,
+                      "consecutiveWindows": 2,
                       "groupByFields": [
                         {
                           "fields": [
@@ -65839,7 +66569,7 @@
                                   "properties": {
                                     "aggregate": {
                                       "title": "InputAggregate",
-                                      "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                                      "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                                       "type": "object",
                                       "discriminator": {
                                         "propertyName": "type",
@@ -65990,7 +66720,7 @@
                                 "errorMessage": {
                                   "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
                                 },
-                                "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400."
+                                "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
                               }
                             },
                             "title": "SloQueryFormula",
@@ -66014,7 +66744,7 @@
                                   "properties": {
                                     "aggregate": {
                                       "title": "InputAggregate",
-                                      "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                                      "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                                       "type": "object",
                                       "discriminator": {
                                         "propertyName": "type",
@@ -66165,7 +66895,7 @@
                                 "errorMessage": {
                                   "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
                                 },
-                                "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400."
+                                "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
                               }
                             },
                             "title": "SloQueryFormula",
@@ -66271,7 +67001,7 @@
                                   "properties": {
                                     "aggregate": {
                                       "title": "InputAggregate",
-                                      "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                                      "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                                       "type": "object",
                                       "discriminator": {
                                         "propertyName": "type",
@@ -66422,7 +67152,7 @@
                                 "errorMessage": {
                                   "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
                                 },
-                                "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400."
+                                "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
                               }
                             },
                             "title": "SloQueryFormula",
@@ -67022,7 +67752,7 @@
                                   "properties": {
                                     "aggregate": {
                                       "title": "InputAggregate",
-                                      "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                                      "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                                       "type": "object",
                                       "discriminator": {
                                         "propertyName": "type",
@@ -67173,7 +67903,7 @@
                                 "errorMessage": {
                                   "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
                                 },
-                                "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400."
+                                "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
                               }
                             },
                             "title": "SloQueryFormula",
@@ -67197,7 +67927,7 @@
                                   "properties": {
                                     "aggregate": {
                                       "title": "InputAggregate",
-                                      "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                                      "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                                       "type": "object",
                                       "discriminator": {
                                         "propertyName": "type",
@@ -67348,7 +68078,7 @@
                                 "errorMessage": {
                                   "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
                                 },
-                                "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400."
+                                "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
                               }
                             },
                             "title": "SloQueryFormula",
@@ -67454,7 +68184,7 @@
                                   "properties": {
                                     "aggregate": {
                                       "title": "InputAggregate",
-                                      "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`.",
+                                      "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
                                       "type": "object",
                                       "discriminator": {
                                         "propertyName": "type",
@@ -67605,7 +68335,7 @@
                                 "errorMessage": {
                                   "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
                                 },
-                                "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400."
+                                "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
                               }
                             },
                             "title": "SloQueryFormula",
@@ -70648,18 +71378,18 @@
                     "type": "integer",
                     "minimum": 1,
                     "maximum": 100,
-                    "description": "Maximum number of findings to return, strongest first. A finding is one attribute/value pair, and findings are grouped into one `contrastSets` entry per attribute, so a result carries at most this many `values` rows across possibly fewer entries. Valid values are 1 through 100."
+                    "description": "Maximum number of findings to return, strongest first. A finding is one attribute/value pair, and findings are grouped into one `contrastSets` entry per attribute, so a result carries at most this many `values` rows across possibly fewer entries. Valid values are 1 through 100. Defaults to 10."
                   },
                   "minLift": {
                     "type": "number",
                     "minimum": 1,
-                    "description": "Minimum lift a value must reach to be reported as a finding. Lift is the value's coverage of the target group divided by its coverage of the baseline, so `2` keeps only values at least twice as frequent in the target. Raise it to cut weak findings."
+                    "description": "Minimum lift a value must reach to be reported as a finding. Lift is the value's coverage of the target group divided by its coverage of the baseline, so `2` keeps only values at least twice as frequent in the target. Raise it to cut weak findings. Defaults to 1.5."
                   },
                   "minSupport": {
                     "type": "number",
                     "minimum": 0,
                     "maximum": 100,
-                    "description": "Support floor as a percentage: a value is reported as a finding only when it covers at least this much of the target group or of the baseline group. Valid values are 0 through 100. Raise it to drop findings that explain only a handful of spans."
+                    "description": "Support floor as a percentage: a value is reported as a finding only when it covers at least this much of the target group or of the baseline group. Valid values are 0 through 100. Raise it to drop findings that explain only a handful of spans. Defaults to 0.5."
                   }
                 },
                 "description": "Contrast-set request. Provide the target group to explain and the baseline to compare it against, plus optional significance tuning. Send `clusterId` as a query parameter, not in the JSON body."
@@ -71104,6 +71834,10 @@
     {
       "name": "custom-usage-tags",
       "description": "Operations for custom telemetry tag keys tracked as usage dimensions. Use these endpoints to configure which tags appear in usage analysis. See [Usage overview](/documentation/account-and-settings/usage-overview)."
+    },
+    {
+      "name": "data-deletion-requests",
+      "description": "Operations for requests that delete telemetry events matching a query, for example to answer GDPR erasure requests. Only scope:all operation API keys and global admins can use them."
     },
     {
       "name": "dashboards",
