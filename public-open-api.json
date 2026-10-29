@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsuga Public API",
     "description": "Public HTTP API for Tsuga customers and customer-operated tools. Use these endpoints to query observability data, manage customer-owned Tsuga resources, and retrieve documentation or API-reference content. Public API requests authenticate with Bearer tokens such as operation keys. See [API reference](/documentation/api).",
-    "version": "20261028.16.0+33881f3",
+    "version": "20261029.19.0+296073d",
     "contact": {
       "name": "Tsuga",
       "url": "https://tsuga.com"
@@ -259,6 +259,40 @@
                         "description": "Parses a user-agent string and writes browser, operating system, and device details.",
                         "enum": [
                           "user-agent"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "sourceAttribute",
+                      "targetAttribute",
+                      "redactSource",
+                      "subtype"
+                    ],
+                    "properties": {
+                      "sourceAttribute": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 250,
+                        "description": "Attribute containing the IP address to look up"
+                      },
+                      "targetAttribute": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 250,
+                        "description": "Target map attribute where geolocation details will be written"
+                      },
+                      "redactSource": {
+                        "type": "boolean",
+                        "description": "Whether to replace a public IP address in the source attribute with `[REDACTED_IP]`. Private IP addresses and non-IP values are left unchanged."
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "description": "Resolves an IP address attribute to geolocation details.",
+                        "enum": [
+                          "geo-ip"
                         ]
                       }
                     }
@@ -713,6 +747,36 @@
                         "description": "Parses a user-agent string and writes browser, operating system, and device details.",
                         "enum": [
                           "user-agent"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "sourceAttribute",
+                      "targetAttribute",
+                      "redactSource",
+                      "subtype"
+                    ],
+                    "properties": {
+                      "sourceAttribute": {
+                        "type": "string",
+                        "description": "Attribute containing the IP address to look up"
+                      },
+                      "targetAttribute": {
+                        "type": "string",
+                        "description": "Target map attribute where geolocation details will be written"
+                      },
+                      "redactSource": {
+                        "type": "boolean",
+                        "description": "Whether to replace a public IP address in the source attribute with `[REDACTED_IP]`. Private IP addresses and non-IP values are left unchanged."
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "description": "Resolves an IP address attribute to geolocation details.",
+                        "enum": [
+                          "geo-ip"
                         ]
                       }
                     }
@@ -13668,6 +13732,36 @@
                         "description": "Parses a user-agent string and writes browser, operating system, and device details.",
                         "enum": [
                           "user-agent"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "sourceAttribute",
+                      "targetAttribute",
+                      "redactSource",
+                      "subtype"
+                    ],
+                    "properties": {
+                      "sourceAttribute": {
+                        "type": "string",
+                        "description": "Attribute containing the IP address to look up"
+                      },
+                      "targetAttribute": {
+                        "type": "string",
+                        "description": "Target map attribute where geolocation details will be written"
+                      },
+                      "redactSource": {
+                        "type": "boolean",
+                        "description": "Whether to replace a public IP address in the source attribute with `[REDACTED_IP]`. Private IP addresses and non-IP values are left unchanged."
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "description": "Resolves an IP address attribute to geolocation details.",
+                        "enum": [
+                          "geo-ip"
                         ]
                       }
                     }
