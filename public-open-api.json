@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsuga Public API",
     "description": "Public HTTP API for Tsuga customers and customer-operated tools. Use these endpoints to query observability data, manage customer-owned Tsuga resources, and retrieve documentation or API-reference content. Public API requests authenticate with Bearer tokens such as operation keys. See [API reference](/documentation/api).",
-    "version": "20261029.47.0+e165519",
+    "version": "20261030.13.0+9cd759b",
     "contact": {
       "name": "Tsuga",
       "url": "https://tsuga.com"
@@ -8540,6 +8540,9 @@
                 }
               ]
             }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
           }
         }
       },
@@ -8724,6 +8727,9 @@
                 }
               ]
             }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
           }
         }
       },
@@ -8818,6 +8824,9 @@
                 }
               ]
             }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
           }
         }
       },
@@ -8897,6 +8906,9 @@
                 }
               ]
             }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
           }
         }
       },
@@ -8966,6 +8978,9 @@
                 }
               ]
             }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
           }
         }
       },
@@ -9045,6 +9060,9 @@
                 }
               ]
             }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
           }
         }
       },
@@ -10185,13 +10203,6 @@
                     "type": "string"
                   },
                   "description": "Aggregate function types (such as `max`, `min`, `sum`) supported when querying or graphing this metric. An empty or omitted array means all aggregate types are supported."
-                },
-                "attributes": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "description": "Metric attribute names available as dimensions for filtering or grouping."
                 }
               },
               "examples": [
@@ -10205,11 +10216,6 @@
                     "max",
                     "min",
                     "sum"
-                  ],
-                  "attributes": [
-                    "context.team",
-                    "context.environment",
-                    "context.region"
                   ]
                 }
               ]
@@ -54059,7 +54065,7 @@
         "tags": [
           "kubernetes-explorer"
         ],
-        "description": "Lists Kubernetes pods observed across the organization with their current phase, owning workload, and resource usage.",
+        "description": "Lists Kubernetes pods observed across the organization with their current phase, owning workload, and resource usage. Results are paged, 100 per page by default; when `totalCount` exceeds the page, narrow them with `search` or page through them with `limit` and `offset`, and set `sortBy` so the order stays the same across pages.",
         "parameters": [
           {
             "schema": {
@@ -54083,6 +54089,67 @@
             "name": "search",
             "required": false,
             "description": "Substring matched against the resource name. Kubernetes names are lowercase RFC 1123, so only lowercase letters, digits, `.` and `-` are accepted; uppercase and other characters are rejected. Wildcard and other query-syntax characters are treated literally."
+          },
+          {
+            "schema": {
+              "enum": [
+                "podName",
+                "namespace",
+                "cluster",
+                "team",
+                "env",
+                "node",
+                "phase",
+                "restarts",
+                "cpuUsageMilli",
+                "cpuUtilization",
+                "cpuRequestUtilization",
+                "memoryUsageBytes",
+                "memoryUtilization",
+                "memoryRequestUtilization",
+                "createdAt"
+              ],
+              "type": "string"
+            },
+            "in": "query",
+            "name": "sortBy",
+            "required": false,
+            "description": "Field to sort results by."
+          },
+          {
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            },
+            "in": "query",
+            "name": "sortDirection",
+            "required": false,
+            "description": "Sort direction: ascending or descending."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Maximum number of items to return in this page. Omit to use the public API default of 100."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "description": "Zero-based index of the first matching item to return. Increase it with `limit` to request later pages. If `limit` is provided without `offset`, the offset defaults to 0."
           }
         ],
         "responses": {
@@ -54239,7 +54306,7 @@
         "tags": [
           "kubernetes-explorer"
         ],
-        "description": "Lists Kubernetes namespaces observed across the organization with pod counts and aggregate resource usage.",
+        "description": "Lists Kubernetes namespaces observed across the organization with pod counts and aggregate resource usage. Results are paged, 100 per page by default; when `totalCount` exceeds the page, narrow them with `search` or page through them with `limit` and `offset`, and set `sortBy` so the order stays the same across pages.",
         "parameters": [
           {
             "schema": {
@@ -54263,6 +54330,59 @@
             "name": "search",
             "required": false,
             "description": "Substring matched against the resource name. Kubernetes names are lowercase RFC 1123, so only lowercase letters, digits, `.` and `-` are accepted; uppercase and other characters are rejected. Wildcard and other query-syntax characters are treated literally."
+          },
+          {
+            "schema": {
+              "enum": [
+                "namespace",
+                "cluster",
+                "teams",
+                "envs",
+                "pods",
+                "cpuUsageMilli",
+                "memoryUsageBytes"
+              ],
+              "type": "string"
+            },
+            "in": "query",
+            "name": "sortBy",
+            "required": false,
+            "description": "Field to sort results by."
+          },
+          {
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            },
+            "in": "query",
+            "name": "sortDirection",
+            "required": false,
+            "description": "Sort direction: ascending or descending."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Maximum number of items to return in this page. Omit to use the public API default of 100."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "description": "Zero-based index of the first matching item to return. Increase it with `limit` to request later pages. If `limit` is provided without `offset`, the offset defaults to 0."
           }
         ],
         "responses": {
@@ -54329,7 +54449,7 @@
         "tags": [
           "kubernetes-explorer"
         ],
-        "description": "Lists Kubernetes nodes observed across the organization with their readiness, instance type, and resource usage against allocatable capacity.",
+        "description": "Lists Kubernetes nodes observed across the organization with their readiness, instance type, and resource usage against allocatable capacity. Results are paged, 100 per page by default; when `totalCount` exceeds the page, narrow them with `search` or page through them with `limit` and `offset`, and set `sortBy` so the order stays the same across pages.",
         "parameters": [
           {
             "schema": {
@@ -54353,6 +54473,64 @@
             "name": "search",
             "required": false,
             "description": "Substring matched against the resource name. Kubernetes names are lowercase RFC 1123, so only lowercase letters, digits, `.` and `-` are accepted; uppercase and other characters are rejected. Wildcard and other query-syntax characters are treated literally."
+          },
+          {
+            "schema": {
+              "enum": [
+                "node",
+                "cluster",
+                "status",
+                "instanceType",
+                "pods",
+                "allocatablePods",
+                "cpuUsageMilli",
+                "cpuAllocatableMilli",
+                "cpuUtilization",
+                "memoryUsageBytes",
+                "memoryAllocatableBytes",
+                "memoryUtilization"
+              ],
+              "type": "string"
+            },
+            "in": "query",
+            "name": "sortBy",
+            "required": false,
+            "description": "Field to sort results by."
+          },
+          {
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            },
+            "in": "query",
+            "name": "sortDirection",
+            "required": false,
+            "description": "Sort direction: ascending or descending."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Maximum number of items to return in this page. Omit to use the public API default of 100."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "description": "Zero-based index of the first matching item to return. Increase it with `limit` to request later pages. If `limit` is provided without `offset`, the offset defaults to 0."
           }
         ],
         "responses": {
@@ -54419,7 +54597,7 @@
         "tags": [
           "kubernetes-explorer"
         ],
-        "description": "Lists Kubernetes deployments observed across the organization with replica counts and aggregate resource usage.",
+        "description": "Lists Kubernetes deployments observed across the organization with replica counts and aggregate resource usage. Results are paged, 100 per page by default; when `totalCount` exceeds the page, narrow them with `search` or page through them with `limit` and `offset`, and set `sortBy` so the order stays the same across pages.",
         "parameters": [
           {
             "schema": {
@@ -54443,6 +54621,61 @@
             "name": "search",
             "required": false,
             "description": "Substring matched against the resource name. Kubernetes names are lowercase RFC 1123, so only lowercase letters, digits, `.` and `-` are accepted; uppercase and other characters are rejected. Wildcard and other query-syntax characters are treated literally."
+          },
+          {
+            "schema": {
+              "enum": [
+                "deployment",
+                "namespace",
+                "cluster",
+                "team",
+                "env",
+                "pods",
+                "availableReplicas",
+                "cpuUsageMilli",
+                "memoryUsageBytes"
+              ],
+              "type": "string"
+            },
+            "in": "query",
+            "name": "sortBy",
+            "required": false,
+            "description": "Field to sort results by."
+          },
+          {
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            },
+            "in": "query",
+            "name": "sortDirection",
+            "required": false,
+            "description": "Sort direction: ascending or descending."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Maximum number of items to return in this page. Omit to use the public API default of 100."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "description": "Zero-based index of the first matching item to return. Increase it with `limit` to request later pages. If `limit` is provided without `offset`, the offset defaults to 0."
           }
         ],
         "responses": {
@@ -54509,7 +54742,7 @@
         "tags": [
           "kubernetes-explorer"
         ],
-        "description": "Lists Kubernetes StatefulSets observed across the organization with replica counts and aggregate resource usage.",
+        "description": "Lists Kubernetes StatefulSets observed across the organization with replica counts and aggregate resource usage. Results are paged, 100 per page by default; when `totalCount` exceeds the page, narrow them with `search` or page through them with `limit` and `offset`, and set `sortBy` so the order stays the same across pages.",
         "parameters": [
           {
             "schema": {
@@ -54533,6 +54766,60 @@
             "name": "search",
             "required": false,
             "description": "Substring matched against the resource name. Kubernetes names are lowercase RFC 1123, so only lowercase letters, digits, `.` and `-` are accepted; uppercase and other characters are rejected. Wildcard and other query-syntax characters are treated literally."
+          },
+          {
+            "schema": {
+              "enum": [
+                "statefulSet",
+                "namespace",
+                "cluster",
+                "team",
+                "env",
+                "pods",
+                "cpuUsageMilli",
+                "memoryUsageBytes"
+              ],
+              "type": "string"
+            },
+            "in": "query",
+            "name": "sortBy",
+            "required": false,
+            "description": "Field to sort results by."
+          },
+          {
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            },
+            "in": "query",
+            "name": "sortDirection",
+            "required": false,
+            "description": "Sort direction: ascending or descending."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Maximum number of items to return in this page. Omit to use the public API default of 100."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "description": "Zero-based index of the first matching item to return. Increase it with `limit` to request later pages. If `limit` is provided without `offset`, the offset defaults to 0."
           }
         ],
         "responses": {
@@ -54599,7 +54886,7 @@
         "tags": [
           "kubernetes-explorer"
         ],
-        "description": "Lists Kubernetes DaemonSets observed across the organization with eligible-node readiness and aggregate resource usage.",
+        "description": "Lists Kubernetes DaemonSets observed across the organization with eligible-node readiness and aggregate resource usage. Results are paged, 100 per page by default; when `totalCount` exceeds the page, narrow them with `search` or page through them with `limit` and `offset`, and set `sortBy` so the order stays the same across pages.",
         "parameters": [
           {
             "schema": {
@@ -54623,6 +54910,61 @@
             "name": "search",
             "required": false,
             "description": "Substring matched against the resource name. Kubernetes names are lowercase RFC 1123, so only lowercase letters, digits, `.` and `-` are accepted; uppercase and other characters are rejected. Wildcard and other query-syntax characters are treated literally."
+          },
+          {
+            "schema": {
+              "enum": [
+                "daemonSet",
+                "namespace",
+                "cluster",
+                "team",
+                "env",
+                "pods",
+                "readyNodes",
+                "cpuUsageMilli",
+                "memoryUsageBytes"
+              ],
+              "type": "string"
+            },
+            "in": "query",
+            "name": "sortBy",
+            "required": false,
+            "description": "Field to sort results by."
+          },
+          {
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            },
+            "in": "query",
+            "name": "sortDirection",
+            "required": false,
+            "description": "Sort direction: ascending or descending."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Maximum number of items to return in this page. Omit to use the public API default of 100."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "description": "Zero-based index of the first matching item to return. Increase it with `limit` to request later pages. If `limit` is provided without `offset`, the offset defaults to 0."
           }
         ],
         "responses": {
@@ -54713,6 +55055,73 @@
             "name": "search",
             "required": false,
             "description": "Substring matched against the resource name. Kubernetes names are lowercase RFC 1123, so only lowercase letters, digits, `.` and `-` are accepted; uppercase and other characters are rejected. Wildcard and other query-syntax characters are treated literally."
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "includeInternalNamespaces",
+            "required": false,
+            "description": "When false or omitted, resources in internal namespaces (kube-system, kube-public, kube-node-lease, local-path-storage, gke-managed-*) are excluded, even when `namespaces` names them."
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 250
+              }
+            },
+            "in": "query",
+            "name": "clusters",
+            "required": false,
+            "description": "Restrict results to these Kubernetes cluster names."
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 250
+              }
+            },
+            "in": "query",
+            "name": "namespaces",
+            "required": false,
+            "description": "Restrict results to these namespaces."
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 250
+              }
+            },
+            "in": "query",
+            "name": "resourceKinds",
+            "required": false,
+            "description": "Restrict results to events about these resource kinds (Pod, Node, Deployment...)."
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "Normal",
+                  "Warning"
+                ],
+                "type": "string"
+              }
+            },
+            "in": "query",
+            "name": "types",
+            "required": false,
+            "description": "Restrict results to events of these types."
           },
           {
             "schema": {
@@ -55747,7 +56156,7 @@
         "tags": [
           "metrics"
         ],
-        "description": "Lists metric names with metadata such as type, unit, temporality, capabilities, and attributes. Use this to discover metric names before querying or graphing them. Results are sorted by name and paged, 100 per page by default; when `totalCount` exceeds the page, narrow them with `search` or page through them with `limit` and `offset`. This reads a cluster-wide catalog of names rather than the window: `from` and `to` are required but do not scope the result, and a name stays listed after the metric stops reporting. To find out whether a metric has data in a window, run a `count` aggregation over it. See [Metrics](/documentation/explore/metrics/index).",
+        "description": "Lists metric names with metadata such as type, unit, temporality, and capabilities. Use this to discover metric names before querying or graphing them, then get one metric for its attributes. Results are sorted by name and paged, 100 per page by default; when `totalCount` exceeds the page, narrow them with `search` or page through them with `limit` and `offset`. This reads a cluster-wide catalog of names rather than the window: `from` and `to` are required but do not scope the result, and a name stays listed after the metric stops reporting. To find out whether a metric has data in a window, run a `count` aggregation over it. See [Metrics](/documentation/explore/metrics/index).",
         "parameters": [
           {
             "schema": {
