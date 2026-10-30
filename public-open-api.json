@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsuga Public API",
     "description": "Public HTTP API for Tsuga customers and customer-operated tools. Use these endpoints to query observability data, manage customer-owned Tsuga resources, and retrieve documentation or API-reference content. Public API requests authenticate with Bearer tokens such as operation keys. See [API reference](/documentation/api).",
-    "version": "20261029.19.0+296073d",
+    "version": "20261029.47.0+e165519",
     "contact": {
       "name": "Tsuga",
       "url": "https://tsuga.com"
@@ -19068,7 +19068,7 @@
           },
           "consecutiveWindows": {
             "type": "integer",
-            "description": "Number of consecutive `timeframe`-minute windows that must all meet the conditions before the monitor alerts. 1 or omitted is the standard threshold behavior: one window ending at evaluation time. Above 1, each evaluation checks the last `consecutiveWindows` windows and alerts only when every one meets the conditions, per group for grouped monitors. A window that does not meet the conditions breaks the run, and so does a window with no data unless `noDataBehavior` is `consider_zero`, which evaluates it as 0. At most 10, and above 1, `consecutiveWindows` × `timeframe` must not exceed 4320 minutes (3 days)."
+            "description": "Number of consecutive `timeframe`-minute windows that must all meet the conditions before the monitor alerts. 1 or omitted is the standard threshold behavior: one window ending at evaluation time. Above 1, each evaluation checks the last `consecutiveWindows` windows and alerts only when every one meets the conditions, per group for grouped monitors. A window that does not meet the conditions breaks the run. A window with no data, such as one where a query with `fill.mode.type` `null` returns nothing, breaks the run with `alert` or `resolve`, takes the result of the window before it with `keep_last_status`, and is compared as 0 with `consider_zero`. A query without `fill` counts an empty window as 0. When every window has no data (with `keep_last_status`, when the oldest window has none and no window breaks the run), the group follows `noDataBehavior` as a single window does. At most 10, and above 1, `consecutiveWindows` × `timeframe` must not exceed 4320 minutes (3 days)."
           },
           "queries": {
             "type": "array",
@@ -19365,7 +19365,7 @@
           },
           "consecutiveWindows": {
             "type": "integer",
-            "description": "Number of consecutive `timeframe`-minute windows that must all meet the conditions before the monitor alerts. 1 or omitted is the standard threshold behavior: one window ending at evaluation time. Above 1, each evaluation checks the last `consecutiveWindows` windows and alerts only when every one meets the conditions, per group for grouped monitors. A window that does not meet the conditions breaks the run, and so does a window with no data unless `noDataBehavior` is `consider_zero`, which evaluates it as 0. At most 10, and above 1, `consecutiveWindows` × `timeframe` must not exceed 4320 minutes (3 days)."
+            "description": "Number of consecutive `timeframe`-minute windows that must all meet the conditions before the monitor alerts. 1 or omitted is the standard threshold behavior: one window ending at evaluation time. Above 1, each evaluation checks the last `consecutiveWindows` windows and alerts only when every one meets the conditions, per group for grouped monitors. A window that does not meet the conditions breaks the run. A window with no data, such as one where a query with `fill.mode.type` `null` returns nothing, breaks the run with `alert` or `resolve`, takes the result of the window before it with `keep_last_status`, and is compared as 0 with `consider_zero`. A query without `fill` counts an empty window as 0. When every window has no data (with `keep_last_status`, when the oldest window has none and no window breaks the run), the group follows `noDataBehavior` as a single window does. At most 10, and above 1, `consecutiveWindows` × `timeframe` must not exceed 4320 minutes (3 days)."
           },
           "queries": {
             "type": "array",
@@ -19662,7 +19662,7 @@
           },
           "consecutiveWindows": {
             "type": "integer",
-            "description": "Number of consecutive `timeframe`-minute windows that must all meet the conditions before the monitor alerts. 1 or omitted is the standard threshold behavior: one window ending at evaluation time. Above 1, each evaluation checks the last `consecutiveWindows` windows and alerts only when every one meets the conditions, per group for grouped monitors. A window that does not meet the conditions breaks the run, and so does a window with no data unless `noDataBehavior` is `consider_zero`, which evaluates it as 0. At most 10, and above 1, `consecutiveWindows` × `timeframe` must not exceed 4320 minutes (3 days)."
+            "description": "Number of consecutive `timeframe`-minute windows that must all meet the conditions before the monitor alerts. 1 or omitted is the standard threshold behavior: one window ending at evaluation time. Above 1, each evaluation checks the last `consecutiveWindows` windows and alerts only when every one meets the conditions, per group for grouped monitors. A window that does not meet the conditions breaks the run. A window with no data, such as one where a query with `fill.mode.type` `null` returns nothing, breaks the run with `alert` or `resolve`, takes the result of the window before it with `keep_last_status`, and is compared as 0 with `consider_zero`. A query without `fill` counts an empty window as 0. When every window has no data (with `keep_last_status`, when the oldest window has none and no window breaks the run), the group follows `noDataBehavior` as a single window does. At most 10, and above 1, `consecutiveWindows` × `timeframe` must not exceed 4320 minutes (3 days)."
           },
           "queries": {
             "type": "array",
@@ -21099,7 +21099,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 10,
-            "description": "Number of consecutive `timeframe`-minute windows that must all meet the conditions before the monitor alerts. 1 or omitted is the standard threshold behavior: one window ending at evaluation time. Above 1, each evaluation checks the last `consecutiveWindows` windows and alerts only when every one meets the conditions, per group for grouped monitors. A window that does not meet the conditions breaks the run, and so does a window with no data unless `noDataBehavior` is `consider_zero`, which evaluates it as 0. At most 10, and above 1, `consecutiveWindows` × `timeframe` must not exceed 4320 minutes (3 days)."
+            "description": "Number of consecutive `timeframe`-minute windows that must all meet the conditions before the monitor alerts. 1 or omitted is the standard threshold behavior: one window ending at evaluation time. Above 1, each evaluation checks the last `consecutiveWindows` windows and alerts only when every one meets the conditions, per group for grouped monitors. A window that does not meet the conditions breaks the run. A window with no data, such as one where a query with `fill.mode.type` `null` returns nothing, breaks the run with `alert` or `resolve`, takes the result of the window before it with `keep_last_status`, and is compared as 0 with `consider_zero`. A query without `fill` counts an empty window as 0. When every window has no data (with `keep_last_status`, when the oldest window has none and no window breaks the run), the group follows `noDataBehavior` as a single window does. At most 10, and above 1, `consecutiveWindows` × `timeframe` must not exceed 4320 minutes (3 days)."
           },
           "queries": {
             "type": "array",
@@ -21420,7 +21420,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 10,
-            "description": "Number of consecutive `timeframe`-minute windows that must all meet the conditions before the monitor alerts. 1 or omitted is the standard threshold behavior: one window ending at evaluation time. Above 1, each evaluation checks the last `consecutiveWindows` windows and alerts only when every one meets the conditions, per group for grouped monitors. A window that does not meet the conditions breaks the run, and so does a window with no data unless `noDataBehavior` is `consider_zero`, which evaluates it as 0. At most 10, and above 1, `consecutiveWindows` × `timeframe` must not exceed 4320 minutes (3 days)."
+            "description": "Number of consecutive `timeframe`-minute windows that must all meet the conditions before the monitor alerts. 1 or omitted is the standard threshold behavior: one window ending at evaluation time. Above 1, each evaluation checks the last `consecutiveWindows` windows and alerts only when every one meets the conditions, per group for grouped monitors. A window that does not meet the conditions breaks the run. A window with no data, such as one where a query with `fill.mode.type` `null` returns nothing, breaks the run with `alert` or `resolve`, takes the result of the window before it with `keep_last_status`, and is compared as 0 with `consider_zero`. A query without `fill` counts an empty window as 0. When every window has no data (with `keep_last_status`, when the oldest window has none and no window breaks the run), the group follows `noDataBehavior` as a single window does. At most 10, and above 1, `consecutiveWindows` × `timeframe` must not exceed 4320 minutes (3 days)."
           },
           "queries": {
             "type": "array",
@@ -21741,7 +21741,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 10,
-            "description": "Number of consecutive `timeframe`-minute windows that must all meet the conditions before the monitor alerts. 1 or omitted is the standard threshold behavior: one window ending at evaluation time. Above 1, each evaluation checks the last `consecutiveWindows` windows and alerts only when every one meets the conditions, per group for grouped monitors. A window that does not meet the conditions breaks the run, and so does a window with no data unless `noDataBehavior` is `consider_zero`, which evaluates it as 0. At most 10, and above 1, `consecutiveWindows` × `timeframe` must not exceed 4320 minutes (3 days)."
+            "description": "Number of consecutive `timeframe`-minute windows that must all meet the conditions before the monitor alerts. 1 or omitted is the standard threshold behavior: one window ending at evaluation time. Above 1, each evaluation checks the last `consecutiveWindows` windows and alerts only when every one meets the conditions, per group for grouped monitors. A window that does not meet the conditions breaks the run. A window with no data, such as one where a query with `fill.mode.type` `null` returns nothing, breaks the run with `alert` or `resolve`, takes the result of the window before it with `keep_last_status`, and is compared as 0 with `consider_zero`. A query without `fill` counts an empty window as 0. When every window has no data (with `keep_last_status`, when the oldest window has none and no window breaks the run), the group follows `noDataBehavior` as a single window does. At most 10, and above 1, `consecutiveWindows` × `timeframe` must not exceed 4320 minutes (3 days)."
           },
           "queries": {
             "type": "array",
