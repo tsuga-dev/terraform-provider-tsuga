@@ -353,7 +353,7 @@
             "name": "name",
             "string": {
               "computed_optional_required": "required",
-              "description": "Kebab-case name for the ingestion API key. Maximum length is 100 characters.",
+              "description": "Kebab-case name for the ingestion API key.",
               "validators": [
                 {
                   "custom": {
@@ -468,7 +468,7 @@
               "element_type": {
                 "string": {}
               },
-              "description": "Array form. Up to 3 fields are allowed.",
+              "description": "Array form.",
               "validators": [
                 {
                   "custom": {
@@ -1082,7 +1082,7 @@
             "name": "name",
             "string": {
               "computed_optional_required": "required",
-              "description": "Kebab-case name for the RUM public token. Maximum length is 100 characters.",
+              "description": "Kebab-case name for the RUM public token.",
               "validators": [
                 {
                   "custom": {
@@ -1204,7 +1204,7 @@
               "element_type": {
                 "string": {}
               },
-              "description": "Array form. Up to 3 fields are allowed.",
+              "description": "Array form.",
               "validators": [
                 {
                   "custom": {
@@ -1275,7 +1275,7 @@
             "name": "name",
             "string": {
               "computed_optional_required": "required",
-              "description": "Name to assign to the team. Must be kebab-case (lowercase letters, numbers, and dashes only) and unique in the organization. Maximum length is 100 characters.",
+              "description": "Name to assign to the team. Must be kebab-case (lowercase letters, numbers, and dashes only) and unique in the organization.",
               "validators": [
                 {
                   "custom": {

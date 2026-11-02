@@ -45,8 +45,8 @@ func IngestionApiKeyResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				Description:         "Kebab-case name for the ingestion API key. Maximum length is 100 characters.",
-				MarkdownDescription: "Kebab-case name for the ingestion API key. Maximum length is 100 characters.",
+				Description:         "Kebab-case name for the ingestion API key.",
+				MarkdownDescription: "Kebab-case name for the ingestion API key.",
 				Validators: []validator.String{
 					stringvalidator.LengthBetween(1, 100),
 				},
@@ -96,8 +96,8 @@ func IngestionApiKeyResourceSchema(ctx context.Context) schema.Schema {
 			"team_override_fields": schema.ListAttribute{
 				ElementType:         types.StringType,
 				Optional:            true,
-				Description:         "Array form. Up to 3 fields are allowed.",
-				MarkdownDescription: "Array form. Up to 3 fields are allowed.",
+				Description:         "Array form.",
+				MarkdownDescription: "Array form.",
 				Validators: []validator.List{
 					listvalidator.SizeBetween(1, 3),
 				},

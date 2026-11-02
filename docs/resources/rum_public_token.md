@@ -35,13 +35,13 @@ resource "tsuga_rum_public_token" "example" {
 
 - `allowed_url_prefixes` (List of String) URL prefixes which RUM telemetry data can be sent from. Supports wildcard matching. At least one prefix is required for `web` applications, and the array must be empty for `ios` and `android` applications.
 - `application_type` (String) Kind of application the token is issued for. Only `web` telemetry is checked against `allowedUrlPrefixes`, since mobile applications do not send an `Origin` header. Fixed at creation: an update must resend the token's current value.
-- `name` (String) Kebab-case name for the RUM public token. Maximum length is 100 characters.
+- `name` (String) Kebab-case name for the RUM public token.
 - `owner` (String) Team ID that will own and manage the RUM public token.
 - `tags` (Attributes List) Key/value tags to apply to the resource. Tag policies may require specific keys or values. (see [below for nested schema](#nestedatt--tags))
 
 ### Optional
 
-- `team_override_fields` (List of String) Array form. Up to 3 fields are allowed.
+- `team_override_fields` (List of String) Array form.
 
 ### Read-Only
 

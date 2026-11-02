@@ -31,13 +31,13 @@ resource "tsuga_ingestion_api_key" "example" {
 
 ### Required
 
-- `name` (String) Kebab-case name for the ingestion API key. Maximum length is 100 characters.
+- `name` (String) Kebab-case name for the ingestion API key.
 - `owner` (String) Team ID that will own and manage the ingestion API key.
 - `tags` (Attributes List) Key/value tags to apply to the resource. Tag policies may require specific keys or values. (see [below for nested schema](#nestedatt--tags))
 
 ### Optional
 
-- `team_override_fields` (List of String) Array form. Up to 3 fields are allowed.
+- `team_override_fields` (List of String) Array form.
 
 ### Read-Only
 

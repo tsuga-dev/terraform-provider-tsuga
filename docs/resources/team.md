@@ -31,7 +31,7 @@ resource "tsuga_team" "team" {
 
 ### Required
 
-- `name` (String) Name to assign to the team. Must be kebab-case (lowercase letters, numbers, and dashes only) and unique in the organization. Maximum length is 100 characters.
+- `name` (String) Name to assign to the team. Must be kebab-case (lowercase letters, numbers, and dashes only) and unique in the organization.
 - `visibility` (String) `public` makes team-owned resources discoverable according to access controls. `private` restricts discovery to team members and authorized users.
 
 ### Optional
