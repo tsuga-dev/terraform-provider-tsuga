@@ -41,6 +41,7 @@ resource "tsuga_rum_public_token" "example" {
 
 ### Optional
 
+- `collect_client_ip` (Boolean) Whether intake records the IP address each request comes from as `client.address` on RUM records, and derives the `geo` location from it. Defaults to false on creation. Omit it on update to keep the current value.
 - `team_override_fields` (List of String) Array form.
 
 ### Read-Only

@@ -36,6 +36,7 @@ type rumPublicTokenAPIResponse struct {
 		Owner              string   `json:"owner"`
 		ApplicationType    string   `json:"applicationType"`
 		AllowedUrlPrefixes []string `json:"allowedUrlPrefixes"`
+		CollectClientIp    bool     `json:"collectClientIp"`
 		Tags               []apiTag `json:"tags"`
 		TeamOverrideFields []string `json:"teamOverrideFields"`
 	} `json:"data"`
@@ -271,6 +272,9 @@ func (r *rumPublicTokenResource) modelToRequest(ctx context.Context, model resou
 	if len(fields) > 0 {
 		body["teamOverrideFields"] = fields
 	}
+	if !model.CollectClientIp.IsNull() && !model.CollectClientIp.IsUnknown() {
+		body["collectClientIp"] = model.CollectClientIp.ValueBool()
+	}
 
 	return body, diags
 }
@@ -283,6 +287,7 @@ func (r *rumPublicTokenResource) apiRespToModel(ctx context.Context, model *reso
 	model.Token = types.StringValue(apiResp.Data.Token)
 	model.Owner = types.StringValue(apiResp.Data.Owner)
 	model.ApplicationType = types.StringValue(apiResp.Data.ApplicationType)
+	model.CollectClientIp = types.BoolValue(apiResp.Data.CollectClientIp)
 
 	// allowed_url_prefixes is required, so an empty API value stays an empty list.
 	prefixes := make([]attr.Value, 0, len(apiResp.Data.AllowedUrlPrefixes))

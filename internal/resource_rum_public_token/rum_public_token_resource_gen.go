@@ -46,6 +46,12 @@ func RumPublicTokenResourceSchema(ctx context.Context) schema.Schema {
 					),
 				},
 			},
+			"collect_client_ip": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether intake records the IP address each request comes from as `client.address` on RUM records, and derives the `geo` location from it. Defaults to false on creation. Omit it on update to keep the current value.",
+				MarkdownDescription: "Whether intake records the IP address each request comes from as `client.address` on RUM records, and derives the `geo` location from it. Defaults to false on creation. Omit it on update to keep the current value.",
+			},
 			"id": schema.StringAttribute{
 				Computed:            true,
 				Description:         "Tsuga-generated RUM public token ID assigned when the token is created.",
@@ -121,6 +127,7 @@ func RumPublicTokenResourceSchema(ctx context.Context) schema.Schema {
 type RumPublicTokenModel struct {
 	AllowedUrlPrefixes types.List   `tfsdk:"allowed_url_prefixes"`
 	ApplicationType    types.String `tfsdk:"application_type"`
+	CollectClientIp    types.Bool   `tfsdk:"collect_client_ip"`
 	Id                 types.String `tfsdk:"id"`
 	Name               types.String `tfsdk:"name"`
 	Owner              types.String `tfsdk:"owner"`

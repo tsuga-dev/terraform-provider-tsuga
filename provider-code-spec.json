@@ -71,60 +71,6 @@
           }
         ]
       }
-    },
-    {
-      "name": "user",
-      "schema": {
-        "attributes": [
-          {
-            "name": "id",
-            "string": {
-              "computed_optional_required": "required",
-              "description": "Identifier of the organization user to retrieve. Use the `id` returned by list users responses.",
-              "validators": [
-                {
-                  "custom": {
-                    "imports": [
-                      {
-                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-                      }
-                    ],
-                    "schema_definition": "stringvalidator.LengthBetween(1, 250)"
-                  }
-                }
-              ]
-            }
-          },
-          {
-            "name": "custom_role_id",
-            "string": {
-              "computed_optional_required": "computed",
-              "description": "Identifier of the custom role held by the user, when `role` is `custom`. Use it with the custom role endpoints to read what the role grants."
-            }
-          },
-          {
-            "name": "email",
-            "string": {
-              "computed_optional_required": "computed",
-              "description": "Lowercase email address for the user. Use this for display and invitation matching, not as a stable identifier."
-            }
-          },
-          {
-            "name": "name",
-            "string": {
-              "computed_optional_required": "computed",
-              "description": "Display name of the user."
-            }
-          },
-          {
-            "name": "role",
-            "string": {
-              "computed_optional_required": "computed",
-              "description": "Organization role for the user: `admin`, `public_editor`, `public_viewer`, `teams_only`, or `custom` when the user holds a custom role."
-            }
-          }
-        ]
-      }
     }
   ],
   "provider": {
@@ -1076,6 +1022,13 @@
                   }
                 }
               ]
+            }
+          },
+          {
+            "name": "collect_client_ip",
+            "bool": {
+              "computed_optional_required": "computed_optional",
+              "description": "Whether intake records the IP address each request comes from as `client.address` on RUM records, and derives the `geo` location from it. Defaults to false on creation. Omit it on update to keep the current value."
             }
           },
           {

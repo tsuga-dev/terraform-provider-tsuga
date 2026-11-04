@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsuga Public API",
     "description": "Public HTTP API for Tsuga customers and customer-operated tools. Use these endpoints to query observability data, manage customer-owned Tsuga resources, and retrieve documentation or API-reference content. Public API requests authenticate with Bearer tokens such as operation keys. See [API reference](/documentation/api).",
-    "version": "20261102.33.0+16ae808",
+    "version": "20261104.19.0+dd69676",
     "contact": {
       "name": "Tsuga",
       "url": "https://tsuga.com"
@@ -1189,7 +1189,7 @@
               "properties": {
                 "id": {
                   "type": "string",
-                  "description": "Result identifier. Query results use `q1`, `q2`, and so on; formula results use `formula`."
+                  "description": "Result identifier. Query results use `q1`, `q2`, and so on; formula results use `value`."
                 },
                 "group": {
                   "type": "object",
@@ -1265,7 +1265,7 @@
               "properties": {
                 "id": {
                   "type": "string",
-                  "description": "Result identifier. Query results use `q1`, `q2`, and so on; formula results use `formula`."
+                  "description": "Result identifier. Query results use `q1`, `q2`, and so on; formula results use `value`."
                 },
                 "group": {
                   "type": "object",
@@ -1346,6 +1346,198 @@
           },
           "data": {
             "$ref": "#/components/schemas/TimeseriesAggregationResponse"
+          }
+        }
+      },
+      "ScalarAggregationResponseV2": {
+        "type": "object",
+        "required": [
+          "results"
+        ],
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "group",
+                "values"
+              ],
+              "properties": {
+                "group": {
+                  "type": "object",
+                  "description": "Group-by field values for this row, keyed by field name. Empty when no group-by is requested.",
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  }
+                },
+                "values": {
+                  "type": "object",
+                  "description": "Aggregated values over the full time range, `null` where the group has none. Keyed by result id: `q1`, `q2`, and so on for each query in submission order, plus `formula` when a computed formula is given, or `value` for a PromQL query. Every row has the same keys.",
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              },
+              "title": "ScalarResultV2"
+            },
+            "description": "One row per group, in group-by sort order (largest first unless `sortOrder` says otherwise)."
+          }
+        },
+        "title": "ScalarAggregationResponseV2",
+        "description": "Scalar aggregation response with one row per group.",
+        "examples": [
+          {
+            "results": [
+              {
+                "group": {
+                  "level": "error"
+                },
+                "values": {
+                  "q1": 1234
+                }
+              },
+              {
+                "group": {
+                  "level": "warn"
+                },
+                "values": {
+                  "q1": 567
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "AggregateScalarV2Response": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ScalarAggregationResponseV2"
+          }
+        }
+      },
+      "TimeseriesAggregationResponseV2": {
+        "type": "object",
+        "required": [
+          "timestamps",
+          "series"
+        ],
+        "properties": {
+          "timestamps": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "Start of each time bucket as a Unix timestamp in milliseconds, ascending, spaced by `aggregationWindow` (`step` for PromQL) from the first bucket with data to the last. Every `values` array in `series` aligns with it index by index."
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "group",
+                "values"
+              ],
+              "properties": {
+                "group": {
+                  "type": "object",
+                  "description": "Group-by field values for this row, keyed by field name. Empty when no group-by is requested.",
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  }
+                },
+                "values": {
+                  "type": "object",
+                  "description": "One value per entry of `timestamps`, `null` where the bucket has none. Keyed by result id: `q1`, `q2`, and so on for each query in submission order, plus `formula` when a computed formula is given, or `value` for a PromQL query. Every row has the same keys.",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "title": "SeriesV2"
+            },
+            "description": "One series per group, in group-by sort order for aggregation queries and in no particular order for PromQL."
+          }
+        },
+        "title": "TimeseriesAggregationResponseV2",
+        "description": "Timeseries aggregation response: a shared time axis and one series per group aligned to it.",
+        "examples": [
+          {
+            "timestamps": [
+              1609459200000,
+              1609459260000,
+              1609459320000
+            ],
+            "series": [
+              {
+                "group": {
+                  "level": "error"
+                },
+                "values": {
+                  "q1": [
+                    12,
+                    null,
+                    7
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "AggregateTimeseriesV2Response": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/TimeseriesAggregationResponseV2"
           }
         }
       },
@@ -1908,6 +2100,14 @@
                 "description": "Metric routes, which select newly ingested metrics by name and apply processors to them.",
                 "type": "string"
               },
+              "span-route": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Span routes, which select newly ingested spans and apply processors to them.",
+                "type": "string"
+              },
               "monitor": {
                 "enum": [
                   "read",
@@ -2335,6 +2535,14 @@
                     "description": "Metric routes, which select newly ingested metrics by name and apply processors to them.",
                     "type": "string"
                   },
+                  "span-route": {
+                    "enum": [
+                      "read",
+                      "write"
+                    ],
+                    "description": "Span routes, which select newly ingested spans and apply processors to them.",
+                    "type": "string"
+                  },
                   "monitor": {
                     "enum": [
                       "read",
@@ -2663,6 +2871,7 @@
           "owner",
           "applicationType",
           "allowedUrlPrefixes",
+          "collectClientIp",
           "tags"
         ],
         "properties": {
@@ -2697,6 +2906,10 @@
               "type": "string"
             },
             "description": "URL prefixes which RUM telemetry data can be sent from. Supports wildcard matching. Always empty for `ios` and `android` applications."
+          },
+          "collectClientIp": {
+            "type": "boolean",
+            "description": "Whether intake records the IP address each request comes from as `client.address` on RUM records, and derives the `geo` location from it."
           },
           "tags": {
             "type": "array",
@@ -2740,6 +2953,7 @@
             "allowedUrlPrefixes": [
               "https://app.example.com"
             ],
+            "collectClientIp": false,
             "tags": [
               {
                 "key": "env",
@@ -3234,6 +3448,14 @@
                 "type": "string"
               },
               "metric-route": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`.",
+                "type": "string"
+              },
+              "span-route": {
                 "enum": [
                   "read",
                   "write"
@@ -3883,8 +4105,6 @@
                       "list-log-patterns": "#/components/schemas/GraphVisualizationListLogPatterns",
                       "list-spans": "#/components/schemas/GraphVisualizationListSpans",
                       "list-rum": "#/components/schemas/GraphVisualizationListRum",
-                      "slo-uptime": "#/components/schemas/GraphVisualizationSloUptime",
-                      "slo-over-time": "#/components/schemas/GraphVisualizationSloOverTime",
                       "slo": "#/components/schemas/GraphVisualizationSlo"
                     }
                   },
@@ -3977,17 +4197,11 @@
                       "$ref": "#/components/schemas/GraphVisualizationListRum"
                     },
                     {
-                      "$ref": "#/components/schemas/GraphVisualizationSloUptime"
-                    },
-                    {
-                      "$ref": "#/components/schemas/GraphVisualizationSloOverTime"
-                    },
-                    {
                       "$ref": "#/components/schemas/GraphVisualizationSlo"
                     }
                   ],
                   "errorMessage": {
-                    "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, list-log-patterns, list-spans, list-rum, slo-uptime, slo-over-time, slo"
+                    "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, list-log-patterns, list-spans, list-rum, slo"
                   }
                 },
                 "layout": {
@@ -4317,8 +4531,6 @@
                     "list-log-patterns": "#/components/schemas/GraphVisualizationListLogPatterns",
                     "list-spans": "#/components/schemas/GraphVisualizationListSpans",
                     "list-rum": "#/components/schemas/GraphVisualizationListRum",
-                    "slo-uptime": "#/components/schemas/GraphVisualizationSloUptime",
-                    "slo-over-time": "#/components/schemas/GraphVisualizationSloOverTime",
                     "slo": "#/components/schemas/GraphVisualizationSlo"
                   }
                 },
@@ -4411,17 +4623,11 @@
                     "$ref": "#/components/schemas/GraphVisualizationListRum"
                   },
                   {
-                    "$ref": "#/components/schemas/GraphVisualizationSloUptime"
-                  },
-                  {
-                    "$ref": "#/components/schemas/GraphVisualizationSloOverTime"
-                  },
-                  {
                     "$ref": "#/components/schemas/GraphVisualizationSlo"
                   }
                 ],
                 "errorMessage": {
-                  "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, list-log-patterns, list-spans, list-rum, slo-uptime, slo-over-time, slo"
+                  "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, list-log-patterns, list-spans, list-rum, slo"
                 }
               },
               "layout": {
@@ -13044,6 +13250,22 @@
           }
         }
       },
+      "QueryPromqlV2Response": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/TimeseriesAggregationResponseV2"
+          }
+        }
+      },
       "QualityReportRow": {
         "type": "object",
         "required": [
@@ -16373,7 +16595,8 @@
                         "monitor",
                         "notification-rule",
                         "notification-silence",
-                        "slo"
+                        "slo",
+                        "span-route"
                       ],
                       "description": "Tsuga-managed asset type.",
                       "type": "string"
@@ -18186,19 +18409,76 @@
             "description": "Display name of the user."
           },
           "role": {
-            "enum": [
-              "admin",
-              "public_editor",
-              "public_viewer",
-              "teams_only",
-              "custom"
+            "anyOf": [
+              {
+                "enum": [
+                  "admin",
+                  "public_editor",
+                  "public_viewer",
+                  "teams_only",
+                  "custom"
+                ],
+                "description": "Organization role for the user: `admin`, `public_editor`, `public_viewer`, `teams_only`, or `custom` when the user holds a custom role.",
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "admin",
+                          "public_editor",
+                          "public_viewer",
+                          "teams_only"
+                        ],
+                        "description": "Built-in organization role: `admin`, `public_editor`, `public_viewer`, or `teams_only`.",
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "customRoleId"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "The user holds a custom role.",
+                        "enum": [
+                          "custom"
+                        ]
+                      },
+                      "customRoleId": {
+                        "type": "string",
+                        "description": "Identifier of the custom role. Use it with the custom role endpoints to read what the role grants."
+                      }
+                    }
+                  }
+                ],
+                "errorMessage": {
+                  "discriminator": "value of tag \"type\" must be one of: admin, public_editor, public_viewer, teams_only, custom"
+                }
+              }
             ],
-            "description": "Organization role for the user: `admin`, `public_editor`, `public_viewer`, `teams_only`, or `custom` when the user holds a custom role.",
-            "type": "string"
+            "description": "Organization role for the user, either as a role key or as an object with the role `type` and, for a custom role, its `customRoleId`. Handle both forms: the object form replaces the role key."
           },
           "customRoleId": {
             "type": "string",
-            "description": "Identifier of the custom role held by the user, when `role` is `custom`. Use it with the custom role endpoints to read what the role grants."
+            "description": "Identifier of the custom role held by the user, when `role` is the `custom` key. The object form of `role` carries it instead. Use it with the custom role endpoints to read what the role grants."
           }
         },
         "description": "User account in the authenticated organization. See [Members](/documentation/account-and-settings/members).",
@@ -18504,7 +18784,8 @@
                     "monitor",
                     "notification-rule",
                     "notification-silence",
-                    "slo"
+                    "slo",
+                    "span-route"
                   ],
                   "description": "Type of Tsuga asset validated by the policy. Set by the route that ran tag-policy validation. Returned for every violation.",
                   "type": "string"
@@ -33233,48 +33514,6 @@
         },
         "title": "ListRum"
       },
-      "GraphVisualizationSloUptime": {
-        "type": "object",
-        "required": [
-          "type",
-          "sloId"
-        ],
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "Displays the SLI percentage of an SLO computed over the dashboard time range, colored against the SLO target. Experimental.",
-            "enum": [
-              "slo-uptime"
-            ]
-          },
-          "sloId": {
-            "type": "string",
-            "description": "Id of the SLO to display"
-          }
-        },
-        "title": "SloUptime"
-      },
-      "GraphVisualizationSloOverTime": {
-        "type": "object",
-        "required": [
-          "type",
-          "sloId"
-        ],
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "Displays the good and bad events, or the per-slice status, of an SLO over the dashboard time range. Experimental.",
-            "enum": [
-              "slo-over-time"
-            ]
-          },
-          "sloId": {
-            "type": "string",
-            "description": "Id of the SLO to display"
-          }
-        },
-        "title": "SloOverTime"
-      },
       "GraphVisualizationSlo": {
         "type": "object",
         "required": [
@@ -41253,52 +41492,6 @@
         },
         "title": "ListRum"
       },
-      "InputGraphVisualizationSloUptime": {
-        "type": "object",
-        "required": [
-          "type",
-          "sloId"
-        ],
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "Displays the SLI percentage of an SLO computed over the dashboard time range, colored against the SLO target. Experimental.",
-            "enum": [
-              "slo-uptime"
-            ]
-          },
-          "sloId": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 250,
-            "description": "Id of the SLO to display"
-          }
-        },
-        "title": "SloUptime"
-      },
-      "InputGraphVisualizationSloOverTime": {
-        "type": "object",
-        "required": [
-          "type",
-          "sloId"
-        ],
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "Displays the good and bad events, or the per-slice status, of an SLO over the dashboard time range. Experimental.",
-            "enum": [
-              "slo-over-time"
-            ]
-          },
-          "sloId": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 250,
-            "description": "Id of the SLO to display"
-          }
-        },
-        "title": "SloOverTime"
-      },
       "InputGraphVisualizationSlo": {
         "type": "object",
         "required": [
@@ -43761,6 +43954,14 @@
                 "description": "Metric routes, which select newly ingested metrics by name and apply processors to them.",
                 "type": "string"
               },
+              "span-route": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Span routes, which select newly ingested spans and apply processors to them.",
+                "type": "string"
+              },
               "monitor": {
                 "enum": [
                   "read",
@@ -43985,15 +44186,72 @@
             "description": "Display name of the user."
           },
           "role": {
-            "enum": [
-              "admin",
-              "public_editor",
-              "public_viewer",
-              "teams_only",
-              "custom"
+            "anyOf": [
+              {
+                "enum": [
+                  "admin",
+                  "public_editor",
+                  "public_viewer",
+                  "teams_only",
+                  "custom"
+                ],
+                "description": "Organization role for the user: `admin`, `public_editor`, `public_viewer`, `teams_only`, or `custom` when the user holds a custom role.",
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                },
+                "required": [
+                  "type"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "admin",
+                          "public_editor",
+                          "public_viewer",
+                          "teams_only"
+                        ],
+                        "description": "Built-in organization role: `admin`, `public_editor`, `public_viewer`, or `teams_only`.",
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "customRoleId"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "The user holds a custom role.",
+                        "enum": [
+                          "custom"
+                        ]
+                      },
+                      "customRoleId": {
+                        "type": "string",
+                        "description": "Identifier of the custom role. Use it with the custom role endpoints to read what the role grants."
+                      }
+                    }
+                  }
+                ],
+                "errorMessage": {
+                  "discriminator": "value of tag \"type\" must be one of: admin, public_editor, public_viewer, teams_only, custom"
+                }
+              }
             ],
-            "description": "Organization role for the user: `admin`, `public_editor`, `public_viewer`, `teams_only`, or `custom` when the user holds a custom role.",
-            "type": "string"
+            "description": "Organization role for the user, either as a role key or as an object with the role `type` and, for a custom role, its `customRoleId`. Handle both forms: the object form replaces the role key."
           },
           "orgId": {
             "type": "string",
@@ -44080,7 +44338,7 @@
                         "type": "integer",
                         "description": "End of the query window as a Unix timestamp in seconds",
                         "examples": [
-                          1704067200
+                          1704070800
                         ],
                         "minimum": 1456444800,
                         "maximum": 4927737600,
@@ -44092,7 +44350,7 @@
                     "examples": [
                       {
                         "from": 1704067200,
-                        "to": 1704067200
+                        "to": 1704070800
                       }
                     ]
                   },
@@ -44462,7 +44720,7 @@
                         "type": "integer",
                         "description": "End of the query window as a Unix timestamp in seconds",
                         "examples": [
-                          1704067200
+                          1704070800
                         ],
                         "minimum": 1456444800,
                         "maximum": 4927737600,
@@ -44474,7 +44732,7 @@
                     "examples": [
                       {
                         "from": 1704067200,
-                        "to": 1704067200
+                        "to": 1704070800
                       }
                     ]
                   },
@@ -44704,7 +44962,10 @@
                   },
                   "aggregationWindow": {
                     "type": "string",
-                    "minLength": 0,
+                    "pattern": "^0*[1-9]\\d*[smhdw]$",
+                    "errorMessage": {
+                      "pattern": "must be a positive whole number followed by s, m, h, d or w, such as \"10s\", \"1m\" or \"1h\"."
+                    },
                     "maxLength": 250,
                     "description": "Time bucket size for timeseries aggregation, such as `10s`, `1m`, or `1h`."
                   }
@@ -44767,6 +45028,779 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AggregateTimeseriesResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/aggregation/multi-query/scalar": {
+      "post": {
+        "operationId": "aggregateScalarV2",
+        "tags": [
+          "aggregation"
+        ],
+        "description": "Runs one or more aggregation queries over logs, metrics, traces, or RUM events and returns one row per group with every query result in it. Same request as `POST /v1/aggregation/multi-query/scalar`, with `timeRange` in milliseconds. See [Analytics queries](/documentation/visualize/analytics/queries).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "timeRange",
+                  "queries",
+                  "dataSource"
+                ],
+                "properties": {
+                  "timeRange": {
+                    "type": "object",
+                    "required": [
+                      "from",
+                      "to"
+                    ],
+                    "properties": {
+                      "from": {
+                        "type": "integer",
+                        "description": "Start of the query window as a Unix timestamp in milliseconds",
+                        "examples": [
+                          1704067200000
+                        ],
+                        "minimum": 1456444800000,
+                        "maximum": 4927737600000,
+                        "format": "int64"
+                      },
+                      "to": {
+                        "type": "integer",
+                        "description": "End of the query window as a Unix timestamp in milliseconds",
+                        "examples": [
+                          1704070800000
+                        ],
+                        "minimum": 1456444800000,
+                        "maximum": 4927737600000,
+                        "format": "int64"
+                      }
+                    },
+                    "title": "V2TimeRange",
+                    "description": "Inclusive time range for telemetry queries using Unix timestamps in milliseconds.",
+                    "examples": [
+                      {
+                        "from": 1704067200000,
+                        "to": 1704070800000
+                      }
+                    ]
+                  },
+                  "queries": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "aggregate"
+                      ],
+                      "properties": {
+                        "aggregate": {
+                          "title": "InputAggregate",
+                          "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
+                          "type": "object",
+                          "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                              "count": "#/components/schemas/InputAggregateCount",
+                              "unique-count": "#/components/schemas/InputAggregateUniqueCount",
+                              "average": "#/components/schemas/InputAggregateAverage",
+                              "max": "#/components/schemas/InputAggregateMax",
+                              "min": "#/components/schemas/InputAggregateMin",
+                              "sum": "#/components/schemas/InputAggregateSum",
+                              "percentile": "#/components/schemas/InputAggregatePercentile"
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "oneOf": [
+                            {
+                              "$ref": "#/components/schemas/InputAggregateCount"
+                            },
+                            {
+                              "$ref": "#/components/schemas/InputAggregateUniqueCount"
+                            },
+                            {
+                              "$ref": "#/components/schemas/InputAggregateAverage"
+                            },
+                            {
+                              "$ref": "#/components/schemas/InputAggregateMax"
+                            },
+                            {
+                              "$ref": "#/components/schemas/InputAggregateMin"
+                            },
+                            {
+                              "$ref": "#/components/schemas/InputAggregateSum"
+                            },
+                            {
+                              "$ref": "#/components/schemas/InputAggregatePercentile"
+                            }
+                          ],
+                          "errorMessage": {
+                            "discriminator": "value of tag \"type\" must be one of: count, unique-count, average, max, min, sum, percentile"
+                          }
+                        },
+                        "functions": {
+                          "type": "array",
+                          "items": {
+                            "title": "InputFunction",
+                            "description": "Post-processing function applied to an aggregation query result after the aggregate is computed, selected by `type`.",
+                            "type": "object",
+                            "discriminator": {
+                              "propertyName": "type",
+                              "mapping": {
+                                "per-second": "#/components/schemas/FunctionPerSecond",
+                                "per-minute": "#/components/schemas/FunctionPerMinute",
+                                "per-hour": "#/components/schemas/FunctionPerHour",
+                                "rate": "#/components/schemas/FunctionRate",
+                                "increase": "#/components/schemas/FunctionIncrease",
+                                "log": "#/components/schemas/InputFunctionLog",
+                                "power": "#/components/schemas/FunctionPower",
+                                "sqrt": "#/components/schemas/FunctionSqrt",
+                                "last": "#/components/schemas/FunctionLast",
+                                "time-offset": "#/components/schemas/InputFunctionTimeOffset",
+                                "cumsum": "#/components/schemas/FunctionCumsum"
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ],
+                            "oneOf": [
+                              {
+                                "$ref": "#/components/schemas/FunctionPerSecond"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionPerMinute"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionPerHour"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionRate"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionIncrease"
+                              },
+                              {
+                                "$ref": "#/components/schemas/InputFunctionLog"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionPower"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionSqrt"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionLast"
+                              },
+                              {
+                                "$ref": "#/components/schemas/InputFunctionTimeOffset"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionCumsum"
+                              }
+                            ],
+                            "errorMessage": {
+                              "discriminator": "value of tag \"type\" must be one of: per-second, per-minute, per-hour, rate, increase, log, power, sqrt, last, time-offset, cumsum"
+                            }
+                          },
+                          "maxItems": 10,
+                          "description": "Post-processing functions applied to aggregation results. Defaults to an empty array when omitted."
+                        },
+                        "timeAggregate": {
+                          "enum": [
+                            "avg",
+                            "sum",
+                            "min",
+                            "max",
+                            "last"
+                          ],
+                          "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                          "type": "string"
+                        },
+                        "metricKind": {
+                          "enum": [
+                            "gauge",
+                            "cumulative-counter",
+                            "delta-counter",
+                            "cumulative-histogram",
+                            "delta-histogram",
+                            "summary"
+                          ],
+                          "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence.",
+                          "type": "string"
+                        },
+                        "filter": {
+                          "type": "string",
+                          "format": "tsuga-query",
+                          "minLength": 0,
+                          "maxLength": 10000,
+                          "description": "Tsuga query filter to apply to the aggregation. Defaults to an empty string when omitted."
+                        }
+                      },
+                      "title": "AggregationQuery",
+                      "description": "Aggregation query. Omit `filter` for an unfiltered query and omit `functions` when no post-processing is needed."
+                    },
+                    "maxItems": 15,
+                    "description": "Aggregations that may be combined together in the same query. Each item is referenced from `formula` as q1, q2, and so on, in submission order. For dataSource \"metrics\", each aggregate's `field` is the metric name, not an attribute; to count distinct values of an attribute use unique-count with field \"<metricName>.context.<attribute>\" (e.g. \"system.cpu.utilization.context.host.name\")."
+                  },
+                  "groupBy": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "fields",
+                        "limit"
+                      ],
+                      "properties": {
+                        "fields": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 0,
+                            "maxLength": 250
+                          },
+                          "maxItems": 1,
+                          "description": "Telemetry attribute name to group aggregation results by at this grouping level. To group by several attributes, send one `groupBy` entry per attribute: entries nest, outermost first.",
+                          "errorMessage": {
+                            "maxItems": "must hold one field. To group by several fields, send one groupBy entry per field: they nest, outermost first, such as [{\"fields\": [\"context.service.name\"], \"limit\": 10}, {\"fields\": [\"level\"], \"limit\": 5}]."
+                          }
+                        },
+                        "limit": {
+                          "type": "number",
+                          "description": "Maximum number of distinct values of `fields` to return for this grouping level, ranked by aggregate value. Groups beyond the limit are truncated from the response, not merged into an \"other\" group."
+                        },
+                        "sortOrder": {
+                          "enum": [
+                            "asc",
+                            "desc"
+                          ],
+                          "description": "Sort direction: ascending or descending.",
+                          "type": "string"
+                        },
+                        "replaceNullWith": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 250,
+                          "description": "Value used to group documents that have no value for a grouped field."
+                        }
+                      },
+                      "title": "AggregationGroupBy"
+                    },
+                    "maxItems": 7,
+                    "description": "Nested grouping levels applied to aggregation results, outermost first (e.g. group by service, then by level within each service). Each level splits results further, so the response contains one result per unique combination of group values instead of one aggregated total. Defaults to an empty array (one ungrouped result) when omitted."
+                  },
+                  "dataSource": {
+                    "enum": [
+                      "logs",
+                      "metrics",
+                      "traces",
+                      "rum"
+                    ],
+                    "description": "Telemetry source queried by this aggregation: `logs`, `metrics`, `traces`, or `rum`.",
+                    "type": "string"
+                  },
+                  "formula": {
+                    "type": "string",
+                    "format": "tsuga-formula",
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "errorMessage": {
+                      "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                    },
+                    "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
+                  }
+                },
+                "description": "Scalar aggregation request. Provide a time range in milliseconds, one or more queries, a telemetry data source, and optional grouping or formula. Omit `groupBy` for ungrouped results. Send `clusterId` as a query parameter, not in the JSON body."
+              },
+              "example": {
+                "timeRange": {
+                  "from": 1782201500000,
+                  "to": 1782203400000
+                },
+                "dataSource": "logs",
+                "queries": [
+                  {
+                    "aggregate": {
+                      "type": "count"
+                    },
+                    "filter": "context.service.name:checkout"
+                  }
+                ],
+                "groupBy": [
+                  {
+                    "fields": [
+                      "level"
+                    ],
+                    "limit": 5
+                  }
+                ]
+              }
+            }
+          },
+          "description": "Scalar aggregation request. Provide a time range in milliseconds, one or more queries, a telemetry data source, and optional grouping or formula. Omit `groupBy` for ungrouped results. Send `clusterId` as a query parameter, not in the JSON body."
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "clusterId",
+            "required": false,
+            "description": "Telemetry cluster to target. Required when the organization has multiple clusters; omit only for single-cluster organizations."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AggregateScalarV2Response"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/aggregation/multi-query/timeseries": {
+      "post": {
+        "operationId": "aggregateTimeseriesV2",
+        "tags": [
+          "aggregation"
+        ],
+        "description": "Runs one or more aggregation queries over logs, metrics, traces, or RUM events and returns one shared time axis in milliseconds with one series per group aligned to it. Use `aggregationWindow` to choose the time bucket size. Same request as `POST /v1/aggregation/multi-query/timeseries`, with `timeRange` in milliseconds. See [Analytics queries](/documentation/visualize/analytics/queries).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "timeRange",
+                  "queries",
+                  "dataSource",
+                  "aggregationWindow"
+                ],
+                "properties": {
+                  "timeRange": {
+                    "type": "object",
+                    "required": [
+                      "from",
+                      "to"
+                    ],
+                    "properties": {
+                      "from": {
+                        "type": "integer",
+                        "description": "Start of the query window as a Unix timestamp in milliseconds",
+                        "examples": [
+                          1704067200000
+                        ],
+                        "minimum": 1456444800000,
+                        "maximum": 4927737600000,
+                        "format": "int64"
+                      },
+                      "to": {
+                        "type": "integer",
+                        "description": "End of the query window as a Unix timestamp in milliseconds",
+                        "examples": [
+                          1704070800000
+                        ],
+                        "minimum": 1456444800000,
+                        "maximum": 4927737600000,
+                        "format": "int64"
+                      }
+                    },
+                    "title": "V2TimeRange",
+                    "description": "Inclusive time range for telemetry queries using Unix timestamps in milliseconds.",
+                    "examples": [
+                      {
+                        "from": 1704067200000,
+                        "to": 1704070800000
+                      }
+                    ]
+                  },
+                  "queries": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "aggregate"
+                      ],
+                      "properties": {
+                        "aggregate": {
+                          "title": "InputAggregate",
+                          "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
+                          "type": "object",
+                          "discriminator": {
+                            "propertyName": "type",
+                            "mapping": {
+                              "count": "#/components/schemas/InputAggregateCount",
+                              "unique-count": "#/components/schemas/InputAggregateUniqueCount",
+                              "average": "#/components/schemas/InputAggregateAverage",
+                              "max": "#/components/schemas/InputAggregateMax",
+                              "min": "#/components/schemas/InputAggregateMin",
+                              "sum": "#/components/schemas/InputAggregateSum",
+                              "percentile": "#/components/schemas/InputAggregatePercentile"
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "oneOf": [
+                            {
+                              "$ref": "#/components/schemas/InputAggregateCount"
+                            },
+                            {
+                              "$ref": "#/components/schemas/InputAggregateUniqueCount"
+                            },
+                            {
+                              "$ref": "#/components/schemas/InputAggregateAverage"
+                            },
+                            {
+                              "$ref": "#/components/schemas/InputAggregateMax"
+                            },
+                            {
+                              "$ref": "#/components/schemas/InputAggregateMin"
+                            },
+                            {
+                              "$ref": "#/components/schemas/InputAggregateSum"
+                            },
+                            {
+                              "$ref": "#/components/schemas/InputAggregatePercentile"
+                            }
+                          ],
+                          "errorMessage": {
+                            "discriminator": "value of tag \"type\" must be one of: count, unique-count, average, max, min, sum, percentile"
+                          }
+                        },
+                        "functions": {
+                          "type": "array",
+                          "items": {
+                            "title": "InputFunction",
+                            "description": "Post-processing function applied to an aggregation query result after the aggregate is computed, selected by `type`.",
+                            "type": "object",
+                            "discriminator": {
+                              "propertyName": "type",
+                              "mapping": {
+                                "per-second": "#/components/schemas/FunctionPerSecond",
+                                "per-minute": "#/components/schemas/FunctionPerMinute",
+                                "per-hour": "#/components/schemas/FunctionPerHour",
+                                "rate": "#/components/schemas/FunctionRate",
+                                "increase": "#/components/schemas/FunctionIncrease",
+                                "log": "#/components/schemas/InputFunctionLog",
+                                "power": "#/components/schemas/FunctionPower",
+                                "sqrt": "#/components/schemas/FunctionSqrt",
+                                "last": "#/components/schemas/FunctionLast",
+                                "time-offset": "#/components/schemas/InputFunctionTimeOffset",
+                                "cumsum": "#/components/schemas/FunctionCumsum"
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ],
+                            "oneOf": [
+                              {
+                                "$ref": "#/components/schemas/FunctionPerSecond"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionPerMinute"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionPerHour"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionRate"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionIncrease"
+                              },
+                              {
+                                "$ref": "#/components/schemas/InputFunctionLog"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionPower"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionSqrt"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionLast"
+                              },
+                              {
+                                "$ref": "#/components/schemas/InputFunctionTimeOffset"
+                              },
+                              {
+                                "$ref": "#/components/schemas/FunctionCumsum"
+                              }
+                            ],
+                            "errorMessage": {
+                              "discriminator": "value of tag \"type\" must be one of: per-second, per-minute, per-hour, rate, increase, log, power, sqrt, last, time-offset, cumsum"
+                            }
+                          },
+                          "maxItems": 10,
+                          "description": "Post-processing functions applied to aggregation results. Defaults to an empty array when omitted."
+                        },
+                        "timeAggregate": {
+                          "enum": [
+                            "avg",
+                            "sum",
+                            "min",
+                            "max",
+                            "last"
+                          ],
+                          "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                          "type": "string"
+                        },
+                        "metricKind": {
+                          "enum": [
+                            "gauge",
+                            "cumulative-counter",
+                            "delta-counter",
+                            "cumulative-histogram",
+                            "delta-histogram",
+                            "summary"
+                          ],
+                          "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence.",
+                          "type": "string"
+                        },
+                        "filter": {
+                          "type": "string",
+                          "format": "tsuga-query",
+                          "minLength": 0,
+                          "maxLength": 10000,
+                          "description": "Tsuga query filter to apply to the aggregation. Defaults to an empty string when omitted."
+                        }
+                      },
+                      "title": "AggregationQuery",
+                      "description": "Aggregation query. Omit `filter` for an unfiltered query and omit `functions` when no post-processing is needed."
+                    },
+                    "maxItems": 15,
+                    "description": "Aggregations that may be combined together in the same query. Each item is referenced from `formula` as q1, q2, and so on, in submission order. For dataSource \"metrics\", each aggregate's `field` is the metric name, not an attribute; to count distinct values of an attribute use unique-count with field \"<metricName>.context.<attribute>\" (e.g. \"system.cpu.utilization.context.host.name\")."
+                  },
+                  "groupBy": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "fields",
+                        "limit"
+                      ],
+                      "properties": {
+                        "fields": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 0,
+                            "maxLength": 250
+                          },
+                          "maxItems": 1,
+                          "description": "Telemetry attribute name to group aggregation results by at this grouping level. To group by several attributes, send one `groupBy` entry per attribute: entries nest, outermost first.",
+                          "errorMessage": {
+                            "maxItems": "must hold one field. To group by several fields, send one groupBy entry per field: they nest, outermost first, such as [{\"fields\": [\"context.service.name\"], \"limit\": 10}, {\"fields\": [\"level\"], \"limit\": 5}]."
+                          }
+                        },
+                        "limit": {
+                          "type": "number",
+                          "description": "Maximum number of distinct values of `fields` to return for this grouping level, ranked by aggregate value. Groups beyond the limit are truncated from the response, not merged into an \"other\" group."
+                        },
+                        "sortOrder": {
+                          "enum": [
+                            "asc",
+                            "desc"
+                          ],
+                          "description": "Sort direction: ascending or descending.",
+                          "type": "string"
+                        },
+                        "replaceNullWith": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 250,
+                          "description": "Value used to group documents that have no value for a grouped field."
+                        }
+                      },
+                      "title": "AggregationGroupBy"
+                    },
+                    "maxItems": 7,
+                    "description": "Nested grouping levels applied to aggregation results, outermost first (e.g. group by service, then by level within each service). Each level splits results further, so the response contains one result per unique combination of group values instead of one aggregated total. Defaults to an empty array (one ungrouped result) when omitted."
+                  },
+                  "dataSource": {
+                    "enum": [
+                      "logs",
+                      "metrics",
+                      "traces",
+                      "rum"
+                    ],
+                    "description": "Telemetry source queried by this aggregation: `logs`, `metrics`, `traces`, or `rum`.",
+                    "type": "string"
+                  },
+                  "formula": {
+                    "type": "string",
+                    "format": "tsuga-formula",
+                    "minLength": 0,
+                    "maxLength": 250,
+                    "errorMessage": {
+                      "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                    },
+                    "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
+                  },
+                  "aggregationWindow": {
+                    "type": "string",
+                    "pattern": "^0*[1-9]\\d*[smhdw]$",
+                    "errorMessage": {
+                      "pattern": "must be a positive whole number followed by s, m, h, d or w, such as \"10s\", \"1m\" or \"1h\"."
+                    },
+                    "maxLength": 250,
+                    "description": "Time bucket size for timeseries aggregation, such as `10s`, `1m`, or `1h`."
+                  }
+                },
+                "description": "Timeseries aggregation request. Provide a time range in milliseconds, bucket size, one or more queries, a telemetry data source, and optional grouping or formula. Omit `groupBy` for ungrouped series. Send `clusterId` as a query parameter, not in the JSON body."
+              },
+              "example": {
+                "timeRange": {
+                  "from": 1782201500000,
+                  "to": 1782203400000
+                },
+                "aggregationWindow": "1m",
+                "dataSource": "logs",
+                "queries": [
+                  {
+                    "aggregate": {
+                      "type": "count"
+                    },
+                    "filter": "context.service.name:checkout"
+                  }
+                ],
+                "groupBy": [
+                  {
+                    "fields": [
+                      "level"
+                    ],
+                    "limit": 5
+                  }
+                ]
+              }
+            }
+          },
+          "description": "Timeseries aggregation request. Provide a time range in milliseconds, bucket size, one or more queries, a telemetry data source, and optional grouping or formula. Omit `groupBy` for ungrouped series. Send `clusterId` as a query parameter, not in the JSON body."
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "clusterId",
+            "required": false,
+            "description": "Telemetry cluster to target. Required when the organization has multiple clusters; omit only for single-cluster organizations."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AggregateTimeseriesV2Response"
                 }
               }
             }
@@ -46023,6 +47057,14 @@
                         "description": "Metric routes, which select newly ingested metrics by name and apply processors to them.",
                         "type": "string"
                       },
+                      "span-route": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Span routes, which select newly ingested spans and apply processors to them.",
+                        "type": "string"
+                      },
                       "monitor": {
                         "enum": [
                           "read",
@@ -46547,6 +47589,14 @@
                         "description": "Metric routes, which select newly ingested metrics by name and apply processors to them.",
                         "type": "string"
                       },
+                      "span-route": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Span routes, which select newly ingested spans and apply processors to them.",
+                        "type": "string"
+                      },
                       "monitor": {
                         "enum": [
                           "read",
@@ -46915,7 +47965,7 @@
               "maximum": 4927737600,
               "format": "int64"
             },
-            "example": 1704067200,
+            "example": 1704070800,
             "in": "query",
             "name": "to",
             "required": true,
@@ -47146,6 +48196,10 @@
                     },
                     "description": "URL prefixes which RUM telemetry data can be sent from. Supports wildcard matching. At least one prefix is required for `web` applications, and the array must be empty for `ios` and `android` applications."
                   },
+                  "collectClientIp": {
+                    "type": "boolean",
+                    "description": "Whether intake records the IP address each request comes from as `client.address` on RUM records, and derives the `geo` location from it. Defaults to false on creation. Omit it on update to keep the current value."
+                  },
                   "tags": {
                     "type": "array",
                     "items": {
@@ -47194,7 +48248,7 @@
                     "description": "Telemetry attribute names used to override ownership for data sent with this token. Send null to clear existing override fields."
                   }
                 },
-                "description": "RUM public token creation request. Provide a kebab-case name, owner team, application type, allowed URL prefixes (required for `web`, empty for `ios` and `android`), tags including an `env` tag, and team override fields as an array of fields or null."
+                "description": "RUM public token creation request. Provide a kebab-case name, owner team, application type, allowed URL prefixes (required for `web`, empty for `ios` and `android`), tags including an `env` tag, and team override fields as an array of fields or null. Set `collectClientIp` to record client IP addresses."
               },
               "example": {
                 "name": "my-web-app",
@@ -47203,6 +48257,7 @@
                 "allowedUrlPrefixes": [
                   "https://app.example.com"
                 ],
+                "collectClientIp": false,
                 "tags": [
                   {
                     "key": "env",
@@ -47213,7 +48268,7 @@
               }
             }
           },
-          "description": "RUM public token creation request. Provide a kebab-case name, owner team, application type, allowed URL prefixes (required for `web`, empty for `ios` and `android`), tags including an `env` tag, and team override fields as an array of fields or null."
+          "description": "RUM public token creation request. Provide a kebab-case name, owner team, application type, allowed URL prefixes (required for `web`, empty for `ios` and `android`), tags including an `env` tag, and team override fields as an array of fields or null. Set `collectClientIp` to record client IP addresses."
         },
         "responses": {
           "200": {
@@ -47366,7 +48421,7 @@
         "tags": [
           "public-tokens"
         ],
-        "description": "Updates RUM public token metadata by ID, including name, owner, application type, allowed URL prefixes, tags, and team override fields. Every field is required: the application type is fixed at creation, so resend the token's current value. The token value is not rotated by this operation.",
+        "description": "Updates RUM public token metadata by ID, including name, owner, application type, allowed URL prefixes, client IP collection, tags, and team override fields. Every field except `collectClientIp` is required: the application type is fixed at creation, so resend the token's current value. The token value is not rotated by this operation.",
         "requestBody": {
           "required": true,
           "content": {
@@ -47411,6 +48466,10 @@
                       "format": "http-url"
                     },
                     "description": "URL prefixes which RUM telemetry data can be sent from. Supports wildcard matching. At least one prefix is required for `web` applications, and the array must be empty for `ios` and `android` applications."
+                  },
+                  "collectClientIp": {
+                    "type": "boolean",
+                    "description": "Whether intake records the IP address each request comes from as `client.address` on RUM records, and derives the `geo` location from it. Defaults to false on creation. Omit it on update to keep the current value."
                   },
                   "tags": {
                     "type": "array",
@@ -47460,7 +48519,7 @@
                     "description": "Telemetry attribute names used to override ownership for data sent with this token. Send null to clear existing override fields."
                   }
                 },
-                "description": "RUM public token update request. Provide the full definition, including name, owner team, allowed URL prefixes, tags including an `env` tag, and team override fields. The application type must match the existing token and the token value itself never changes."
+                "description": "RUM public token update request. Provide the full definition, including name, owner team, allowed URL prefixes, tags including an `env` tag, and team override fields. `collectClientIp` is optional and keeps its current value when omitted. The application type must match the existing token and the token value itself never changes."
               },
               "example": {
                 "name": "my-web-app",
@@ -47469,6 +48528,7 @@
                 "allowedUrlPrefixes": [
                   "https://app.example.com"
                 ],
+                "collectClientIp": false,
                 "tags": [
                   {
                     "key": "env",
@@ -47479,7 +48539,7 @@
               }
             }
           },
-          "description": "RUM public token update request. Provide the full definition, including name, owner team, allowed URL prefixes, tags including an `env` tag, and team override fields. The application type must match the existing token and the token value itself never changes."
+          "description": "RUM public token update request. Provide the full definition, including name, owner team, allowed URL prefixes, tags including an `env` tag, and team override fields. `collectClientIp` is optional and keeps its current value when omitted. The application type must match the existing token and the token value itself never changes."
         },
         "parameters": [
           {
@@ -48194,6 +49254,14 @@
                         "description": "Access granted on this resource type. `write` implies `read`.",
                         "type": "string"
                       },
+                      "span-route": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`.",
+                        "type": "string"
+                      },
                       "monitor": {
                         "enum": [
                           "read",
@@ -48889,6 +49957,14 @@
                         "type": "string"
                       },
                       "metric-route": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`.",
+                        "type": "string"
+                      },
+                      "span-route": {
                         "enum": [
                           "read",
                           "write"
@@ -49755,7 +50831,7 @@
                     "type": "integer",
                     "description": "End of the query window as a Unix timestamp in seconds",
                     "examples": [
-                      1704067200
+                      1704070800
                     ],
                     "minimum": 1456444800,
                     "maximum": 4927737600,
@@ -50357,8 +51433,6 @@
                               "list-log-patterns": "#/components/schemas/InputGraphVisualizationListLogPatterns",
                               "list-spans": "#/components/schemas/InputGraphVisualizationListSpans",
                               "list-rum": "#/components/schemas/InputGraphVisualizationListRum",
-                              "slo-uptime": "#/components/schemas/InputGraphVisualizationSloUptime",
-                              "slo-over-time": "#/components/schemas/InputGraphVisualizationSloOverTime",
                               "slo": "#/components/schemas/InputGraphVisualizationSlo"
                             }
                           },
@@ -50451,17 +51525,11 @@
                               "$ref": "#/components/schemas/InputGraphVisualizationListRum"
                             },
                             {
-                              "$ref": "#/components/schemas/InputGraphVisualizationSloUptime"
-                            },
-                            {
-                              "$ref": "#/components/schemas/InputGraphVisualizationSloOverTime"
-                            },
-                            {
                               "$ref": "#/components/schemas/InputGraphVisualizationSlo"
                             }
                           ],
                           "errorMessage": {
-                            "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, list-log-patterns, list-spans, list-rum, slo-uptime, slo-over-time, slo"
+                            "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, list-log-patterns, list-spans, list-rum, slo"
                           }
                         },
                         "layout": {
@@ -50916,8 +51984,6 @@
                               "list-log-patterns": "#/components/schemas/InputGraphVisualizationListLogPatterns",
                               "list-spans": "#/components/schemas/InputGraphVisualizationListSpans",
                               "list-rum": "#/components/schemas/InputGraphVisualizationListRum",
-                              "slo-uptime": "#/components/schemas/InputGraphVisualizationSloUptime",
-                              "slo-over-time": "#/components/schemas/InputGraphVisualizationSloOverTime",
                               "slo": "#/components/schemas/InputGraphVisualizationSlo"
                             }
                           },
@@ -51010,17 +52076,11 @@
                               "$ref": "#/components/schemas/InputGraphVisualizationListRum"
                             },
                             {
-                              "$ref": "#/components/schemas/InputGraphVisualizationSloUptime"
-                            },
-                            {
-                              "$ref": "#/components/schemas/InputGraphVisualizationSloOverTime"
-                            },
-                            {
                               "$ref": "#/components/schemas/InputGraphVisualizationSlo"
                             }
                           ],
                           "errorMessage": {
-                            "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, list-log-patterns, list-spans, list-rum, slo-uptime, slo-over-time, slo"
+                            "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, list-log-patterns, list-spans, list-rum, slo"
                           }
                         },
                         "layout": {
@@ -51386,8 +52446,6 @@
                         "list-log-patterns": "#/components/schemas/InputGraphVisualizationListLogPatterns",
                         "list-spans": "#/components/schemas/InputGraphVisualizationListSpans",
                         "list-rum": "#/components/schemas/InputGraphVisualizationListRum",
-                        "slo-uptime": "#/components/schemas/InputGraphVisualizationSloUptime",
-                        "slo-over-time": "#/components/schemas/InputGraphVisualizationSloOverTime",
                         "slo": "#/components/schemas/InputGraphVisualizationSlo"
                       }
                     },
@@ -51480,17 +52538,11 @@
                         "$ref": "#/components/schemas/InputGraphVisualizationListRum"
                       },
                       {
-                        "$ref": "#/components/schemas/InputGraphVisualizationSloUptime"
-                      },
-                      {
-                        "$ref": "#/components/schemas/InputGraphVisualizationSloOverTime"
-                      },
-                      {
                         "$ref": "#/components/schemas/InputGraphVisualizationSlo"
                       }
                     ],
                     "errorMessage": {
-                      "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, list-log-patterns, list-spans, list-rum, slo-uptime, slo-over-time, slo"
+                      "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, list-log-patterns, list-spans, list-rum, slo"
                     }
                   },
                   "layout": {
@@ -53666,14 +54718,117 @@
               "schema": {
                 "type": "array",
                 "items": {
-                  "type": "object",
-                  "discriminator": {
-                    "propertyName": "userRole"
-                  },
-                  "required": [
-                    "userRole"
-                  ],
-                  "oneOf": [
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "discriminator": {
+                        "propertyName": "userRole"
+                      },
+                      "required": [
+                        "userRole"
+                      ],
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "required": [
+                            "email",
+                            "teamId",
+                            "teamRole",
+                            "userRole"
+                          ],
+                          "properties": {
+                            "email": {
+                              "type": "string",
+                              "format": "lowercase-email",
+                              "minLength": 0,
+                              "maxLength": 254,
+                              "errorMessage": {
+                                "format": "Must be a valid lowercase email address."
+                              },
+                              "description": "Lowercase email address to invite into the organization."
+                            },
+                            "teamId": {
+                              "type": "string",
+                              "minLength": 0,
+                              "maxLength": 250,
+                              "description": "Team ID to add the invited user to after acceptance."
+                            },
+                            "teamRole": {
+                              "enum": [
+                                "admin",
+                                "editor",
+                                "viewer"
+                              ],
+                              "description": "Role the invited user receives in the target team once accepted: `admin`, `editor`, or `viewer`.",
+                              "type": "string"
+                            },
+                            "userRole": {
+                              "enum": [
+                                "admin",
+                                "public_editor",
+                                "public_viewer",
+                                "teams_only"
+                              ],
+                              "description": "Organization role the invited user receives after acceptance: `admin`, `public_editor`, `public_viewer`, or `teams_only`.",
+                              "type": "string"
+                            }
+                          }
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "email",
+                            "teamId",
+                            "teamRole",
+                            "userRole",
+                            "customRoleId"
+                          ],
+                          "properties": {
+                            "email": {
+                              "type": "string",
+                              "format": "lowercase-email",
+                              "minLength": 0,
+                              "maxLength": 254,
+                              "errorMessage": {
+                                "format": "Must be a valid lowercase email address."
+                              },
+                              "description": "Lowercase email address to invite into the organization."
+                            },
+                            "teamId": {
+                              "type": "string",
+                              "minLength": 0,
+                              "maxLength": 250,
+                              "description": "Team ID to add the invited user to after acceptance."
+                            },
+                            "teamRole": {
+                              "enum": [
+                                "admin",
+                                "editor",
+                                "viewer"
+                              ],
+                              "description": "Role the invited user receives in the target team once accepted: `admin`, `editor`, or `viewer`.",
+                              "type": "string"
+                            },
+                            "userRole": {
+                              "type": "string",
+                              "description": "Assigns the custom role identified by `customRoleId` after acceptance.",
+                              "enum": [
+                                "custom"
+                              ]
+                            },
+                            "customRoleId": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 250,
+                              "description": "Identifier of the custom role to assign. Use the `id` returned by the custom role endpoints."
+                            }
+                          }
+                        }
+                      ],
+                      "errorMessage": {
+                        "discriminator": "value of tag \"userRole\" must be one of: admin, public_editor, public_viewer, teams_only, custom"
+                      }
+                    },
                     {
                       "type": "object",
                       "required": [
@@ -53709,71 +54864,63 @@
                           "type": "string"
                         },
                         "userRole": {
-                          "enum": [
-                            "admin",
-                            "public_editor",
-                            "public_viewer",
-                            "teams_only"
-                          ],
-                          "description": "Organization role the invited user receives after acceptance: `admin`, `public_editor`, `public_viewer`, or `teams_only`.",
-                          "type": "string"
-                        }
-                      }
-                    },
-                    {
-                      "type": "object",
-                      "required": [
-                        "email",
-                        "teamId",
-                        "teamRole",
-                        "userRole",
-                        "customRoleId"
-                      ],
-                      "properties": {
-                        "email": {
-                          "type": "string",
-                          "format": "lowercase-email",
-                          "minLength": 0,
-                          "maxLength": 254,
-                          "errorMessage": {
-                            "format": "Must be a valid lowercase email address."
+                          "description": "Organization role to assign: a built-in role `type`, or `custom` with the `customRoleId` of a custom role.",
+                          "type": "object",
+                          "discriminator": {
+                            "propertyName": "type"
                           },
-                          "description": "Lowercase email address to invite into the organization."
-                        },
-                        "teamId": {
-                          "type": "string",
-                          "minLength": 0,
-                          "maxLength": 250,
-                          "description": "Team ID to add the invited user to after acceptance."
-                        },
-                        "teamRole": {
-                          "enum": [
-                            "admin",
-                            "editor",
-                            "viewer"
+                          "required": [
+                            "type"
                           ],
-                          "description": "Role the invited user receives in the target team once accepted: `admin`, `editor`, or `viewer`.",
-                          "type": "string"
-                        },
-                        "userRole": {
-                          "type": "string",
-                          "description": "Assigns the custom role identified by `customRoleId` after acceptance.",
-                          "enum": [
-                            "custom"
-                          ]
-                        },
-                        "customRoleId": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 250,
-                          "description": "Identifier of the custom role to assign. Use the `id` returned by the custom role endpoints."
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "type"
+                              ],
+                              "properties": {
+                                "type": {
+                                  "enum": [
+                                    "admin",
+                                    "public_editor",
+                                    "public_viewer",
+                                    "teams_only"
+                                  ],
+                                  "description": "Built-in organization role: `admin`, `public_editor`, `public_viewer`, or `teams_only`.",
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "type",
+                                "customRoleId"
+                              ],
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "description": "Assigns the custom role `customRoleId`.",
+                                  "enum": [
+                                    "custom"
+                                  ]
+                                },
+                                "customRoleId": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 250,
+                                  "description": "Identifier of the custom role to assign. Use the `id` returned by the custom role endpoints."
+                                }
+                              }
+                            }
+                          ],
+                          "errorMessage": {
+                            "discriminator": "value of tag \"type\" must be one of: admin, public_editor, public_viewer, teams_only, custom"
+                          }
                         }
                       }
                     }
-                  ],
-                  "errorMessage": {
-                    "discriminator": "value of tag \"userRole\" must be one of: admin, public_editor, public_viewer, teams_only, custom"
-                  }
+                  ]
                 },
                 "maxItems": 10,
                 "description": "Invitations to create."
@@ -53783,7 +54930,9 @@
                   "email": "new.member@example.com",
                   "teamId": "team-123-abc",
                   "teamRole": "viewer",
-                  "userRole": "teams_only"
+                  "userRole": {
+                    "type": "teams_only"
+                  }
                 }
               ]
             }
@@ -56432,7 +57581,7 @@
               "maximum": 4927737600,
               "format": "int64"
             },
-            "example": 1704067200,
+            "example": 1704070800,
             "in": "query",
             "name": "to",
             "required": true,
@@ -56525,7 +57674,7 @@
               "maximum": 4927737600,
               "format": "int64"
             },
-            "example": 1704067200,
+            "example": 1704070800,
             "in": "query",
             "name": "to",
             "required": true,
@@ -56641,7 +57790,7 @@
               "maximum": 4927737600,
               "format": "int64"
             },
-            "example": 1704067200,
+            "example": 1704070800,
             "in": "query",
             "name": "to",
             "required": true,
@@ -56778,7 +57927,7 @@
               "maximum": 4927737600,
               "format": "int64"
             },
-            "example": 1704067200,
+            "example": 1704070800,
             "in": "query",
             "name": "to",
             "required": true,
@@ -56893,7 +58042,7 @@
               "maximum": 4927737600,
               "format": "int64"
             },
-            "example": 1704067200,
+            "example": 1704070800,
             "in": "query",
             "name": "to",
             "required": true,
@@ -64798,7 +65947,7 @@
                         "type": "integer",
                         "description": "End of the query window as a Unix timestamp in seconds",
                         "examples": [
-                          1704067200
+                          1704070800
                         ],
                         "minimum": 1456444800,
                         "maximum": 4927737600,
@@ -64810,7 +65959,7 @@
                     "examples": [
                       {
                         "from": 1704067200,
-                        "to": 1704067200
+                        "to": 1704070800
                       }
                     ]
                   }
@@ -64857,6 +66006,160 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/QueryPromqlResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/promql": {
+      "post": {
+        "operationId": "queryPromqlV2",
+        "tags": [
+          "promql"
+        ],
+        "description": "Runs a PromQL range query over Tsuga metric data and returns one shared time axis in milliseconds with one series per group aligned to it. Same request and authentication as `POST /v1/promql`, with `timeRange` in milliseconds. See [How to write PromQL queries](/documentation/visualize/guides/how-to-write-promql-queries) for query syntax and examples.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "query",
+                  "step",
+                  "timeRange"
+                ],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50000,
+                    "description": "PromQL expression to evaluate."
+                  },
+                  "step": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "description": "Evaluation step interval (e.g. `1m`, `5m`, `1h`). Must be a valid Prometheus duration string."
+                  },
+                  "timeRange": {
+                    "type": "object",
+                    "required": [
+                      "from",
+                      "to"
+                    ],
+                    "properties": {
+                      "from": {
+                        "type": "integer",
+                        "description": "Start of the query window as a Unix timestamp in milliseconds",
+                        "examples": [
+                          1704067200000
+                        ],
+                        "minimum": 1456444800000,
+                        "maximum": 4927737600000,
+                        "format": "int64"
+                      },
+                      "to": {
+                        "type": "integer",
+                        "description": "End of the query window as a Unix timestamp in milliseconds",
+                        "examples": [
+                          1704070800000
+                        ],
+                        "minimum": 1456444800000,
+                        "maximum": 4927737600000,
+                        "format": "int64"
+                      }
+                    },
+                    "title": "V2TimeRange",
+                    "description": "Inclusive time range for telemetry queries using Unix timestamps in milliseconds.",
+                    "examples": [
+                      {
+                        "from": 1704067200000,
+                        "to": 1704070800000
+                      }
+                    ]
+                  }
+                },
+                "description": "PromQL range-query request with the time range in milliseconds. Send clusterId as a query parameter, not in this JSON body."
+              },
+              "example": {
+                "query": "sum by (\"context.service.name\") (sum_over_time({\"traces.span.metrics.calls\", \"span.kind\"=\"SPAN_KIND_SERVER\"}[5m]))",
+                "timeRange": {
+                  "from": 1782201500000,
+                  "to": 1782203400000
+                },
+                "step": "1m"
+              }
+            }
+          },
+          "description": "PromQL range-query request with the time range in milliseconds. Send clusterId as a query parameter, not in this JSON body."
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "query",
+            "name": "clusterId",
+            "required": false,
+            "description": "Telemetry cluster to query. Set by the client as the clusterId query parameter, not in the JSON body. Required when the organization has multiple clusters; omit only for single-cluster organizations. Unknown cluster IDs return 404."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryPromqlV2Response"
                 }
               }
             }
@@ -67402,7 +68705,7 @@
               "maximum": 4927737600,
               "format": "int64"
             },
-            "example": 1704067200,
+            "example": 1704070800,
             "in": "query",
             "name": "to",
             "required": false,
@@ -70511,7 +71814,8 @@
                                 "monitor",
                                 "notification-rule",
                                 "notification-silence",
-                                "slo"
+                                "slo",
+                                "span-route"
                               ],
                               "description": "Tsuga-managed asset type.",
                               "type": "string"
@@ -70896,7 +72200,8 @@
                                 "monitor",
                                 "notification-rule",
                                 "notification-silence",
-                                "slo"
+                                "slo",
+                                "span-route"
                               ],
                               "description": "Tsuga-managed asset type.",
                               "type": "string"
@@ -72394,7 +73699,7 @@
               "maximum": 4927737600,
               "format": "int64"
             },
-            "example": 1704067200,
+            "example": 1704070800,
             "in": "query",
             "name": "to",
             "required": true,
@@ -72523,7 +73828,7 @@
               "maximum": 4927737600,
               "format": "int64"
             },
-            "example": 1704067200,
+            "example": 1704070800,
             "in": "query",
             "name": "to",
             "required": true,
@@ -72697,7 +74002,7 @@
               "maximum": 4927737600,
               "format": "int64"
             },
-            "example": 1704067200,
+            "example": 1704070800,
             "in": "query",
             "name": "to",
             "required": true,
@@ -72857,7 +74162,7 @@
                             "type": "integer",
                             "description": "End of the query window as a Unix timestamp in seconds",
                             "examples": [
-                              1704067200
+                              1704070800
                             ],
                             "minimum": 1456444800,
                             "maximum": 4927737600,
@@ -72869,7 +74174,7 @@
                         "examples": [
                           {
                             "from": 1704067200,
-                            "to": 1704067200
+                            "to": 1704070800
                           }
                         ]
                       }
@@ -72911,7 +74216,7 @@
                             "type": "integer",
                             "description": "End of the query window as a Unix timestamp in seconds",
                             "examples": [
-                              1704067200
+                              1704070800
                             ],
                             "minimum": 1456444800,
                             "maximum": 4927737600,
@@ -72923,7 +74228,7 @@
                         "examples": [
                           {
                             "from": 1704067200,
-                            "to": 1704067200
+                            "to": 1704070800
                           }
                         ]
                       }
@@ -73079,7 +74384,7 @@
               "maximum": 4927737600,
               "format": "int64"
             },
-            "example": 1704067200,
+            "example": 1704070800,
             "in": "query",
             "name": "to",
             "required": true,
