@@ -1,6 +1,7 @@
 resource "tsuga_rum_public_token" "rum_public_token" {
   allowed_url_prefixes = ["https://app.example.com"]
   application_type     = "web"
+  collect_client_ip    = false
   name                 = "example-web-app"
   owner                = "team-123"
   tags = [{
