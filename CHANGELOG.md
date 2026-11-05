@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.1] - 2026-11-05
+
 ### Changed
 
 - `tsuga_dashboard`, `tsuga_monitor`: faster plan and diff on large configurations; nested attribute types are now computed once per schema instead of at every visited path.
