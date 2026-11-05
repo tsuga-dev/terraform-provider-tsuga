@@ -15,6 +15,7 @@ import (
 	"terraform-provider-tsuga/internal/groupby"
 	"terraform-provider-tsuga/internal/normalizer"
 	"terraform-provider-tsuga/internal/resource_dashboard"
+	"terraform-provider-tsuga/internal/schematype"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -58,7 +59,7 @@ func (r *dashboardResource) Metadata(_ context.Context, req resource.MetadataReq
 }
 
 func (r *dashboardResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = resource_dashboard.DashboardResourceSchema(ctx)
+	resp.Schema = schematype.Cache(resource_dashboard.DashboardResourceSchema(ctx))
 }
 
 func (r *dashboardResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {

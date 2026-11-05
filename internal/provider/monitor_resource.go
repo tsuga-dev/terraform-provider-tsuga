@@ -9,6 +9,7 @@ import (
 	"terraform-provider-tsuga/internal/aggregate"
 	"terraform-provider-tsuga/internal/groupby"
 	"terraform-provider-tsuga/internal/resource_monitor"
+	"terraform-provider-tsuga/internal/schematype"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -58,7 +59,7 @@ func (r *monitorResource) Metadata(_ context.Context, req resource.MetadataReque
 }
 
 func (r *monitorResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = resource_monitor.MonitorResourceSchema(ctx)
+	resp.Schema = schematype.Cache(resource_monitor.MonitorResourceSchema(ctx))
 }
 
 func (r *monitorResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
