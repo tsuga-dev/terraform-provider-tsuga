@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsuga Public API",
     "description": "Public HTTP API for Tsuga customers and customer-operated tools. Use these endpoints to query observability data, manage customer-owned Tsuga resources, and retrieve documentation or API-reference content. Public API requests authenticate with Bearer tokens such as operation keys. See [API reference](/documentation/api).",
-    "version": "20261104.19.0+dd69676",
+    "version": "20261104.40.0+ee8785c",
     "contact": {
       "name": "Tsuga",
       "url": "https://tsuga.com"
@@ -1380,7 +1380,7 @@
                 },
                 "values": {
                   "type": "object",
-                  "description": "Aggregated values over the full time range, `null` where the group has none. Keyed by result id: `q1`, `q2`, and so on for each query in submission order, plus `formula` when a computed formula is given, or `value` for a PromQL query. Every row has the same keys.",
+                  "description": "Aggregated values over the full time range, `null` where the group has none. Keyed by result id: `q1`, `q2`, and so on for each query in submission order, plus `f1`, `f2`, and so on for each entry of `formulas` in submission order, or `value` for a PromQL query. Every row has the same keys.",
                   "additionalProperties": {
                     "anyOf": [
                       {
@@ -1405,18 +1405,22 @@
             "results": [
               {
                 "group": {
-                  "level": "error"
+                  "context.host.name": "web-1"
                 },
                 "values": {
-                  "q1": 1234
+                  "q1": 12,
+                  "q2": 1000,
+                  "f1": 1.2
                 }
               },
               {
                 "group": {
-                  "level": "warn"
+                  "context.host.name": "web-2"
                 },
                 "values": {
-                  "q1": 567
+                  "q1": 3,
+                  "q2": 500,
+                  "f1": 0.6
                 }
               }
             ]
@@ -1478,7 +1482,7 @@
                 },
                 "values": {
                   "type": "object",
-                  "description": "One value per entry of `timestamps`, `null` where the bucket has none. Keyed by result id: `q1`, `q2`, and so on for each query in submission order, plus `formula` when a computed formula is given, or `value` for a PromQL query. Every row has the same keys.",
+                  "description": "One value per entry of `timestamps`, `null` where the bucket has none. Keyed by result id: `q1`, `q2`, and so on for each query in submission order, plus `f1`, `f2`, and so on for each entry of `formulas` in submission order, or `value` for a PromQL query. Every row has the same keys.",
                   "additionalProperties": {
                     "type": "array",
                     "items": {
@@ -1511,13 +1515,23 @@
             "series": [
               {
                 "group": {
-                  "level": "error"
+                  "context.host.name": "web-1"
                 },
                 "values": {
                   "q1": [
                     12,
                     null,
                     7
+                  ],
+                  "q2": [
+                    1000,
+                    900,
+                    1400
+                  ],
+                  "f1": [
+                    1.2,
+                    null,
+                    0.5
                   ]
                 }
               }
@@ -3833,7 +3847,6 @@
           "from",
           "to",
           "reason",
-          "dryRun",
           "status",
           "matchedEventCount",
           "dueAt",
@@ -3873,10 +3886,6 @@
             "type": "string",
             "description": "Why the deletion was requested, kept for audit."
           },
-          "dryRun": {
-            "type": "boolean",
-            "description": "Whether the cluster only counts the events the request matches, without deleting them."
-          },
           "status": {
             "enum": [
               "pending",
@@ -3915,7 +3924,7 @@
                 "properties": {
                   "matchedRows": {
                     "type": "integer",
-                    "description": "Events matching the request. A dry run counts them without deleting them."
+                    "description": "Events matching the request."
                   },
                   "scannedRows": {
                     "type": "integer",
@@ -3949,7 +3958,6 @@
             "from": "2026-01-01T00:00:00.000Z",
             "to": "2026-02-01T00:00:00.000Z",
             "reason": "GDPR request #42",
-            "dryRun": false,
             "status": "pending",
             "matchedEventCount": 12,
             "dueAt": "2026-02-02T10:30:00.000Z",
@@ -44510,7 +44518,7 @@
                       "description": "Aggregation query. Omit `filter` for an unfiltered query and omit `functions` when no post-processing is needed."
                     },
                     "maxItems": 15,
-                    "description": "Aggregations that may be combined together in the same query. Each item is referenced from `formula` as q1, q2, and so on, in submission order. For dataSource \"metrics\", each aggregate's `field` is the metric name, not an attribute; to count distinct values of an attribute use unique-count with field \"<metricName>.context.<attribute>\" (e.g. \"system.cpu.utilization.context.host.name\")."
+                    "description": "Aggregations that may be combined together in the same query. Each item is referenced from formulas as q1, q2, and so on, in submission order. For dataSource \"metrics\", each aggregate's `field` is the metric name, not an attribute; to count distinct values of an attribute use unique-count with field \"<metricName>.context.<attribute>\" (e.g. \"system.cpu.utilization.context.host.name\")."
                   },
                   "groupBy": {
                     "type": "array",
@@ -44892,7 +44900,7 @@
                       "description": "Aggregation query. Omit `filter` for an unfiltered query and omit `functions` when no post-processing is needed."
                     },
                     "maxItems": 15,
-                    "description": "Aggregations that may be combined together in the same query. Each item is referenced from `formula` as q1, q2, and so on, in submission order. For dataSource \"metrics\", each aggregate's `field` is the metric name, not an attribute; to count distinct values of an attribute use unique-count with field \"<metricName>.context.<attribute>\" (e.g. \"system.cpu.utilization.context.host.name\")."
+                    "description": "Aggregations that may be combined together in the same query. Each item is referenced from formulas as q1, q2, and so on, in submission order. For dataSource \"metrics\", each aggregate's `field` is the metric name, not an attribute; to count distinct values of an attribute use unique-count with field \"<metricName>.context.<attribute>\" (e.g. \"system.cpu.utilization.context.host.name\")."
                   },
                   "groupBy": {
                     "type": "array",
@@ -45077,7 +45085,7 @@
         "tags": [
           "aggregation"
         ],
-        "description": "Runs one or more aggregation queries over logs, metrics, traces, or RUM events and returns one row per group with every query result in it. Same request as `POST /v1/aggregation/multi-query/scalar`, with `timeRange` in milliseconds. See [Analytics queries](/documentation/visualize/analytics/queries).",
+        "description": "Runs one or more aggregation queries over logs, metrics, traces, or RUM events and returns one row per group with every query result in it. Same request as `POST /v1/aggregation/multi-query/scalar`, with `timeRange` in milliseconds and formulas given as the `formulas` list and returned as `f1`. See [Analytics queries](/documentation/visualize/analytics/queries).",
         "requestBody": {
           "required": true,
           "content": {
@@ -45283,7 +45291,7 @@
                       "description": "Aggregation query. Omit `filter` for an unfiltered query and omit `functions` when no post-processing is needed."
                     },
                     "maxItems": 15,
-                    "description": "Aggregations that may be combined together in the same query. Each item is referenced from `formula` as q1, q2, and so on, in submission order. For dataSource \"metrics\", each aggregate's `field` is the metric name, not an attribute; to count distinct values of an attribute use unique-count with field \"<metricName>.context.<attribute>\" (e.g. \"system.cpu.utilization.context.host.name\")."
+                    "description": "Aggregations that may be combined together in the same query. Each item is referenced from formulas as q1, q2, and so on, in submission order. For dataSource \"metrics\", each aggregate's `field` is the metric name, not an attribute; to count distinct values of an attribute use unique-count with field \"<metricName>.context.<attribute>\" (e.g. \"system.cpu.utilization.context.host.name\")."
                   },
                   "groupBy": {
                     "type": "array",
@@ -45341,18 +45349,23 @@
                     "description": "Telemetry source queried by this aggregation: `logs`, `metrics`, `traces`, or `rum`.",
                     "type": "string"
                   },
-                  "formula": {
-                    "type": "string",
-                    "format": "tsuga-formula",
-                    "minLength": 0,
-                    "maxLength": 250,
-                    "errorMessage": {
-                      "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                  "formulas": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "tsuga-formula",
+                      "minLength": 1,
+                      "maxLength": 250,
+                      "errorMessage": {
+                        "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                      },
+                      "description": "Formula over the query results, such as `q1 / q2 * 100`. Only `+`, `-`, `*`, `/` and parentheses over query references (`q1` through `qN`) and numbers are supported; an undefined query reference returns 400."
                     },
-                    "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
+                    "maxItems": 1,
+                    "description": "Formulas computed from the query results, returned beside them as `f1`, `f2`, and so on in submission order. At most one for now."
                   }
                 },
-                "description": "Scalar aggregation request. Provide a time range in milliseconds, one or more queries, a telemetry data source, and optional grouping or formula. Omit `groupBy` for ungrouped results. Send `clusterId` as a query parameter, not in the JSON body."
+                "description": "Scalar aggregation request. Provide a time range in milliseconds, one or more queries, a telemetry data source, and optional grouping or formulas. Omit `groupBy` for ungrouped results. Send `clusterId` as a query parameter, not in the JSON body."
               },
               "example": {
                 "timeRange": {
@@ -45365,21 +45378,30 @@
                     "aggregate": {
                       "type": "count"
                     },
+                    "filter": "context.service.name:checkout AND level:error"
+                  },
+                  {
+                    "aggregate": {
+                      "type": "count"
+                    },
                     "filter": "context.service.name:checkout"
                   }
                 ],
                 "groupBy": [
                   {
                     "fields": [
-                      "level"
+                      "context.host.name"
                     ],
                     "limit": 5
                   }
+                ],
+                "formulas": [
+                  "q1 / q2 * 100"
                 ]
               }
             }
           },
-          "description": "Scalar aggregation request. Provide a time range in milliseconds, one or more queries, a telemetry data source, and optional grouping or formula. Omit `groupBy` for ungrouped results. Send `clusterId` as a query parameter, not in the JSON body."
+          "description": "Scalar aggregation request. Provide a time range in milliseconds, one or more queries, a telemetry data source, and optional grouping or formulas. Omit `groupBy` for ungrouped results. Send `clusterId` as a query parameter, not in the JSON body."
         },
         "parameters": [
           {
@@ -45458,7 +45480,7 @@
         "tags": [
           "aggregation"
         ],
-        "description": "Runs one or more aggregation queries over logs, metrics, traces, or RUM events and returns one shared time axis in milliseconds with one series per group aligned to it. Use `aggregationWindow` to choose the time bucket size. Same request as `POST /v1/aggregation/multi-query/timeseries`, with `timeRange` in milliseconds. See [Analytics queries](/documentation/visualize/analytics/queries).",
+        "description": "Runs one or more aggregation queries over logs, metrics, traces, or RUM events and returns one shared time axis in milliseconds with one series per group aligned to it. Use `aggregationWindow` to choose the time bucket size. Same request as `POST /v1/aggregation/multi-query/timeseries`, with `timeRange` in milliseconds and formulas given as the `formulas` list and returned as `f1`. See [Analytics queries](/documentation/visualize/analytics/queries).",
         "requestBody": {
           "required": true,
           "content": {
@@ -45665,7 +45687,7 @@
                       "description": "Aggregation query. Omit `filter` for an unfiltered query and omit `functions` when no post-processing is needed."
                     },
                     "maxItems": 15,
-                    "description": "Aggregations that may be combined together in the same query. Each item is referenced from `formula` as q1, q2, and so on, in submission order. For dataSource \"metrics\", each aggregate's `field` is the metric name, not an attribute; to count distinct values of an attribute use unique-count with field \"<metricName>.context.<attribute>\" (e.g. \"system.cpu.utilization.context.host.name\")."
+                    "description": "Aggregations that may be combined together in the same query. Each item is referenced from formulas as q1, q2, and so on, in submission order. For dataSource \"metrics\", each aggregate's `field` is the metric name, not an attribute; to count distinct values of an attribute use unique-count with field \"<metricName>.context.<attribute>\" (e.g. \"system.cpu.utilization.context.host.name\")."
                   },
                   "groupBy": {
                     "type": "array",
@@ -45723,15 +45745,20 @@
                     "description": "Telemetry source queried by this aggregation: `logs`, `metrics`, `traces`, or `rum`.",
                     "type": "string"
                   },
-                  "formula": {
-                    "type": "string",
-                    "format": "tsuga-formula",
-                    "minLength": 0,
-                    "maxLength": 250,
-                    "errorMessage": {
-                      "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                  "formulas": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "tsuga-formula",
+                      "minLength": 1,
+                      "maxLength": 250,
+                      "errorMessage": {
+                        "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                      },
+                      "description": "Formula over the query results, such as `q1 / q2 * 100`. Only `+`, `-`, `*`, `/` and parentheses over query references (`q1` through `qN`) and numbers are supported; an undefined query reference returns 400."
                     },
-                    "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
+                    "maxItems": 1,
+                    "description": "Formulas computed from the query results, returned beside them as `f1`, `f2`, and so on in submission order. At most one for now."
                   },
                   "aggregationWindow": {
                     "type": "string",
@@ -45743,16 +45770,21 @@
                     "description": "Time bucket size for timeseries aggregation, such as `10s`, `1m`, or `1h`."
                   }
                 },
-                "description": "Timeseries aggregation request. Provide a time range in milliseconds, bucket size, one or more queries, a telemetry data source, and optional grouping or formula. Omit `groupBy` for ungrouped series. Send `clusterId` as a query parameter, not in the JSON body."
+                "description": "Timeseries aggregation request. Provide a time range in milliseconds, bucket size, one or more queries, a telemetry data source, and optional grouping or formulas. Omit `groupBy` for ungrouped series. Send `clusterId` as a query parameter, not in the JSON body."
               },
               "example": {
                 "timeRange": {
                   "from": 1782201500000,
                   "to": 1782203400000
                 },
-                "aggregationWindow": "1m",
                 "dataSource": "logs",
                 "queries": [
+                  {
+                    "aggregate": {
+                      "type": "count"
+                    },
+                    "filter": "context.service.name:checkout AND level:error"
+                  },
                   {
                     "aggregate": {
                       "type": "count"
@@ -45763,15 +45795,19 @@
                 "groupBy": [
                   {
                     "fields": [
-                      "level"
+                      "context.host.name"
                     ],
                     "limit": 5
                   }
-                ]
+                ],
+                "formulas": [
+                  "q1 / q2 * 100"
+                ],
+                "aggregationWindow": "1m"
               }
             }
           },
-          "description": "Timeseries aggregation request. Provide a time range in milliseconds, bucket size, one or more queries, a telemetry data source, and optional grouping or formula. Omit `groupBy` for ungrouped series. Send `clusterId` as a query parameter, not in the JSON body."
+          "description": "Timeseries aggregation request. Provide a time range in milliseconds, bucket size, one or more queries, a telemetry data source, and optional grouping or formulas. Omit `groupBy` for ungrouped series. Send `clusterId` as a query parameter, not in the JSON body."
         },
         "parameters": [
           {
@@ -50777,7 +50813,7 @@
         "tags": [
           "data-deletion-requests"
         ],
-        "description": "Creates a request to delete the events matching a query in a time range. The cluster executes it 30 minutes after creation, leaving time to cancel it. Deleted events cannot be restored. When every event carrying an attribute is deleted, the attribute name is removed too, and attribute discovery stops listing it. Use `dryRun` to count the matching events first.",
+        "description": "Creates a request to delete the events matching a query in a time range. The cluster executes it 30 minutes after creation, leaving time to cancel it. Deleted events cannot be restored. When every event carrying an attribute is deleted, the attribute name is removed too, and attribute discovery stops listing it.",
         "requestBody": {
           "required": true,
           "content": {
@@ -50791,7 +50827,6 @@
                   "from",
                   "to",
                   "reason",
-                  "dryRun",
                   "owner"
                 ],
                 "properties": {
@@ -50843,10 +50878,6 @@
                     "maxLength": 50000,
                     "description": "Why the deletion is requested, for example the reference of a GDPR request. Kept for audit."
                   },
-                  "dryRun": {
-                    "type": "boolean",
-                    "description": "Set to true to only count the events the request matches, without deleting them."
-                  },
                   "owner": {
                     "type": "string",
                     "minLength": 1,
@@ -50863,7 +50894,6 @@
                 "from": 1767225600,
                 "to": 1769904000,
                 "reason": "GDPR request #42",
-                "dryRun": true,
                 "owner": "team-123-abc"
               }
             }
