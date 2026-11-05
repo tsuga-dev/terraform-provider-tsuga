@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsuga Public API",
     "description": "Public HTTP API for Tsuga customers and customer-operated tools. Use these endpoints to query observability data, manage customer-owned Tsuga resources, and retrieve documentation or API-reference content. Public API requests authenticate with Bearer tokens such as operation keys. See [API reference](/documentation/api).",
-    "version": "20261104.40.0+ee8785c",
+    "version": "20261105.4.0+dccf50c",
     "contact": {
       "name": "Tsuga",
       "url": "https://tsuga.com"
@@ -4019,6 +4019,165 @@
           }
         }
       },
+      "DashboardSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "owner",
+          "widgetCount"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Tsuga-generated dashboard ID assigned when the dashboard is created."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the dashboard. Set by the caller on create or update."
+          },
+          "owner": {
+            "type": "string",
+            "description": "ID of the team that owns the dashboard. Set by the caller on create or update and used for dashboard access control."
+          },
+          "filters": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "values"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "Dashboard-wide filter key, usually a telemetry attribute name."
+                },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "Filter value."
+                  },
+                  "description": "Allowed values for this dashboard-wide filter."
+                },
+                "exclude": {
+                  "type": "boolean",
+                  "description": "If true, widgets exclude telemetry whose value matches this filter instead of including it (is-not)."
+                }
+              }
+            },
+            "description": "Dashboard-wide filters applied to every widget on the dashboard."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "value"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "Tag key attached to the resource. Consumers can use key/value tags for filtering, ownership context, and policy checks."
+                },
+                "value": {
+                  "type": "string",
+                  "description": "Tag value attached to the resource for this key. Tsuga returns the value exactly as stored."
+                }
+              },
+              "title": "Tag"
+            },
+            "title": "Tags",
+            "description": "Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies."
+          },
+          "timePreset": {
+            "enum": [
+              "past-5-minutes",
+              "past-15-minutes",
+              "past-30-minutes",
+              "past-1-hour",
+              "past-2-hours",
+              "past-4-hours",
+              "past-6-hours",
+              "past-12-hours",
+              "past-24-hours",
+              "past-2-days",
+              "past-3-days",
+              "past-7-days",
+              "past-15-days",
+              "past-30-days",
+              "past-3-months",
+              "current-day",
+              "current-week",
+              "current-month",
+              "current-year",
+              "previous-day",
+              "previous-week",
+              "previous-month",
+              "previous-3-months",
+              "previous-year"
+            ],
+            "description": "Relative time preset used when opening the dashboard.",
+            "type": "string"
+          },
+          "folderId": {
+            "type": "string",
+            "description": "Folder that contains the dashboard. Set from the dashboard's saved folder relationship. Returned when the dashboard is in a folder; omitted when it is not."
+          },
+          "widgetCount": {
+            "type": "number",
+            "description": "Number of widgets on the dashboard."
+          }
+        },
+        "description": "Dashboard as listed by the dashboard query: its fields without `graphs`, plus the number of widgets. Retrieve the dashboard by ID to read its widgets.",
+        "examples": [
+          {
+            "id": "123-456-abc",
+            "name": "API Performance Overview",
+            "owner": "team-123-abc",
+            "filters": [
+              {
+                "key": "env",
+                "values": [
+                  "production"
+                ]
+              }
+            ],
+            "tags": [
+              {
+                "key": "team",
+                "value": "platform"
+              }
+            ],
+            "timePreset": "past-1-hour",
+            "widgetCount": 1
+          }
+        ]
+      },
+      "QueryDashboardsResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardSummary"
+            }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
+          }
+        }
+      },
       "Dashboard": {
         "type": "object",
         "required": [
@@ -4386,28 +4545,6 @@
             "timePreset": "past-1-hour"
           }
         ]
-      },
-      "QueryDashboardsResponse": {
-        "type": "object",
-        "required": [
-          "requestId",
-          "data"
-        ],
-        "properties": {
-          "requestId": {
-            "type": "string",
-            "description": "Identifier used to trace the lifecycle of this API request"
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Dashboard"
-            }
-          },
-          "metadata": {
-            "$ref": "#/components/schemas/ResponseMetadata"
-          }
-        }
       },
       "GetDashboardResponse": {
         "type": "object",
@@ -51042,7 +51179,7 @@
         "tags": [
           "dashboards"
         ],
-        "description": "Queries dashboards visible to the authenticated operation key. Use this endpoint to build dashboard inventories or synchronize dashboard metadata. Pagination fields limit the returned page; use the response metadata to request additional pages. See [Dashboards](/documentation/visualize/dashboards/index).",
+        "description": "Queries dashboards visible to the authenticated operation key. Use this endpoint to build dashboard inventories or synchronize dashboard metadata. Pagination fields limit the returned page; use the response metadata to request additional pages. Each dashboard is returned without its `graphs`; use `getDashboard` to read its widgets. See [Dashboards](/documentation/visualize/dashboards/index).",
         "requestBody": {
           "required": true,
           "content": {
