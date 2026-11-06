@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsuga Public API",
     "description": "Public HTTP API for Tsuga customers and customer-operated tools. Use these endpoints to query observability data, manage customer-owned Tsuga resources, and retrieve documentation or API-reference content. Public API requests authenticate with Bearer tokens such as operation keys. See [API reference](/documentation/api).",
-    "version": "20261105.30.0+1d62fa7",
+    "version": "20261106.9.0+777affd",
     "contact": {
       "name": "Tsuga",
       "url": "https://tsuga.com"
@@ -3565,6 +3565,14 @@
                 "description": "Access granted on this resource type. `write` implies `read`.",
                 "type": "string"
               },
+              "synthetic-variable": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Access granted on this resource type. `write` implies `read`.",
+                "type": "string"
+              },
               "tag-policy": {
                 "enum": [
                   "read",
@@ -4269,6 +4277,7 @@
                       "table": "#/components/schemas/GraphVisualizationTable",
                       "list": "#/components/schemas/GraphVisualizationList",
                       "note": "#/components/schemas/GraphVisualizationNote",
+                      "group": "#/components/schemas/GraphVisualizationGroup",
                       "list-log-patterns": "#/components/schemas/GraphVisualizationListLogPatterns",
                       "list-spans": "#/components/schemas/GraphVisualizationListSpans",
                       "list-rum": "#/components/schemas/GraphVisualizationListRum",
@@ -4355,6 +4364,9 @@
                       "$ref": "#/components/schemas/GraphVisualizationNote"
                     },
                     {
+                      "$ref": "#/components/schemas/GraphVisualizationGroup"
+                    },
+                    {
                       "$ref": "#/components/schemas/GraphVisualizationListLogPatterns"
                     },
                     {
@@ -4368,7 +4380,7 @@
                     }
                   ],
                   "errorMessage": {
-                    "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, list-log-patterns, list-spans, list-rum, slo"
+                    "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, group, list-log-patterns, list-spans, list-rum, slo"
                   }
                 },
                 "layout": {
@@ -4397,11 +4409,15 @@
                       "description": "Height of the widget in grid rows, where each row is 50 pixels tall. Dashboard validation uses this with `w` and the widget type to reject layouts below the widget minimum."
                     }
                   },
-                  "description": "Grid position and size of the widget. Optional; when provided, the size must be at least 2×2 (width×height) grid units, except note widgets which can go down to 1×1."
+                  "description": "Grid position and size of the widget. Optional; when provided, the size must be at least 2×2 (width×height) grid units, except note widgets which can go down to 1×1, and group widgets which span the full 12 columns."
                 },
                 "tabId": {
                   "type": "string",
                   "description": "ID of the dashboard tab that shows the widget. Widgets without a tab, or whose tab no longer exists, are shown in the first tab."
+                },
+                "groupId": {
+                  "type": "string",
+                  "description": "ID of the group widget the widget belongs to. The group must be in the same tab, and cannot itself belong to a group."
                 }
               },
               "title": "Graph",
@@ -4673,6 +4689,7 @@
                     "table": "#/components/schemas/GraphVisualizationTable",
                     "list": "#/components/schemas/GraphVisualizationList",
                     "note": "#/components/schemas/GraphVisualizationNote",
+                    "group": "#/components/schemas/GraphVisualizationGroup",
                     "list-log-patterns": "#/components/schemas/GraphVisualizationListLogPatterns",
                     "list-spans": "#/components/schemas/GraphVisualizationListSpans",
                     "list-rum": "#/components/schemas/GraphVisualizationListRum",
@@ -4759,6 +4776,9 @@
                     "$ref": "#/components/schemas/GraphVisualizationNote"
                   },
                   {
+                    "$ref": "#/components/schemas/GraphVisualizationGroup"
+                  },
+                  {
                     "$ref": "#/components/schemas/GraphVisualizationListLogPatterns"
                   },
                   {
@@ -4772,7 +4792,7 @@
                   }
                 ],
                 "errorMessage": {
-                  "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, list-log-patterns, list-spans, list-rum, slo"
+                  "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, group, list-log-patterns, list-spans, list-rum, slo"
                 }
               },
               "layout": {
@@ -4801,11 +4821,15 @@
                     "description": "Height of the widget in grid rows, where each row is 50 pixels tall. Dashboard validation uses this with `w` and the widget type to reject layouts below the widget minimum."
                   }
                 },
-                "description": "Grid position and size of the widget. Optional; when provided, the size must be at least 2×2 (width×height) grid units, except note widgets which can go down to 1×1."
+                "description": "Grid position and size of the widget. Optional; when provided, the size must be at least 2×2 (width×height) grid units, except note widgets which can go down to 1×1, and group widgets which span the full 12 columns."
               },
               "tabId": {
                 "type": "string",
                 "description": "ID of the dashboard tab that shows the widget. Widgets without a tab, or whose tab no longer exists, are shown in the first tab."
+              },
+              "groupId": {
+                "type": "string",
+                "description": "ID of the group widget the widget belongs to. The group must be in the same tab, and cannot itself belong to a group."
               }
             },
             "title": "Graph",
@@ -33376,6 +33400,22 @@
         },
         "title": "Note"
       },
+      "GraphVisualizationGroup": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Full-width header that groups the widgets referencing it through `groupId`. Its name is the widget `name`.",
+            "enum": [
+              "group"
+            ]
+          }
+        },
+        "title": "Group"
+      },
       "GraphVisualizationListLogPatterns": {
         "type": "object",
         "required": [
@@ -49523,6 +49563,14 @@
                         "description": "Access granted on this resource type. `write` implies `read`.",
                         "type": "string"
                       },
+                      "synthetic-variable": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`.",
+                        "type": "string"
+                      },
                       "tag-policy": {
                         "enum": [
                           "read",
@@ -50226,6 +50274,14 @@
                         "type": "string"
                       },
                       "synthetic-test": {
+                        "enum": [
+                          "read",
+                          "write"
+                        ],
+                        "description": "Access granted on this resource type. `write` implies `read`.",
+                        "type": "string"
+                      },
+                      "synthetic-variable": {
                         "enum": [
                           "read",
                           "write"
@@ -51597,6 +51653,7 @@
                               "table": "#/components/schemas/InputGraphVisualizationTable",
                               "list": "#/components/schemas/InputGraphVisualizationList",
                               "note": "#/components/schemas/InputGraphVisualizationNote",
+                              "group": "#/components/schemas/GraphVisualizationGroup",
                               "list-log-patterns": "#/components/schemas/InputGraphVisualizationListLogPatterns",
                               "list-spans": "#/components/schemas/InputGraphVisualizationListSpans",
                               "list-rum": "#/components/schemas/InputGraphVisualizationListRum",
@@ -51683,6 +51740,9 @@
                               "$ref": "#/components/schemas/InputGraphVisualizationNote"
                             },
                             {
+                              "$ref": "#/components/schemas/GraphVisualizationGroup"
+                            },
+                            {
                               "$ref": "#/components/schemas/InputGraphVisualizationListLogPatterns"
                             },
                             {
@@ -51696,7 +51756,7 @@
                             }
                           ],
                           "errorMessage": {
-                            "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, list-log-patterns, list-spans, list-rum, slo"
+                            "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, group, list-log-patterns, list-spans, list-rum, slo"
                           }
                         },
                         "layout": {
@@ -51725,13 +51785,19 @@
                               "description": "Height of the widget in grid rows, where each row is 50 pixels tall. Dashboard validation uses this with `w` and the widget type to reject layouts below the widget minimum."
                             }
                           },
-                          "description": "Grid position and size of the widget. Optional; when provided, the size must be at least 2×2 (width×height) grid units, except note widgets which can go down to 1×1."
+                          "description": "Grid position and size of the widget. Optional; when provided, the size must be at least 2×2 (width×height) grid units, except note widgets which can go down to 1×1, and group widgets which span the full 12 columns."
                         },
                         "tabId": {
                           "type": "string",
                           "minLength": 0,
                           "maxLength": 250,
                           "description": "ID of the dashboard tab that shows the widget. Widgets without a tab, or whose tab no longer exists, are shown in the first tab."
+                        },
+                        "groupId": {
+                          "type": "string",
+                          "minLength": 0,
+                          "maxLength": 250,
+                          "description": "ID of the group widget the widget belongs to. The group must be in the same tab, and cannot itself belong to a group."
                         }
                       },
                       "title": "Graph",
@@ -52148,6 +52214,7 @@
                               "table": "#/components/schemas/InputGraphVisualizationTable",
                               "list": "#/components/schemas/InputGraphVisualizationList",
                               "note": "#/components/schemas/InputGraphVisualizationNote",
+                              "group": "#/components/schemas/GraphVisualizationGroup",
                               "list-log-patterns": "#/components/schemas/InputGraphVisualizationListLogPatterns",
                               "list-spans": "#/components/schemas/InputGraphVisualizationListSpans",
                               "list-rum": "#/components/schemas/InputGraphVisualizationListRum",
@@ -52234,6 +52301,9 @@
                               "$ref": "#/components/schemas/InputGraphVisualizationNote"
                             },
                             {
+                              "$ref": "#/components/schemas/GraphVisualizationGroup"
+                            },
+                            {
                               "$ref": "#/components/schemas/InputGraphVisualizationListLogPatterns"
                             },
                             {
@@ -52247,7 +52317,7 @@
                             }
                           ],
                           "errorMessage": {
-                            "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, list-log-patterns, list-spans, list-rum, slo"
+                            "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, group, list-log-patterns, list-spans, list-rum, slo"
                           }
                         },
                         "layout": {
@@ -52276,13 +52346,19 @@
                               "description": "Height of the widget in grid rows, where each row is 50 pixels tall. Dashboard validation uses this with `w` and the widget type to reject layouts below the widget minimum."
                             }
                           },
-                          "description": "Grid position and size of the widget. Optional; when provided, the size must be at least 2×2 (width×height) grid units, except note widgets which can go down to 1×1."
+                          "description": "Grid position and size of the widget. Optional; when provided, the size must be at least 2×2 (width×height) grid units, except note widgets which can go down to 1×1, and group widgets which span the full 12 columns."
                         },
                         "tabId": {
                           "type": "string",
                           "minLength": 0,
                           "maxLength": 250,
                           "description": "ID of the dashboard tab that shows the widget. Widgets without a tab, or whose tab no longer exists, are shown in the first tab."
+                        },
+                        "groupId": {
+                          "type": "string",
+                          "minLength": 0,
+                          "maxLength": 250,
+                          "description": "ID of the group widget the widget belongs to. The group must be in the same tab, and cannot itself belong to a group."
                         }
                       },
                       "title": "Graph",
@@ -52610,6 +52686,7 @@
                         "table": "#/components/schemas/InputGraphVisualizationTable",
                         "list": "#/components/schemas/InputGraphVisualizationList",
                         "note": "#/components/schemas/InputGraphVisualizationNote",
+                        "group": "#/components/schemas/GraphVisualizationGroup",
                         "list-log-patterns": "#/components/schemas/InputGraphVisualizationListLogPatterns",
                         "list-spans": "#/components/schemas/InputGraphVisualizationListSpans",
                         "list-rum": "#/components/schemas/InputGraphVisualizationListRum",
@@ -52696,6 +52773,9 @@
                         "$ref": "#/components/schemas/InputGraphVisualizationNote"
                       },
                       {
+                        "$ref": "#/components/schemas/GraphVisualizationGroup"
+                      },
+                      {
                         "$ref": "#/components/schemas/InputGraphVisualizationListLogPatterns"
                       },
                       {
@@ -52709,7 +52789,7 @@
                       }
                     ],
                     "errorMessage": {
-                      "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, list-log-patterns, list-spans, list-rum, slo"
+                      "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, group, list-log-patterns, list-spans, list-rum, slo"
                     }
                   },
                   "layout": {
@@ -52743,7 +52823,7 @@
                             "description": "Height of the widget in grid rows, where each row is 50 pixels tall. Dashboard validation uses this with `w` and the widget type to reject layouts below the widget minimum."
                           }
                         },
-                        "description": "Grid position and size of the widget. Optional; when provided, the size must be at least 2×2 (width×height) grid units, except note widgets which can go down to 1×1."
+                        "description": "Grid position and size of the widget. Optional; when provided, the size must be at least 2×2 (width×height) grid units, except note widgets which can go down to 1×1, and group widgets which span the full 12 columns."
                       }
                     ],
                     "description": "Grid position and size of the widget. Pass null to remove it."
