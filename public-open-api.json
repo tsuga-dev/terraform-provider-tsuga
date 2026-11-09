@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsuga Public API",
     "description": "Public HTTP API for Tsuga customers and customer-operated tools. Use these endpoints to query observability data, manage customer-owned Tsuga resources, and retrieve documentation or API-reference content. Public API requests authenticate with Bearer tokens such as operation keys. See [API reference](/documentation/api).",
-    "version": "20261106.9.0+777affd",
+    "version": "20261109.12.0+5cca474",
     "contact": {
       "name": "Tsuga",
       "url": "https://tsuga.com"
@@ -4130,6 +4130,13 @@
             "description": "Relative time preset used when opening the dashboard.",
             "type": "string"
           },
+          "clusterIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Clusters selected when opening the dashboard."
+          },
           "folderId": {
             "type": "string",
             "description": "Folder that contains the dashboard. Set from the dashboard's saved folder relationship. Returned when the dashboard is in a folder; omitted when it is not."
@@ -4160,6 +4167,9 @@
               }
             ],
             "timePreset": "past-1-hour",
+            "clusterIds": [
+              "cluster-123-abc"
+            ],
             "widgetCount": 1
           }
         ]
@@ -4507,6 +4517,13 @@
             "description": "Relative time preset used when opening the dashboard.",
             "type": "string"
           },
+          "clusterIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Clusters selected when opening the dashboard."
+          },
           "folderId": {
             "type": "string",
             "description": "Folder that contains the dashboard. Set from the dashboard's saved folder relationship. Returned when the dashboard is in a folder; omitted when it is not."
@@ -4558,7 +4575,10 @@
                 "value": "platform"
               }
             ],
-            "timePreset": "past-1-hour"
+            "timePreset": "past-1-hour",
+            "clusterIds": [
+              "cluster-123-abc"
+            ]
           }
         ]
       },
@@ -17361,6 +17381,10 @@
                       "type": "string",
                       "description": "`span_id` of this span's parent within the same trace. Empty or absent for a root span."
                     },
+                    "resource_id": {
+                      "type": "string",
+                      "description": "Only on summarized traces: key into the response `resources` map holding the resource context (host, cloud, process, SDK) hoisted off this span. `context` keeps `service` and `env` inline."
+                    },
                     "resource_attributes": {
                       "type": "object",
                       "properties": {},
@@ -17564,6 +17588,10 @@
             "type": "string",
             "description": "`span_id` of this span's parent within the same trace. Empty or absent for a root span."
           },
+          "resource_id": {
+            "type": "string",
+            "description": "Only on summarized traces: key into the response `resources` map holding the resource context (host, cloud, process, SDK) hoisted off this span. `context` keeps `service` and `env` inline."
+          },
           "resource_attributes": {
             "type": "object",
             "properties": {},
@@ -17735,9 +17763,19 @@
           "data": {
             "type": "object",
             "required": [
+              "resources",
               "spans"
             ],
             "properties": {
+              "resources": {
+                "type": "object",
+                "description": "Distinct resource contexts of the trace, keyed by the `resource_id` each span carries. Emitted once per resource instead of on every span.",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              },
               "spans": {
                 "type": "array",
                 "items": {
@@ -17779,6 +17817,10 @@
                     "parent_span_id": {
                       "type": "string",
                       "description": "`span_id` of this span's parent within the same trace. Empty or absent for a root span."
+                    },
+                    "resource_id": {
+                      "type": "string",
+                      "description": "Only on summarized traces: key into the response `resources` map holding the resource context (host, cloud, process, SDK) hoisted off this span. `context` keeps `service` and `env` inline."
                     },
                     "resource_attributes": {
                       "type": "object",
@@ -51896,6 +51938,26 @@
                     "description": "Relative time preset used when opening the dashboard. Optional; create defaults to `past-30-minutes` when omitted, and update omission preserves the current value.",
                     "type": "string"
                   },
+                  "clusterIds": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 250
+                        },
+                        "minItems": 1,
+                        "maxItems": 5,
+                        "uniqueItems": true,
+                        "description": "IDs of the clusters to query, without duplicates. Mutually exclusive with `clusterId`. Omit both to use the default cluster."
+                      }
+                    ],
+                    "description": "IDs of the clusters to select when opening the dashboard (its default clusters). Optional; omit on update to keep the current clusters, or pass null to clear them."
+                  },
                   "folderId": {
                     "anyOf": [
                       {
@@ -51955,6 +52017,9 @@
                   }
                 ],
                 "timePreset": "past-1-hour",
+                "clusterIds": [
+                  "cluster-123-abc"
+                ],
                 "folderId": null
               }
             }
@@ -52457,6 +52522,26 @@
                     "description": "Relative time preset used when opening the dashboard. Optional; create defaults to `past-30-minutes` when omitted, and update omission preserves the current value.",
                     "type": "string"
                   },
+                  "clusterIds": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 250
+                        },
+                        "minItems": 1,
+                        "maxItems": 5,
+                        "uniqueItems": true,
+                        "description": "IDs of the clusters to query, without duplicates. Mutually exclusive with `clusterId`. Omit both to use the default cluster."
+                      }
+                    ],
+                    "description": "IDs of the clusters to select when opening the dashboard (its default clusters). Optional; omit on update to keep the current clusters, or pass null to clear them."
+                  },
                   "folderId": {
                     "anyOf": [
                       {
@@ -52471,7 +52556,7 @@
                     "description": "Folder that should contain the dashboard. Optional; omit on update to keep the current folder, pass null to clear the folder, or pass a readable dashboard-folder ID to move it."
                   }
                 },
-                "description": "Dashboard create or update request. Provide the dashboard identity, owner team, widgets, filters, tags, and optional time preset."
+                "description": "Dashboard create or update request. Provide the dashboard identity, owner team, widgets, filters, tags, and optional time preset and default clusters."
               },
               "example": {
                 "name": "API Performance Overview",
@@ -52517,11 +52602,14 @@
                   }
                 ],
                 "timePreset": "past-1-hour",
+                "clusterIds": [
+                  "cluster-123-abc"
+                ],
                 "folderId": null
               }
             }
           },
-          "description": "Dashboard create or update request. Provide the dashboard identity, owner team, widgets, filters, tags, and optional time preset."
+          "description": "Dashboard create or update request. Provide the dashboard identity, owner team, widgets, filters, tags, and optional time preset and default clusters."
         },
         "responses": {
           "200": {
@@ -74053,7 +74141,7 @@
         "tags": [
           "traces"
         ],
-        "description": "Returns one trace by trace ID as a compact set of spans: similar spans are merged into summary spans with counts and duration statistics, so large traces fit. Summary spans carry `span_attributes.aggregation.is_summary`. For where the time went, use the trace latency summary. See [Traces](/documentation/explore/traces).",
+        "description": "Returns one trace by trace ID as a compact set of spans: similar spans are merged into summary spans with counts and duration statistics, so large traces fit. Summary spans carry `span_attributes.aggregation.is_summary`. The resource context of each span (host, cloud, process, SDK) is emitted once under `resources`; a span points at its entry with `resource_id` and keeps only `context.service` and `context.env` inline. For where the time went, use the trace latency summary. See [Traces](/documentation/explore/traces).",
         "parameters": [
           {
             "schema": {
