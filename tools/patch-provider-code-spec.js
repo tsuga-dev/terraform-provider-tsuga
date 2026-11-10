@@ -45,6 +45,15 @@
  *    add use_state_for_unknown to it. The API returns the key only on creation
  *    and never rotates it, so plans keep the stored value instead of showing
  *    `key -> (known after apply)`.
+ *  - cloud_account resource (its request body is expanded from a discriminated
+ *    oneOf by expand-oneof.js): the spec cannot express that exactly one of
+ *    aws, gcp and azure is set, so adds ExactlyOneOf across them. Also makes
+ *    the three blocks plain optional (codegen marks them computed_optional,
+ *    which would plan the unselected ones as `(known after apply)`) with
+ *    requires_replace on their fields (connection settings are immutable); makes
+ *    account_friendly_name plain optional (computed_optional would keep the
+ *    stored name when it is dropped from the config, so it could never be
+ *    cleared); and adds use_state_for_unknown to `id`, as for the team resource.
  */
 const fs = require("fs");
 
@@ -156,7 +165,7 @@ permissions.map = {
   computed_optional_required: "required",
   element_type: {string: {}},
   description:
-    "Resource types the key can act on, each mapped to `read` or `write`. `write` also grants read access. " +
+  "Resource types the key can act on, each mapped to `read` or `write`. `write` also grants read access. " +
     "A resource type absent from the map is not accessible to the key at all. " +
     "Keys are API resource types such as `dashboard`, `dashboard-folder` or `logs`.",
   validators: [
@@ -196,5 +205,33 @@ for (const keyResourceName of ["ingestion_api_key", "operation_api_key"]) {
   key.description = "The full API key value. Only available at creation time; not retrievable afterwards.";
   key.plan_modifiers = planModifier(STRING_PLAN_MODIFIER, "stringplanmodifier.UseStateForUnknown()");
 }
+
+const cloudAccount = requireResource("cloud_account");
+requireAttr(cloudAccount, "id").string.plan_modifiers = planModifier(
+  STRING_PLAN_MODIFIER,
+  "stringplanmodifier.UseStateForUnknown()",
+);
+requireAttr(cloudAccount, "account_friendly_name").string.computed_optional_required = "optional";
+for (const name of ["aws", "gcp", "azure"]) {
+  const block = requireAttr(cloudAccount, name).single_nested;
+  block.computed_optional_required = "optional";
+  // Object-level plan modifiers run on null blocks and the generated
+  // ValueFromObject rejects null objects, so replace on each field instead.
+  for (const attr of block.attributes) {
+    attr.string.plan_modifiers = planModifier(STRING_PLAN_MODIFIER, "stringplanmodifier.RequiresReplace()");
+  }
+}
+requireAttr(cloudAccount, "aws").single_nested.validators = [
+  {
+    custom: {
+      imports: [
+        {path: "github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"},
+        {path: "github.com/hashicorp/terraform-plugin-framework/path"},
+      ],
+      schema_definition:
+      'objectvalidator.ExactlyOneOf(path.MatchRoot("aws"), path.MatchRoot("gcp"), path.MatchRoot("azure"))',
+    },
+  },
+];
 
 fs.writeFileSync(specPath, JSON.stringify(spec, null, 2) + "\n");

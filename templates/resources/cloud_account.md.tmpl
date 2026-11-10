@@ -1,0 +1,16 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  A cloud account (AWS, GCP or Azure) connected to Tsuga for inventory scanning.
+---
+
+# {{.Name}} ({{.Type}})
+
+A cloud account (AWS, GCP or Azure) connected to Tsuga for inventory scanning. The trust relationship (IAM role, workload identity or federated credential) must already exist on the cloud side before creating the account. Exactly one of `aws`, `gcp` or `azure` must be set; changing it replaces the account.
+
+## Example Usage
+
+{{ tffile "examples/resources/tsuga_cloud_account/resource.tf" }}
+
+{{ .SchemaMarkdown | trimspace }}

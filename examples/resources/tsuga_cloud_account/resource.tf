@@ -18,7 +18,7 @@ resource "tsuga_cloud_account" "gcp_prod" {
   gcp = {
     project_id                 = "my-gcp-project"
     service_account_id         = "tsuga-inventory@my-gcp-project.iam.gserviceaccount.com"
-    workload_identity_provider = "projects/123/locations/global/workloadIdentityPools/tsuga/providers/tsuga"
+    workload_identity_provider = "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/tsuga/providers/tsuga"
   }
 }
 

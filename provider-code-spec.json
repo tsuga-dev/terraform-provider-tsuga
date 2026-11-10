@@ -78,6 +78,477 @@
   },
   "resources": [
     {
+      "name": "cloud_account",
+      "schema": {
+        "attributes": [
+          {
+            "name": "account_friendly_name",
+            "string": {
+              "computed_optional_required": "optional",
+              "description": "Human-readable name for the account shown in Tsuga.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.LengthBetween(0, 250)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "aws",
+            "single_nested": {
+              "computed_optional_required": "optional",
+              "attributes": [
+                {
+                  "name": "account_id",
+                  "string": {
+                    "computed_optional_required": "required",
+                    "description": "AWS account ID that Tsuga scans.",
+                    "validators": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "regexp"
+                            },
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[0-9]{12}$\"), \"\")"
+                        }
+                      }
+                    ],
+                    "plan_modifiers": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+                            }
+                          ],
+                          "schema_definition": "stringplanmodifier.RequiresReplace()"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "external_id",
+                  "string": {
+                    "computed_optional_required": "required",
+                    "description": "External ID Tsuga passes when assuming the cross-account IAM role.",
+                    "validators": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                        }
+                      }
+                    ],
+                    "plan_modifiers": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+                            }
+                          ],
+                          "schema_definition": "stringplanmodifier.RequiresReplace()"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "role_arn",
+                  "string": {
+                    "computed_optional_required": "required",
+                    "description": "ARN of the IAM role Tsuga assumes to read inventory in the account.",
+                    "validators": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "stringvalidator.LengthBetween(1, 2048)"
+                        }
+                      },
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "regexp"
+                            },
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^arn:aws[a-z-]*:iam::[0-9]{12}:role/.+$\"), \"\")"
+                        }
+                      }
+                    ],
+                    "plan_modifiers": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+                            }
+                          ],
+                          "schema_definition": "stringplanmodifier.RequiresReplace()"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ],
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
+                      },
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework/path"
+                      }
+                    ],
+                    "schema_definition": "objectvalidator.ExactlyOneOf(path.MatchRoot(\"aws\"), path.MatchRoot(\"gcp\"), path.MatchRoot(\"azure\"))"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "azure",
+            "single_nested": {
+              "computed_optional_required": "optional",
+              "attributes": [
+                {
+                  "name": "client_id",
+                  "string": {
+                    "computed_optional_required": "required",
+                    "description": "Client ID of the Azure application Tsuga authenticates as (GUID).",
+                    "validators": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "stringvalidator.LengthAtLeast(1)"
+                        }
+                      },
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "regexp"
+                            },
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$\"), \"\")"
+                        }
+                      }
+                    ],
+                    "plan_modifiers": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+                            }
+                          ],
+                          "schema_definition": "stringplanmodifier.RequiresReplace()"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "subscription_id",
+                  "string": {
+                    "computed_optional_required": "required",
+                    "description": "Azure subscription ID that Tsuga scans (GUID).",
+                    "validators": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "stringvalidator.LengthAtLeast(1)"
+                        }
+                      },
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "regexp"
+                            },
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$\"), \"\")"
+                        }
+                      }
+                    ],
+                    "plan_modifiers": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+                            }
+                          ],
+                          "schema_definition": "stringplanmodifier.RequiresReplace()"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "tenant_id",
+                  "string": {
+                    "computed_optional_required": "required",
+                    "description": "Azure tenant ID that owns the subscription (GUID).",
+                    "validators": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "stringvalidator.LengthAtLeast(1)"
+                        }
+                      },
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "regexp"
+                            },
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$\"), \"\")"
+                        }
+                      }
+                    ],
+                    "plan_modifiers": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+                            }
+                          ],
+                          "schema_definition": "stringplanmodifier.RequiresReplace()"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "gcp",
+            "single_nested": {
+              "computed_optional_required": "optional",
+              "attributes": [
+                {
+                  "name": "project_id",
+                  "string": {
+                    "computed_optional_required": "required",
+                    "description": "GCP project ID that Tsuga scans.",
+                    "validators": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "stringvalidator.LengthBetween(6, 30)"
+                        }
+                      },
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "regexp"
+                            },
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[a-z][a-z0-9-]{4,28}[a-z0-9]$\"), \"\")"
+                        }
+                      }
+                    ],
+                    "plan_modifiers": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+                            }
+                          ],
+                          "schema_definition": "stringplanmodifier.RequiresReplace()"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "service_account_id",
+                  "string": {
+                    "computed_optional_required": "required",
+                    "description": "Service account Tsuga impersonates to read inventory.",
+                    "validators": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "stringvalidator.LengthBetween(1, 128)"
+                        }
+                      },
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "regexp"
+                            },
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[^@\\\\s]+@[^@\\\\s]+\\\\.iam\\\\.gserviceaccount\\\\.com$\"), \"\")"
+                        }
+                      }
+                    ],
+                    "plan_modifiers": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+                            }
+                          ],
+                          "schema_definition": "stringplanmodifier.RequiresReplace()"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "workload_identity_provider",
+                  "string": {
+                    "computed_optional_required": "required",
+                    "description": "Full resource name of the workload identity provider used for federated authentication, e.g. //iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider.",
+                    "validators": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "stringvalidator.LengthBetween(1, 256)"
+                        }
+                      },
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "regexp"
+                            },
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^//iam\\\\.googleapis\\\\.com/projects/[0-9]+/locations/global/workloadIdentityPools/[^/]+/providers/[^/]+$\"), \"\")"
+                        }
+                      }
+                    ],
+                    "plan_modifiers": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+                            }
+                          ],
+                          "schema_definition": "stringplanmodifier.RequiresReplace()"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "cloud_account_id",
+            "string": {
+              "computed_optional_required": "computed",
+              "description": "Cloud-native account identifier: an AWS account ID, GCP project ID, or Azure subscription ID."
+            }
+          },
+          {
+            "name": "cloud_type",
+            "string": {
+              "computed_optional_required": "computed",
+              "description": "Cloud provider of the account."
+            }
+          },
+          {
+            "name": "id",
+            "string": {
+              "computed_optional_required": "computed",
+              "description": "Identifier of the cloud account. Generated by Tsuga.",
+              "plan_modifiers": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+                      }
+                    ],
+                    "schema_definition": "stringplanmodifier.UseStateForUnknown()"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "custom_usage_tag",
       "schema": {
         "attributes": [

@@ -100,6 +100,19 @@ resources:
     delete:
       path: /v1/public-tokens/{id}
       method: DELETE
+  cloud_account:
+    create:
+      path: /v1/inventory/cloud-accounts
+      method: POST
+    read:
+      path: /v1/inventory/cloud-accounts/{id}
+      method: GET
+    update:
+      path: /v1/inventory/cloud-accounts/{id}
+      method: PUT
+    delete:
+      path: /v1/inventory/cloud-accounts/{id}
+      method: DELETE
   operation_api_key:
     create:
       path: /v1/operation-api-keys

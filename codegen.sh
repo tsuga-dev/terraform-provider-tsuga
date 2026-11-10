@@ -6,6 +6,11 @@ set -eux
 TMP_SPEC="$(mktemp)"
 node ./tools/flatten-data.js ./public-open-api.json >"$TMP_SPEC"
 
+# Expand the discriminated oneOf request bodies tfplugingen cannot read into plain objects.
+TMP_EXPANDED="$(mktemp)"
+node ./tools/expand-oneof.js "$TMP_SPEC" >"$TMP_EXPANDED"
+mv "$TMP_EXPANDED" "$TMP_SPEC"
+
 # Generate the provider code spec
 go tool -modfile=tools/go.mod tfplugingen-openapi generate \
 	--config ./generator_config.yml \

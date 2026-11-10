@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `tsuga_cloud_account`: schema is now generated from the OpenAPI spec. Connection fields are checked against the API's formats and lengths at plan time instead of failing at apply.
+
+### Fixed
+
+- `tsuga_cloud_account`: the GCP example used a `workload_identity_provider` the API rejects; it now uses the full resource name (`//iam.googleapis.com/projects/...`).
+
 ## [3.1.1] - 2026-11-05
 
 ### Changed

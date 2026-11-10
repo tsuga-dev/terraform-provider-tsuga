@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"terraform-provider-tsuga/internal/resource_cloud_account"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -18,7 +16,6 @@ const cloudAccountBasePath = "/v1/inventory/cloud-accounts"
 
 var _ resource.Resource = (*cloudAccountResource)(nil)
 var _ resource.ResourceWithConfigure = (*cloudAccountResource)(nil)
-var _ resource.ResourceWithConfigValidators = (*cloudAccountResource)(nil)
 
 func NewCloudAccountResource() resource.Resource {
 	return &cloudAccountResource{}
@@ -49,22 +46,12 @@ func (r *cloudAccountResource) Metadata(_ context.Context, req resource.Metadata
 	resp.TypeName = req.ProviderTypeName + "_cloud_account"
 }
 
-func (r *cloudAccountResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = resource_cloud_account.CloudAccountResourceSchema()
-}
-
-func (r *cloudAccountResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
-	return []resource.ConfigValidator{
-		resourcevalidator.ExactlyOneOf(
-			path.MatchRoot("aws"),
-			path.MatchRoot("gcp"),
-			path.MatchRoot("azure"),
-		),
-	}
+func (r *cloudAccountResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = resource_cloud_account.CloudAccountResourceSchema(ctx)
 }
 
 func expandConnectionSettings(plan resource_cloud_account.CloudAccountModel) (map[string]interface{}, string, string) {
-	if plan.Aws != nil {
+	if !plan.Aws.IsNull() {
 		return map[string]interface{}{
 			"type":       "aws",
 			"accountId":  plan.Aws.AccountId.ValueString(),
@@ -72,7 +59,7 @@ func expandConnectionSettings(plan resource_cloud_account.CloudAccountModel) (ma
 			"roleArn":    plan.Aws.RoleArn.ValueString(),
 		}, "aws", plan.Aws.AccountId.ValueString()
 	}
-	if plan.Gcp != nil {
+	if !plan.Gcp.IsNull() {
 		return map[string]interface{}{
 			"type":                     "gcp",
 			"projectId":                plan.Gcp.ProjectId.ValueString(),
