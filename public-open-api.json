@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsuga Public API",
     "description": "Public HTTP API for Tsuga customers and customer-operated tools. Use these endpoints to query observability data, manage customer-owned Tsuga resources, and retrieve documentation or API-reference content. Public API requests authenticate with Bearer tokens such as operation keys. See [API reference](/documentation/api).",
-    "version": "20261109.35.0+06e8714",
+    "version": "20261110.3.0+e3b9715",
     "contact": {
       "name": "Tsuga",
       "url": "https://tsuga.com"
@@ -18252,83 +18252,193 @@
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "required": [
-                    "attr",
-                    "values",
-                    "otherValues"
-                  ],
-                  "properties": {
-                    "attr": {
-                      "type": "string",
-                      "description": "Span attribute dot-path this contrast set is about, such as `context.env`."
-                    },
-                    "values": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "required": [
-                          "value",
-                          "targetSupport",
-                          "baselineSupport",
-                          "pValue"
-                        ],
-                        "properties": {
-                          "value": {
-                            "type": "string",
-                            "description": "The attribute value this row is about."
-                          },
-                          "targetSupport": {
-                            "type": "number",
-                            "description": "Percentage of target spans carrying this value, from 0 to 100."
-                          },
-                          "baselineSupport": {
-                            "type": "number",
-                            "description": "Percentage of baseline spans carrying this value, from 0 to 100."
-                          },
-                          "lift": {
-                            "type": "number",
-                            "description": "`targetSupport / baselineSupport`: how many times more frequent the value is in the target group. Absent when the value never appears in the baseline, which makes the lift unbounded."
-                          },
-                          "pValue": {
-                            "type": "number",
-                            "description": "Probability that a difference this large would occur if the value were unrelated to the split. Smaller is stronger."
-                          }
-                        },
-                        "title": "ContrastSetValue"
-                      },
-                      "description": "Values over-represented in the target group that cleared the lift, support, and significance gates, strongest first. These are the findings."
-                    },
-                    "otherValues": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "required": [
-                          "value",
-                          "targetSupport",
-                          "baselineSupport"
-                        ],
-                        "properties": {
-                          "value": {
-                            "type": "string",
-                            "description": "The attribute value this row is about."
-                          },
-                          "targetSupport": {
-                            "type": "number",
-                            "description": "Percentage of target spans carrying this value, from 0 to 100."
-                          },
-                          "baselineSupport": {
-                            "type": "number",
-                            "description": "Percentage of baseline spans carrying this value, from 0 to 100."
-                          }
-                        },
-                        "title": "ContrastSetOtherValue"
-                      },
-                      "description": "The attribute's other frequent values in the target group, by target percentage descending, as context for reading `values`. Never overlaps `values`."
-                    }
+                  "discriminator": {
+                    "propertyName": "type"
                   },
-                  "title": "ContrastSet"
+                  "required": [
+                    "type"
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "required": [
+                        "type",
+                        "attr",
+                        "values",
+                        "otherValues"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "description": "The attribute is compared value by value.",
+                          "enum": [
+                            "categorical"
+                          ]
+                        },
+                        "attr": {
+                          "type": "string",
+                          "description": "Span attribute dot-path this contrast set is about, such as `context.env`."
+                        },
+                        "values": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "value",
+                              "targetSupport",
+                              "baselineSupport",
+                              "pValue"
+                            ],
+                            "properties": {
+                              "value": {
+                                "type": "string",
+                                "description": "The attribute value this row is about."
+                              },
+                              "targetSupport": {
+                                "type": "number",
+                                "description": "Percentage of target spans carrying this value, from 0 to 100."
+                              },
+                              "baselineSupport": {
+                                "type": "number",
+                                "description": "Percentage of baseline spans carrying this value, from 0 to 100."
+                              },
+                              "lift": {
+                                "type": "number",
+                                "description": "`targetSupport / baselineSupport`: how many times more frequent the value is in the target group. Absent when the value never appears in the baseline, which makes the lift unbounded."
+                              },
+                              "pValue": {
+                                "type": "number",
+                                "description": "Probability that a difference this large would occur if the value were unrelated to the split. Smaller is stronger."
+                              }
+                            },
+                            "title": "ContrastSetValue"
+                          },
+                          "description": "Values over-represented in the target group that cleared the lift, support, and significance gates, strongest first. These are the findings."
+                        },
+                        "otherValues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "value",
+                              "targetSupport",
+                              "baselineSupport"
+                            ],
+                            "properties": {
+                              "value": {
+                                "type": "string",
+                                "description": "The attribute value this row is about."
+                              },
+                              "targetSupport": {
+                                "type": "number",
+                                "description": "Percentage of target spans carrying this value, from 0 to 100."
+                              },
+                              "baselineSupport": {
+                                "type": "number",
+                                "description": "Percentage of baseline spans carrying this value, from 0 to 100."
+                              }
+                            },
+                            "title": "ContrastSetOtherValue"
+                          },
+                          "description": "The attribute's other frequent values in the target group, by target percentage descending, as context for reading `values`. Never overlaps `values`."
+                        }
+                      },
+                      "title": "CategoricalContrastSet"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "type",
+                        "attr",
+                        "shift"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "description": "The attribute is numeric, such as a duration, and is compared by the shape of its values.",
+                          "enum": [
+                            "distribution"
+                          ]
+                        },
+                        "attr": {
+                          "type": "string",
+                          "description": "Span attribute dot-path this contrast set is about, such as `context.env`."
+                        },
+                        "shift": {
+                          "type": "object",
+                          "required": [
+                            "quantileLift",
+                            "ks",
+                            "pValue",
+                            "targetSampleCount",
+                            "baselineSampleCount",
+                            "histogram"
+                          ],
+                          "properties": {
+                            "quantileLift": {
+                              "type": "number",
+                              "description": "How far apart the two groups are, as a ratio: 1 means no change, 3 means about three times apart. It does not tell which group is larger. Read `histogram` for the direction."
+                            },
+                            "ks": {
+                              "type": "number",
+                              "description": "Kolmogorov-Smirnov statistic, from 0 to 1: the largest gap between the two cumulative distributions."
+                            },
+                            "pValue": {
+                              "type": "number",
+                              "description": "Probability that a difference this large would occur if the two groups had the same distribution. Smaller is stronger."
+                            },
+                            "targetSampleCount": {
+                              "type": "number",
+                              "description": "Number of target spans that carry the attribute."
+                            },
+                            "baselineSampleCount": {
+                              "type": "number",
+                              "description": "Number of baseline spans that carry the attribute."
+                            },
+                            "histogram": {
+                              "type": "object",
+                              "required": [
+                                "bounds",
+                                "targetCounts",
+                                "baselineCounts"
+                              ],
+                              "properties": {
+                                "bounds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "number"
+                                  },
+                                  "description": "Bin edges, in the unit of the attribute. One more item than each count list. The bins go from the 2nd to the 98th percentile of both groups, so they do not hold all samples."
+                                },
+                                "targetCounts": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "number"
+                                  },
+                                  "description": "Number of target samples in each bin."
+                                },
+                                "baselineCounts": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "number"
+                                  },
+                                  "description": "Number of baseline samples in each bin."
+                                }
+                              },
+                              "title": "ContrastSetHistogram"
+                            }
+                          },
+                          "title": "ContrastSetShift"
+                        }
+                      },
+                      "title": "DistributionContrastSet"
+                    }
+                  ],
+                  "errorMessage": {
+                    "discriminator": "value of tag \"type\" must be one of: categorical, distribution"
+                  }
                 },
-                "description": "One entry per attribute that separates the two groups, strongest first. An attribute with the same value strings as a stronger entry is left out, so two boolean attributes appear as one entry. Empty when nothing cleared the gates, which means the target and the baseline look alike on the attributes tested."
+                "description": "One entry per attribute that separates the two groups, strongest first. Read `type` first: a categorical entry lists values, a distribution entry describes how a numeric attribute shifted. An attribute with the same value strings as a stronger entry is left out, so two boolean attributes appear as one entry. Empty when nothing cleared the gates, which means the target and the baseline look alike on the attributes tested."
               },
               "targetGroupCount": {
                 "type": "number",
@@ -18347,6 +18457,7 @@
               {
                 "contrastSets": [
                   {
+                    "type": "categorical",
                     "attr": "span_attributes.http.route",
                     "values": [
                       {
@@ -18364,6 +18475,35 @@
                         "baselineSupport": 44.2
                       }
                     ]
+                  },
+                  {
+                    "type": "distribution",
+                    "attr": "duration_ns",
+                    "shift": {
+                      "quantileLift": 4.2,
+                      "ks": 0.61,
+                      "pValue": 0.0001,
+                      "targetSampleCount": 1180,
+                      "baselineSampleCount": 8620,
+                      "histogram": {
+                        "bounds": [
+                          2000000,
+                          50000000,
+                          200000000,
+                          900000000
+                        ],
+                        "targetCounts": [
+                          40,
+                          310,
+                          830
+                        ],
+                        "baselineCounts": [
+                          5100,
+                          3200,
+                          320
+                        ]
+                      }
+                    }
                   }
                 ],
                 "targetGroupCount": 1240,
@@ -74450,7 +74590,7 @@
         "tags": [
           "traces"
         ],
-        "description": "Finds what failing or slow requests have in common that healthy ones do not, for example errors against successes, or before and after a change: compares a target span group with a baseline and returns the attribute values over-represented in the target. Each group has its own time range, so a before/after comparison is one call. See [Traces](/documentation/explore/traces).",
+        "description": "Finds what failing or slow requests have in common that healthy ones do not, for example errors against successes, or before and after a change: compares a target span group with a baseline and returns the attribute values over-represented in the target, and the numeric attributes, such as durations, whose distribution shifted. Each group has its own time range, so a before/after comparison is one call. See [Traces](/documentation/explore/traces).",
         "requestBody": {
           "required": true,
           "content": {
@@ -74578,7 +74718,7 @@
                       "maxLength": 250
                     },
                     "maxItems": 20,
-                    "description": "Span attribute dot-paths to test, such as `context.service.name` or `span_attributes.http.route`. Attributes referenced by either group filter, and their known sibling attributes for the same field, are always excluded, so the contrasted condition does not come back as a finding. Omit or pass an empty array to let Tsuga test the attributes among `span_attributes.*`, `context.*`, `span.name`, `span.kind`, `status_code` and `is_root` that take more than one value across samples of both groups, most frequent in the target first; when none varies, `contrastSets` is empty. Span duration (`duration_ns`, even when named here) and discovered numeric attributes with near-unique values never appear in `contrastSets`."
+                    "description": "Span attribute dot-paths to test, such as `context.service.name` or `span_attributes.http.route`. Attributes referenced by either group filter, and their known sibling attributes for the same field, are always excluded, so the contrasted condition does not come back as a finding. Omit or pass an empty array to let Tsuga test the attributes among `span_attributes.*`, `context.*`, `span.name`, `span.kind`, `status_code` and `is_root` that take more than one value across samples of both groups, most frequent in the target first; when none varies, `contrastSets` is empty. Numeric attributes with mostly distinct values, such as `duration_ns`, come back as `distribution` entries. Span duration is excluded when a group filter uses it."
                   },
                   "topK": {
                     "type": "integer",
