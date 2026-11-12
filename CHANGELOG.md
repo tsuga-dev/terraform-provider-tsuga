@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.2] - 2026-11-12
+
 ### Changed
 
 - `tsuga_cloud_account`: schema is now generated from the OpenAPI spec. Connection fields are checked against the API's formats and lengths at plan time instead of failing at apply.
