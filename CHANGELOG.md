@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `tsuga_cloud_account`: the GCP example used a `workload_identity_provider` the API rejects; it now uses the full resource name (`//iam.googleapis.com/projects/...`).
+- `tsuga_user` data source: the API now returns `role` as an object; the data source reads its `type`, and still accepts the old string form.
 
 ## [3.1.1] - 2026-11-05
 

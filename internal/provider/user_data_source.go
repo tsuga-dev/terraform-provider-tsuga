@@ -84,10 +84,10 @@ func (d *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 
 	var apiResp struct {
 		Data struct {
-			ID    string `json:"id"`
-			Email string `json:"email"`
-			Name  string `json:"name"`
-			Role  string `json:"role"`
+			ID    string          `json:"id"`
+			Email string          `json:"email"`
+			Name  string          `json:"name"`
+			Role  json.RawMessage `json:"role"`
 		} `json:"data"`
 	}
 	if err := json.Unmarshal(body, &apiResp); err != nil {
@@ -95,10 +95,22 @@ func (d *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
+	var role string
+	if len(apiResp.Data.Role) > 0 && json.Unmarshal(apiResp.Data.Role, &role) != nil {
+		var roleObj struct {
+			Type string `json:"type"`
+		}
+		if err := json.Unmarshal(apiResp.Data.Role, &roleObj); err != nil {
+			resp.Diagnostics.AddError("Parse Error", fmt.Sprintf("Unable to parse user role: %s", err))
+			return
+		}
+		role = roleObj.Type
+	}
+
 	config.Id = types.StringValue(apiResp.Data.ID)
 	config.Email = types.StringValue(apiResp.Data.Email)
 	config.Name = types.StringValue(apiResp.Data.Name)
-	config.Role = types.StringValue(apiResp.Data.Role)
+	config.Role = types.StringValue(role)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &config)...)
 }
