@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsuga Public API",
     "description": "Public HTTP API for Tsuga customers and customer-operated tools. Use these endpoints to query observability data, manage customer-owned Tsuga resources, and retrieve documentation or API-reference content. Public API requests authenticate with Bearer tokens such as operation keys. See [API reference](/documentation/api).",
-    "version": "20261110.3.0+e3b9715",
+    "version": "20261112.38.0+6ec54d3",
     "contact": {
       "name": "Tsuga",
       "url": "https://tsuga.com"
@@ -4278,6 +4278,7 @@
                       "heatmap-promql": "#/components/schemas/GraphVisualizationHeatmapPromql",
                       "timeseries": "#/components/schemas/GraphVisualizationTimeseries",
                       "top-list": "#/components/schemas/GraphVisualizationTopList",
+                      "timeline": "#/components/schemas/GraphVisualizationTimeline",
                       "pie": "#/components/schemas/GraphVisualizationPie",
                       "query-value": "#/components/schemas/GraphVisualizationQueryValue",
                       "gauge": "#/components/schemas/GraphVisualizationGauge",
@@ -4347,6 +4348,9 @@
                       "$ref": "#/components/schemas/GraphVisualizationTopList"
                     },
                     {
+                      "$ref": "#/components/schemas/GraphVisualizationTimeline"
+                    },
+                    {
                       "$ref": "#/components/schemas/GraphVisualizationPie"
                     },
                     {
@@ -4390,7 +4394,7 @@
                     }
                   ],
                   "errorMessage": {
-                    "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, group, list-log-patterns, list-spans, list-rum, slo"
+                    "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, timeline, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, group, list-log-patterns, list-spans, list-rum, slo"
                   }
                 },
                 "layout": {
@@ -4700,6 +4704,7 @@
                     "heatmap-promql": "#/components/schemas/GraphVisualizationHeatmapPromql",
                     "timeseries": "#/components/schemas/GraphVisualizationTimeseries",
                     "top-list": "#/components/schemas/GraphVisualizationTopList",
+                    "timeline": "#/components/schemas/GraphVisualizationTimeline",
                     "pie": "#/components/schemas/GraphVisualizationPie",
                     "query-value": "#/components/schemas/GraphVisualizationQueryValue",
                     "gauge": "#/components/schemas/GraphVisualizationGauge",
@@ -4769,6 +4774,9 @@
                     "$ref": "#/components/schemas/GraphVisualizationTopList"
                   },
                   {
+                    "$ref": "#/components/schemas/GraphVisualizationTimeline"
+                  },
+                  {
                     "$ref": "#/components/schemas/GraphVisualizationPie"
                   },
                   {
@@ -4812,7 +4820,7 @@
                   }
                 ],
                 "errorMessage": {
-                  "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, group, list-log-patterns, list-spans, list-rum, slo"
+                  "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, timeline, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, group, list-log-patterns, list-spans, list-rum, slo"
                 }
               },
               "layout": {
@@ -5507,7 +5515,7 @@
             "anchor": "set-resource-attributes-by-language",
             "score": 0.9,
             "excerpt": "...Python SDK setup should use the default resource detectors...",
-            "link": "https://www.app.tsuga.com/documentation/data-collection/guides/how-to-add-resource-attributes?tab=Python#set-resource-attributes-by-language"
+            "link": "https://app.tsuga.com/documentation/data-collection/guides/how-to-add-resource-attributes?tab=Python#set-resource-attributes-by-language"
           }
         ]
       },
@@ -11360,11 +11368,13 @@
                 "metric": "#/components/schemas/MonitorConfigurationMetric",
                 "log": "#/components/schemas/MonitorConfigurationLog",
                 "trace": "#/components/schemas/MonitorConfigurationTrace",
+                "rum": "#/components/schemas/MonitorConfigurationRum",
                 "anomaly-log": "#/components/schemas/MonitorConfigurationAnomalyLog",
                 "anomaly-metric": "#/components/schemas/MonitorConfigurationAnomalyMetric",
                 "log-error-pattern": "#/components/schemas/MonitorConfigurationLogErrorPattern",
                 "log-error-pattern-increase": "#/components/schemas/MonitorConfigurationLogErrorPatternIncrease",
                 "anomaly-trace": "#/components/schemas/MonitorConfigurationAnomalyTrace",
+                "anomaly-rum": "#/components/schemas/MonitorConfigurationAnomalyRum",
                 "certificate-expiry": "#/components/schemas/MonitorConfigurationCertificateExpiry",
                 "k8s-faulty-deployment": "#/components/schemas/MonitorConfigurationK8sFaultyDeployment",
                 "faulty-deployment": "#/components/schemas/MonitorConfigurationFaultyDeployment"
@@ -11384,6 +11394,9 @@
                 "$ref": "#/components/schemas/MonitorConfigurationTrace"
               },
               {
+                "$ref": "#/components/schemas/MonitorConfigurationRum"
+              },
+              {
                 "$ref": "#/components/schemas/MonitorConfigurationAnomalyLog"
               },
               {
@@ -11399,6 +11412,9 @@
                 "$ref": "#/components/schemas/MonitorConfigurationAnomalyTrace"
               },
               {
+                "$ref": "#/components/schemas/MonitorConfigurationAnomalyRum"
+              },
+              {
                 "$ref": "#/components/schemas/MonitorConfigurationCertificateExpiry"
               },
               {
@@ -11409,7 +11425,7 @@
               }
             ],
             "errorMessage": {
-              "discriminator": "value of tag \"type\" must be one of: metric, log, trace, anomaly-log, anomaly-metric, log-error-pattern, log-error-pattern-increase, anomaly-trace, certificate-expiry, k8s-faulty-deployment, faulty-deployment"
+              "discriminator": "value of tag \"type\" must be one of: metric, log, trace, rum, anomaly-log, anomaly-metric, log-error-pattern, log-error-pattern-increase, anomaly-trace, anomaly-rum, certificate-expiry, k8s-faulty-deployment, faulty-deployment"
             }
           },
           "priority": {
@@ -18838,7 +18854,9 @@
             "id": "user-123-abc",
             "email": "alex@example.com",
             "name": "Alex Rivera",
-            "role": "public_viewer"
+            "role": {
+              "type": "public_viewer"
+            }
           }
         ]
       },
@@ -20692,6 +20710,309 @@
           }
         }
       },
+      "MonitorConfigurationRum": {
+        "type": "object",
+        "required": [
+          "type",
+          "conditions",
+          "noDataBehavior",
+          "timeframe",
+          "groupByFields",
+          "queries"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Threshold monitor over RUM aggregations.",
+            "enum": [
+              "rum"
+            ]
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "formula",
+                "operator",
+                "threshold"
+              ],
+              "properties": {
+                "formula": {
+                  "type": "string",
+                  "description": "Formula result to compare against the threshold, usually `q1` or a formula alias."
+                },
+                "operator": {
+                  "enum": [
+                    "greater_than",
+                    "less_than",
+                    "equal",
+                    "not_equal",
+                    "greater_than_or_equal",
+                    "less_than_or_equal"
+                  ],
+                  "description": "Comparison operator used to evaluate the threshold condition.",
+                  "type": "string"
+                },
+                "threshold": {
+                  "type": "number",
+                  "description": "Numeric threshold value used by the comparison. May be negative when the formula result can be below zero."
+                }
+              }
+            },
+            "description": "Threshold conditions evaluated against query and formula results. All listed conditions must match for a non-grouped threshold monitor to alert."
+          },
+          "noDataBehavior": {
+            "enum": [
+              "alert",
+              "resolve",
+              "keep_last_status",
+              "consider_zero"
+            ],
+            "description": "How the monitor updates state when no data is returned. `alert` enters no-data alert state, `resolve` resolves, `keep_last_status` preserves the previous state, and `consider_zero` evaluates missing values as zero.",
+            "type": "string"
+          },
+          "timeframe": {
+            "type": "number",
+            "description": "Lookback window, in minutes, that each query-backed threshold monitor evaluation aggregates over. Always a whole number, at least 1."
+          },
+          "groupByFields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "fields",
+                "limit"
+              ],
+              "properties": {
+                "fields": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Attribute names the monitor splits results by, evaluating each resulting group independently. Empty means the monitor evaluates a single ungrouped series."
+                },
+                "limit": {
+                  "type": "number",
+                  "description": "Maximum number of groups evaluated per field. Anomaly monitors apply it, capped at 100. Threshold monitors ignore it and evaluate up to 100 groups per field."
+                },
+                "sortOrder": {
+                  "enum": [
+                    "asc",
+                    "desc"
+                  ],
+                  "description": "Sort direction: ascending or descending.",
+                  "type": "string"
+                },
+                "replaceNullWith": {
+                  "type": "string",
+                  "description": "Value used to group documents that have no value for a grouped field."
+                }
+              }
+            },
+            "description": "Monitor group by configuration."
+          },
+          "aggregationAlertLogic": {
+            "enum": [
+              "no_aggregation",
+              "all",
+              "any",
+              "each",
+              "proportion"
+            ],
+            "description": "How grouped results are combined into alert state. Use `no_aggregation` only when `groupByFields` is empty; use `all`, `any`, `each`, or `proportion` with non-empty `groupByFields`. `proportion` also requires `proportionAlertThreshold`.",
+            "type": "string"
+          },
+          "proportionAlertThreshold": {
+            "type": "integer",
+            "description": "Percentage threshold used when `aggregationAlertLogic` is `proportion`."
+          },
+          "consecutiveWindows": {
+            "type": "integer",
+            "description": "Number of consecutive `timeframe`-minute windows, ending at evaluation time, that must all meet the conditions before the monitor alerts, per group for grouped monitors. 1 or omitted checks a single window. A window that does not meet the conditions breaks the run. An empty window, such as a query with `fill.mode.type` `null` returning nothing, breaks the run under `noDataBehavior` `alert` or `resolve`, takes the previous window's result under `keep_last_status`, and counts as 0 under `consider_zero`. A query without `fill` counts an empty window as 0. When every window is empty (with `keep_last_status`, when the oldest is empty and none breaks the run), `noDataBehavior` applies as for a single window. Above 1, `consecutiveWindows` × `timeframe` must not exceed 4320 minutes (3 days)."
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "aggregate",
+                "filter"
+              ],
+              "properties": {
+                "aggregate": {
+                  "title": "Aggregate",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
+                  "type": "object",
+                  "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                      "count": "#/components/schemas/AggregateCount",
+                      "unique-count": "#/components/schemas/AggregateUniqueCount",
+                      "average": "#/components/schemas/AggregateAverage",
+                      "max": "#/components/schemas/AggregateMax",
+                      "min": "#/components/schemas/AggregateMin",
+                      "sum": "#/components/schemas/AggregateSum",
+                      "percentile": "#/components/schemas/AggregatePercentile"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/AggregateCount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateUniqueCount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateAverage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMax"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMin"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateSum"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregatePercentile"
+                    }
+                  ],
+                  "errorMessage": {
+                    "discriminator": "value of tag \"type\" must be one of: count, unique-count, average, max, min, sum, percentile"
+                  }
+                },
+                "functions": {
+                  "type": "array",
+                  "items": {
+                    "title": "Function",
+                    "description": "Post-processing function applied to an aggregation query result after the aggregate is computed, selected by `type`.",
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type",
+                      "mapping": {
+                        "per-second": "#/components/schemas/FunctionPerSecond",
+                        "per-minute": "#/components/schemas/FunctionPerMinute",
+                        "per-hour": "#/components/schemas/FunctionPerHour",
+                        "rate": "#/components/schemas/FunctionRate",
+                        "increase": "#/components/schemas/FunctionIncrease",
+                        "log": "#/components/schemas/FunctionLog",
+                        "power": "#/components/schemas/FunctionPower",
+                        "sqrt": "#/components/schemas/FunctionSqrt",
+                        "last": "#/components/schemas/FunctionLast",
+                        "time-offset": "#/components/schemas/FunctionTimeOffset",
+                        "cumsum": "#/components/schemas/FunctionCumsum"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/FunctionPerSecond"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPerMinute"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPerHour"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionRate"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionIncrease"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionLog"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPower"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionSqrt"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionLast"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionTimeOffset"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionCumsum"
+                      }
+                    ],
+                    "errorMessage": {
+                      "discriminator": "value of tag \"type\" must be one of: per-second, per-minute, per-hour, rate, increase, log, power, sqrt, last, time-offset, cumsum"
+                    }
+                  },
+                  "description": "Post-processing functions applied to aggregation results"
+                },
+                "fill": {
+                  "type": "object",
+                  "required": [
+                    "mode"
+                  ],
+                  "properties": {
+                    "mode": {
+                      "type": "object",
+                      "required": [
+                        "type"
+                      ],
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "zero",
+                            "null"
+                          ],
+                          "description": "`zero` fills missing points with zero. `null` keeps missing points null.",
+                          "type": "string"
+                        }
+                      },
+                      "description": "How missing aggregation points should be filled."
+                    }
+                  },
+                  "description": "Missing-point fill behavior for aggregation results. Optional; omit to keep missing points null."
+                },
+                "timeAggregate": {
+                  "enum": [
+                    "avg",
+                    "sum",
+                    "min",
+                    "max",
+                    "last"
+                  ],
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "type": "string"
+                },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence.",
+                  "type": "string"
+                },
+                "filter": {
+                  "type": "string",
+                  "description": "Filter to apply to the aggregation"
+                }
+              },
+              "title": "MonitorAggregationQuery",
+              "description": "Single aggregation query evaluated by a monitor or SLO."
+            },
+            "description": "Aggregation queries used by alerting and SLO evaluation. Each query is referenced from formulas as q1, q2, and so on."
+          }
+        }
+      },
       "MonitorConfigurationAnomalyLog": {
         "type": "object",
         "required": [
@@ -21408,6 +21729,295 @@
             "description": "Anomaly monitor over trace aggregations. Use this configuration when Tsuga should learn historical trace query behavior and alert on unusual movement in trace-derived values.",
             "enum": [
               "anomaly-trace"
+            ]
+          },
+          "condition": {
+            "type": "object",
+            "required": [
+              "formula",
+              "conditionType"
+            ],
+            "properties": {
+              "formula": {
+                "type": "string",
+                "description": "Formula result analyzed for anomalous behavior, usually `q1` or a formula alias."
+              },
+              "conditionType": {
+                "enum": [
+                  "rate",
+                  "error",
+                  "cpu",
+                  "general",
+                  "to_be_set"
+                ],
+                "description": "Anomaly model type Tsuga uses to classify expected behavior: `rate` flags downward anomalies (e.g. count rates), `error` and `cpu` flag upward anomalies (e.g. error counts/rates, CPU usage), `general` flags both directions, and `to_be_set` is a placeholder Tsuga replaces by inferring the model type from the monitor query when the monitor is created or updated.",
+                "type": "string"
+              }
+            },
+            "description": "Anomaly detection condition evaluated by this monitor. The `formula` result is compared against behavior learned from historical query results, and the monitor alerts on deviations in the direction implied by `conditionType`."
+          },
+          "noDataBehavior": {
+            "enum": [
+              "alert",
+              "resolve",
+              "keep_last_status"
+            ],
+            "description": "How the anomaly monitor updates state when no data is returned. `alert` enters no-data alert state, `resolve` resolves, and `keep_last_status` preserves the previous state.",
+            "type": "string"
+          },
+          "timeframe": {
+            "type": "number",
+            "description": "Lookback window, in minutes, that each anomaly monitor evaluation aggregates over. Always a whole number from 5 through 1440."
+          },
+          "groupByFields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "fields",
+                "limit"
+              ],
+              "properties": {
+                "fields": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Attribute names the monitor splits results by, evaluating each resulting group independently. Empty means the monitor evaluates a single ungrouped series."
+                },
+                "limit": {
+                  "type": "number",
+                  "description": "Maximum number of groups evaluated per field. Anomaly monitors apply it, capped at 100. Threshold monitors ignore it and evaluate up to 100 groups per field."
+                },
+                "sortOrder": {
+                  "enum": [
+                    "asc",
+                    "desc"
+                  ],
+                  "description": "Sort direction: ascending or descending.",
+                  "type": "string"
+                },
+                "replaceNullWith": {
+                  "type": "string",
+                  "description": "Value used to group documents that have no value for a grouped field."
+                }
+              }
+            },
+            "description": "Monitor group by configuration."
+          },
+          "aggregationAlertLogic": {
+            "enum": [
+              "no_aggregation",
+              "all",
+              "any",
+              "each",
+              "proportion"
+            ],
+            "description": "How grouped results are combined into alert state. Use `no_aggregation` only when `groupByFields` is empty; use `all`, `any`, `each`, or `proportion` with non-empty `groupByFields`. `proportion` also requires `proportionAlertThreshold`.",
+            "type": "string"
+          },
+          "proportionAlertThreshold": {
+            "type": "integer",
+            "description": "Percentage threshold used when `aggregationAlertLogic` is `proportion`."
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "aggregate",
+                "filter"
+              ],
+              "properties": {
+                "aggregate": {
+                  "title": "Aggregate",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
+                  "type": "object",
+                  "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                      "count": "#/components/schemas/AggregateCount",
+                      "unique-count": "#/components/schemas/AggregateUniqueCount",
+                      "average": "#/components/schemas/AggregateAverage",
+                      "max": "#/components/schemas/AggregateMax",
+                      "min": "#/components/schemas/AggregateMin",
+                      "sum": "#/components/schemas/AggregateSum",
+                      "percentile": "#/components/schemas/AggregatePercentile"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/AggregateCount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateUniqueCount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateAverage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMax"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMin"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateSum"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregatePercentile"
+                    }
+                  ],
+                  "errorMessage": {
+                    "discriminator": "value of tag \"type\" must be one of: count, unique-count, average, max, min, sum, percentile"
+                  }
+                },
+                "functions": {
+                  "type": "array",
+                  "items": {
+                    "title": "Function",
+                    "description": "Post-processing function applied to an aggregation query result after the aggregate is computed, selected by `type`.",
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type",
+                      "mapping": {
+                        "per-second": "#/components/schemas/FunctionPerSecond",
+                        "per-minute": "#/components/schemas/FunctionPerMinute",
+                        "per-hour": "#/components/schemas/FunctionPerHour",
+                        "rate": "#/components/schemas/FunctionRate",
+                        "increase": "#/components/schemas/FunctionIncrease",
+                        "log": "#/components/schemas/FunctionLog",
+                        "power": "#/components/schemas/FunctionPower",
+                        "sqrt": "#/components/schemas/FunctionSqrt",
+                        "last": "#/components/schemas/FunctionLast",
+                        "time-offset": "#/components/schemas/FunctionTimeOffset",
+                        "cumsum": "#/components/schemas/FunctionCumsum"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/FunctionPerSecond"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPerMinute"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPerHour"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionRate"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionIncrease"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionLog"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPower"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionSqrt"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionLast"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionTimeOffset"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionCumsum"
+                      }
+                    ],
+                    "errorMessage": {
+                      "discriminator": "value of tag \"type\" must be one of: per-second, per-minute, per-hour, rate, increase, log, power, sqrt, last, time-offset, cumsum"
+                    }
+                  },
+                  "description": "Post-processing functions applied to aggregation results"
+                },
+                "fill": {
+                  "type": "object",
+                  "required": [
+                    "mode"
+                  ],
+                  "properties": {
+                    "mode": {
+                      "type": "object",
+                      "required": [
+                        "type"
+                      ],
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "zero",
+                            "null"
+                          ],
+                          "description": "`zero` fills missing points with zero. `null` keeps missing points null.",
+                          "type": "string"
+                        }
+                      },
+                      "description": "How missing aggregation points should be filled."
+                    }
+                  },
+                  "description": "Missing-point fill behavior for aggregation results. Optional; omit to keep missing points null."
+                },
+                "timeAggregate": {
+                  "enum": [
+                    "avg",
+                    "sum",
+                    "min",
+                    "max",
+                    "last"
+                  ],
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "type": "string"
+                },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence.",
+                  "type": "string"
+                },
+                "filter": {
+                  "type": "string",
+                  "description": "Filter to apply to the aggregation"
+                }
+              },
+              "title": "MonitorAggregationQuery",
+              "description": "Single aggregation query evaluated by a monitor or SLO."
+            },
+            "description": "Aggregation queries used by alerting and SLO evaluation. Each query is referenced from formulas as q1, q2, and so on."
+          }
+        }
+      },
+      "MonitorConfigurationAnomalyRum": {
+        "type": "object",
+        "required": [
+          "type",
+          "condition",
+          "noDataBehavior",
+          "timeframe",
+          "groupByFields",
+          "queries"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Anomaly monitor over RUM aggregations. Use this configuration when Tsuga should learn historical RUM query behavior and alert on unusual movement in RUM-derived values.",
+            "enum": [
+              "anomaly-rum"
             ]
           },
           "condition": {
@@ -22816,6 +23426,334 @@
           }
         }
       },
+      "InputMonitorConfigurationRum": {
+        "type": "object",
+        "required": [
+          "type",
+          "conditions",
+          "noDataBehavior",
+          "timeframe",
+          "groupByFields",
+          "queries"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Threshold monitor over RUM aggregations. The monitor reads a single RUM stream: fields in `queries` and `groupByFields` that carry a stream prefix (`events.`, `measurements.` or `exceptions.`) must all name the same stream, and unprefixed fields are read from that stream (`events` when no field names one).",
+            "enum": [
+              "rum"
+            ]
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "formula",
+                "operator",
+                "threshold"
+              ],
+              "properties": {
+                "formula": {
+                  "type": "string",
+                  "format": "tsuga-formula",
+                  "minLength": 0,
+                  "maxLength": 250,
+                  "errorMessage": {
+                    "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                  },
+                  "description": "Formula result to compare against the threshold, usually `q1` or a formula alias."
+                },
+                "operator": {
+                  "enum": [
+                    "greater_than",
+                    "less_than",
+                    "equal",
+                    "not_equal",
+                    "greater_than_or_equal",
+                    "less_than_or_equal"
+                  ],
+                  "description": "Comparison operator used to evaluate the threshold condition.",
+                  "type": "string"
+                },
+                "threshold": {
+                  "type": "number",
+                  "description": "Numeric threshold value used by the comparison. May be negative when the formula result can be below zero."
+                }
+              }
+            },
+            "minItems": 1,
+            "maxItems": 5,
+            "description": "Threshold conditions evaluated against query and formula results. All listed conditions must match for a non-grouped threshold monitor to alert."
+          },
+          "noDataBehavior": {
+            "enum": [
+              "alert",
+              "resolve",
+              "keep_last_status",
+              "consider_zero"
+            ],
+            "description": "How the monitor updates state when no data is returned. `alert` enters no-data alert state, `resolve` resolves, `keep_last_status` preserves the previous state, and `consider_zero` evaluates missing values as zero.",
+            "type": "string"
+          },
+          "timeframe": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Lookback window, in minutes, that each query-backed threshold monitor evaluation aggregates over."
+          },
+          "groupByFields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "fields",
+                "limit"
+              ],
+              "properties": {
+                "fields": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 250
+                  },
+                  "maxItems": 4,
+                  "description": "Attribute names the monitor splits results by, evaluating each resulting group independently. Empty or omitted means the monitor evaluates a single ungrouped series."
+                },
+                "limit": {
+                  "type": "number",
+                  "description": "Maximum number of groups evaluated per field. Anomaly monitors apply it, capped at 100. Threshold monitors ignore it and evaluate up to 100 groups per field."
+                },
+                "sortOrder": {
+                  "enum": [
+                    "asc",
+                    "desc"
+                  ],
+                  "description": "Sort direction: ascending or descending.",
+                  "type": "string"
+                },
+                "replaceNullWith": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 250,
+                  "description": "Value used to group documents that have no value for a grouped field."
+                }
+              }
+            },
+            "maxItems": 1,
+            "description": "Monitor group by configuration."
+          },
+          "aggregationAlertLogic": {
+            "enum": [
+              "no_aggregation",
+              "all",
+              "any",
+              "each",
+              "proportion"
+            ],
+            "description": "How grouped results are combined into alert state. Use `no_aggregation` only when `groupByFields` is empty; use `all`, `any`, `each`, or `proportion` with non-empty `groupByFields`. `proportion` also requires `proportionAlertThreshold`. With `groupByFields`, send `each` so every group opens and resolves its own alert, as the app does by default; `all`, `any`, and `proportion` raise one alert for the whole monitor. On create, omitted query-monitor values default to `no_aggregation`; on update, omitted values keep the existing aggregation logic.",
+            "type": "string"
+          },
+          "proportionAlertThreshold": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 99,
+            "description": "Percentage threshold used when `aggregationAlertLogic` is `proportion`."
+          },
+          "consecutiveWindows": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "description": "Number of consecutive `timeframe`-minute windows, ending at evaluation time, that must all meet the conditions before the monitor alerts, per group for grouped monitors. 1 or omitted checks a single window. A window that does not meet the conditions breaks the run. An empty window, such as a query with `fill.mode.type` `null` returning nothing, breaks the run under `noDataBehavior` `alert` or `resolve`, takes the previous window's result under `keep_last_status`, and counts as 0 under `consider_zero`. A query without `fill` counts an empty window as 0. When every window is empty (with `keep_last_status`, when the oldest is empty and none breaks the run), `noDataBehavior` applies as for a single window. Above 1, `consecutiveWindows` × `timeframe` must not exceed 4320 minutes (3 days)."
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "aggregate",
+                "filter"
+              ],
+              "properties": {
+                "aggregate": {
+                  "title": "InputAggregate",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
+                  "type": "object",
+                  "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                      "count": "#/components/schemas/InputAggregateCount",
+                      "unique-count": "#/components/schemas/InputAggregateUniqueCount",
+                      "average": "#/components/schemas/InputAggregateAverage",
+                      "max": "#/components/schemas/InputAggregateMax",
+                      "min": "#/components/schemas/InputAggregateMin",
+                      "sum": "#/components/schemas/InputAggregateSum",
+                      "percentile": "#/components/schemas/InputAggregatePercentile"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/InputAggregateCount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InputAggregateUniqueCount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InputAggregateAverage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InputAggregateMax"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InputAggregateMin"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InputAggregateSum"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InputAggregatePercentile"
+                    }
+                  ],
+                  "errorMessage": {
+                    "discriminator": "value of tag \"type\" must be one of: count, unique-count, average, max, min, sum, percentile"
+                  }
+                },
+                "functions": {
+                  "type": "array",
+                  "items": {
+                    "title": "InputFunction",
+                    "description": "Post-processing function applied to an aggregation query result after the aggregate is computed, selected by `type`.",
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type",
+                      "mapping": {
+                        "per-second": "#/components/schemas/FunctionPerSecond",
+                        "per-minute": "#/components/schemas/FunctionPerMinute",
+                        "per-hour": "#/components/schemas/FunctionPerHour",
+                        "rate": "#/components/schemas/FunctionRate",
+                        "increase": "#/components/schemas/FunctionIncrease",
+                        "log": "#/components/schemas/InputFunctionLog",
+                        "power": "#/components/schemas/FunctionPower",
+                        "sqrt": "#/components/schemas/FunctionSqrt",
+                        "last": "#/components/schemas/FunctionLast",
+                        "time-offset": "#/components/schemas/InputFunctionTimeOffset",
+                        "cumsum": "#/components/schemas/FunctionCumsum"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/FunctionPerSecond"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPerMinute"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPerHour"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionRate"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionIncrease"
+                      },
+                      {
+                        "$ref": "#/components/schemas/InputFunctionLog"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPower"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionSqrt"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionLast"
+                      },
+                      {
+                        "$ref": "#/components/schemas/InputFunctionTimeOffset"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionCumsum"
+                      }
+                    ],
+                    "errorMessage": {
+                      "discriminator": "value of tag \"type\" must be one of: per-second, per-minute, per-hour, rate, increase, log, power, sqrt, last, time-offset, cumsum"
+                    }
+                  },
+                  "maxItems": 10,
+                  "description": "Post-processing functions applied to aggregation results. Defaults to an empty array when omitted."
+                },
+                "fill": {
+                  "type": "object",
+                  "required": [
+                    "mode"
+                  ],
+                  "properties": {
+                    "mode": {
+                      "type": "object",
+                      "required": [
+                        "type"
+                      ],
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "zero",
+                            "null"
+                          ],
+                          "description": "`zero` fills missing points with zero. `null` keeps missing points null.",
+                          "type": "string"
+                        }
+                      },
+                      "description": "How missing aggregation points should be filled."
+                    }
+                  },
+                  "description": "Missing-point fill behavior for aggregation results. Optional; omit to keep missing points null."
+                },
+                "timeAggregate": {
+                  "enum": [
+                    "avg",
+                    "sum",
+                    "min",
+                    "max",
+                    "last"
+                  ],
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "type": "string"
+                },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence.",
+                  "type": "string"
+                },
+                "filter": {
+                  "type": "string",
+                  "format": "tsuga-query",
+                  "minLength": 0,
+                  "maxLength": 10000,
+                  "description": "Tsuga query filter applied to this alerting or SLO aggregation query. Required by the API; use the query language for the selected data source."
+                }
+              },
+              "title": "MonitorAggregationQuery",
+              "description": "Single aggregation query evaluated by a monitor."
+            },
+            "minItems": 1,
+            "maxItems": 15,
+            "description": "Aggregation queries used by alerting. Each query is referenced from formulas as q1, q2, and so on."
+          }
+        }
+      },
       "InputMonitorConfigurationAnomalyLog": {
         "type": "object",
         "required": [
@@ -23454,6 +24392,317 @@
             "description": "Anomaly monitor over trace aggregations. Set this value to create or update an anomaly monitor that learns historical trace query behavior and alerts on unusual movement in trace-derived values.",
             "enum": [
               "anomaly-trace"
+            ]
+          },
+          "condition": {
+            "type": "object",
+            "required": [
+              "formula",
+              "conditionType"
+            ],
+            "properties": {
+              "formula": {
+                "type": "string",
+                "format": "tsuga-formula",
+                "minLength": 0,
+                "maxLength": 250,
+                "errorMessage": {
+                  "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+                },
+                "description": "Formula result analyzed for anomalous behavior, usually `q1` or a formula alias."
+              },
+              "conditionType": {
+                "enum": [
+                  "rate",
+                  "error",
+                  "cpu",
+                  "general",
+                  "to_be_set"
+                ],
+                "description": "Anomaly model type used to classify expected behavior: `rate` flags downward anomalies (e.g. count rates), `error` and `cpu` flag upward anomalies (e.g. error counts/rates, CPU usage), and `general` flags both directions. Use `to_be_set` to let Tsuga infer the model type from the monitor query during create or update.",
+                "type": "string"
+              }
+            },
+            "description": "Anomaly detection condition evaluated by this monitor. The `formula` result is compared against behavior learned from historical query results, and the monitor alerts on deviations in the direction implied by `conditionType`."
+          },
+          "noDataBehavior": {
+            "enum": [
+              "alert",
+              "resolve",
+              "keep_last_status"
+            ],
+            "description": "How the anomaly monitor updates state when no data is returned. `alert` enters no-data alert state, `resolve` resolves, and `keep_last_status` preserves the previous state.",
+            "type": "string"
+          },
+          "timeframe": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 1440,
+            "description": "Lookback window, in minutes, that each anomaly monitor evaluation aggregates over."
+          },
+          "groupByFields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "fields",
+                "limit"
+              ],
+              "properties": {
+                "fields": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 250
+                  },
+                  "maxItems": 4,
+                  "description": "Attribute names the monitor splits results by, evaluating each resulting group independently. Empty or omitted means the monitor evaluates a single ungrouped series."
+                },
+                "limit": {
+                  "type": "number",
+                  "description": "Maximum number of groups evaluated per field. Anomaly monitors apply it, capped at 100. Threshold monitors ignore it and evaluate up to 100 groups per field."
+                },
+                "sortOrder": {
+                  "enum": [
+                    "asc",
+                    "desc"
+                  ],
+                  "description": "Sort direction: ascending or descending.",
+                  "type": "string"
+                },
+                "replaceNullWith": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 250,
+                  "description": "Value used to group documents that have no value for a grouped field."
+                }
+              }
+            },
+            "maxItems": 1,
+            "description": "Monitor group by configuration."
+          },
+          "aggregationAlertLogic": {
+            "enum": [
+              "no_aggregation",
+              "all",
+              "any",
+              "each",
+              "proportion"
+            ],
+            "description": "How grouped results are combined into alert state. Use `no_aggregation` only when `groupByFields` is empty; use `all`, `any`, `each`, or `proportion` with non-empty `groupByFields`. `proportion` also requires `proportionAlertThreshold`. With `groupByFields`, send `each` so every group opens and resolves its own alert, as the app does by default; `all`, `any`, and `proportion` raise one alert for the whole monitor. On create, omitted query-monitor values default to `no_aggregation`; on update, omitted values keep the existing aggregation logic.",
+            "type": "string"
+          },
+          "proportionAlertThreshold": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 99,
+            "description": "Percentage threshold used when `aggregationAlertLogic` is `proportion`."
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "aggregate",
+                "filter"
+              ],
+              "properties": {
+                "aggregate": {
+                  "title": "InputAggregate",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
+                  "type": "object",
+                  "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                      "count": "#/components/schemas/InputAggregateCount",
+                      "unique-count": "#/components/schemas/InputAggregateUniqueCount",
+                      "average": "#/components/schemas/InputAggregateAverage",
+                      "max": "#/components/schemas/InputAggregateMax",
+                      "min": "#/components/schemas/InputAggregateMin",
+                      "sum": "#/components/schemas/InputAggregateSum",
+                      "percentile": "#/components/schemas/InputAggregatePercentile"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/InputAggregateCount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InputAggregateUniqueCount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InputAggregateAverage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InputAggregateMax"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InputAggregateMin"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InputAggregateSum"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InputAggregatePercentile"
+                    }
+                  ],
+                  "errorMessage": {
+                    "discriminator": "value of tag \"type\" must be one of: count, unique-count, average, max, min, sum, percentile"
+                  }
+                },
+                "functions": {
+                  "type": "array",
+                  "items": {
+                    "title": "InputFunction",
+                    "description": "Post-processing function applied to an aggregation query result after the aggregate is computed, selected by `type`.",
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type",
+                      "mapping": {
+                        "per-second": "#/components/schemas/FunctionPerSecond",
+                        "per-minute": "#/components/schemas/FunctionPerMinute",
+                        "per-hour": "#/components/schemas/FunctionPerHour",
+                        "rate": "#/components/schemas/FunctionRate",
+                        "increase": "#/components/schemas/FunctionIncrease",
+                        "log": "#/components/schemas/InputFunctionLog",
+                        "power": "#/components/schemas/FunctionPower",
+                        "sqrt": "#/components/schemas/FunctionSqrt",
+                        "last": "#/components/schemas/FunctionLast",
+                        "time-offset": "#/components/schemas/InputFunctionTimeOffset",
+                        "cumsum": "#/components/schemas/FunctionCumsum"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/FunctionPerSecond"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPerMinute"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPerHour"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionRate"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionIncrease"
+                      },
+                      {
+                        "$ref": "#/components/schemas/InputFunctionLog"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPower"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionSqrt"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionLast"
+                      },
+                      {
+                        "$ref": "#/components/schemas/InputFunctionTimeOffset"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionCumsum"
+                      }
+                    ],
+                    "errorMessage": {
+                      "discriminator": "value of tag \"type\" must be one of: per-second, per-minute, per-hour, rate, increase, log, power, sqrt, last, time-offset, cumsum"
+                    }
+                  },
+                  "maxItems": 10,
+                  "description": "Post-processing functions applied to aggregation results. Defaults to an empty array when omitted."
+                },
+                "fill": {
+                  "type": "object",
+                  "required": [
+                    "mode"
+                  ],
+                  "properties": {
+                    "mode": {
+                      "type": "object",
+                      "required": [
+                        "type"
+                      ],
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "zero",
+                            "null"
+                          ],
+                          "description": "`zero` fills missing points with zero. `null` keeps missing points null.",
+                          "type": "string"
+                        }
+                      },
+                      "description": "How missing aggregation points should be filled."
+                    }
+                  },
+                  "description": "Missing-point fill behavior for aggregation results. Optional; omit to keep missing points null."
+                },
+                "timeAggregate": {
+                  "enum": [
+                    "avg",
+                    "sum",
+                    "min",
+                    "max",
+                    "last"
+                  ],
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "type": "string"
+                },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence.",
+                  "type": "string"
+                },
+                "filter": {
+                  "type": "string",
+                  "format": "tsuga-query",
+                  "minLength": 0,
+                  "maxLength": 10000,
+                  "description": "Tsuga query filter applied to this alerting or SLO aggregation query. Required by the API; use the query language for the selected data source."
+                }
+              },
+              "title": "MonitorAggregationQuery",
+              "description": "Single aggregation query evaluated by a monitor."
+            },
+            "minItems": 1,
+            "maxItems": 15,
+            "description": "Aggregation queries used by alerting. Each query is referenced from formulas as q1, q2, and so on."
+          }
+        }
+      },
+      "InputMonitorConfigurationAnomalyRum": {
+        "type": "object",
+        "required": [
+          "type",
+          "condition",
+          "noDataBehavior",
+          "timeframe",
+          "groupByFields",
+          "queries"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Anomaly monitor over RUM aggregations. Set this value to create or update an anomaly monitor that learns historical RUM query behavior and alerts on unusual movement in RUM-derived values. The monitor reads a single RUM stream: fields in `queries` and `groupByFields` that carry a stream prefix (`events.`, `measurements.` or `exceptions.`) must all name the same stream, and unprefixed fields are read from that stream (`events` when no field names one).",
+            "enum": [
+              "anomaly-rum"
             ]
           },
           "condition": {
@@ -26113,14 +27362,14 @@
             "items": {
               "type": "string"
             },
-            "description": "IDs of the teams whose services are drawn. The set is resolved when the widget renders, so a service joining one of these teams later is picked up automatically. Every service is drawn when omitted."
+            "description": "IDs of the teams whose services the app offers in its Services picker. It does not select what is drawn: the overlay draws only the services listed in `services`."
           },
           "services": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "OpenTelemetry service names to draw, narrowing `teams` down to an explicit list. Every service matching `teams` is drawn when omitted."
+            "description": "OpenTelemetry service names whose deployments are drawn. Nothing is drawn until at least one service is set."
           },
           "env": {
             "type": "string",
@@ -26144,7 +27393,7 @@
           },
           "query": {
             "type": "string",
-            "description": "Tsuga query selecting the log events drawn over the chart. All log events in the time range are drawn when omitted."
+            "description": "Tsuga query selecting the log events drawn over the chart. Nothing is drawn when omitted. An empty string draws every log event in the time range."
           }
         },
         "title": "LogsOverlay"
@@ -26171,11 +27420,11 @@
               ],
               "type": "string"
             },
-            "description": "Kinds of alert drawn over the chart. Both monitor and SLO alerts are drawn when omitted."
+            "description": "Kinds of alert drawn over the chart. Both monitor and SLO alerts are drawn when omitted. On its own, it does not make the overlay draw: set `query` or a filter too."
           },
           "query": {
             "type": "string",
-            "description": "Case-insensitive substring matched against the alert, the same way the Ongoing alerts page matches its search box. Every alert is drawn when omitted."
+            "description": "Case-insensitive substring matched against the alert, the same way the Ongoing alerts page matches its search box. An empty string matches every alert. Nothing is drawn unless `query` or at least one filter is set."
           },
           "filters": {
             "type": "object",
@@ -26242,7 +27491,7 @@
               "maxLength": 250
             },
             "maxItems": 50,
-            "description": "IDs of the teams whose services are drawn. The set is resolved when the widget renders, so a service joining one of these teams later is picked up automatically. Every service is drawn when omitted."
+            "description": "IDs of the teams whose services the app offers in its Services picker. It does not select what is drawn: the overlay draws only the services listed in `services`."
           },
           "services": {
             "type": "array",
@@ -26252,7 +27501,7 @@
               "maxLength": 250
             },
             "maxItems": 200,
-            "description": "OpenTelemetry service names to draw, narrowing `teams` down to an explicit list. Every service matching `teams` is drawn when omitted."
+            "description": "OpenTelemetry service names whose deployments are drawn. Nothing is drawn until at least one service is set."
           },
           "env": {
             "type": "string",
@@ -26281,7 +27530,7 @@
             "format": "tsuga-query",
             "minLength": 0,
             "maxLength": 10000,
-            "description": "Tsuga query selecting the log events drawn over the chart. All log events in the time range are drawn when omitted."
+            "description": "Tsuga query selecting the log events drawn over the chart. Nothing is drawn when omitted. An empty string draws every log event in the time range."
           }
         },
         "title": "LogsOverlay"
@@ -26309,13 +27558,13 @@
               "type": "string"
             },
             "maxItems": 2,
-            "description": "Kinds of alert drawn over the chart. Both monitor and SLO alerts are drawn when omitted."
+            "description": "Kinds of alert drawn over the chart. Both monitor and SLO alerts are drawn when omitted. On its own, it does not make the overlay draw: set `query` or a filter too."
           },
           "query": {
             "type": "string",
             "minLength": 0,
             "maxLength": 250,
-            "description": "Case-insensitive substring matched against the alert, the same way the Ongoing alerts page matches its search box. Every alert is drawn when omitted."
+            "description": "Case-insensitive substring matched against the alert, the same way the Ongoing alerts page matches its search box. An empty string matches every alert. Nothing is drawn unless `query` or at least one filter is set."
           },
           "filters": {
             "type": "object",
@@ -30370,6 +31619,438 @@
           }
         },
         "title": "TopList"
+      },
+      "GraphVisualizationTimeline": {
+        "type": "object",
+        "required": [
+          "type",
+          "source",
+          "queries",
+          "sections"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Displays each group as a row of time buckets, colored by the section their value falls in",
+            "enum": [
+              "timeline"
+            ]
+          },
+          "source": {
+            "enum": [
+              "logs",
+              "metrics",
+              "traces",
+              "rum"
+            ],
+            "description": "Telemetry source queried by this aggregation: `logs`, `metrics`, `traces`, or `rum`.",
+            "type": "string"
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "aggregate"
+              ],
+              "properties": {
+                "aggregate": {
+                  "title": "Aggregate",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
+                  "type": "object",
+                  "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                      "count": "#/components/schemas/AggregateCount",
+                      "unique-count": "#/components/schemas/AggregateUniqueCount",
+                      "average": "#/components/schemas/AggregateAverage",
+                      "max": "#/components/schemas/AggregateMax",
+                      "min": "#/components/schemas/AggregateMin",
+                      "sum": "#/components/schemas/AggregateSum",
+                      "percentile": "#/components/schemas/AggregatePercentile"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/AggregateCount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateUniqueCount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateAverage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMax"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateMin"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregateSum"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AggregatePercentile"
+                    }
+                  ],
+                  "errorMessage": {
+                    "discriminator": "value of tag \"type\" must be one of: count, unique-count, average, max, min, sum, percentile"
+                  }
+                },
+                "functions": {
+                  "type": "array",
+                  "items": {
+                    "title": "Function",
+                    "description": "Post-processing function applied to an aggregation query result after the aggregate is computed, selected by `type`.",
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type",
+                      "mapping": {
+                        "per-second": "#/components/schemas/FunctionPerSecond",
+                        "per-minute": "#/components/schemas/FunctionPerMinute",
+                        "per-hour": "#/components/schemas/FunctionPerHour",
+                        "rate": "#/components/schemas/FunctionRate",
+                        "increase": "#/components/schemas/FunctionIncrease",
+                        "log": "#/components/schemas/FunctionLog",
+                        "power": "#/components/schemas/FunctionPower",
+                        "sqrt": "#/components/schemas/FunctionSqrt",
+                        "last": "#/components/schemas/FunctionLast",
+                        "time-offset": "#/components/schemas/FunctionTimeOffset",
+                        "cumsum": "#/components/schemas/FunctionCumsum"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/FunctionPerSecond"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPerMinute"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPerHour"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionRate"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionIncrease"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionLog"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPower"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionSqrt"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionLast"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionTimeOffset"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionCumsum"
+                      }
+                    ],
+                    "errorMessage": {
+                      "discriminator": "value of tag \"type\" must be one of: per-second, per-minute, per-hour, rate, increase, log, power, sqrt, last, time-offset, cumsum"
+                    }
+                  },
+                  "description": "Post-processing functions applied to aggregation results"
+                },
+                "fill": {
+                  "type": "object",
+                  "required": [
+                    "mode"
+                  ],
+                  "properties": {
+                    "mode": {
+                      "type": "object",
+                      "required": [
+                        "type"
+                      ],
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "zero",
+                            "null"
+                          ],
+                          "description": "`zero` fills missing points with zero. `null` keeps missing points null.",
+                          "type": "string"
+                        }
+                      },
+                      "description": "How missing aggregation points should be filled."
+                    }
+                  },
+                  "description": "Missing-point fill behavior for aggregation results. Optional; omit to keep missing points null."
+                },
+                "timeAggregate": {
+                  "enum": [
+                    "avg",
+                    "sum",
+                    "min",
+                    "max",
+                    "last"
+                  ],
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "type": "string"
+                },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence.",
+                  "type": "string"
+                },
+                "filter": {
+                  "type": "string",
+                  "description": "Filter to apply to the aggregation"
+                }
+              },
+              "title": "AggregationQuery"
+            },
+            "description": "Aggregations that may be combined together in the same query. Each item is referenced from `formula` as q1, q2, and so on, in submission order."
+          },
+          "formula": {
+            "type": "string",
+            "description": "Formula referencing submitted query outputs, such as `q1 + q2`. References must be within `q1` through `qN` for the submitted queries."
+          },
+          "aliases": {
+            "type": "object",
+            "properties": {
+              "formula": {
+                "type": "string",
+                "description": "Optional alias for formula (only used for display in the UI)"
+              },
+              "queries": {
+                "type": "object",
+                "description": "Display names for individual query series, keyed by the zero-based query index as a string.",
+                "additionalProperties": {
+                  "type": "string",
+                  "description": "Display name for this query series in the legend, keyed by the zero-based query index as a string (\"0\" = first query, \"1\" = second, and so on). This differs from `formula`, which references queries as \"q1\", \"q2\". Omit to fall back to an auto-generated label like \"Count on <filter>\"."
+                }
+              }
+            },
+            "description": "Display names used for the formula series and the individual query series instead of auto-generated labels."
+          },
+          "visibleSeries": {
+            "type": "array",
+            "items": {
+              "type": "boolean"
+            },
+            "description": "Flags indicating whether each query or formula series is visible"
+          },
+          "groupBy": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "fields",
+                "limit"
+              ],
+              "properties": {
+                "fields": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Telemetry attribute names used to group aggregation results."
+                },
+                "limit": {
+                  "type": "number",
+                  "description": "Maximum number of distinct values of `fields` returned for this grouping level, ranked by aggregate value. Groups beyond the limit are truncated, not merged into an \"other\" group."
+                },
+                "sortOrder": {
+                  "enum": [
+                    "asc",
+                    "desc"
+                  ],
+                  "description": "Sort direction: ascending or descending.",
+                  "type": "string"
+                },
+                "replaceNullWith": {
+                  "type": "string",
+                  "description": "Value used to group documents that have no value for a grouped field."
+                }
+              },
+              "title": "AggregationGroupBy"
+            },
+            "description": "Nested grouping levels applied to the results, outermost first (e.g. group by service, then by level within each service). Each level splits results further, so the response contains one result per unique combination of group values."
+          },
+          "groupByMode": {
+            "enum": [
+              "relative",
+              "absolute"
+            ],
+            "description": "`absolute` keeps each group at its own value; `relative` shows it as a percentage of the ungrouped total (defaults to absolute)",
+            "type": "string"
+          },
+          "timeBucket": {
+            "type": "object",
+            "required": [
+              "time",
+              "metric"
+            ],
+            "properties": {
+              "time": {
+                "type": "number",
+                "description": "Numeric count of `metric` units in each bucket. Required when `timeBucket` is present."
+              },
+              "metric": {
+                "enum": [
+                  "sec",
+                  "min",
+                  "hour",
+                  "day"
+                ],
+                "description": "Unit used to measure the bucket width",
+                "type": "string"
+              }
+            },
+            "description": "Time bucket width for time-based chart widgets. Optional; when present, `time` and `metric` together define the bucket width."
+          },
+          "normalizer": {
+            "title": "Normalizer",
+            "description": "Display-value formatter for widget values or list/table columns.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "duration": "#/components/schemas/DataNormalizerDuration",
+                "data": "#/components/schemas/DataNormalizerData",
+                "percent": "#/components/schemas/DataNormalizerPercent",
+                "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                "date": "#/components/schemas/DataNormalizerDate",
+                "level": "#/components/schemas/DataNormalizerLevel",
+                "cpu": "#/components/schemas/DataNormalizerCpu",
+                "none": "#/components/schemas/DataNormalizerNone",
+                "custom": "#/components/schemas/DataNormalizerCustom"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DataNormalizerDuration"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerData"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercent"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerDate"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerLevel"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCpu"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerNone"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCustom"
+              }
+            ],
+            "errorMessage": {
+              "discriminator": "value of tag \"type\" must be one of: duration, data, percent, percent-fraction, date, level, cpu, none, custom"
+            }
+          },
+          "precision": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "max"
+                ]
+              }
+            ],
+            "description": "Display precision for numeric labels, tooltips, tables, and scalar values. Use a number of decimal places to round displayed values, or `max` to display the full submitted precision."
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "operator",
+                "value",
+                "color"
+              ],
+              "properties": {
+                "operator": {
+                  "enum": [
+                    "greater_than",
+                    "less_than",
+                    "equal",
+                    "not_equal",
+                    "greater_than_or_equal",
+                    "less_than_or_equal"
+                  ],
+                  "description": "Comparator used to evaluate each time bucket value against `value`",
+                  "type": "string"
+                },
+                "value": {
+                  "type": "number",
+                  "description": "Bound of the section, compared with `operator`"
+                },
+                "color": {
+                  "enum": [
+                    "red",
+                    "pink",
+                    "violet",
+                    "blue",
+                    "cyan",
+                    "green",
+                    "yellow",
+                    "orange"
+                  ],
+                  "description": "Color of the time buckets in this section",
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Name of the state, shown in the legend"
+                }
+              },
+              "title": "TimelineSection",
+              "description": "Range of values shown as one state, evaluated against the raw value of each time bucket, before the unit is applied."
+            },
+            "description": "Rules that assign each time bucket to a state. Among the sections whose condition the value matches, the one whose `value` is closest to it applies, so `> 5` overrides `> 0` above 5 regardless of order. `not_equal` sections apply only when nothing else matches, and ties go to the earlier section. Buckets that match no section are shown in a neutral color."
+          },
+          "legendMode": {
+            "enum": [
+              "table",
+              "legend-only",
+              "no-legend"
+            ],
+            "description": "Controls whether and how the widget displays legend or series details (e.g. table, legend-only, or no legend)",
+            "type": "string"
+          }
+        },
+        "title": "Timeline"
       },
       "GraphVisualizationPie": {
         "type": "object",
@@ -38163,6 +39844,466 @@
         },
         "title": "TopList"
       },
+      "InputGraphVisualizationTimeline": {
+        "type": "object",
+        "required": [
+          "type",
+          "source",
+          "queries",
+          "sections"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Displays each group as a row of time buckets, colored by the section their value falls in",
+            "enum": [
+              "timeline"
+            ]
+          },
+          "source": {
+            "enum": [
+              "logs",
+              "metrics",
+              "traces",
+              "rum"
+            ],
+            "description": "Telemetry source queried by this aggregation: `logs`, `metrics`, `traces`, or `rum`.",
+            "type": "string"
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "aggregate"
+              ],
+              "properties": {
+                "aggregate": {
+                  "title": "InputAggregate",
+                  "description": "Aggregation operation for this query. Required for every query; `field` is required by all aggregate types except `count`, which needs it only when `dataSource` is `metrics`.",
+                  "type": "object",
+                  "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                      "count": "#/components/schemas/InputAggregateCount",
+                      "unique-count": "#/components/schemas/InputAggregateUniqueCount",
+                      "average": "#/components/schemas/InputAggregateAverage",
+                      "max": "#/components/schemas/InputAggregateMax",
+                      "min": "#/components/schemas/InputAggregateMin",
+                      "sum": "#/components/schemas/InputAggregateSum",
+                      "percentile": "#/components/schemas/InputAggregatePercentile"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/InputAggregateCount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InputAggregateUniqueCount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InputAggregateAverage"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InputAggregateMax"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InputAggregateMin"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InputAggregateSum"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InputAggregatePercentile"
+                    }
+                  ],
+                  "errorMessage": {
+                    "discriminator": "value of tag \"type\" must be one of: count, unique-count, average, max, min, sum, percentile"
+                  }
+                },
+                "functions": {
+                  "type": "array",
+                  "items": {
+                    "title": "InputFunction",
+                    "description": "Post-processing function applied to an aggregation query result after the aggregate is computed, selected by `type`.",
+                    "type": "object",
+                    "discriminator": {
+                      "propertyName": "type",
+                      "mapping": {
+                        "per-second": "#/components/schemas/FunctionPerSecond",
+                        "per-minute": "#/components/schemas/FunctionPerMinute",
+                        "per-hour": "#/components/schemas/FunctionPerHour",
+                        "rate": "#/components/schemas/FunctionRate",
+                        "increase": "#/components/schemas/FunctionIncrease",
+                        "log": "#/components/schemas/InputFunctionLog",
+                        "power": "#/components/schemas/FunctionPower",
+                        "sqrt": "#/components/schemas/FunctionSqrt",
+                        "last": "#/components/schemas/FunctionLast",
+                        "time-offset": "#/components/schemas/InputFunctionTimeOffset",
+                        "cumsum": "#/components/schemas/FunctionCumsum"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/FunctionPerSecond"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPerMinute"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPerHour"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionRate"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionIncrease"
+                      },
+                      {
+                        "$ref": "#/components/schemas/InputFunctionLog"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionPower"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionSqrt"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionLast"
+                      },
+                      {
+                        "$ref": "#/components/schemas/InputFunctionTimeOffset"
+                      },
+                      {
+                        "$ref": "#/components/schemas/FunctionCumsum"
+                      }
+                    ],
+                    "errorMessage": {
+                      "discriminator": "value of tag \"type\" must be one of: per-second, per-minute, per-hour, rate, increase, log, power, sqrt, last, time-offset, cumsum"
+                    }
+                  },
+                  "maxItems": 10,
+                  "description": "Post-processing functions applied to aggregation results. Defaults to an empty array when omitted."
+                },
+                "fill": {
+                  "type": "object",
+                  "required": [
+                    "mode"
+                  ],
+                  "properties": {
+                    "mode": {
+                      "type": "object",
+                      "required": [
+                        "type"
+                      ],
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "zero",
+                            "null"
+                          ],
+                          "description": "`zero` fills missing points with zero. `null` keeps missing points null.",
+                          "type": "string"
+                        }
+                      },
+                      "description": "How missing aggregation points should be filled."
+                    }
+                  },
+                  "description": "Missing-point fill behavior for aggregation results. Optional; omit to keep missing points null."
+                },
+                "timeAggregate": {
+                  "enum": [
+                    "avg",
+                    "sum",
+                    "min",
+                    "max",
+                    "last"
+                  ],
+                  "description": "Per-series rollup applied within each time bucket before the cross-series aggregate. Use it on metric queries when `aggregate.type` is `sum` and no `rate`, `increase`, or `last` function is present. When omitted, Tsuga derives the rollup from the metric type.",
+                  "type": "string"
+                },
+                "metricKind": {
+                  "enum": [
+                    "gauge",
+                    "cumulative-counter",
+                    "delta-counter",
+                    "cumulative-histogram",
+                    "delta-histogram",
+                    "summary"
+                  ],
+                  "description": "Variant of the metric in `aggregate.field` to query, for metric names reported under several kinds (for instance both cumulative and delta). When omitted, Tsuga picks one variant by type and temporality precedence.",
+                  "type": "string"
+                },
+                "filter": {
+                  "type": "string",
+                  "format": "tsuga-query",
+                  "minLength": 0,
+                  "maxLength": 10000,
+                  "description": "Tsuga query filter to apply to the aggregation. Defaults to an empty string when omitted."
+                }
+              },
+              "title": "AggregationQuery"
+            },
+            "minItems": 1,
+            "maxItems": 15,
+            "description": "Aggregations that may be combined together in the same query. Each item is referenced from `formula` as q1, q2, and so on, in submission order. For dataSource \"metrics\", each aggregate's `field` is the metric name, not an attribute; to count distinct values of an attribute use unique-count with field \"<metricName>.context.<attribute>\" (e.g. \"system.cpu.utilization.context.host.name\")."
+          },
+          "formula": {
+            "type": "string",
+            "format": "tsuga-formula",
+            "minLength": 0,
+            "maxLength": 250,
+            "errorMessage": {
+              "format": "Must be a simple mathematical formula, and all variables in it should refer to queries (q1, q2, etc.). The formula you provided is invalid: ${0}"
+            },
+            "description": "Formula referencing query outputs, such as `q1 + q2`, to compute derived results. Defaults to `q1`. Formulas may reference only submitted queries (`q1` through `qN`); undefined query references return 400. Only `+`, `-`, `*`, `/` and parentheses over query references and numbers are supported, with no functions such as `max()`."
+          },
+          "aliases": {
+            "type": "object",
+            "properties": {
+              "formula": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 250,
+                "description": "Optional alias for formula (only used for display in the UI)"
+              },
+              "queries": {
+                "type": "object",
+                "description": "Display names for individual query series, keyed by the zero-based query index as a string.",
+                "additionalProperties": {
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 250,
+                  "description": "Display name for this query series in the legend, keyed by the zero-based query index as a string (\"0\" = first query, \"1\" = second, and so on). This differs from `formula`, which references queries as \"q1\", \"q2\". Omit to fall back to an auto-generated label like \"Count on <filter>\"."
+                }
+              }
+            },
+            "description": "Display names used for the formula series and the individual query series instead of auto-generated labels."
+          },
+          "visibleSeries": {
+            "type": "array",
+            "items": {
+              "type": "boolean"
+            },
+            "description": "Flags indicating whether each query or formula series is visible"
+          },
+          "groupBy": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "fields",
+                "limit"
+              ],
+              "properties": {
+                "fields": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 250
+                  },
+                  "maxItems": 1,
+                  "description": "Telemetry attribute name to group aggregation results by at this grouping level. To group by several attributes, send one `groupBy` entry per attribute: entries nest, outermost first.",
+                  "errorMessage": {
+                    "maxItems": "must hold one field. To group by several fields, send one groupBy entry per field: they nest, outermost first, such as [{\"fields\": [\"context.service.name\"], \"limit\": 10}, {\"fields\": [\"level\"], \"limit\": 5}]."
+                  }
+                },
+                "limit": {
+                  "type": "number",
+                  "description": "Maximum number of distinct values of `fields` to return for this grouping level, ranked by aggregate value. Groups beyond the limit are truncated from the response, not merged into an \"other\" group."
+                },
+                "sortOrder": {
+                  "enum": [
+                    "asc",
+                    "desc"
+                  ],
+                  "description": "Sort direction: ascending or descending.",
+                  "type": "string"
+                },
+                "replaceNullWith": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 250,
+                  "description": "Value used to group documents that have no value for a grouped field."
+                }
+              },
+              "title": "AggregationGroupBy"
+            },
+            "maxItems": 7,
+            "description": "Nested grouping levels applied to aggregation results, outermost first (e.g. group by service, then by level within each service). Each level splits results further, so the response contains one result per unique combination of group values instead of one aggregated total. Defaults to an empty array (one ungrouped result) when omitted."
+          },
+          "groupByMode": {
+            "enum": [
+              "relative",
+              "absolute"
+            ],
+            "description": "`absolute` keeps each group at its own value; `relative` shows it as a percentage of the ungrouped total (defaults to absolute)",
+            "type": "string"
+          },
+          "timeBucket": {
+            "type": "object",
+            "required": [
+              "time",
+              "metric"
+            ],
+            "properties": {
+              "time": {
+                "type": "number",
+                "description": "Numeric count of `metric` units in each bucket. Required when `timeBucket` is present."
+              },
+              "metric": {
+                "enum": [
+                  "sec",
+                  "min",
+                  "hour",
+                  "day"
+                ],
+                "description": "Unit used to measure the bucket width",
+                "type": "string"
+              }
+            },
+            "description": "Time bucket width for time-based chart widgets. Optional; when present, `time` and `metric` together define the bucket width."
+          },
+          "normalizer": {
+            "title": "Normalizer",
+            "description": "Display-value formatter for widget values or list/table columns.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "duration": "#/components/schemas/DataNormalizerDuration",
+                "data": "#/components/schemas/DataNormalizerData",
+                "percent": "#/components/schemas/DataNormalizerPercent",
+                "percent-fraction": "#/components/schemas/DataNormalizerPercentFraction",
+                "date": "#/components/schemas/DataNormalizerDate",
+                "level": "#/components/schemas/DataNormalizerLevel",
+                "cpu": "#/components/schemas/DataNormalizerCpu",
+                "none": "#/components/schemas/DataNormalizerNone",
+                "custom": "#/components/schemas/InputDataNormalizerCustom"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DataNormalizerDuration"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerData"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercent"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerPercentFraction"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerDate"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerLevel"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerCpu"
+              },
+              {
+                "$ref": "#/components/schemas/DataNormalizerNone"
+              },
+              {
+                "$ref": "#/components/schemas/InputDataNormalizerCustom"
+              }
+            ],
+            "errorMessage": {
+              "discriminator": "value of tag \"type\" must be one of: duration, data, percent, percent-fraction, date, level, cpu, none, custom"
+            }
+          },
+          "precision": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "max"
+                ]
+              }
+            ],
+            "description": "Display precision for numeric labels, tooltips, tables, and scalar values. Use a number of decimal places to round displayed values, or `max` to display the full submitted precision."
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "operator",
+                "value",
+                "color"
+              ],
+              "properties": {
+                "operator": {
+                  "enum": [
+                    "greater_than",
+                    "less_than",
+                    "equal",
+                    "not_equal",
+                    "greater_than_or_equal",
+                    "less_than_or_equal"
+                  ],
+                  "description": "Comparator used to evaluate each time bucket value against `value`",
+                  "type": "string"
+                },
+                "value": {
+                  "type": "number",
+                  "description": "Bound of the section, compared with `operator`"
+                },
+                "color": {
+                  "enum": [
+                    "red",
+                    "pink",
+                    "violet",
+                    "blue",
+                    "cyan",
+                    "green",
+                    "yellow",
+                    "orange"
+                  ],
+                  "description": "Color of the time buckets in this section",
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 250,
+                  "description": "Name of the state, shown in the legend"
+                }
+              },
+              "title": "TimelineSection",
+              "description": "Range of values shown as one state, evaluated against the raw value of each time bucket, before the unit is applied."
+            },
+            "maxItems": 10,
+            "description": "Rules that assign each time bucket to a state. Among the sections whose condition the value matches, the one whose `value` is closest to it applies, so `> 5` overrides `> 0` above 5 regardless of order. `not_equal` sections apply only when nothing else matches, and ties go to the earlier section. Buckets that match no section are shown in a neutral color."
+          },
+          "legendMode": {
+            "enum": [
+              "table",
+              "legend-only",
+              "no-legend"
+            ],
+            "description": "Controls whether and how the widget displays legend or series details (e.g. table, legend-only, or no legend)",
+            "type": "string"
+          }
+        },
+        "title": "Timeline"
+      },
       "InputGraphVisualizationPie": {
         "type": "object",
         "required": [
@@ -42699,9 +44840,11 @@
                     "metric": "#/components/schemas/MonitorConfigurationMetric",
                     "log": "#/components/schemas/MonitorConfigurationLog",
                     "trace": "#/components/schemas/MonitorConfigurationTrace",
+                    "rum": "#/components/schemas/MonitorConfigurationRum",
                     "anomaly-log": "#/components/schemas/MonitorConfigurationAnomalyLog",
                     "anomaly-metric": "#/components/schemas/MonitorConfigurationAnomalyMetric",
                     "anomaly-trace": "#/components/schemas/MonitorConfigurationAnomalyTrace",
+                    "anomaly-rum": "#/components/schemas/MonitorConfigurationAnomalyRum",
                     "certificate-expiry": "#/components/schemas/MonitorConfigurationCertificateExpiry",
                     "log-error-pattern-increase": "#/components/schemas/MonitorConfigurationLogErrorPatternIncrease",
                     "k8s-faulty-deployment": "#/components/schemas/MonitorConfigurationK8sFaultyDeployment",
@@ -42722,6 +44865,9 @@
                     "$ref": "#/components/schemas/MonitorConfigurationTrace"
                   },
                   {
+                    "$ref": "#/components/schemas/MonitorConfigurationRum"
+                  },
+                  {
                     "$ref": "#/components/schemas/MonitorConfigurationAnomalyLog"
                   },
                   {
@@ -42729,6 +44875,9 @@
                   },
                   {
                     "$ref": "#/components/schemas/MonitorConfigurationAnomalyTrace"
+                  },
+                  {
+                    "$ref": "#/components/schemas/MonitorConfigurationAnomalyRum"
                   },
                   {
                     "$ref": "#/components/schemas/MonitorConfigurationCertificateExpiry"
@@ -42744,7 +44893,7 @@
                   }
                 ],
                 "errorMessage": {
-                  "discriminator": "value of tag \"type\" must be one of: metric, log, trace, anomaly-log, anomaly-metric, anomaly-trace, certificate-expiry, log-error-pattern-increase, k8s-faulty-deployment, faulty-deployment"
+                  "discriminator": "value of tag \"type\" must be one of: metric, log, trace, rum, anomaly-log, anomaly-metric, anomaly-trace, anomaly-rum, certificate-expiry, log-error-pattern-increase, k8s-faulty-deployment, faulty-deployment"
                 }
               },
               "priority": {
@@ -44650,7 +46799,9 @@
             "id": "user-123-abc",
             "email": "john@tsuga.com",
             "name": "John Doe",
-            "role": "public_viewer",
+            "role": {
+              "type": "public_viewer"
+            },
             "orgId": "org-123-abc",
             "orgName": "Acme Inc.",
             "favoriteDashboards": [
@@ -51826,6 +53977,7 @@
                               "heatmap-promql": "#/components/schemas/InputGraphVisualizationHeatmapPromql",
                               "timeseries": "#/components/schemas/InputGraphVisualizationTimeseries",
                               "top-list": "#/components/schemas/InputGraphVisualizationTopList",
+                              "timeline": "#/components/schemas/InputGraphVisualizationTimeline",
                               "pie": "#/components/schemas/InputGraphVisualizationPie",
                               "query-value": "#/components/schemas/InputGraphVisualizationQueryValue",
                               "gauge": "#/components/schemas/InputGraphVisualizationGauge",
@@ -51895,6 +54047,9 @@
                               "$ref": "#/components/schemas/InputGraphVisualizationTopList"
                             },
                             {
+                              "$ref": "#/components/schemas/InputGraphVisualizationTimeline"
+                            },
+                            {
                               "$ref": "#/components/schemas/InputGraphVisualizationPie"
                             },
                             {
@@ -51938,7 +54093,7 @@
                             }
                           ],
                           "errorMessage": {
-                            "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, group, list-log-patterns, list-spans, list-rum, slo"
+                            "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, timeline, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, group, list-log-patterns, list-spans, list-rum, slo"
                           }
                         },
                         "layout": {
@@ -52410,6 +54565,7 @@
                               "heatmap-promql": "#/components/schemas/InputGraphVisualizationHeatmapPromql",
                               "timeseries": "#/components/schemas/InputGraphVisualizationTimeseries",
                               "top-list": "#/components/schemas/InputGraphVisualizationTopList",
+                              "timeline": "#/components/schemas/InputGraphVisualizationTimeline",
                               "pie": "#/components/schemas/InputGraphVisualizationPie",
                               "query-value": "#/components/schemas/InputGraphVisualizationQueryValue",
                               "gauge": "#/components/schemas/InputGraphVisualizationGauge",
@@ -52479,6 +54635,9 @@
                               "$ref": "#/components/schemas/InputGraphVisualizationTopList"
                             },
                             {
+                              "$ref": "#/components/schemas/InputGraphVisualizationTimeline"
+                            },
+                            {
                               "$ref": "#/components/schemas/InputGraphVisualizationPie"
                             },
                             {
@@ -52522,7 +54681,7 @@
                             }
                           ],
                           "errorMessage": {
-                            "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, group, list-log-patterns, list-spans, list-rum, slo"
+                            "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, timeline, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, group, list-log-patterns, list-spans, list-rum, slo"
                           }
                         },
                         "layout": {
@@ -52905,6 +55064,7 @@
                         "heatmap-promql": "#/components/schemas/InputGraphVisualizationHeatmapPromql",
                         "timeseries": "#/components/schemas/InputGraphVisualizationTimeseries",
                         "top-list": "#/components/schemas/InputGraphVisualizationTopList",
+                        "timeline": "#/components/schemas/InputGraphVisualizationTimeline",
                         "pie": "#/components/schemas/InputGraphVisualizationPie",
                         "query-value": "#/components/schemas/InputGraphVisualizationQueryValue",
                         "gauge": "#/components/schemas/InputGraphVisualizationGauge",
@@ -52974,6 +55134,9 @@
                         "$ref": "#/components/schemas/InputGraphVisualizationTopList"
                       },
                       {
+                        "$ref": "#/components/schemas/InputGraphVisualizationTimeline"
+                      },
+                      {
                         "$ref": "#/components/schemas/InputGraphVisualizationPie"
                       },
                       {
@@ -53017,7 +55180,7 @@
                       }
                     ],
                     "errorMessage": {
-                      "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, group, list-log-patterns, list-spans, list-rum, slo"
+                      "discriminator": "value of tag \"type\" must be one of: timeseries-connection, list-connection, top-list-connection, pie-connection, bar-connection, query-value-connection, timeseries-promql, query-value-promql, gauge-promql, top-list-promql, pie-promql, bar-promql, distribution-promql, heatmap-promql, timeseries, top-list, timeline, pie, query-value, gauge, bar, distribution, heatmap, table, list, note, group, list-log-patterns, list-spans, list-rum, slo"
                     }
                   },
                   "layout": {
@@ -60565,7 +62728,8 @@
                         },
                         "description": "Restrict results to monitors deployed to any of these cluster IDs (monitors with no cluster restriction are always included)"
                       }
-                    }
+                    },
+                    "description": "Filters applied to narrow the returned monitors"
                   },
                   "sort": {
                     "type": "object",
@@ -60861,9 +63025,11 @@
                         "metric": "#/components/schemas/InputMonitorConfigurationMetric",
                         "log": "#/components/schemas/InputMonitorConfigurationLog",
                         "trace": "#/components/schemas/InputMonitorConfigurationTrace",
+                        "rum": "#/components/schemas/InputMonitorConfigurationRum",
                         "anomaly-log": "#/components/schemas/InputMonitorConfigurationAnomalyLog",
                         "anomaly-metric": "#/components/schemas/InputMonitorConfigurationAnomalyMetric",
                         "anomaly-trace": "#/components/schemas/InputMonitorConfigurationAnomalyTrace",
+                        "anomaly-rum": "#/components/schemas/InputMonitorConfigurationAnomalyRum",
                         "log-error-pattern": "#/components/schemas/InputMonitorConfigurationLogErrorPattern",
                         "log-error-pattern-increase": "#/components/schemas/InputMonitorConfigurationLogErrorPatternIncrease",
                         "certificate-expiry": "#/components/schemas/InputMonitorConfigurationCertificateExpiry",
@@ -60885,6 +63051,9 @@
                         "$ref": "#/components/schemas/InputMonitorConfigurationTrace"
                       },
                       {
+                        "$ref": "#/components/schemas/InputMonitorConfigurationRum"
+                      },
+                      {
                         "$ref": "#/components/schemas/InputMonitorConfigurationAnomalyLog"
                       },
                       {
@@ -60892,6 +63061,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/InputMonitorConfigurationAnomalyTrace"
+                      },
+                      {
+                        "$ref": "#/components/schemas/InputMonitorConfigurationAnomalyRum"
                       },
                       {
                         "$ref": "#/components/schemas/InputMonitorConfigurationLogErrorPattern"
@@ -60910,7 +63082,7 @@
                       }
                     ],
                     "errorMessage": {
-                      "discriminator": "value of tag \"type\" must be one of: metric, log, trace, anomaly-log, anomaly-metric, anomaly-trace, log-error-pattern, log-error-pattern-increase, certificate-expiry, k8s-faulty-deployment, faulty-deployment"
+                      "discriminator": "value of tag \"type\" must be one of: metric, log, trace, rum, anomaly-log, anomaly-metric, anomaly-trace, anomaly-rum, log-error-pattern, log-error-pattern-increase, certificate-expiry, k8s-faulty-deployment, faulty-deployment"
                     }
                   },
                   "priority": {
@@ -61463,9 +63635,11 @@
                         "metric": "#/components/schemas/InputMonitorConfigurationMetric",
                         "log": "#/components/schemas/InputMonitorConfigurationLog",
                         "trace": "#/components/schemas/InputMonitorConfigurationTrace",
+                        "rum": "#/components/schemas/InputMonitorConfigurationRum",
                         "anomaly-log": "#/components/schemas/InputMonitorConfigurationAnomalyLog",
                         "anomaly-metric": "#/components/schemas/InputMonitorConfigurationAnomalyMetric",
                         "anomaly-trace": "#/components/schemas/InputMonitorConfigurationAnomalyTrace",
+                        "anomaly-rum": "#/components/schemas/InputMonitorConfigurationAnomalyRum",
                         "log-error-pattern": "#/components/schemas/InputMonitorConfigurationLogErrorPattern",
                         "log-error-pattern-increase": "#/components/schemas/InputMonitorConfigurationLogErrorPatternIncrease",
                         "certificate-expiry": "#/components/schemas/InputMonitorConfigurationCertificateExpiry",
@@ -61487,6 +63661,9 @@
                         "$ref": "#/components/schemas/InputMonitorConfigurationTrace"
                       },
                       {
+                        "$ref": "#/components/schemas/InputMonitorConfigurationRum"
+                      },
+                      {
                         "$ref": "#/components/schemas/InputMonitorConfigurationAnomalyLog"
                       },
                       {
@@ -61494,6 +63671,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/InputMonitorConfigurationAnomalyTrace"
+                      },
+                      {
+                        "$ref": "#/components/schemas/InputMonitorConfigurationAnomalyRum"
                       },
                       {
                         "$ref": "#/components/schemas/InputMonitorConfigurationLogErrorPattern"
@@ -61512,7 +63692,7 @@
                       }
                     ],
                     "errorMessage": {
-                      "discriminator": "value of tag \"type\" must be one of: metric, log, trace, anomaly-log, anomaly-metric, anomaly-trace, log-error-pattern, log-error-pattern-increase, certificate-expiry, k8s-faulty-deployment, faulty-deployment"
+                      "discriminator": "value of tag \"type\" must be one of: metric, log, trace, rum, anomaly-log, anomaly-metric, anomaly-trace, anomaly-rum, log-error-pattern, log-error-pattern-increase, certificate-expiry, k8s-faulty-deployment, faulty-deployment"
                     }
                   },
                   "priority": {
@@ -66399,7 +68579,7 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 250,
-                    "description": "Evaluation step interval (e.g. `1m`, `5m`, `1h`). Must be a valid Prometheus duration string."
+                    "description": "Evaluation step interval: a positive whole number followed by one unit, `s`, `m`, `h`, `d`, or `w`, such as `60s`, `1m`, or `1h`. A number without a unit, such as `60`, is not accepted."
                   },
                   "timeRange": {
                     "type": "object",
@@ -66553,7 +68733,7 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 250,
-                    "description": "Evaluation step interval (e.g. `1m`, `5m`, `1h`). Must be a valid Prometheus duration string."
+                    "description": "Evaluation step interval: a positive whole number followed by one unit, `s`, `m`, `h`, `d`, or `w`, such as `60s`, `1m`, or `1h`. A number without a unit, such as `60`, is not accepted."
                   },
                   "timeRange": {
                     "type": "object",
