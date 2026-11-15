@@ -80,12 +80,11 @@ resource "tsuga_slo" "checkout_availability" {
 }
 
 resource "tsuga_adaptive_notification_rule" "adaptive-notification-rule" {
-  name                        = "checkout-errors"
-  owner                       = "abc-123-def"
-  is_active                   = true
-  should_create_investigation = true
-  monitor_ids                 = [tsuga_monitor.checkout_errors.id]
-  slo_ids                     = [tsuga_slo.checkout_availability.id]
+  name        = "checkout-errors"
+  owner       = "abc-123-def"
+  is_active   = true
+  monitor_ids = [tsuga_monitor.checkout_errors.id]
+  slo_ids     = [tsuga_slo.checkout_availability.id]
   tags = [
     {
       key   = "env"
@@ -118,7 +117,6 @@ resource "tsuga_adaptive_notification_rule" "adaptive-notification-rule" {
 ### Optional
 
 - `monitor_ids` (List of String) Monitors the rule reacts to. Only trace monitors and metric monitors over OTel span metrics are eligible. Set at least one monitor or SLO.
-- `should_create_investigation` (Boolean) Whether each page records an investigation holding the sampled traces and the call graph the destination was resolved from
 - `slo_ids` (List of String) SLOs the rule reacts to. Only SLOs over traces or OTel span metrics are eligible. Set at least one monitor or SLO.
 - `tags` (Attributes List) List of key/value tags applied to the resource (see [below for nested schema](#nestedatt--tags))
 

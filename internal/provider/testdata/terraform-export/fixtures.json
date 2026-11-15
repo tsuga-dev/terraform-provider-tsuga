@@ -241,7 +241,6 @@
       "owner": "team-123",
       "tags": [],
       "isActive": true,
-      "shouldCreateInvestigation": false,
       "monitorIds": ["monitor-123"],
       "sloIds": [],
       "fallbackTarget": {

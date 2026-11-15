@@ -7,11 +7,10 @@ resource "tsuga_adaptive_notification_rule" "adaptive_notification_rule" {
     }
     id = "target-1"
   }
-  is_active                   = true
-  monitor_ids                 = ["monitor-123"]
-  name                        = "Example"
-  owner                       = "team-123"
-  should_create_investigation = false
+  is_active   = true
+  monitor_ids = ["monitor-123"]
+  name        = "Example"
+  owner       = "team-123"
 }
 
 import {

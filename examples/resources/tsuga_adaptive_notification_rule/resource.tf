@@ -65,12 +65,11 @@ resource "tsuga_slo" "checkout_availability" {
 }
 
 resource "tsuga_adaptive_notification_rule" "adaptive-notification-rule" {
-  name                        = "checkout-errors"
-  owner                       = "abc-123-def"
-  is_active                   = true
-  should_create_investigation = true
-  monitor_ids                 = [tsuga_monitor.checkout_errors.id]
-  slo_ids                     = [tsuga_slo.checkout_availability.id]
+  name        = "checkout-errors"
+  owner       = "abc-123-def"
+  is_active   = true
+  monitor_ids = [tsuga_monitor.checkout_errors.id]
+  slo_ids     = [tsuga_slo.checkout_availability.id]
   tags = [
     {
       key   = "env"

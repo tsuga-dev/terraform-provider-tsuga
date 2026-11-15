@@ -236,15 +236,14 @@ func (r *adaptiveNotificationRuleResource) createOrUpdate(ctx context.Context, m
 }
 
 type adaptiveNotificationRuleAPIData struct {
-	ID                        string                    `json:"id"`
-	Name                      string                    `json:"name"`
-	Owner                     string                    `json:"owner"`
-	IsActive                  bool                      `json:"isActive"`
-	ShouldCreateInvestigation bool                      `json:"shouldCreateInvestigation"`
-	Tags                      []apiTag                  `json:"tags"`
-	MonitorIDs                []string                  `json:"monitorIds"`
-	SloIDs                    []string                  `json:"sloIds"`
-	FallbackTarget            notificationRuleAPITarget `json:"fallbackTarget"`
+	ID             string                    `json:"id"`
+	Name           string                    `json:"name"`
+	Owner          string                    `json:"owner"`
+	IsActive       bool                      `json:"isActive"`
+	Tags           []apiTag                  `json:"tags"`
+	MonitorIDs     []string                  `json:"monitorIds"`
+	SloIDs         []string                  `json:"sloIds"`
+	FallbackTarget notificationRuleAPITarget `json:"fallbackTarget"`
 }
 
 func decodeAdaptiveNotificationRule(bodyReader io.Reader) (adaptiveNotificationRuleAPIData, diag.Diagnostics) {
@@ -289,13 +288,12 @@ func buildAdaptiveNotificationRuleRequestBody(ctx context.Context, plan resource
 	}
 
 	requestBody := map[string]any{
-		"name":                      plan.Name.ValueString(),
-		"owner":                     plan.Owner.ValueString(),
-		"isActive":                  plan.IsActive.ValueBool(),
-		"shouldCreateInvestigation": plan.ShouldCreateInvestigation.ValueBool(),
-		"monitorIds":                monitorIDs,
-		"sloIds":                    sloIDs,
-		"fallbackTarget":            fallbackTarget,
+		"name":           plan.Name.ValueString(),
+		"owner":          plan.Owner.ValueString(),
+		"isActive":       plan.IsActive.ValueBool(),
+		"monitorIds":     monitorIDs,
+		"sloIds":         sloIDs,
+		"fallbackTarget": fallbackTarget,
 	}
 
 	if tags, tagDiags := expandTags(ctx, plan.Tags); tagDiags.HasError() {
@@ -351,15 +349,14 @@ func flattenAdaptiveNotificationRule(ctx context.Context, data adaptiveNotificat
 	}
 
 	return resource_adaptive_notification_rule.AdaptiveNotificationRuleModel{
-		Id:                        types.StringValue(data.ID),
-		Name:                      types.StringValue(data.Name),
-		Owner:                     types.StringValue(data.Owner),
-		Tags:                      tags,
-		IsActive:                  types.BoolValue(data.IsActive),
-		ShouldCreateInvestigation: types.BoolValue(data.ShouldCreateInvestigation),
-		MonitorIds:                monitorIDs,
-		SloIds:                    sloIDs,
-		FallbackTarget:            &fallbackTarget,
+		Id:             types.StringValue(data.ID),
+		Name:           types.StringValue(data.Name),
+		Owner:          types.StringValue(data.Owner),
+		Tags:           tags,
+		IsActive:       types.BoolValue(data.IsActive),
+		MonitorIds:     monitorIDs,
+		SloIds:         sloIDs,
+		FallbackTarget: &fallbackTarget,
 	}, diags
 }
 

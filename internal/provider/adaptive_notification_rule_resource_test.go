@@ -72,7 +72,6 @@ func TestAccAdaptiveNotificationRuleResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", ruleName),
 					resource.TestCheckResourceAttr(resourceName, "is_active", "true"),
-					resource.TestCheckResourceAttr(resourceName, "should_create_investigation", "false"),
 					resource.TestCheckResourceAttr(resourceName, "monitor_ids.#", "1"),
 					resource.TestCheckResourceAttrPair(resourceName, "monitor_ids.0", "tsuga_monitor.test", "id"),
 					resource.TestCheckNoResourceAttr(resourceName, "slo_ids"),

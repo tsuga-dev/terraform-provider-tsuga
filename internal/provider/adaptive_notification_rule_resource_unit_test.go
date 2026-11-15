@@ -65,14 +65,13 @@ func emailTarget(id string) *resource_notification_rule.TargetModel {
 func TestBuildAdaptiveNotificationRuleRequestBody_SendsEmptyListsForOmittedIDs(t *testing.T) {
 	ctx := context.Background()
 	plan := resource_adaptive_notification_rule.AdaptiveNotificationRuleModel{
-		Name:                      types.StringValue("rule"),
-		Owner:                     types.StringValue("team-1"),
-		IsActive:                  types.BoolValue(true),
-		ShouldCreateInvestigation: types.BoolValue(false),
-		Tags:                      types.ListNull(types.ObjectType{}),
-		MonitorIds:                types.ListValueMust(types.StringType, []attr.Value{types.StringValue("monitor-1")}),
-		SloIds:                    types.ListNull(types.StringType),
-		FallbackTarget:            emailTarget("fallback"),
+		Name:           types.StringValue("rule"),
+		Owner:          types.StringValue("team-1"),
+		IsActive:       types.BoolValue(true),
+		Tags:           types.ListNull(types.ObjectType{}),
+		MonitorIds:     types.ListValueMust(types.StringType, []attr.Value{types.StringValue("monitor-1")}),
+		SloIds:         types.ListNull(types.StringType),
+		FallbackTarget: emailTarget("fallback"),
 	}
 
 	body, diags := buildAdaptiveNotificationRuleRequestBody(ctx, plan)

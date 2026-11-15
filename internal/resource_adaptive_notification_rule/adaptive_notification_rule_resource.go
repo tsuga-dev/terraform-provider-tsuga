@@ -6,7 +6,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
@@ -45,12 +44,6 @@ func AdaptiveNotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 				Required:    true,
 				Description: "Whether the rule sends notifications when one of its monitors or SLOs fires",
 			},
-			"should_create_investigation": schema.BoolAttribute{
-				Optional:    true,
-				Computed:    true,
-				Default:     booldefault.StaticBool(false),
-				Description: "Whether each page records an investigation holding the sampled traces and the call graph the destination was resolved from",
-			},
 			"monitor_ids": schema.ListAttribute{
 				Optional:    true,
 				Description: "Monitors the rule reacts to. Only trace monitors and metric monitors over OTel span metrics are eligible. Set at least one monitor or SLO.",
@@ -77,13 +70,12 @@ func AdaptiveNotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 }
 
 type AdaptiveNotificationRuleModel struct {
-	Id                        types.String                            `tfsdk:"id"`
-	Name                      types.String                            `tfsdk:"name"`
-	Owner                     types.String                            `tfsdk:"owner"`
-	Tags                      types.List                              `tfsdk:"tags"`
-	IsActive                  types.Bool                              `tfsdk:"is_active"`
-	ShouldCreateInvestigation types.Bool                              `tfsdk:"should_create_investigation"`
-	MonitorIds                types.List                              `tfsdk:"monitor_ids"`
-	SloIds                    types.List                              `tfsdk:"slo_ids"`
-	FallbackTarget            *resource_notification_rule.TargetModel `tfsdk:"fallback_target"`
+	Id             types.String                            `tfsdk:"id"`
+	Name           types.String                            `tfsdk:"name"`
+	Owner          types.String                            `tfsdk:"owner"`
+	Tags           types.List                              `tfsdk:"tags"`
+	IsActive       types.Bool                              `tfsdk:"is_active"`
+	MonitorIds     types.List                              `tfsdk:"monitor_ids"`
+	SloIds         types.List                              `tfsdk:"slo_ids"`
+	FallbackTarget *resource_notification_rule.TargetModel `tfsdk:"fallback_target"`
 }

@@ -12198,7 +12198,6 @@
           "name",
           "owner",
           "isActive",
-          "shouldCreateInvestigation",
           "monitorIds",
           "sloIds",
           "fallbackTarget"
@@ -12219,10 +12218,6 @@
           "isActive": {
             "type": "boolean",
             "description": "Whether the rule currently sends notifications when one of its monitors fires."
-          },
-          "shouldCreateInvestigation": {
-            "type": "boolean",
-            "description": "Whether each page records an investigation holding the sampled traces and the call graph the destination was resolved from, linked from the notification body."
           },
           "tags": {
             "type": "array",
@@ -12361,7 +12356,6 @@
             "name": "Checkout latency",
             "owner": "team-123-abc",
             "isActive": true,
-            "shouldCreateInvestigation": true,
             "tags": [
               {
                 "key": "channel",
@@ -65296,10 +65290,6 @@
                     "type": "boolean",
                     "description": "Set to true for the rule to send notifications when one of its monitors fires."
                   },
-                  "shouldCreateInvestigation": {
-                    "type": "boolean",
-                    "description": "Set to true to record an investigation for each page, holding the sampled traces and the call graph the destination was resolved from, and to link it from the notification body. Defaults to false."
-                  },
                   "monitorIds": {
                     "type": "array",
                     "items": {
@@ -65423,7 +65413,6 @@
                 "name": "Checkout latency",
                 "owner": "team-123-abc",
                 "isActive": true,
-                "shouldCreateInvestigation": true,
                 "tags": [
                   {
                     "key": "channel",
@@ -65658,10 +65647,6 @@
                     "type": "boolean",
                     "description": "Set to true for the rule to send notifications when one of its monitors fires."
                   },
-                  "shouldCreateInvestigation": {
-                    "type": "boolean",
-                    "description": "Set to true to record an investigation for each page, holding the sampled traces and the call graph the destination was resolved from, and to link it from the notification body. Defaults to false."
-                  },
                   "monitorIds": {
                     "type": "array",
                     "items": {
@@ -65785,7 +65770,6 @@
                 "name": "Checkout latency",
                 "owner": "team-123-abc",
                 "isActive": true,
-                "shouldCreateInvestigation": true,
                 "tags": [
                   {
                     "key": "channel",
