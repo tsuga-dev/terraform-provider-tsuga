@@ -93,24 +93,24 @@ function enumFromOneOfTypes(node) {
 // equality.
 function signature(mode, node) {
   switch (mode) {
-    case "enum":
-      return { enum: enumOf(node) };
-    case "enumMapping":
-      return { enum: enumFromMapping(node) };
-    case "enumOneOfType":
-      return { enum: enumFromOneOfTypes(node) };
-    case "string":
-    case "nullableString": {
-      const n = mode === "nullableString" ? unwrapNullable(node) : node;
-      return { min: n.minLength || 0, max: n.maxLength, pattern: n.pattern };
-    }
-    case "int64":
-    case "float64":
-      return { min: node.minimum, max: node.maximum };
-    case "list":
-      return { min: node.minItems, max: node.maxItems };
-    default:
-      fail(`unknown mode: ${mode}`);
+  case "enum":
+    return { enum: enumOf(node) };
+  case "enumMapping":
+    return { enum: enumFromMapping(node) };
+  case "enumOneOfType":
+    return { enum: enumFromOneOfTypes(node) };
+  case "string":
+  case "nullableString": {
+    const n = mode === "nullableString" ? unwrapNullable(node) : node;
+    return { min: n.minLength || 0, max: n.maxLength, pattern: n.pattern };
+  }
+  case "int64":
+  case "float64":
+    return { min: node.minimum, max: node.maximum };
+  case "list":
+    return { min: node.minItems, max: node.maxItems };
+  default:
+    fail(`unknown mode: ${mode}`);
   }
 }
 
@@ -122,60 +122,60 @@ function goStringSlice(values) {
 // for a given mode + resolved node.
 function renderValidators(mode, node) {
   switch (mode) {
-    case "enum":
-      return [`stringvalidator.OneOf(${goStringSlice(enumOf(node))})`];
-    case "enumMapping":
-      return [`stringvalidator.OneOf(${goStringSlice(enumFromMapping(node))})`];
-    case "enumOneOfType":
-      return [`stringvalidator.OneOf(${goStringSlice(enumFromOneOfTypes(node))})`];
-    case "string":
-    case "nullableString": {
-      const n = mode === "nullableString" ? unwrapNullable(node) : node;
-      const out = [];
-      if (n.minLength) out.push(`stringvalidator.LengthAtLeast(${n.minLength})`);
-      if (n.maxLength !== undefined) out.push(`stringvalidator.LengthAtMost(${n.maxLength})`);
-      if (n.pattern) out.push(`stringvalidator.RegexMatches(regexp.MustCompile(${JSON.stringify(n.pattern)}), "")`);
-      if (out.length === 0) fail("string mode produced no validators");
-      return out;
+  case "enum":
+    return [`stringvalidator.OneOf(${goStringSlice(enumOf(node))})`];
+  case "enumMapping":
+    return [`stringvalidator.OneOf(${goStringSlice(enumFromMapping(node))})`];
+  case "enumOneOfType":
+    return [`stringvalidator.OneOf(${goStringSlice(enumFromOneOfTypes(node))})`];
+  case "string":
+  case "nullableString": {
+    const n = mode === "nullableString" ? unwrapNullable(node) : node;
+    const out = [];
+    if (n.minLength) out.push(`stringvalidator.LengthAtLeast(${n.minLength})`);
+    if (n.maxLength !== undefined) out.push(`stringvalidator.LengthAtMost(${n.maxLength})`);
+    if (n.pattern) out.push(`stringvalidator.RegexMatches(regexp.MustCompile(${JSON.stringify(n.pattern)}), "")`);
+    if (out.length === 0) fail("string mode produced no validators");
+    return out;
+  }
+  case "int64": {
+    const out = [];
+    if (node.minimum !== undefined && node.maximum !== undefined) {
+      out.push(`int64validator.Between(${node.minimum}, ${node.maximum})`);
+    } else if (node.minimum !== undefined) {
+      out.push(`int64validator.AtLeast(${node.minimum})`);
+    } else if (node.maximum !== undefined) {
+      out.push(`int64validator.AtMost(${node.maximum})`);
     }
-    case "int64": {
-      const out = [];
-      if (node.minimum !== undefined && node.maximum !== undefined) {
-        out.push(`int64validator.Between(${node.minimum}, ${node.maximum})`);
-      } else if (node.minimum !== undefined) {
-        out.push(`int64validator.AtLeast(${node.minimum})`);
-      } else if (node.maximum !== undefined) {
-        out.push(`int64validator.AtMost(${node.maximum})`);
-      }
-      if (out.length === 0) fail("int64 mode produced no validators");
-      return out;
+    if (out.length === 0) fail("int64 mode produced no validators");
+    return out;
+  }
+  case "float64": {
+    const out = [];
+    if (node.minimum !== undefined && node.maximum !== undefined) {
+      out.push(`float64validator.Between(${node.minimum}, ${node.maximum})`);
+    } else if (node.minimum !== undefined) {
+      out.push(`float64validator.AtLeast(${node.minimum})`);
+    } else if (node.maximum !== undefined) {
+      out.push(`float64validator.AtMost(${node.maximum})`);
     }
-    case "float64": {
-      const out = [];
-      if (node.minimum !== undefined && node.maximum !== undefined) {
-        out.push(`float64validator.Between(${node.minimum}, ${node.maximum})`);
-      } else if (node.minimum !== undefined) {
-        out.push(`float64validator.AtLeast(${node.minimum})`);
-      } else if (node.maximum !== undefined) {
-        out.push(`float64validator.AtMost(${node.maximum})`);
-      }
-      if (out.length === 0) fail("float64 mode produced no validators");
-      return out;
+    if (out.length === 0) fail("float64 mode produced no validators");
+    return out;
+  }
+  case "list": {
+    const out = [];
+    if (node.minItems !== undefined && node.maxItems !== undefined) {
+      out.push(`listvalidator.SizeBetween(${node.minItems}, ${node.maxItems})`);
+    } else if (node.minItems !== undefined) {
+      out.push(`listvalidator.SizeAtLeast(${node.minItems})`);
+    } else if (node.maxItems !== undefined) {
+      out.push(`listvalidator.SizeAtMost(${node.maxItems})`);
     }
-    case "list": {
-      const out = [];
-      if (node.minItems !== undefined && node.maxItems !== undefined) {
-        out.push(`listvalidator.SizeBetween(${node.minItems}, ${node.maxItems})`);
-      } else if (node.minItems !== undefined) {
-        out.push(`listvalidator.SizeAtLeast(${node.minItems})`);
-      } else if (node.maxItems !== undefined) {
-        out.push(`listvalidator.SizeAtMost(${node.maxItems})`);
-      }
-      if (out.length === 0) fail("list mode produced no validators");
-      return out;
-    }
-    default:
-      fail(`unknown mode: ${mode}`);
+    if (out.length === 0) fail("list mode produced no validators");
+    return out;
+  }
+  default:
+    fail(`unknown mode: ${mode}`);
   }
 }
 
@@ -301,7 +301,6 @@ const ATTRS = {
       "InputGraphVisualizationTimeseries.properties.legendMode",
       "InputGraphVisualizationTopList.properties.legendMode",
       "InputGraphVisualizationPie.properties.legendMode",
-      "InputGraphVisualizationQueryValue.properties.legendMode",
       "InputGraphVisualizationBar.properties.legendMode",
     ],
   },
