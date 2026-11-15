@@ -7,10 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Removed
-
-- **Breaking:** `tsuga_adaptive_notification_rule`: removed `should_create_investigation`. Investigations were removed from the Tsuga API, which no longer stores the flag. Delete the argument from your configurations; existing state needs no migration.
-
 ## [3.1.2] - 2026-11-12
 
 ### Changed
