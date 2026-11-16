@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsuga Public API",
     "description": "Public HTTP API for Tsuga customers and customer-operated tools. Use these endpoints to query observability data, manage customer-owned Tsuga resources, and retrieve documentation or API-reference content. Public API requests authenticate with Bearer tokens such as operation keys. See [API reference](/documentation/api).",
-    "version": "20261112.38.0+6ec54d3",
+    "version": "20261113.34.0+6c1acf6",
     "contact": {
       "name": "Tsuga",
       "url": "https://tsuga.com"
@@ -12198,6 +12198,7 @@
           "name",
           "owner",
           "isActive",
+          "shouldCreateInvestigation",
           "monitorIds",
           "sloIds",
           "fallbackTarget"
@@ -12218,6 +12219,10 @@
           "isActive": {
             "type": "boolean",
             "description": "Whether the rule currently sends notifications when one of its monitors fires."
+          },
+          "shouldCreateInvestigation": {
+            "type": "boolean",
+            "description": "Whether each page records an investigation holding the sampled traces and the call graph the destination was resolved from, linked from the notification body."
           },
           "tags": {
             "type": "array",
@@ -12356,6 +12361,7 @@
             "name": "Checkout latency",
             "owner": "team-123-abc",
             "isActive": true,
+            "shouldCreateInvestigation": true,
             "tags": [
               {
                 "key": "channel",
@@ -15385,7 +15391,7 @@
             "type": "string"
           }
         },
-        "description": "A short link copied with **Copy page URL** on the Logs or Traces page, resolved to the app URL it opens. See [Share the current search](/documentation/explore/logs#share-the-current-search).",
+        "description": "A short link copied with **Copy page URL** in the app, resolved to the app URL it opens. See [Copy and paste](/documentation/keyboard-shortcuts#copy-and-paste).",
         "examples": [
           {
             "id": "aB3-dE5fG-h7J",
@@ -27614,6 +27620,22 @@
         },
         "title": "OngoingAlertsOverlay"
       },
+      "SloWidgetOrganizeBySlo": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Groups the results by their SLO",
+            "enum": [
+              "slo"
+            ]
+          }
+        },
+        "title": "SLO"
+      },
       "SloWidgetOrganizeByTeam": {
         "type": "object",
         "required": [
@@ -28109,6 +28131,13 @@
               "description": "List column pairing a displayed attribute with the formatting applied to its values."
             },
             "description": "Custom columns to display for each database row"
+          },
+          "listColumnsAliases": {
+            "type": "object",
+            "description": "Column headers by column attribute. A column without an alias shows its attribute.",
+            "additionalProperties": {
+              "type": "string"
+            }
           },
           "listColumnsSize": {
             "type": "object",
@@ -28782,15 +28811,6 @@
             "errorMessage": {
               "discriminator": "value of tag \"type\" must be one of: duration, data, percent, percent-fraction, date, level, cpu, none, custom"
             }
-          },
-          "legendMode": {
-            "enum": [
-              "table",
-              "legend-only",
-              "no-legend"
-            ],
-            "description": "Controls whether and how the widget displays legend or series details (e.g. table, legend-only, or no legend)",
-            "type": "string"
           }
         },
         "title": "QueryValueConnection"
@@ -29348,15 +29368,6 @@
             "errorMessage": {
               "discriminator": "value of tag \"type\" must be one of: duration, data, percent, percent-fraction, date, level, cpu, none, custom"
             }
-          },
-          "legendMode": {
-            "enum": [
-              "table",
-              "legend-only",
-              "no-legend"
-            ],
-            "description": "Controls whether and how the widget displays legend or series details (e.g. table, legend-only, or no legend)",
-            "type": "string"
           }
         },
         "title": "QueryValuePromql"
@@ -32768,15 +32779,6 @@
             "errorMessage": {
               "discriminator": "value of tag \"type\" must be one of: duration, data, percent, percent-fraction, date, level, cpu, none, custom"
             }
-          },
-          "legendMode": {
-            "enum": [
-              "table",
-              "legend-only",
-              "no-legend"
-            ],
-            "description": "Controls whether and how the widget displays legend or series details (e.g. table, legend-only, or no legend)",
-            "type": "string"
           }
         },
         "title": "QueryValue"
@@ -35165,6 +35167,13 @@
             },
             "description": "Custom columns to display for each log"
           },
+          "listColumnsAliases": {
+            "type": "object",
+            "description": "Column headers by column attribute. A column without an alias shows its attribute.",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
           "listColumnsSize": {
             "type": "object",
             "description": "List column widths in pixels, keyed by the `attribute` of the matching `listColumns` entry. Columns without an entry keep their default width.",
@@ -35392,6 +35401,13 @@
             },
             "description": "Custom columns to display for each span"
           },
+          "listColumnsAliases": {
+            "type": "object",
+            "description": "Column headers by column attribute. A column without an alias shows its attribute.",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
           "listColumnsSize": {
             "type": "object",
             "description": "List column widths in pixels, keyed by the `attribute` of the matching `listColumns` entry. Columns without an entry keep their default width.",
@@ -35518,6 +35534,13 @@
               "description": "List column pairing a displayed attribute with the formatting applied to its values."
             },
             "description": "Custom columns to display for each RUM event. Attributes are read without their stream prefix, e.g. `view.name` rather than `events.view.name`."
+          },
+          "listColumnsAliases": {
+            "type": "object",
+            "description": "Column headers by column attribute. A column without an alias shows its attribute.",
+            "additionalProperties": {
+              "type": "string"
+            }
           },
           "listColumnsSize": {
             "type": "object",
@@ -35687,11 +35710,12 @@
           },
           "organizeBy": {
             "title": "SloWidgetOrganizeBy",
-            "description": "Groups the results by owning team, or by the value of a tag key or group-by field. Omit it to list results ungrouped. Only the `table` section is grouped, so include `table` in `display`.",
+            "description": "Groups the results by SLO, by owning team, or by the value of a tag key or group-by field. Omit it to list results ungrouped. Only the `table` section is grouped, so include `table` in `display`.",
             "type": "object",
             "discriminator": {
               "propertyName": "type",
               "mapping": {
+                "slo": "#/components/schemas/SloWidgetOrganizeBySlo",
                 "team": "#/components/schemas/SloWidgetOrganizeByTeam",
                 "key": "#/components/schemas/SloWidgetOrganizeByKey"
               }
@@ -35701,6 +35725,9 @@
             ],
             "oneOf": [
               {
+                "$ref": "#/components/schemas/SloWidgetOrganizeBySlo"
+              },
+              {
                 "$ref": "#/components/schemas/SloWidgetOrganizeByTeam"
               },
               {
@@ -35708,7 +35735,7 @@
               }
             ],
             "errorMessage": {
-              "discriminator": "value of tag \"type\" must be one of: team, key"
+              "discriminator": "value of tag \"type\" must be one of: slo, team, key"
             }
           },
           "display": {
@@ -36178,6 +36205,15 @@
               "description": "List column pairing a displayed attribute with the formatting applied to its values."
             },
             "description": "Custom columns to display for each database row. Omit it and the list renders no columns: there is no default set."
+          },
+          "listColumnsAliases": {
+            "type": "object",
+            "description": "Column headers by column attribute. A column without an alias shows its attribute.",
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 250
+            }
           },
           "listColumnsSize": {
             "type": "object",
@@ -36890,15 +36926,6 @@
             "errorMessage": {
               "discriminator": "value of tag \"type\" must be one of: duration, data, percent, percent-fraction, date, level, cpu, none, custom"
             }
-          },
-          "legendMode": {
-            "enum": [
-              "table",
-              "legend-only",
-              "no-legend"
-            ],
-            "description": "Controls whether and how the widget displays legend or series details (e.g. table, legend-only, or no legend)",
-            "type": "string"
           }
         },
         "title": "QueryValueConnection"
@@ -37471,15 +37498,6 @@
             "errorMessage": {
               "discriminator": "value of tag \"type\" must be one of: duration, data, percent, percent-fraction, date, level, cpu, none, custom"
             }
-          },
-          "legendMode": {
-            "enum": [
-              "table",
-              "legend-only",
-              "no-legend"
-            ],
-            "description": "Controls whether and how the widget displays legend or series details (e.g. table, legend-only, or no legend)",
-            "type": "string"
           }
         },
         "title": "QueryValuePromql"
@@ -41065,15 +41083,6 @@
             "errorMessage": {
               "discriminator": "value of tag \"type\" must be one of: duration, data, percent, percent-fraction, date, level, cpu, none, custom"
             }
-          },
-          "legendMode": {
-            "enum": [
-              "table",
-              "legend-only",
-              "no-legend"
-            ],
-            "description": "Controls whether and how the widget displays legend or series details (e.g. table, legend-only, or no legend)",
-            "type": "string"
           }
         },
         "title": "QueryValue"
@@ -43602,6 +43611,15 @@
             },
             "description": "Custom columns to display for each log. Omit it and the list renders no columns: there is no default set."
           },
+          "listColumnsAliases": {
+            "type": "object",
+            "description": "Column headers by column attribute. A column without an alias shows its attribute.",
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 250
+            }
+          },
           "listColumnsSize": {
             "type": "object",
             "description": "List column widths in pixels, keyed by the `attribute` of the matching `listColumns` entry. Columns without an entry keep their default width.",
@@ -43823,6 +43841,15 @@
             },
             "description": "Custom columns to display for each span. Omit it and the list renders no columns: there is no default set."
           },
+          "listColumnsAliases": {
+            "type": "object",
+            "description": "Column headers by column attribute. A column without an alias shows its attribute.",
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 250
+            }
+          },
           "listColumnsSize": {
             "type": "object",
             "description": "List column widths in pixels, keyed by the `attribute` of the matching `listColumns` entry. Columns without an entry keep their default width.",
@@ -43954,6 +43981,15 @@
               "description": "List column pairing a displayed attribute with the formatting applied to its values."
             },
             "description": "Custom columns to display for each RUM event. Set attributes without their stream prefix, e.g. `view.name` rather than `events.view.name`. Omit it and the list renders no columns: there is no default set."
+          },
+          "listColumnsAliases": {
+            "type": "object",
+            "description": "Column headers by column attribute. A column without an alias shows its attribute.",
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 250
+            }
           },
           "listColumnsSize": {
             "type": "object",
@@ -44145,11 +44181,12 @@
           },
           "organizeBy": {
             "title": "SloWidgetOrganizeBy",
-            "description": "Groups the results by owning team, or by the value of a tag key or group-by field. Omit it to list results ungrouped. Only the `table` section is grouped, so include `table` in `display`.",
+            "description": "Groups the results by SLO, by owning team, or by the value of a tag key or group-by field. Omit it to list results ungrouped. Only the `table` section is grouped, so include `table` in `display`.",
             "type": "object",
             "discriminator": {
               "propertyName": "type",
               "mapping": {
+                "slo": "#/components/schemas/SloWidgetOrganizeBySlo",
                 "team": "#/components/schemas/SloWidgetOrganizeByTeam",
                 "key": "#/components/schemas/InputSloWidgetOrganizeByKey"
               }
@@ -44159,6 +44196,9 @@
             ],
             "oneOf": [
               {
+                "$ref": "#/components/schemas/SloWidgetOrganizeBySlo"
+              },
+              {
                 "$ref": "#/components/schemas/SloWidgetOrganizeByTeam"
               },
               {
@@ -44166,7 +44206,7 @@
               }
             ],
             "errorMessage": {
-              "discriminator": "value of tag \"type\" must be one of: team, key"
+              "discriminator": "value of tag \"type\" must be one of: slo, team, key"
             }
           },
           "display": {
@@ -65290,6 +65330,10 @@
                     "type": "boolean",
                     "description": "Set to true for the rule to send notifications when one of its monitors fires."
                   },
+                  "shouldCreateInvestigation": {
+                    "type": "boolean",
+                    "description": "Set to true to record an investigation for each page, holding the sampled traces and the call graph the destination was resolved from, and to link it from the notification body. Defaults to false."
+                  },
                   "monitorIds": {
                     "type": "array",
                     "items": {
@@ -65413,6 +65457,7 @@
                 "name": "Checkout latency",
                 "owner": "team-123-abc",
                 "isActive": true,
+                "shouldCreateInvestigation": true,
                 "tags": [
                   {
                     "key": "channel",
@@ -65647,6 +65692,10 @@
                     "type": "boolean",
                     "description": "Set to true for the rule to send notifications when one of its monitors fires."
                   },
+                  "shouldCreateInvestigation": {
+                    "type": "boolean",
+                    "description": "Set to true to record an investigation for each page, holding the sampled traces and the call graph the destination was resolved from, and to link it from the notification body. Defaults to false."
+                  },
                   "monitorIds": {
                     "type": "array",
                     "items": {
@@ -65770,6 +65819,7 @@
                 "name": "Checkout latency",
                 "owner": "team-123-abc",
                 "isActive": true,
+                "shouldCreateInvestigation": true,
                 "tags": [
                   {
                     "key": "channel",
@@ -71439,7 +71489,7 @@
         "tags": [
           "short-urls"
         ],
-        "description": "Resolves a short link copied from the Logs or Traces page to the app URL it opens, which carries the query, filters and time range. An expired or unknown code returns 404.",
+        "description": "Resolves a short link copied with **Copy page URL** to the app URL it opens, which carries the page state, such as the query, filters and time range. An expired or unknown code returns 404.",
         "parameters": [
           {
             "schema": {
