@@ -190,6 +190,15 @@ func CloudAccountResourceSchema(ctx context.Context) schema.Schema {
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"owner": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Team ID that will own the account.",
+				MarkdownDescription: "Team ID that will own the account.",
+				Validators: []validator.String{
+					stringvalidator.LengthBetween(1, 250),
+				},
+			},
 		},
 	}
 }
@@ -202,6 +211,7 @@ type CloudAccountModel struct {
 	CloudType           types.String `tfsdk:"cloud_type"`
 	Gcp                 GcpValue     `tfsdk:"gcp"`
 	Id                  types.String `tfsdk:"id"`
+	Owner               types.String `tfsdk:"owner"`
 }
 
 var _ basetypes.ObjectTypable = AwsType{}

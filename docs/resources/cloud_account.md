@@ -58,6 +58,7 @@ resource "tsuga_cloud_account" "azure_prod" {
 - `aws` (Attributes) (see [below for nested schema](#nestedatt--aws))
 - `azure` (Attributes) (see [below for nested schema](#nestedatt--azure))
 - `gcp` (Attributes) (see [below for nested schema](#nestedatt--gcp))
+- `owner` (String) Team ID that will own the account.
 
 ### Read-Only
 

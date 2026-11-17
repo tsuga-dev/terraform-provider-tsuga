@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsuga Public API",
     "description": "Public HTTP API for Tsuga customers and customer-operated tools. Use these endpoints to query observability data, manage customer-owned Tsuga resources, and retrieve documentation or API-reference content. Public API requests authenticate with Bearer tokens such as operation keys. See [API reference](/documentation/api).",
-    "version": "20261113.34.0+6c1acf6",
+    "version": "20261116.33.0+2aa1465",
     "contact": {
       "name": "Tsuga",
       "url": "https://tsuga.com"
@@ -1582,25 +1582,6 @@
         },
         "description": "Metadata accompanying `data` on paginated operations, describing the full result set the page was taken from."
       },
-      "DeleteResponse": {
-        "type": "object",
-        "required": [
-          "success"
-        ],
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "description": "Always `true` when the delete request completed and the resource was removed.",
-            "enum": [
-              true
-            ]
-          }
-        },
-        "description": "Confirmation that the targeted resource was deleted.",
-        "example": {
-          "success": true
-        }
-      },
       "QueryOngoingAlertsResponse": {
         "type": "object",
         "required": [
@@ -1653,6 +1634,25 @@
           "metadata": {
             "$ref": "#/components/schemas/ResponseMetadata"
           }
+        }
+      },
+      "DeleteResponse": {
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Always `true` when the delete request completed and the resource was removed.",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "description": "Confirmation that the targeted resource was deleted.",
+        "example": {
+          "success": true
         }
       },
       "CreateIngestionApiKeyResponse": {
@@ -1990,14 +1990,6 @@
           "permissions": {
             "type": "object",
             "properties": {
-              "investigations": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Investigations, the records collecting the timeline and findings of an incident analysis.",
-                "type": "string"
-              },
               "dashboard": {
                 "enum": [
                   "read",
@@ -2425,14 +2417,6 @@
               "permissions": {
                 "type": "object",
                 "properties": {
-                  "investigations": {
-                    "enum": [
-                      "read",
-                      "write"
-                    ],
-                    "description": "Investigations, the records collecting the timeline and findings of an incident analysis.",
-                    "type": "string"
-                  },
                   "dashboard": {
                     "enum": [
                       "read",
@@ -3438,14 +3422,6 @@
                 "type": "string"
               },
               "ingestion-api-key": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Access granted on this resource type. `write` implies `read`.",
-                "type": "string"
-              },
-              "investigation": {
                 "enum": [
                   "read",
                   "write"
@@ -8743,6 +8719,10 @@
           "accountFriendlyName": {
             "type": "string",
             "description": "Human-readable name for the account shown in Tsuga."
+          },
+          "owner": {
+            "type": "string",
+            "description": "Team ID that owns the account."
           }
         },
         "examples": [
@@ -8750,7 +8730,8 @@
             "id": "123-456-abc",
             "cloudType": "aws",
             "cloudAccountId": "123456789012",
-            "accountFriendlyName": "Production AWS"
+            "accountFriendlyName": "Production AWS",
+            "owner": "team-123-abc"
           }
         ]
       },
@@ -10904,46 +10885,61 @@
                     },
                     "params": {
                       "type": "object",
+                      "discriminator": {
+                        "propertyName": "subtype"
+                      },
                       "required": [
-                        "attributes",
                         "subtype"
                       ],
-                      "properties": {
-                        "attributes": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "required": [
-                              "originAttribute",
-                              "targetAttribute"
-                            ],
-                            "properties": {
-                              "originAttribute": {
-                                "type": "string",
-                                "description": "Attribute name to map to the target attribute"
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "required": [
+                            "attributes",
+                            "subtype"
+                          ],
+                          "properties": {
+                            "attributes": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "required": [
+                                  "originAttribute",
+                                  "targetAttribute"
+                                ],
+                                "properties": {
+                                  "originAttribute": {
+                                    "type": "string",
+                                    "description": "Attribute name to map to the target attribute"
+                                  },
+                                  "keepOrigin": {
+                                    "type": "boolean",
+                                    "description": "Whether the source attribute is preserved after mapping."
+                                  },
+                                  "overrideTarget": {
+                                    "type": "boolean",
+                                    "description": "Whether to overwrite the target attribute when it already exists."
+                                  },
+                                  "targetAttribute": {
+                                    "type": "string",
+                                    "description": "Attribute name that will receive the mapped value"
+                                  }
+                                }
                               },
-                              "keepOrigin": {
-                                "type": "boolean",
-                                "description": "Whether the source attribute is preserved after mapping."
-                              },
-                              "overrideTarget": {
-                                "type": "boolean",
-                                "description": "Whether to overwrite the target attribute when it already exists."
-                              },
-                              "targetAttribute": {
-                                "type": "string",
-                                "description": "Attribute name that will receive the mapped value"
-                              }
+                              "description": "Mappings that map individual attributes to new targets"
+                            },
+                            "subtype": {
+                              "type": "string",
+                              "description": "Copies or moves one or more source attributes to target attributes.",
+                              "enum": [
+                                "map-attributes"
+                              ]
                             }
-                          },
-                          "description": "Mappings that map individual attributes to new targets"
-                        },
-                        "subtype": {
-                          "type": "string",
-                          "enum": [
-                            "map-attributes"
-                          ]
+                          }
                         }
+                      ],
+                      "errorMessage": {
+                        "discriminator": "value of tag \"subtype\" must be one of: map-attributes"
                       }
                     }
                   }
@@ -12198,7 +12194,6 @@
           "name",
           "owner",
           "isActive",
-          "shouldCreateInvestigation",
           "monitorIds",
           "sloIds",
           "fallbackTarget"
@@ -12219,10 +12214,6 @@
           "isActive": {
             "type": "boolean",
             "description": "Whether the rule currently sends notifications when one of its monitors fires."
-          },
-          "shouldCreateInvestigation": {
-            "type": "boolean",
-            "description": "Whether each page records an investigation holding the sampled traces and the call graph the destination was resolved from, linked from the notification body."
           },
           "tags": {
             "type": "array",
@@ -12361,7 +12352,6 @@
             "name": "Checkout latency",
             "owner": "team-123-abc",
             "isActive": true,
-            "shouldCreateInvestigation": true,
             "tags": [
               {
                 "key": "channel",
@@ -13526,7 +13516,8 @@
               "k8s-recommended-metrics",
               "k8s-recommended-change-events",
               "otel-collector-self-metrics",
-              "span-metrics-delta-temporality",
+              "histograms-delta-temporality",
+              "service-telemetry-coverage",
               "use-standard-attributes",
               "no-unused-operation-api-keys",
               "no-unused-ingestion-api-keys",
@@ -18776,76 +18767,57 @@
             "description": "Display name of the user."
           },
           "role": {
-            "anyOf": [
-              {
-                "enum": [
-                  "admin",
-                  "public_editor",
-                  "public_viewer",
-                  "teams_only",
-                  "custom"
-                ],
-                "description": "Organization role for the user: `admin`, `public_editor`, `public_viewer`, `teams_only`, or `custom` when the user holds a custom role.",
-                "type": "string"
-              },
+            "description": "Organization role for the user: a built-in role `type`, or `custom` with the `customRoleId` of the custom role.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type"
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
               {
                 "type": "object",
-                "discriminator": {
-                  "propertyName": "type"
-                },
                 "required": [
                   "type"
                 ],
-                "oneOf": [
-                  {
-                    "type": "object",
-                    "required": [
-                      "type"
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "admin",
+                      "public_editor",
+                      "public_viewer",
+                      "teams_only"
                     ],
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "admin",
-                          "public_editor",
-                          "public_viewer",
-                          "teams_only"
-                        ],
-                        "description": "Built-in organization role: `admin`, `public_editor`, `public_viewer`, or `teams_only`.",
-                        "type": "string"
-                      }
-                    }
-                  },
-                  {
-                    "type": "object",
-                    "required": [
-                      "type",
-                      "customRoleId"
-                    ],
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "description": "The user holds a custom role.",
-                        "enum": [
-                          "custom"
-                        ]
-                      },
-                      "customRoleId": {
-                        "type": "string",
-                        "description": "Identifier of the custom role. Use it with the custom role endpoints to read what the role grants."
-                      }
-                    }
+                    "description": "Built-in organization role: `admin`, `public_editor`, `public_viewer`, or `teams_only`.",
+                    "type": "string"
                   }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "type",
+                  "customRoleId"
                 ],
-                "errorMessage": {
-                  "discriminator": "value of tag \"type\" must be one of: admin, public_editor, public_viewer, teams_only, custom"
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The user holds a custom role.",
+                    "enum": [
+                      "custom"
+                    ]
+                  },
+                  "customRoleId": {
+                    "type": "string",
+                    "description": "Identifier of the custom role. Use it with the custom role endpoints to read what the role grants."
+                  }
                 }
               }
             ],
-            "description": "Organization role for the user, either as a role key or as an object with the role `type` and, for a custom role, its `customRoleId`. Handle both forms: the object form replaces the role key."
-          },
-          "customRoleId": {
-            "type": "string",
-            "description": "Identifier of the custom role held by the user, when `role` is the `custom` key. The object form of `role` carries it instead. Use it with the custom role endpoints to read what the role grants."
+            "errorMessage": {
+              "discriminator": "value of tag \"type\" must be one of: admin, public_editor, public_viewer, teams_only, custom"
+            }
           }
         },
         "description": "User account in the authenticated organization. See [Members](/documentation/account-and-settings/members).",
@@ -28134,7 +28106,7 @@
           },
           "listColumnsAliases": {
             "type": "object",
-            "description": "Column headers by column attribute. A column without an alias shows its attribute.",
+            "description": "Column headers, keyed by the `attribute` of the matching `listColumns` entry. A column without an entry shows its attribute.",
             "additionalProperties": {
               "type": "string"
             }
@@ -35169,7 +35141,7 @@
           },
           "listColumnsAliases": {
             "type": "object",
-            "description": "Column headers by column attribute. A column without an alias shows its attribute.",
+            "description": "Column headers, keyed by the `attribute` of the matching `listColumns` entry. A column without an entry shows its attribute.",
             "additionalProperties": {
               "type": "string"
             }
@@ -35403,7 +35375,7 @@
           },
           "listColumnsAliases": {
             "type": "object",
-            "description": "Column headers by column attribute. A column without an alias shows its attribute.",
+            "description": "Column headers, keyed by the `attribute` of the matching `listColumns` entry. A column without an entry shows its attribute.",
             "additionalProperties": {
               "type": "string"
             }
@@ -35537,7 +35509,7 @@
           },
           "listColumnsAliases": {
             "type": "object",
-            "description": "Column headers by column attribute. A column without an alias shows its attribute.",
+            "description": "Column headers, keyed by the `attribute` of the matching `listColumns` entry. A column without an entry shows its attribute.",
             "additionalProperties": {
               "type": "string"
             }
@@ -36208,7 +36180,7 @@
           },
           "listColumnsAliases": {
             "type": "object",
-            "description": "Column headers by column attribute. A column without an alias shows its attribute.",
+            "description": "Column headers, keyed by the `attribute` of the matching `listColumns` entry. A column without an entry shows its attribute; an empty string shows an empty header. An entry whose key matches no column has no effect.",
             "additionalProperties": {
               "type": "string",
               "minLength": 0,
@@ -43613,7 +43585,7 @@
           },
           "listColumnsAliases": {
             "type": "object",
-            "description": "Column headers by column attribute. A column without an alias shows its attribute.",
+            "description": "Column headers, keyed by the `attribute` of the matching `listColumns` entry. A column without an entry shows its attribute; an empty string shows an empty header. An entry whose key matches no column has no effect.",
             "additionalProperties": {
               "type": "string",
               "minLength": 0,
@@ -43843,7 +43815,7 @@
           },
           "listColumnsAliases": {
             "type": "object",
-            "description": "Column headers by column attribute. A column without an alias shows its attribute.",
+            "description": "Column headers, keyed by the `attribute` of the matching `listColumns` entry. A column without an entry shows its attribute; an empty string shows an empty header. An entry whose key matches no column has no effect.",
             "additionalProperties": {
               "type": "string",
               "minLength": 0,
@@ -43984,7 +43956,7 @@
           },
           "listColumnsAliases": {
             "type": "object",
-            "description": "Column headers by column attribute. A column without an alias shows its attribute.",
+            "description": "Column headers, keyed by the `attribute` of the matching `listColumns` entry. A column without an entry shows its attribute; an empty string shows an empty header. An entry whose key matches no column has no effect.",
             "additionalProperties": {
               "type": "string",
               "minLength": 0,
@@ -46380,14 +46352,6 @@
           "permissions": {
             "type": "object",
             "properties": {
-              "investigations": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Investigations, the records collecting the timeline and findings of an incident analysis.",
-                "type": "string"
-              },
               "dashboard": {
                 "enum": [
                   "read",
@@ -46736,72 +46700,57 @@
             "description": "Display name of the user."
           },
           "role": {
-            "anyOf": [
-              {
-                "enum": [
-                  "admin",
-                  "public_editor",
-                  "public_viewer",
-                  "teams_only",
-                  "custom"
-                ],
-                "description": "Organization role for the user: `admin`, `public_editor`, `public_viewer`, `teams_only`, or `custom` when the user holds a custom role.",
-                "type": "string"
-              },
+            "description": "Organization role for the user: a built-in role `type`, or `custom` with the `customRoleId` of the custom role.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type"
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
               {
                 "type": "object",
-                "discriminator": {
-                  "propertyName": "type"
-                },
                 "required": [
                   "type"
                 ],
-                "oneOf": [
-                  {
-                    "type": "object",
-                    "required": [
-                      "type"
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "admin",
+                      "public_editor",
+                      "public_viewer",
+                      "teams_only"
                     ],
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "admin",
-                          "public_editor",
-                          "public_viewer",
-                          "teams_only"
-                        ],
-                        "description": "Built-in organization role: `admin`, `public_editor`, `public_viewer`, or `teams_only`.",
-                        "type": "string"
-                      }
-                    }
-                  },
-                  {
-                    "type": "object",
-                    "required": [
-                      "type",
-                      "customRoleId"
-                    ],
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "description": "The user holds a custom role.",
-                        "enum": [
-                          "custom"
-                        ]
-                      },
-                      "customRoleId": {
-                        "type": "string",
-                        "description": "Identifier of the custom role. Use it with the custom role endpoints to read what the role grants."
-                      }
-                    }
+                    "description": "Built-in organization role: `admin`, `public_editor`, `public_viewer`, or `teams_only`.",
+                    "type": "string"
                   }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "type",
+                  "customRoleId"
                 ],
-                "errorMessage": {
-                  "discriminator": "value of tag \"type\" must be one of: admin, public_editor, public_viewer, teams_only, custom"
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The user holds a custom role.",
+                    "enum": [
+                      "custom"
+                    ]
+                  },
+                  "customRoleId": {
+                    "type": "string",
+                    "description": "Identifier of the custom role. Use it with the custom role endpoints to read what the role grants."
+                  }
                 }
               }
             ],
-            "description": "Organization role for the user, either as a role key or as an object with the role `type` and, for a custom role, its `customRoleId`. Handle both forms: the object form replaces the role key."
+            "errorMessage": {
+              "discriminator": "value of tag \"type\" must be one of: admin, public_editor, public_viewer, teams_only, custom"
+            }
           },
           "orgId": {
             "type": "string",
@@ -49513,14 +49462,6 @@
                   "permissions": {
                     "type": "object",
                     "properties": {
-                      "investigations": {
-                        "enum": [
-                          "read",
-                          "write"
-                        ],
-                        "description": "Investigations, the records collecting the timeline and findings of an incident analysis.",
-                        "type": "string"
-                      },
                       "dashboard": {
                         "enum": [
                           "read",
@@ -50045,14 +49986,6 @@
                   "permissions": {
                     "type": "object",
                     "properties": {
-                      "investigations": {
-                        "enum": [
-                          "read",
-                          "write"
-                        ],
-                        "description": "Investigations, the records collecting the timeline and findings of an incident analysis.",
-                        "type": "string"
-                      },
                       "dashboard": {
                         "enum": [
                           "read",
@@ -51810,14 +51743,6 @@
                         "description": "Access granted on this resource type. `write` implies `read`.",
                         "type": "string"
                       },
-                      "investigation": {
-                        "enum": [
-                          "read",
-                          "write"
-                        ],
-                        "description": "Access granted on this resource type. `write` implies `read`.",
-                        "type": "string"
-                      },
                       "log-route": {
                         "enum": [
                           "read",
@@ -52521,14 +52446,6 @@
                         "type": "string"
                       },
                       "ingestion-api-key": {
-                        "enum": [
-                          "read",
-                          "write"
-                        ],
-                        "description": "Access granted on this resource type. `write` implies `read`.",
-                        "type": "string"
-                      },
-                      "investigation": {
                         "enum": [
                           "read",
                           "write"
@@ -57390,58 +57307,63 @@
               "schema": {
                 "type": "array",
                 "items": {
-                  "anyOf": [
-                    {
+                  "type": "object",
+                  "required": [
+                    "email",
+                    "teamId",
+                    "teamRole",
+                    "userRole"
+                  ],
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "lowercase-email",
+                      "minLength": 0,
+                      "maxLength": 254,
+                      "errorMessage": {
+                        "format": "Must be a valid lowercase email address."
+                      },
+                      "description": "Lowercase email address to invite into the organization."
+                    },
+                    "teamId": {
+                      "type": "string",
+                      "minLength": 0,
+                      "maxLength": 250,
+                      "description": "Team ID to add the invited user to after acceptance."
+                    },
+                    "teamRole": {
+                      "enum": [
+                        "admin",
+                        "editor",
+                        "viewer"
+                      ],
+                      "description": "Role the invited user receives in the target team once accepted: `admin`, `editor`, or `viewer`.",
+                      "type": "string"
+                    },
+                    "userRole": {
+                      "description": "Organization role to assign: a built-in role `type`, or `custom` with the `customRoleId` of a custom role.",
                       "type": "object",
                       "discriminator": {
-                        "propertyName": "userRole"
+                        "propertyName": "type"
                       },
                       "required": [
-                        "userRole"
+                        "type"
                       ],
                       "oneOf": [
                         {
                           "type": "object",
                           "required": [
-                            "email",
-                            "teamId",
-                            "teamRole",
-                            "userRole"
+                            "type"
                           ],
                           "properties": {
-                            "email": {
-                              "type": "string",
-                              "format": "lowercase-email",
-                              "minLength": 0,
-                              "maxLength": 254,
-                              "errorMessage": {
-                                "format": "Must be a valid lowercase email address."
-                              },
-                              "description": "Lowercase email address to invite into the organization."
-                            },
-                            "teamId": {
-                              "type": "string",
-                              "minLength": 0,
-                              "maxLength": 250,
-                              "description": "Team ID to add the invited user to after acceptance."
-                            },
-                            "teamRole": {
-                              "enum": [
-                                "admin",
-                                "editor",
-                                "viewer"
-                              ],
-                              "description": "Role the invited user receives in the target team once accepted: `admin`, `editor`, or `viewer`.",
-                              "type": "string"
-                            },
-                            "userRole": {
+                            "type": {
                               "enum": [
                                 "admin",
                                 "public_editor",
                                 "public_viewer",
                                 "teams_only"
                               ],
-                              "description": "Organization role the invited user receives after acceptance: `admin`, `public_editor`, `public_viewer`, or `teams_only`.",
+                              "description": "Built-in organization role: `admin`, `public_editor`, `public_viewer`, or `teams_only`.",
                               "type": "string"
                             }
                           }
@@ -57449,41 +57371,13 @@
                         {
                           "type": "object",
                           "required": [
-                            "email",
-                            "teamId",
-                            "teamRole",
-                            "userRole",
+                            "type",
                             "customRoleId"
                           ],
                           "properties": {
-                            "email": {
+                            "type": {
                               "type": "string",
-                              "format": "lowercase-email",
-                              "minLength": 0,
-                              "maxLength": 254,
-                              "errorMessage": {
-                                "format": "Must be a valid lowercase email address."
-                              },
-                              "description": "Lowercase email address to invite into the organization."
-                            },
-                            "teamId": {
-                              "type": "string",
-                              "minLength": 0,
-                              "maxLength": 250,
-                              "description": "Team ID to add the invited user to after acceptance."
-                            },
-                            "teamRole": {
-                              "enum": [
-                                "admin",
-                                "editor",
-                                "viewer"
-                              ],
-                              "description": "Role the invited user receives in the target team once accepted: `admin`, `editor`, or `viewer`.",
-                              "type": "string"
-                            },
-                            "userRole": {
-                              "type": "string",
-                              "description": "Assigns the custom role identified by `customRoleId` after acceptance.",
+                              "description": "Assigns the custom role `customRoleId`.",
                               "enum": [
                                 "custom"
                               ]
@@ -57498,101 +57392,10 @@
                         }
                       ],
                       "errorMessage": {
-                        "discriminator": "value of tag \"userRole\" must be one of: admin, public_editor, public_viewer, teams_only, custom"
-                      }
-                    },
-                    {
-                      "type": "object",
-                      "required": [
-                        "email",
-                        "teamId",
-                        "teamRole",
-                        "userRole"
-                      ],
-                      "properties": {
-                        "email": {
-                          "type": "string",
-                          "format": "lowercase-email",
-                          "minLength": 0,
-                          "maxLength": 254,
-                          "errorMessage": {
-                            "format": "Must be a valid lowercase email address."
-                          },
-                          "description": "Lowercase email address to invite into the organization."
-                        },
-                        "teamId": {
-                          "type": "string",
-                          "minLength": 0,
-                          "maxLength": 250,
-                          "description": "Team ID to add the invited user to after acceptance."
-                        },
-                        "teamRole": {
-                          "enum": [
-                            "admin",
-                            "editor",
-                            "viewer"
-                          ],
-                          "description": "Role the invited user receives in the target team once accepted: `admin`, `editor`, or `viewer`.",
-                          "type": "string"
-                        },
-                        "userRole": {
-                          "description": "Organization role to assign: a built-in role `type`, or `custom` with the `customRoleId` of a custom role.",
-                          "type": "object",
-                          "discriminator": {
-                            "propertyName": "type"
-                          },
-                          "required": [
-                            "type"
-                          ],
-                          "oneOf": [
-                            {
-                              "type": "object",
-                              "required": [
-                                "type"
-                              ],
-                              "properties": {
-                                "type": {
-                                  "enum": [
-                                    "admin",
-                                    "public_editor",
-                                    "public_viewer",
-                                    "teams_only"
-                                  ],
-                                  "description": "Built-in organization role: `admin`, `public_editor`, `public_viewer`, or `teams_only`.",
-                                  "type": "string"
-                                }
-                              }
-                            },
-                            {
-                              "type": "object",
-                              "required": [
-                                "type",
-                                "customRoleId"
-                              ],
-                              "properties": {
-                                "type": {
-                                  "type": "string",
-                                  "description": "Assigns the custom role `customRoleId`.",
-                                  "enum": [
-                                    "custom"
-                                  ]
-                                },
-                                "customRoleId": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 250,
-                                  "description": "Identifier of the custom role to assign. Use the `id` returned by the custom role endpoints."
-                                }
-                              }
-                            }
-                          ],
-                          "errorMessage": {
-                            "discriminator": "value of tag \"type\" must be one of: admin, public_editor, public_viewer, teams_only, custom"
-                          }
-                        }
+                        "discriminator": "value of tag \"type\" must be one of: admin, public_editor, public_viewer, teams_only, custom"
                       }
                     }
-                  ]
+                  }
                 },
                 "maxItems": 10,
                 "description": "Invitations to create."
@@ -58364,6 +58167,12 @@
                     "maxLength": 250,
                     "description": "Human-readable name for the account shown in Tsuga."
                   },
+                  "owner": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "description": "Team ID that will own the account."
+                  },
                   "connectionSettings": {
                     "description": "Credentials Tsuga uses to scan the account, in the provider-specific shape selected by `type`. Credentials are stored as provided and are not validated at creation time; failures surface through `lastScanStatus`.",
                     "type": "object",
@@ -58399,6 +58208,7 @@
                 "cloudType": "aws",
                 "cloudAccountId": "123456789012",
                 "accountFriendlyName": "Production AWS",
+                "owner": "team-123-abc",
                 "connectionSettings": {
                   "type": "aws",
                   "accountId": "123456789012",
@@ -58565,11 +58375,25 @@
                     "minLength": 0,
                     "maxLength": 250,
                     "description": "Human-readable name for the account shown in Tsuga."
+                  },
+                  "owner": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 250
+                      }
+                    ],
+                    "description": "Team ID that will own the account. Set to null to remove the owner."
                   }
                 }
               },
               "example": {
-                "accountFriendlyName": "Production AWS"
+                "accountFriendlyName": "Production AWS",
+                "owner": "team-123-abc"
               }
             }
           }
@@ -61383,52 +61207,67 @@
                             },
                             "params": {
                               "type": "object",
+                              "discriminator": {
+                                "propertyName": "subtype"
+                              },
                               "required": [
-                                "attributes",
                                 "subtype"
                               ],
-                              "properties": {
-                                "attributes": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "required": [
-                                      "originAttribute",
-                                      "targetAttribute"
-                                    ],
-                                    "properties": {
-                                      "originAttribute": {
-                                        "type": "string",
-                                        "minLength": 1,
-                                        "maxLength": 250,
-                                        "description": "Attribute name to map to the target attribute"
+                              "oneOf": [
+                                {
+                                  "type": "object",
+                                  "required": [
+                                    "attributes",
+                                    "subtype"
+                                  ],
+                                  "properties": {
+                                    "attributes": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "required": [
+                                          "originAttribute",
+                                          "targetAttribute"
+                                        ],
+                                        "properties": {
+                                          "originAttribute": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 250,
+                                            "description": "Attribute name to map to the target attribute"
+                                          },
+                                          "keepOrigin": {
+                                            "type": "boolean",
+                                            "description": "Preserve the source attribute after mapping (defaults to false)"
+                                          },
+                                          "overrideTarget": {
+                                            "type": "boolean",
+                                            "description": "Overwrite the target attribute when it already exists (defaults to true)"
+                                          },
+                                          "targetAttribute": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 250,
+                                            "description": "Attribute name that will receive the mapped value"
+                                          }
+                                        }
                                       },
-                                      "keepOrigin": {
-                                        "type": "boolean",
-                                        "description": "Preserve the source attribute after mapping (defaults to false)"
-                                      },
-                                      "overrideTarget": {
-                                        "type": "boolean",
-                                        "description": "Overwrite the target attribute when it already exists (defaults to true)"
-                                      },
-                                      "targetAttribute": {
-                                        "type": "string",
-                                        "minLength": 1,
-                                        "maxLength": 250,
-                                        "description": "Attribute name that will receive the mapped value"
-                                      }
+                                      "minItems": 1,
+                                      "maxItems": 50,
+                                      "description": "Mappings that map individual attributes to new targets"
+                                    },
+                                    "subtype": {
+                                      "type": "string",
+                                      "description": "Copies or moves one or more source attributes to target attributes.",
+                                      "enum": [
+                                        "map-attributes"
+                                      ]
                                     }
-                                  },
-                                  "minItems": 1,
-                                  "maxItems": 50,
-                                  "description": "Mappings that map individual attributes to new targets"
-                                },
-                                "subtype": {
-                                  "type": "string",
-                                  "enum": [
-                                    "map-attributes"
-                                  ]
+                                  }
                                 }
+                              ],
+                              "errorMessage": {
+                                "discriminator": "value of tag \"subtype\" must be one of: map-attributes"
                               }
                             }
                           }
@@ -62037,52 +61876,67 @@
                             },
                             "params": {
                               "type": "object",
+                              "discriminator": {
+                                "propertyName": "subtype"
+                              },
                               "required": [
-                                "attributes",
                                 "subtype"
                               ],
-                              "properties": {
-                                "attributes": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "required": [
-                                      "originAttribute",
-                                      "targetAttribute"
-                                    ],
-                                    "properties": {
-                                      "originAttribute": {
-                                        "type": "string",
-                                        "minLength": 1,
-                                        "maxLength": 250,
-                                        "description": "Attribute name to map to the target attribute"
+                              "oneOf": [
+                                {
+                                  "type": "object",
+                                  "required": [
+                                    "attributes",
+                                    "subtype"
+                                  ],
+                                  "properties": {
+                                    "attributes": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "required": [
+                                          "originAttribute",
+                                          "targetAttribute"
+                                        ],
+                                        "properties": {
+                                          "originAttribute": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 250,
+                                            "description": "Attribute name to map to the target attribute"
+                                          },
+                                          "keepOrigin": {
+                                            "type": "boolean",
+                                            "description": "Preserve the source attribute after mapping (defaults to false)"
+                                          },
+                                          "overrideTarget": {
+                                            "type": "boolean",
+                                            "description": "Overwrite the target attribute when it already exists (defaults to true)"
+                                          },
+                                          "targetAttribute": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 250,
+                                            "description": "Attribute name that will receive the mapped value"
+                                          }
+                                        }
                                       },
-                                      "keepOrigin": {
-                                        "type": "boolean",
-                                        "description": "Preserve the source attribute after mapping (defaults to false)"
-                                      },
-                                      "overrideTarget": {
-                                        "type": "boolean",
-                                        "description": "Overwrite the target attribute when it already exists (defaults to true)"
-                                      },
-                                      "targetAttribute": {
-                                        "type": "string",
-                                        "minLength": 1,
-                                        "maxLength": 250,
-                                        "description": "Attribute name that will receive the mapped value"
-                                      }
+                                      "minItems": 1,
+                                      "maxItems": 50,
+                                      "description": "Mappings that map individual attributes to new targets"
+                                    },
+                                    "subtype": {
+                                      "type": "string",
+                                      "description": "Copies or moves one or more source attributes to target attributes.",
+                                      "enum": [
+                                        "map-attributes"
+                                      ]
                                     }
-                                  },
-                                  "minItems": 1,
-                                  "maxItems": 50,
-                                  "description": "Mappings that map individual attributes to new targets"
-                                },
-                                "subtype": {
-                                  "type": "string",
-                                  "enum": [
-                                    "map-attributes"
-                                  ]
+                                  }
                                 }
+                              ],
+                              "errorMessage": {
+                                "discriminator": "value of tag \"subtype\" must be one of: map-attributes"
                               }
                             }
                           }
@@ -65330,10 +65184,6 @@
                     "type": "boolean",
                     "description": "Set to true for the rule to send notifications when one of its monitors fires."
                   },
-                  "shouldCreateInvestigation": {
-                    "type": "boolean",
-                    "description": "Set to true to record an investigation for each page, holding the sampled traces and the call graph the destination was resolved from, and to link it from the notification body. Defaults to false."
-                  },
                   "monitorIds": {
                     "type": "array",
                     "items": {
@@ -65457,7 +65307,6 @@
                 "name": "Checkout latency",
                 "owner": "team-123-abc",
                 "isActive": true,
-                "shouldCreateInvestigation": true,
                 "tags": [
                   {
                     "key": "channel",
@@ -65692,10 +65541,6 @@
                     "type": "boolean",
                     "description": "Set to true for the rule to send notifications when one of its monitors fires."
                   },
-                  "shouldCreateInvestigation": {
-                    "type": "boolean",
-                    "description": "Set to true to record an investigation for each page, holding the sampled traces and the call graph the destination was resolved from, and to link it from the notification body. Defaults to false."
-                  },
                   "monitorIds": {
                     "type": "array",
                     "items": {
@@ -65819,7 +65664,6 @@
                 "name": "Checkout latency",
                 "owner": "team-123-abc",
                 "isActive": true,
-                "shouldCreateInvestigation": true,
                 "tags": [
                   {
                     "key": "channel",

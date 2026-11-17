@@ -513,6 +513,25 @@
             }
           },
           {
+            "name": "owner",
+            "string": {
+              "computed_optional_required": "computed_optional",
+              "description": "Team ID that will own the account.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                  }
+                }
+              ]
+            }
+          },
+          {
             "name": "cloud_account_id",
             "string": {
               "computed_optional_required": "computed",
