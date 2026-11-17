@@ -69,9 +69,11 @@ func MonitorResourceSchema(ctx context.Context) schema.Schema {
 					"metric":             thresholdMonitorConfigurationSchema(),
 					"log":                thresholdMonitorConfigurationSchema(),
 					"trace":              thresholdMonitorConfigurationSchema(),
+					"rum":                thresholdMonitorConfigurationSchema(),
 					"anomaly_metric":     anomalyMonitorConfigurationSchema(),
 					"anomaly_log":        anomalyMonitorConfigurationSchema(),
 					"anomaly_trace":      anomalyMonitorConfigurationSchema(),
+					"anomaly_rum":        anomalyMonitorConfigurationSchema(),
 					"certificate_expiry": certificateExpiryMonitorConfigurationSchema(),
 					"log_error_pattern":  logErrorPatternMonitorConfigurationSchema(),
 				},
@@ -479,9 +481,11 @@ type MonitorConfigurationModel struct {
 	Metric            *MonitorConfigurationDetailsModel           `tfsdk:"metric"`
 	Log               *MonitorConfigurationDetailsModel           `tfsdk:"log"`
 	Trace             *MonitorConfigurationDetailsModel           `tfsdk:"trace"`
+	Rum               *MonitorConfigurationDetailsModel           `tfsdk:"rum"`
 	AnomalyMetric     *AnomalyMonitorConfigurationDetailsModel    `tfsdk:"anomaly_metric"`
 	AnomalyLog        *AnomalyMonitorConfigurationDetailsModel    `tfsdk:"anomaly_log"`
 	AnomalyTrace      *AnomalyMonitorConfigurationDetailsModel    `tfsdk:"anomaly_trace"`
+	AnomalyRum        *AnomalyMonitorConfigurationDetailsModel    `tfsdk:"anomaly_rum"`
 	CertificateExpiry *CertificateExpiryMonitorConfigurationModel `tfsdk:"certificate_expiry"`
 	LogErrorPattern   *LogErrorPatternMonitorConfigurationModel   `tfsdk:"log_error_pattern"`
 }

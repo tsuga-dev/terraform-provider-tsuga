@@ -36,6 +36,37 @@ resource "tsuga_monitor" "monitor" {
   }
 }
 
+resource "tsuga_monitor" "rum_errors" {
+  name        = "Frontend exceptions"
+  owner       = "abc-123-def"
+  permissions = "all"
+  priority    = 3
+  configuration = {
+    rum = {
+      queries = [
+        {
+          filter = "exceptions.context.app.name:web-app AND exceptions.context.env:production"
+          aggregate = {
+            count = {}
+          }
+        }
+      ]
+      conditions = [{
+        formula   = "q1"
+        operator  = "greater_than"
+        threshold = 0
+      }]
+      timeframe = 5
+      group_by_fields = [{
+        fields = ["exceptions.view.name"]
+        limit  = 10
+      }]
+      no_data_behavior        = "resolve"
+      aggregation_alert_logic = "each"
+    }
+  }
+}
+
 resource "tsuga_monitor" "log_error_pattern" {
   name        = "New Error Pattern Detector"
   owner       = "abc-123-def"

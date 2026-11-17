@@ -571,6 +571,107 @@ resource "tsuga_monitor" "test" {
 	})
 }
 
+func TestAccMonitorResource_Rum(t *testing.T) {
+	teamName := fmt.Sprintf("test-%s", randomString(10))
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: providerConfig + fmt.Sprintf(`
+resource "tsuga_team" "test-team" {
+  name = "%s"
+  visibility = "public"
+}
+
+resource "tsuga_monitor" "test" {
+  name        = "test-rum-monitor"
+  owner       = tsuga_team.test-team.id
+  priority    = 3
+  permissions = "all"
+  message     = "RUM monitor message"
+
+  configuration = {
+    rum = {
+      conditions = [{
+        formula   = "q1"
+        operator  = "greater_than"
+        threshold = 0
+      }]
+      no_data_behavior        = "resolve"
+      timeframe               = 5
+      consecutive_windows     = 2
+      group_by_fields = [{
+        fields = ["exceptions.view.name"]
+        limit  = 10
+      }]
+      aggregation_alert_logic = "each"
+      queries = [{
+        filter = "exceptions.context.app.name:tsuga-ui AND exceptions.exception.message:*\"WASM ERROR\"*"
+        aggregate = {
+          count = {}
+        }
+      }]
+    }
+  }
+}
+`, teamName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "name", "test-rum-monitor"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.rum.conditions.#", "1"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.rum.conditions.0.operator", "greater_than"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.rum.timeframe", "5"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.rum.consecutive_windows", "2"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.rum.group_by_fields.0.fields.0", "exceptions.view.name"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.rum.queries.#", "1"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.rum.queries.0.filter", "exceptions.context.app.name:tsuga-ui AND exceptions.exception.message:*\"WASM ERROR\"*"),
+				),
+			},
+			{
+				Config: providerConfig + fmt.Sprintf(`
+resource "tsuga_team" "test-team" {
+  name = "%s"
+  visibility = "public"
+}
+
+resource "tsuga_monitor" "test" {
+  name        = "test-anomaly-rum-monitor"
+  owner       = tsuga_team.test-team.id
+  priority    = 2
+  permissions = "all"
+  message     = "Anomaly RUM monitor message"
+
+  configuration = {
+    anomaly_rum = {
+      condition = {
+        formula = "q1"
+      }
+      no_data_behavior        = "keep_last_status"
+      timeframe               = 15
+      group_by_fields         = []
+      aggregation_alert_logic = "no_aggregation"
+      queries = [{
+        filter = "exceptions.context.app.name:tsuga-ui"
+        aggregate = {
+          count = {}
+        }
+      }]
+    }
+  }
+}
+`, teamName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "name", "test-anomaly-rum-monitor"),
+					resource.TestCheckNoResourceAttr("tsuga_monitor.test", "configuration.rum.timeframe"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.anomaly_rum.condition.formula", "q1"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.anomaly_rum.timeframe", "15"),
+					resource.TestCheckResourceAttr("tsuga_monitor.test", "configuration.anomaly_rum.queries.#", "1"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccMonitorResource_CertificateExpiry(t *testing.T) {
 	teamName := fmt.Sprintf("test-%s", randomString(10))
 

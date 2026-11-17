@@ -80,6 +80,9 @@ func (r *monitorResource) ValidateConfig(ctx context.Context, req resource.Valid
 	if config.Configuration.Trace != nil {
 		setCount++
 	}
+	if config.Configuration.Rum != nil {
+		setCount++
+	}
 	if config.Configuration.AnomalyMetric != nil {
 		setCount++
 	}
@@ -87,6 +90,9 @@ func (r *monitorResource) ValidateConfig(ctx context.Context, req resource.Valid
 		setCount++
 	}
 	if config.Configuration.AnomalyTrace != nil {
+		setCount++
+	}
+	if config.Configuration.AnomalyRum != nil {
 		setCount++
 	}
 	if config.Configuration.CertificateExpiry != nil {
@@ -99,7 +105,7 @@ func (r *monitorResource) ValidateConfig(ctx context.Context, req resource.Valid
 	if setCount != 1 {
 		resp.Diagnostics.AddError(
 			"Invalid configuration",
-			"Exactly one of metric, log, trace, anomaly_metric, anomaly_log, anomaly_trace, certificate_expiry, or log_error_pattern must be set in configuration",
+			"Exactly one of metric, log, trace, rum, anomaly_metric, anomaly_log, anomaly_trace, anomaly_rum, certificate_expiry, or log_error_pattern must be set in configuration",
 		)
 		return
 	}
@@ -122,6 +128,11 @@ func (r *monitorResource) ValidateConfig(ctx context.Context, req resource.Valid
 		diags.Append(r.validateQueries(ctx, config.Configuration.Trace.Queries, "configuration.trace.queries")...)
 		diags.Append(r.validateConsecutiveWindowsSpan(config.Configuration.Trace.ConsecutiveWindows, config.Configuration.Trace.Timeframe, "configuration.trace")...)
 	}
+	if config.Configuration.Rum != nil {
+		diags.Append(r.validateProportionAlertConfig(config.Configuration.Rum.AggregationAlertLogic, config.Configuration.Rum.ProportionAlertThreshold, "configuration.rum")...)
+		diags.Append(r.validateQueries(ctx, config.Configuration.Rum.Queries, "configuration.rum.queries")...)
+		diags.Append(r.validateConsecutiveWindowsSpan(config.Configuration.Rum.ConsecutiveWindows, config.Configuration.Rum.Timeframe, "configuration.rum")...)
+	}
 	if config.Configuration.AnomalyMetric != nil {
 		diags.Append(r.validateProportionAlertConfig(config.Configuration.AnomalyMetric.AggregationAlertLogic, config.Configuration.AnomalyMetric.ProportionAlertThreshold, "configuration.anomaly_metric")...)
 		diags.Append(r.validateQueries(ctx, config.Configuration.AnomalyMetric.Queries, "configuration.anomaly_metric.queries")...)
@@ -133,6 +144,10 @@ func (r *monitorResource) ValidateConfig(ctx context.Context, req resource.Valid
 	if config.Configuration.AnomalyTrace != nil {
 		diags.Append(r.validateProportionAlertConfig(config.Configuration.AnomalyTrace.AggregationAlertLogic, config.Configuration.AnomalyTrace.ProportionAlertThreshold, "configuration.anomaly_trace")...)
 		diags.Append(r.validateQueries(ctx, config.Configuration.AnomalyTrace.Queries, "configuration.anomaly_trace.queries")...)
+	}
+	if config.Configuration.AnomalyRum != nil {
+		diags.Append(r.validateProportionAlertConfig(config.Configuration.AnomalyRum.AggregationAlertLogic, config.Configuration.AnomalyRum.ProportionAlertThreshold, "configuration.anomaly_rum")...)
+		diags.Append(r.validateQueries(ctx, config.Configuration.AnomalyRum.Queries, "configuration.anomaly_rum.queries")...)
 	}
 	if config.Configuration.CertificateExpiry != nil {
 		diags.Append(r.validateCertificateExpiryConfig(
@@ -590,6 +605,9 @@ func expandMonitorConfiguration(ctx context.Context, config resource_monitor.Mon
 	if config.Trace != nil {
 		return expandThresholdMonitorConfiguration(ctx, "trace", config.Trace)
 	}
+	if config.Rum != nil {
+		return expandThresholdMonitorConfiguration(ctx, "rum", config.Rum)
+	}
 	if config.AnomalyMetric != nil {
 		return expandAnomalyMonitorConfiguration(ctx, "anomaly-metric", config.AnomalyMetric)
 	}
@@ -598,6 +616,9 @@ func expandMonitorConfiguration(ctx context.Context, config resource_monitor.Mon
 	}
 	if config.AnomalyTrace != nil {
 		return expandAnomalyMonitorConfiguration(ctx, "anomaly-trace", config.AnomalyTrace)
+	}
+	if config.AnomalyRum != nil {
+		return expandAnomalyMonitorConfiguration(ctx, "anomaly-rum", config.AnomalyRum)
 	}
 	if config.CertificateExpiry != nil {
 		return expandMonitorConfigurationCertificateExpiry(ctx, config.CertificateExpiry)
@@ -1042,6 +1063,10 @@ func flattenMonitorConfiguration(ctx context.Context, config monitorAPIConfigura
 		detail, d := flattenThresholdMonitorConfiguration(ctx, config)
 		diags.Append(d...)
 		return resource_monitor.MonitorConfigurationModel{Trace: &detail}, diags
+	case "rum":
+		detail, d := flattenThresholdMonitorConfiguration(ctx, config)
+		diags.Append(d...)
+		return resource_monitor.MonitorConfigurationModel{Rum: &detail}, diags
 	case "anomaly-metric":
 		anomalyMetric, d := flattenAnomalyMonitorConfiguration(ctx, config)
 		diags.Append(d...)
@@ -1054,6 +1079,10 @@ func flattenMonitorConfiguration(ctx context.Context, config monitorAPIConfigura
 		anomalyTrace, d := flattenAnomalyMonitorConfiguration(ctx, config)
 		diags.Append(d...)
 		return resource_monitor.MonitorConfigurationModel{AnomalyTrace: &anomalyTrace}, diags
+	case "anomaly-rum":
+		anomalyRum, d := flattenAnomalyMonitorConfiguration(ctx, config)
+		diags.Append(d...)
+		return resource_monitor.MonitorConfigurationModel{AnomalyRum: &anomalyRum}, diags
 	case "certificate-expiry":
 		certificateExpiry, d := flattenMonitorConfigurationCertificateExpiry(ctx, config)
 		diags.Append(d...)

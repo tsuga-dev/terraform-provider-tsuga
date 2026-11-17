@@ -380,6 +380,85 @@ func TestExpandFlattenAnomalyTraceMonitor_RoundTrips(t *testing.T) {
 	}
 }
 
+func TestFlattenExpandRumMonitor_RoundTrips(t *testing.T) {
+	ctx := context.Background()
+	threshold := 0.0
+	consecutiveWindows := 2.0
+
+	flattened, diags := flattenMonitorConfiguration(ctx, monitorAPIConfiguration{
+		Type: "rum",
+		Conditions: []monitorAPICondition{
+			{Formula: "q1", Operator: "greater_than", Threshold: &threshold},
+		},
+		NoDataBehavior:        "resolve",
+		Timeframe:             5,
+		AggregationAlertLogic: "no_aggregation",
+		ConsecutiveWindows:    &consecutiveWindows,
+		Queries: []monitorAPIQuery{
+			{Filter: `exceptions.context.app.name:tsuga-ui AND exceptions.exception.message:*"WASM ERROR"*`, Aggregate: monitorAPIAggregate{Type: "count"}},
+		},
+	})
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if flattened.Rum == nil {
+		t.Fatal("expected rum configuration to be set")
+	}
+	if flattened.Log != nil || flattened.Trace != nil || flattened.AnomalyRum != nil {
+		t.Fatal("expected only the rum configuration to be set")
+	}
+	if !flattened.Rum.Condition.IsNull() {
+		t.Fatalf("expected condition (singular) to be null for threshold monitors, got: %v", flattened.Rum.Condition)
+	}
+
+	expanded, diags := expandMonitorConfiguration(ctx, flattened)
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if expanded["type"] != "rum" {
+		t.Fatalf("expected type rum, got %#v", expanded["type"])
+	}
+	if expanded["consecutiveWindows"] != 2.0 {
+		t.Fatalf("expected consecutiveWindows 2 to be sent, got %#v", expanded["consecutiveWindows"])
+	}
+	expandedQueries := expanded["queries"].([]map[string]interface{})
+	if expandedQueries[0]["filter"] != `exceptions.context.app.name:tsuga-ui AND exceptions.exception.message:*"WASM ERROR"*` {
+		t.Fatalf("expected filter to round-trip, got %#v", expandedQueries[0]["filter"])
+	}
+}
+
+func TestFlattenExpandAnomalyRumMonitor_RoundTrips(t *testing.T) {
+	ctx := context.Background()
+
+	flattened, diags := flattenMonitorConfiguration(ctx, monitorAPIConfiguration{
+		Type:                  "anomaly-rum",
+		Condition:             monitorAPICondition{Formula: "q1", ConditionType: "general"},
+		NoDataBehavior:        "resolve",
+		Timeframe:             15,
+		AggregationAlertLogic: "no_aggregation",
+		Queries: []monitorAPIQuery{
+			{Filter: "exceptions.context.app.name:tsuga-ui", Aggregate: monitorAPIAggregate{Type: "count"}},
+		},
+	})
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if flattened.AnomalyRum == nil {
+		t.Fatal("expected anomaly_rum configuration to be set")
+	}
+	if flattened.Rum != nil || flattened.AnomalyTrace != nil {
+		t.Fatal("expected only the anomaly_rum configuration to be set")
+	}
+
+	expanded, diags := expandMonitorConfiguration(ctx, flattened)
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	if expanded["type"] != "anomaly-rum" {
+		t.Fatalf("expected type anomaly-rum, got %#v", expanded["type"])
+	}
+}
+
 func TestBuildMonitorRequestBody_FolderId(t *testing.T) {
 	ctx := context.Background()
 

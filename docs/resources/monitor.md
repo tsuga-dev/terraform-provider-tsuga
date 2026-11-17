@@ -51,6 +51,37 @@ resource "tsuga_monitor" "monitor" {
   }
 }
 
+resource "tsuga_monitor" "rum_errors" {
+  name        = "Frontend exceptions"
+  owner       = "abc-123-def"
+  permissions = "all"
+  priority    = 3
+  configuration = {
+    rum = {
+      queries = [
+        {
+          filter = "exceptions.context.app.name:web-app AND exceptions.context.env:production"
+          aggregate = {
+            count = {}
+          }
+        }
+      ]
+      conditions = [{
+        formula   = "q1"
+        operator  = "greater_than"
+        threshold = 0
+      }]
+      timeframe = 5
+      group_by_fields = [{
+        fields = ["exceptions.view.name"]
+        limit  = 10
+      }]
+      no_data_behavior        = "resolve"
+      aggregation_alert_logic = "each"
+    }
+  }
+}
+
 resource "tsuga_monitor" "log_error_pattern" {
   name        = "New Error Pattern Detector"
   owner       = "abc-123-def"
@@ -117,11 +148,13 @@ Optional:
 
 - `anomaly_log` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_log))
 - `anomaly_metric` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_metric))
+- `anomaly_rum` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_rum))
 - `anomaly_trace` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_trace))
 - `certificate_expiry` (Attributes) (see [below for nested schema](#nestedatt--configuration--certificate_expiry))
 - `log` (Attributes) (see [below for nested schema](#nestedatt--configuration--log))
 - `log_error_pattern` (Attributes) (see [below for nested schema](#nestedatt--configuration--log_error_pattern))
 - `metric` (Attributes) (see [below for nested schema](#nestedatt--configuration--metric))
+- `rum` (Attributes) (see [below for nested schema](#nestedatt--configuration--rum))
 - `trace` (Attributes) (see [below for nested schema](#nestedatt--configuration--trace))
 
 <a id="nestedatt--configuration--anomaly_log"></a>
@@ -489,6 +522,193 @@ Optional:
 
 <a id="nestedatt--configuration--anomaly_metric--queries--functions--time_offset"></a>
 ### Nested Schema for `configuration.anomaly_metric.queries.functions.time_offset`
+
+Required:
+
+- `seconds` (Number)
+
+
+
+
+
+<a id="nestedatt--configuration--anomaly_rum"></a>
+### Nested Schema for `configuration.anomaly_rum`
+
+Required:
+
+- `aggregation_alert_logic` (String)
+- `condition` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_rum--condition))
+- `group_by_fields` (Attributes List) (see [below for nested schema](#nestedatt--configuration--anomaly_rum--group_by_fields))
+- `no_data_behavior` (String)
+- `queries` (Attributes List) (see [below for nested schema](#nestedatt--configuration--anomaly_rum--queries))
+- `timeframe` (Number) Timeframe of the monitor in minutes (between 5 and 1440)
+
+Optional:
+
+- `proportion_alert_threshold` (Number)
+
+<a id="nestedatt--configuration--anomaly_rum--condition"></a>
+### Nested Schema for `configuration.anomaly_rum.condition`
+
+Required:
+
+- `formula` (String)
+
+
+<a id="nestedatt--configuration--anomaly_rum--group_by_fields"></a>
+### Nested Schema for `configuration.anomaly_rum.group_by_fields`
+
+Required:
+
+- `fields` (List of String)
+- `limit` (Number)
+
+Optional:
+
+- `replace_null_with` (String) Value used to group documents that have no value for a grouped field.
+- `sort_order` (String) Sort direction applied to groups: 'asc' or 'desc'.
+
+
+<a id="nestedatt--configuration--anomaly_rum--queries"></a>
+### Nested Schema for `configuration.anomaly_rum.queries`
+
+Required:
+
+- `aggregate` (Attributes) Aggregate (count, unique_count, average, max, min, sum, or percentile) (see [below for nested schema](#nestedatt--configuration--anomaly_rum--queries--aggregate))
+- `filter` (String)
+
+Optional:
+
+- `fill` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_rum--queries--fill))
+- `functions` (Attributes List) (see [below for nested schema](#nestedatt--configuration--anomaly_rum--queries--functions))
+- `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
+
+<a id="nestedatt--configuration--anomaly_rum--queries--aggregate"></a>
+### Nested Schema for `configuration.anomaly_rum.queries.aggregate`
+
+Optional:
+
+- `average` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_rum--queries--aggregate--average))
+- `count` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_rum--queries--aggregate--count))
+- `max` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_rum--queries--aggregate--max))
+- `min` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_rum--queries--aggregate--min))
+- `percentile` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_rum--queries--aggregate--percentile))
+- `sum` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_rum--queries--aggregate--sum))
+- `unique_count` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_rum--queries--aggregate--unique_count))
+
+<a id="nestedatt--configuration--anomaly_rum--queries--aggregate--average"></a>
+### Nested Schema for `configuration.anomaly_rum.queries.aggregate.average`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--anomaly_rum--queries--aggregate--count"></a>
+### Nested Schema for `configuration.anomaly_rum.queries.aggregate.count`
+
+Optional:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--anomaly_rum--queries--aggregate--max"></a>
+### Nested Schema for `configuration.anomaly_rum.queries.aggregate.max`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--anomaly_rum--queries--aggregate--min"></a>
+### Nested Schema for `configuration.anomaly_rum.queries.aggregate.min`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--anomaly_rum--queries--aggregate--percentile"></a>
+### Nested Schema for `configuration.anomaly_rum.queries.aggregate.percentile`
+
+Required:
+
+- `field` (String)
+- `percentile` (Number)
+
+
+<a id="nestedatt--configuration--anomaly_rum--queries--aggregate--sum"></a>
+### Nested Schema for `configuration.anomaly_rum.queries.aggregate.sum`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--anomaly_rum--queries--aggregate--unique_count"></a>
+### Nested Schema for `configuration.anomaly_rum.queries.aggregate.unique_count`
+
+Required:
+
+- `field` (String)
+
+
+
+<a id="nestedatt--configuration--anomaly_rum--queries--fill"></a>
+### Nested Schema for `configuration.anomaly_rum.queries.fill`
+
+Required:
+
+- `mode` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_rum--queries--fill--mode))
+
+<a id="nestedatt--configuration--anomaly_rum--queries--fill--mode"></a>
+### Nested Schema for `configuration.anomaly_rum.queries.fill.mode`
+
+Required:
+
+- `type` (String)
+
+
+
+<a id="nestedatt--configuration--anomaly_rum--queries--functions"></a>
+### Nested Schema for `configuration.anomaly_rum.queries.functions`
+
+Optional:
+
+- `increase` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_rum--queries--functions--increase))
+- `last` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_rum--queries--functions--last))
+- `per_hour` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_rum--queries--functions--per_hour))
+- `per_minute` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_rum--queries--functions--per_minute))
+- `per_second` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_rum--queries--functions--per_second))
+- `rate` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_rum--queries--functions--rate))
+- `time_offset` (Attributes) (see [below for nested schema](#nestedatt--configuration--anomaly_rum--queries--functions--time_offset))
+
+<a id="nestedatt--configuration--anomaly_rum--queries--functions--increase"></a>
+### Nested Schema for `configuration.anomaly_rum.queries.functions.increase`
+
+
+<a id="nestedatt--configuration--anomaly_rum--queries--functions--last"></a>
+### Nested Schema for `configuration.anomaly_rum.queries.functions.last`
+
+
+<a id="nestedatt--configuration--anomaly_rum--queries--functions--per_hour"></a>
+### Nested Schema for `configuration.anomaly_rum.queries.functions.per_hour`
+
+
+<a id="nestedatt--configuration--anomaly_rum--queries--functions--per_minute"></a>
+### Nested Schema for `configuration.anomaly_rum.queries.functions.per_minute`
+
+
+<a id="nestedatt--configuration--anomaly_rum--queries--functions--per_second"></a>
+### Nested Schema for `configuration.anomaly_rum.queries.functions.per_second`
+
+
+<a id="nestedatt--configuration--anomaly_rum--queries--functions--rate"></a>
+### Nested Schema for `configuration.anomaly_rum.queries.functions.rate`
+
+
+<a id="nestedatt--configuration--anomaly_rum--queries--functions--time_offset"></a>
+### Nested Schema for `configuration.anomaly_rum.queries.functions.time_offset`
 
 Required:
 
@@ -1115,6 +1335,207 @@ Required:
 
 <a id="nestedatt--configuration--metric--condition"></a>
 ### Nested Schema for `configuration.metric.condition`
+
+Optional:
+
+- `formula` (String)
+- `operator` (String)
+- `threshold` (Number)
+
+
+
+<a id="nestedatt--configuration--rum"></a>
+### Nested Schema for `configuration.rum`
+
+Required:
+
+- `aggregation_alert_logic` (String)
+- `conditions` (Attributes List) (see [below for nested schema](#nestedatt--configuration--rum--conditions))
+- `group_by_fields` (Attributes List) (see [below for nested schema](#nestedatt--configuration--rum--group_by_fields))
+- `no_data_behavior` (String)
+- `queries` (Attributes List) (see [below for nested schema](#nestedatt--configuration--rum--queries))
+- `timeframe` (Number) Timeframe of the monitor in minutes
+
+Optional:
+
+- `condition` (Attributes, Deprecated) (see [below for nested schema](#nestedatt--configuration--rum--condition))
+- `consecutive_windows` (Number) Number of consecutive timeframe windows that must all meet the conditions before the monitor alerts. Omit or set to 1 for single-window evaluation. At most 10, and above 1, consecutive_windows × timeframe must not exceed 4320 minutes (3 days).
+- `proportion_alert_threshold` (Number)
+
+<a id="nestedatt--configuration--rum--conditions"></a>
+### Nested Schema for `configuration.rum.conditions`
+
+Required:
+
+- `formula` (String)
+- `operator` (String)
+- `threshold` (Number)
+
+
+<a id="nestedatt--configuration--rum--group_by_fields"></a>
+### Nested Schema for `configuration.rum.group_by_fields`
+
+Required:
+
+- `fields` (List of String)
+- `limit` (Number)
+
+Optional:
+
+- `replace_null_with` (String) Value used to group documents that have no value for a grouped field.
+- `sort_order` (String) Sort direction applied to groups: 'asc' or 'desc'.
+
+
+<a id="nestedatt--configuration--rum--queries"></a>
+### Nested Schema for `configuration.rum.queries`
+
+Required:
+
+- `aggregate` (Attributes) Aggregate (count, unique_count, average, max, min, sum, or percentile) (see [below for nested schema](#nestedatt--configuration--rum--queries--aggregate))
+- `filter` (String)
+
+Optional:
+
+- `fill` (Attributes) (see [below for nested schema](#nestedatt--configuration--rum--queries--fill))
+- `functions` (Attributes List) (see [below for nested schema](#nestedatt--configuration--rum--queries--functions))
+- `time_aggregate` (String) Per-series rollup applied within each time bucket before the cross-series aggregate. When omitted, a default is derived from the metric type.
+
+<a id="nestedatt--configuration--rum--queries--aggregate"></a>
+### Nested Schema for `configuration.rum.queries.aggregate`
+
+Optional:
+
+- `average` (Attributes) (see [below for nested schema](#nestedatt--configuration--rum--queries--aggregate--average))
+- `count` (Attributes) (see [below for nested schema](#nestedatt--configuration--rum--queries--aggregate--count))
+- `max` (Attributes) (see [below for nested schema](#nestedatt--configuration--rum--queries--aggregate--max))
+- `min` (Attributes) (see [below for nested schema](#nestedatt--configuration--rum--queries--aggregate--min))
+- `percentile` (Attributes) (see [below for nested schema](#nestedatt--configuration--rum--queries--aggregate--percentile))
+- `sum` (Attributes) (see [below for nested schema](#nestedatt--configuration--rum--queries--aggregate--sum))
+- `unique_count` (Attributes) (see [below for nested schema](#nestedatt--configuration--rum--queries--aggregate--unique_count))
+
+<a id="nestedatt--configuration--rum--queries--aggregate--average"></a>
+### Nested Schema for `configuration.rum.queries.aggregate.average`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--rum--queries--aggregate--count"></a>
+### Nested Schema for `configuration.rum.queries.aggregate.count`
+
+Optional:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--rum--queries--aggregate--max"></a>
+### Nested Schema for `configuration.rum.queries.aggregate.max`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--rum--queries--aggregate--min"></a>
+### Nested Schema for `configuration.rum.queries.aggregate.min`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--rum--queries--aggregate--percentile"></a>
+### Nested Schema for `configuration.rum.queries.aggregate.percentile`
+
+Required:
+
+- `field` (String)
+- `percentile` (Number)
+
+
+<a id="nestedatt--configuration--rum--queries--aggregate--sum"></a>
+### Nested Schema for `configuration.rum.queries.aggregate.sum`
+
+Required:
+
+- `field` (String)
+
+
+<a id="nestedatt--configuration--rum--queries--aggregate--unique_count"></a>
+### Nested Schema for `configuration.rum.queries.aggregate.unique_count`
+
+Required:
+
+- `field` (String)
+
+
+
+<a id="nestedatt--configuration--rum--queries--fill"></a>
+### Nested Schema for `configuration.rum.queries.fill`
+
+Required:
+
+- `mode` (Attributes) (see [below for nested schema](#nestedatt--configuration--rum--queries--fill--mode))
+
+<a id="nestedatt--configuration--rum--queries--fill--mode"></a>
+### Nested Schema for `configuration.rum.queries.fill.mode`
+
+Required:
+
+- `type` (String)
+
+
+
+<a id="nestedatt--configuration--rum--queries--functions"></a>
+### Nested Schema for `configuration.rum.queries.functions`
+
+Optional:
+
+- `increase` (Attributes) (see [below for nested schema](#nestedatt--configuration--rum--queries--functions--increase))
+- `last` (Attributes) (see [below for nested schema](#nestedatt--configuration--rum--queries--functions--last))
+- `per_hour` (Attributes) (see [below for nested schema](#nestedatt--configuration--rum--queries--functions--per_hour))
+- `per_minute` (Attributes) (see [below for nested schema](#nestedatt--configuration--rum--queries--functions--per_minute))
+- `per_second` (Attributes) (see [below for nested schema](#nestedatt--configuration--rum--queries--functions--per_second))
+- `rate` (Attributes) (see [below for nested schema](#nestedatt--configuration--rum--queries--functions--rate))
+- `time_offset` (Attributes) (see [below for nested schema](#nestedatt--configuration--rum--queries--functions--time_offset))
+
+<a id="nestedatt--configuration--rum--queries--functions--increase"></a>
+### Nested Schema for `configuration.rum.queries.functions.increase`
+
+
+<a id="nestedatt--configuration--rum--queries--functions--last"></a>
+### Nested Schema for `configuration.rum.queries.functions.last`
+
+
+<a id="nestedatt--configuration--rum--queries--functions--per_hour"></a>
+### Nested Schema for `configuration.rum.queries.functions.per_hour`
+
+
+<a id="nestedatt--configuration--rum--queries--functions--per_minute"></a>
+### Nested Schema for `configuration.rum.queries.functions.per_minute`
+
+
+<a id="nestedatt--configuration--rum--queries--functions--per_second"></a>
+### Nested Schema for `configuration.rum.queries.functions.per_second`
+
+
+<a id="nestedatt--configuration--rum--queries--functions--rate"></a>
+### Nested Schema for `configuration.rum.queries.functions.rate`
+
+
+<a id="nestedatt--configuration--rum--queries--functions--time_offset"></a>
+### Nested Schema for `configuration.rum.queries.functions.time_offset`
+
+Required:
+
+- `seconds` (Number)
+
+
+
+
+<a id="nestedatt--configuration--rum--condition"></a>
+### Nested Schema for `configuration.rum.condition`
 
 Optional:
 

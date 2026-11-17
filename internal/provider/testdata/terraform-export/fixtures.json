@@ -518,6 +518,77 @@
     }
   },
   {
+    "name": "monitor-rum",
+    "resourceType": "tsuga_monitor",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "priority": 1,
+      "permissions": "all",
+      "clusterIds": [],
+      "configuration": {
+        "type": "rum",
+        "timeframe": 5,
+        "groupByFields": [],
+        "aggregationAlertLogic": "no_aggregation",
+        "queries": [
+          {
+            "aggregate": {
+              "type": "count"
+            },
+            "filter": "exceptions.context.app.name:web-app"
+          }
+        ],
+        "conditions": [
+          {
+            "formula": "q1",
+            "operator": "greater_than",
+            "threshold": 0
+          }
+        ],
+        "noDataBehavior": "resolve"
+      },
+      "message": "Literal ${service} and %{ if x }\n\"quoted\" \\ unicode 🌲"
+    }
+  },
+  {
+    "name": "monitor-anomaly-rum",
+    "resourceType": "tsuga_monitor",
+    "resource": {
+      "id": "resource-123",
+      "name": "Example",
+      "owner": "team-123",
+      "tags": [],
+      "priority": 1,
+      "permissions": "all",
+      "clusterIds": [],
+      "configuration": {
+        "type": "anomaly-rum",
+        "timeframe": 5,
+        "groupByFields": [],
+        "aggregationAlertLogic": "no_aggregation",
+        "queries": [
+          {
+            "aggregate": {
+              "type": "count"
+            },
+            "filter": "exceptions.context.app.name:web-app"
+          }
+        ],
+        "conditions": [
+          {
+            "type": "general",
+            "formula": "q1"
+          }
+        ],
+        "noDataBehavior": "resolve"
+      },
+      "message": "Literal ${service} and %{ if x }\n\"quoted\" \\ unicode 🌲"
+    }
+  },
+  {
     "name": "monitor-certificate-expiry",
     "resourceType": "tsuga_monitor",
     "resource": {
