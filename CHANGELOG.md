@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-11-18
+
 ### Added
 
 - `tsuga_monitor`: `rum` and `anomaly_rum` configurations, for threshold and anomaly monitors over RUM data. They take the same attributes as `trace` and `anomaly_trace`.
