@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsuga Public API",
     "description": "Public HTTP API for Tsuga customers and customer-operated tools. Use these endpoints to query observability data, manage customer-owned Tsuga resources, and retrieve documentation or API-reference content. Public API requests authenticate with Bearer tokens such as operation keys. See [API reference](/documentation/api).",
-    "version": "20261116.33.0+2aa1465",
+    "version": "20261118.35.0+2f9747c",
     "contact": {
       "name": "Tsuga",
       "url": "https://tsuga.com"
@@ -999,6 +999,1061 @@
               "type": {
                 "type": "string",
                 "description": "Split processor. It sends each log through the first matching conditional branch.",
+                "enum": [
+                  "split"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "InputSpansProcessor": {
+        "anyOf": [
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "type",
+              "params"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 250,
+                "description": "Unique identifier of the processor within the route. Preserve it across updates for existing processors."
+              },
+              "description": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 50000,
+                "description": "Optional processor note."
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "key",
+                    "value"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "maxLength": 128,
+                      "description": "Tag key to attach to the resource."
+                    },
+                    "value": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "pattern": "^\\S(.*\\S)?$",
+                      "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected."
+                    }
+                  },
+                  "title": "Tag"
+                },
+                "title": "Tags",
+                "maxItems": 50,
+                "description": "Key/value tags to apply to the resource. Tag policies may require specific keys or values."
+              },
+              "updatedAt": {
+                "description": "Backend-maintained timestamp for this processor. Omit this field on create and update requests; Tsuga sets or preserves it based on processor changes.",
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "description": "Map processor. It moves, copies, or normalizes existing log attributes.",
+                "enum": [
+                  "mapper"
+                ]
+              },
+              "params": {
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "subtype"
+                },
+                "required": [
+                  "subtype"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "attributes",
+                      "subtype"
+                    ],
+                    "properties": {
+                      "attributes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "originAttribute",
+                            "targetAttribute"
+                          ],
+                          "properties": {
+                            "originAttribute": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 250,
+                              "description": "Attribute name to map to the target attribute"
+                            },
+                            "keepOrigin": {
+                              "type": "boolean",
+                              "description": "Preserve the source attribute after mapping (defaults to false)"
+                            },
+                            "overrideTarget": {
+                              "type": "boolean",
+                              "description": "Overwrite the target attribute when it already exists (defaults to true)"
+                            },
+                            "targetAttribute": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 250,
+                              "description": "Attribute name that will receive the mapped value"
+                            }
+                          }
+                        },
+                        "minItems": 1,
+                        "maxItems": 50,
+                        "description": "Mappings that map individual attributes to new targets"
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "description": "Copies or moves one or more source attributes to target attributes.",
+                        "enum": [
+                          "map-attributes"
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "errorMessage": {
+                  "discriminator": "value of tag \"subtype\" must be one of: map-attributes"
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "type",
+              "params"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 250,
+                "description": "Unique identifier of the processor within the route. Preserve it across updates for existing processors."
+              },
+              "description": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 50000,
+                "description": "Optional processor note."
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "key",
+                    "value"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "maxLength": 128,
+                      "description": "Tag key to attach to the resource."
+                    },
+                    "value": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "pattern": "^\\S(.*\\S)?$",
+                      "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected."
+                    }
+                  },
+                  "title": "Tag"
+                },
+                "title": "Tags",
+                "maxItems": 50,
+                "description": "Key/value tags to apply to the resource. Tag policies may require specific keys or values."
+              },
+              "updatedAt": {
+                "description": "Backend-maintained timestamp for this processor. Omit this field on create and update requests; Tsuga sets or preserves it based on processor changes.",
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "description": "Parse processor. It extracts structured fields from a text attribute.",
+                "enum": [
+                  "parse-attribute"
+                ]
+              },
+              "params": {
+                "description": "Parse processor configuration. The `subtype` discriminator selects which parser reads the source text attribute and which fields it extracts.",
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "subtype"
+                },
+                "required": [
+                  "subtype"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "attributeName",
+                      "rules",
+                      "subtype"
+                    ],
+                    "properties": {
+                      "attributeName": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 250,
+                        "description": "Attribute whose value will be parsed with Grok rules"
+                      },
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 50000,
+                          "description": "Grok rule applied to parse text. Route processing sends rules as engine patterns."
+                        },
+                        "minItems": 1,
+                        "maxItems": 5,
+                        "description": "Ordered Grok rules evaluated until one matches."
+                      },
+                      "samples": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 0,
+                          "maxLength": 50000
+                        },
+                        "maxItems": 5,
+                        "description": "Example log lines for validating the Grok rules. Samples are not sent to the ingestion engine."
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "description": "Extracts fields from unstructured text using ordered Grok rules.",
+                        "enum": [
+                          "grok"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "sourceAttribute",
+                      "subtype"
+                    ],
+                    "properties": {
+                      "sourceAttribute": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 250,
+                        "description": "Attribute containing the URL to parse"
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "description": "Parses a URL attribute and writes URL detail fields.",
+                        "enum": [
+                          "url"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "sourceAttribute",
+                      "subtype"
+                    ],
+                    "properties": {
+                      "sourceAttribute": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 250,
+                        "description": "Attribute containing the user agent string to parse"
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "description": "Parses a user-agent string and writes browser, operating system, and device details.",
+                        "enum": [
+                          "user-agent"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "sourceAttribute",
+                      "targetAttribute",
+                      "redactSource",
+                      "subtype"
+                    ],
+                    "properties": {
+                      "sourceAttribute": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 250,
+                        "description": "Attribute containing the IP address to look up"
+                      },
+                      "targetAttribute": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 250,
+                        "description": "Target map attribute where geolocation details will be written"
+                      },
+                      "redactSource": {
+                        "type": "boolean",
+                        "description": "Whether to replace a public IP address in the source attribute with `[REDACTED_IP]`. Private IP addresses and non-IP values are left unchanged."
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "description": "Resolves an IP address attribute to geolocation details.",
+                        "enum": [
+                          "geo-ip"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "sourceAttribute",
+                      "targetAttribute",
+                      "keyValueSplitter",
+                      "pairsSplitter",
+                      "acceptStandaloneKey",
+                      "subtype"
+                    ],
+                    "properties": {
+                      "sourceAttribute": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 250,
+                        "description": "Attribute containing the key/value string segment to parse"
+                      },
+                      "targetAttribute": {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 250,
+                        "description": "Target map attribute where extracted key/value pairs will be written"
+                      },
+                      "keyValueSplitter": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 250,
+                        "description": "Delimiter separating keys from values in the source string"
+                      },
+                      "pairsSplitter": {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 250,
+                        "description": "Delimiter separating each key/value pair in the source string."
+                      },
+                      "acceptStandaloneKey": {
+                        "type": "boolean",
+                        "description": "Set to true to accept keys without explicit values."
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "description": "Parses delimited key/value text into attributes.",
+                        "enum": [
+                          "key-value"
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "errorMessage": {
+                  "discriminator": "value of tag \"subtype\" must be one of: grok, url, user-agent, geo-ip, key-value"
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "type",
+              "params"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 250,
+                "description": "Unique identifier of the processor within the route. Preserve it across updates for existing processors."
+              },
+              "description": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 50000,
+                "description": "Optional processor note."
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "key",
+                    "value"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "maxLength": 128,
+                      "description": "Tag key to attach to the resource."
+                    },
+                    "value": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "pattern": "^\\S(.*\\S)?$",
+                      "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected."
+                    }
+                  },
+                  "title": "Tag"
+                },
+                "title": "Tags",
+                "maxItems": 50,
+                "description": "Key/value tags to apply to the resource. Tag policies may require specific keys or values."
+              },
+              "updatedAt": {
+                "description": "Backend-maintained timestamp for this processor. Omit this field on create and update requests; Tsuga sets or preserves it based on processor changes.",
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "description": "Create processor. It writes a new attribute from a format string, formula, or category rule.",
+                "enum": [
+                  "creator"
+                ]
+              },
+              "params": {
+                "description": "Create processor configuration. The `subtype` discriminator selects how the value written to `targetAttribute` is built and which fields are required.",
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "subtype",
+                  "mapping": {
+                    "format-string": "#/components/schemas/InputProcessorParamsCreatorFormatString",
+                    "math-formula": "#/components/schemas/InputProcessorParamsCreatorMathFormula",
+                    "category": "#/components/schemas/InputProcessorParamsCreatorCategory"
+                  }
+                },
+                "required": [
+                  "subtype"
+                ],
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/InputProcessorParamsCreatorFormatString"
+                  },
+                  {
+                    "$ref": "#/components/schemas/InputProcessorParamsCreatorMathFormula"
+                  },
+                  {
+                    "$ref": "#/components/schemas/InputProcessorParamsCreatorCategory"
+                  }
+                ],
+                "errorMessage": {
+                  "discriminator": "value of tag \"subtype\" must be one of: format-string, math-formula, category"
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "params",
+              "type"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 250,
+                "description": "Unique identifier of the processor within the route. Preserve it across updates for existing processors."
+              },
+              "description": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 50000,
+                "description": "Optional processor note."
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "key",
+                    "value"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "maxLength": 128,
+                      "description": "Tag key to attach to the resource."
+                    },
+                    "value": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "pattern": "^\\S(.*\\S)?$",
+                      "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected."
+                    }
+                  },
+                  "title": "Tag"
+                },
+                "title": "Tags",
+                "maxItems": 50,
+                "description": "Key/value tags to apply to the resource. Tag policies may require specific keys or values."
+              },
+              "updatedAt": {
+                "description": "Backend-maintained timestamp for this processor. Omit this field on create and update requests; Tsuga sets or preserves it based on processor changes.",
+                "type": "string"
+              },
+              "params": {
+                "type": "object",
+                "required": [
+                  "items"
+                ],
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "query",
+                        "processors"
+                      ],
+                      "properties": {
+                        "query": {
+                          "type": "string",
+                          "format": "tsuga-query",
+                          "minLength": 0,
+                          "maxLength": 10000,
+                          "description": "Query that determines whether spans enter this branch"
+                        },
+                        "processors": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/InputSpansProcessor"
+                          },
+                          "maxItems": 50,
+                          "description": "Processors executed when the branch query matches"
+                        }
+                      }
+                    },
+                    "minItems": 2,
+                    "maxItems": 11,
+                    "description": "Conditional branches evaluated in order before falling back to the default"
+                  }
+                }
+              },
+              "type": {
+                "type": "string",
+                "description": "Split processor. It sends each span through the first matching conditional branch.",
+                "enum": [
+                  "split"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "OutputSpansProcessor": {
+        "anyOf": [
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "type",
+              "params"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique identifier of the processor within the route. Used to preserve processor identity during updates."
+              },
+              "description": {
+                "type": "string",
+                "description": "Optional user-provided processor note."
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "key",
+                    "value"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "description": "Tag key attached to the resource. Consumers can use key/value tags for filtering, ownership context, and policy checks."
+                    },
+                    "value": {
+                      "type": "string",
+                      "description": "Tag value attached to the resource for this key. Tsuga returns the value exactly as stored."
+                    }
+                  },
+                  "title": "Tag"
+                },
+                "title": "Tags",
+                "description": "Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies."
+              },
+              "updatedAt": {
+                "description": "Timestamp when Tsuga last updated the processor.",
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "description": "Map processor. It moves, copies, or normalizes existing log attributes.",
+                "enum": [
+                  "mapper"
+                ]
+              },
+              "params": {
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "subtype"
+                },
+                "required": [
+                  "subtype"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "attributes",
+                      "subtype"
+                    ],
+                    "properties": {
+                      "attributes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "originAttribute",
+                            "targetAttribute"
+                          ],
+                          "properties": {
+                            "originAttribute": {
+                              "type": "string",
+                              "description": "Attribute name to map to the target attribute"
+                            },
+                            "keepOrigin": {
+                              "type": "boolean",
+                              "description": "Whether the source attribute is preserved after mapping."
+                            },
+                            "overrideTarget": {
+                              "type": "boolean",
+                              "description": "Whether to overwrite the target attribute when it already exists."
+                            },
+                            "targetAttribute": {
+                              "type": "string",
+                              "description": "Attribute name that will receive the mapped value"
+                            }
+                          }
+                        },
+                        "description": "Mappings that map individual attributes to new targets"
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "description": "Copies or moves one or more source attributes to target attributes.",
+                        "enum": [
+                          "map-attributes"
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "errorMessage": {
+                  "discriminator": "value of tag \"subtype\" must be one of: map-attributes"
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "type",
+              "params"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique identifier of the processor within the route. Used to preserve processor identity during updates."
+              },
+              "description": {
+                "type": "string",
+                "description": "Optional user-provided processor note."
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "key",
+                    "value"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "description": "Tag key attached to the resource. Consumers can use key/value tags for filtering, ownership context, and policy checks."
+                    },
+                    "value": {
+                      "type": "string",
+                      "description": "Tag value attached to the resource for this key. Tsuga returns the value exactly as stored."
+                    }
+                  },
+                  "title": "Tag"
+                },
+                "title": "Tags",
+                "description": "Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies."
+              },
+              "updatedAt": {
+                "description": "Timestamp when Tsuga last updated the processor.",
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "description": "Parse processor. It extracts structured fields from a text attribute.",
+                "enum": [
+                  "parse-attribute"
+                ]
+              },
+              "params": {
+                "description": "Parse processor configuration. The `subtype` discriminator selects which parser reads the source text attribute and which fields it extracts.",
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "subtype"
+                },
+                "required": [
+                  "subtype"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "attributeName",
+                      "rules",
+                      "subtype"
+                    ],
+                    "properties": {
+                      "attributeName": {
+                        "type": "string",
+                        "description": "Attribute whose value will be parsed with Grok rules"
+                      },
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "description": "Grok rule applied to parse text. Route processing sends rules as engine patterns."
+                        },
+                        "description": "Ordered Grok rules evaluated until one matches."
+                      },
+                      "samples": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Example log lines for validating the Grok rules. Samples are not sent to the ingestion engine."
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "description": "Extracts fields from unstructured text using ordered Grok rules.",
+                        "enum": [
+                          "grok"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "sourceAttribute",
+                      "subtype"
+                    ],
+                    "properties": {
+                      "sourceAttribute": {
+                        "type": "string",
+                        "description": "Attribute containing the URL to parse"
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "description": "Parses a URL attribute and writes URL detail fields.",
+                        "enum": [
+                          "url"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "sourceAttribute",
+                      "subtype"
+                    ],
+                    "properties": {
+                      "sourceAttribute": {
+                        "type": "string",
+                        "description": "Attribute containing the user agent string to parse"
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "description": "Parses a user-agent string and writes browser, operating system, and device details.",
+                        "enum": [
+                          "user-agent"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "sourceAttribute",
+                      "targetAttribute",
+                      "redactSource",
+                      "subtype"
+                    ],
+                    "properties": {
+                      "sourceAttribute": {
+                        "type": "string",
+                        "description": "Attribute containing the IP address to look up"
+                      },
+                      "targetAttribute": {
+                        "type": "string",
+                        "description": "Target map attribute where geolocation details will be written"
+                      },
+                      "redactSource": {
+                        "type": "boolean",
+                        "description": "Whether to replace a public IP address in the source attribute with `[REDACTED_IP]`. Private IP addresses and non-IP values are left unchanged."
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "description": "Resolves an IP address attribute to geolocation details.",
+                        "enum": [
+                          "geo-ip"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "sourceAttribute",
+                      "targetAttribute",
+                      "keyValueSplitter",
+                      "pairsSplitter",
+                      "acceptStandaloneKey",
+                      "subtype"
+                    ],
+                    "properties": {
+                      "sourceAttribute": {
+                        "type": "string",
+                        "description": "Attribute containing the key/value string segment to parse"
+                      },
+                      "targetAttribute": {
+                        "type": "string",
+                        "description": "Target map attribute where extracted key/value pairs will be written"
+                      },
+                      "keyValueSplitter": {
+                        "type": "string",
+                        "description": "Delimiter separating keys from values in the source string"
+                      },
+                      "pairsSplitter": {
+                        "type": "string",
+                        "description": "Delimiter separating each key/value pair in the source string."
+                      },
+                      "acceptStandaloneKey": {
+                        "type": "boolean",
+                        "description": "Whether keys without explicit values are accepted by the parser."
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "description": "Parses delimited key/value text into attributes.",
+                        "enum": [
+                          "key-value"
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "errorMessage": {
+                  "discriminator": "value of tag \"subtype\" must be one of: grok, url, user-agent, geo-ip, key-value"
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "type",
+              "params"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique identifier of the processor within the route. Used to preserve processor identity during updates."
+              },
+              "description": {
+                "type": "string",
+                "description": "Optional user-provided processor note."
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "key",
+                    "value"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "description": "Tag key attached to the resource. Consumers can use key/value tags for filtering, ownership context, and policy checks."
+                    },
+                    "value": {
+                      "type": "string",
+                      "description": "Tag value attached to the resource for this key. Tsuga returns the value exactly as stored."
+                    }
+                  },
+                  "title": "Tag"
+                },
+                "title": "Tags",
+                "description": "Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies."
+              },
+              "updatedAt": {
+                "description": "Timestamp when Tsuga last updated the processor.",
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "description": "Create processor. It writes a new attribute from a format string, formula, or category rule.",
+                "enum": [
+                  "creator"
+                ]
+              },
+              "params": {
+                "description": "Create processor configuration. The `subtype` discriminator selects how the value written to `targetAttribute` is built and which fields are required.",
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "subtype",
+                  "mapping": {
+                    "format-string": "#/components/schemas/ProcessorParamsCreatorFormatString",
+                    "math-formula": "#/components/schemas/ProcessorParamsCreatorMathFormula",
+                    "category": "#/components/schemas/ProcessorParamsCreatorCategory"
+                  }
+                },
+                "required": [
+                  "subtype"
+                ],
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/ProcessorParamsCreatorFormatString"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ProcessorParamsCreatorMathFormula"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ProcessorParamsCreatorCategory"
+                  }
+                ],
+                "errorMessage": {
+                  "discriminator": "value of tag \"subtype\" must be one of: format-string, math-formula, category"
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "params",
+              "type"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique identifier of the processor within the route. Used to preserve processor identity during updates."
+              },
+              "description": {
+                "type": "string",
+                "description": "Optional user-provided processor note."
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "key",
+                    "value"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "description": "Tag key attached to the resource. Consumers can use key/value tags for filtering, ownership context, and policy checks."
+                    },
+                    "value": {
+                      "type": "string",
+                      "description": "Tag value attached to the resource for this key. Tsuga returns the value exactly as stored."
+                    }
+                  },
+                  "title": "Tag"
+                },
+                "title": "Tags",
+                "description": "Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies."
+              },
+              "updatedAt": {
+                "description": "Timestamp when Tsuga last updated the processor.",
+                "type": "string"
+              },
+              "params": {
+                "type": "object",
+                "required": [
+                  "items"
+                ],
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "query",
+                        "processors"
+                      ],
+                      "properties": {
+                        "query": {
+                          "type": "string",
+                          "description": "Query that determines whether spans enter this branch"
+                        },
+                        "processors": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/OutputSpansProcessor"
+                          },
+                          "description": "Processors executed when the branch query matches"
+                        }
+                      }
+                    },
+                    "description": "Conditional branches evaluated in order before falling back to the default"
+                  }
+                }
+              },
+              "type": {
+                "type": "string",
+                "description": "Split processor. It sends each span through the first matching conditional branch.",
                 "enum": [
                   "split"
                 ]
@@ -2849,7 +3904,7 @@
             "examples": [
               {
                 "attributes": [
-                  "events.context.session.id",
+                  "context.session.id",
                   "events.event.name",
                   "events.view.name",
                   "exceptions.exception.type",
@@ -13494,8 +14549,13 @@
               "metric-unit-consistency",
               "host-name-present",
               "inconsistent-attribute-naming",
+              "inconsistent-metric-naming",
+              "inconsistent-log-attribute-naming",
+              "inconsistent-span-attribute-naming",
               "no-dynamic-log-attribute-names",
               "no-dynamic-span-attribute-names",
+              "no-excessive-log-attributes",
+              "no-excessive-span-attributes",
               "no-duplicate-attr-values",
               "no-debug-logs-in-prod",
               "no-multiline-logs",
@@ -16633,6 +17693,687 @@
         }
       },
       "DeleteSloResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DeleteResponse"
+          }
+        }
+      },
+      "SpanRoute": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "isEnabled",
+          "query",
+          "owner",
+          "processors"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Tsuga-generated span route ID assigned when the route is created."
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable span route name shown in Tsuga."
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional free-text note about the span route's purpose, set by the caller. This metadata is not evaluated when matching or processing spans."
+          },
+          "isEnabled": {
+            "type": "boolean",
+            "description": "Whether this route is active for newly ingested spans. Disabled routes remain saved but do not process spans."
+          },
+          "query": {
+            "type": "string",
+            "description": "Tsuga query that selects which newly ingested spans enter the route processor chain."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "value"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "Tag key attached to the resource. Consumers can use key/value tags for filtering, ownership context, and policy checks."
+                },
+                "value": {
+                  "type": "string",
+                  "description": "Tag value attached to the resource for this key. Tsuga returns the value exactly as stored."
+                }
+              },
+              "title": "Tag"
+            },
+            "title": "Tags",
+            "description": "Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies."
+          },
+          "owner": {
+            "type": "string",
+            "description": "ID of the team that owns the span route. Determines which team members can view and manage it. Only an org admin or an admin of this team may change fields other than `processors`, or delete the route."
+          },
+          "processors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OutputSpansProcessor"
+            },
+            "description": "Processors applied in array order to spans that match the route, each transforming the output of the previous one."
+          }
+        },
+        "description": "Team-owned spans processing definition that selects newly ingested spans with a query and applies ordered processors. See [Routes](/documentation/process/routes/index).",
+        "examples": [
+          {
+            "id": "123-456-abc",
+            "name": "Normalize Checkout Spans",
+            "description": "Maps legacy attribute names onto the OpenTelemetry conventions",
+            "isEnabled": true,
+            "query": "context.service.name:checkout",
+            "tags": [
+              {
+                "key": "category",
+                "value": "normalization"
+              }
+            ],
+            "owner": "team-123-abc",
+            "processors": [
+              {
+                "id": "map-http-method",
+                "type": "mapper",
+                "tags": [],
+                "params": {
+                  "subtype": "map-attributes",
+                  "attributes": [
+                    {
+                      "originAttribute": "http.method",
+                      "targetAttribute": "http.request.method",
+                      "keepOrigin": false,
+                      "overrideTarget": true
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "SpanRoute-OutputSpansProcessor": {
+        "anyOf": [
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "type",
+              "params"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique identifier of the processor within the route. Used to preserve processor identity during updates."
+              },
+              "description": {
+                "type": "string",
+                "description": "Optional user-provided processor note."
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "key",
+                    "value"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "description": "Tag key attached to the resource. Consumers can use key/value tags for filtering, ownership context, and policy checks."
+                    },
+                    "value": {
+                      "type": "string",
+                      "description": "Tag value attached to the resource for this key. Tsuga returns the value exactly as stored."
+                    }
+                  },
+                  "title": "Tag"
+                },
+                "title": "Tags",
+                "description": "Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies."
+              },
+              "updatedAt": {
+                "description": "Timestamp when Tsuga last updated the processor.",
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "description": "Map processor. It moves, copies, or normalizes existing log attributes.",
+                "enum": [
+                  "mapper"
+                ]
+              },
+              "params": {
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "subtype"
+                },
+                "required": [
+                  "subtype"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "attributes",
+                      "subtype"
+                    ],
+                    "properties": {
+                      "attributes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "originAttribute",
+                            "targetAttribute"
+                          ],
+                          "properties": {
+                            "originAttribute": {
+                              "type": "string",
+                              "description": "Attribute name to map to the target attribute"
+                            },
+                            "keepOrigin": {
+                              "type": "boolean",
+                              "description": "Whether the source attribute is preserved after mapping."
+                            },
+                            "overrideTarget": {
+                              "type": "boolean",
+                              "description": "Whether to overwrite the target attribute when it already exists."
+                            },
+                            "targetAttribute": {
+                              "type": "string",
+                              "description": "Attribute name that will receive the mapped value"
+                            }
+                          }
+                        },
+                        "description": "Mappings that map individual attributes to new targets"
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "description": "Copies or moves one or more source attributes to target attributes.",
+                        "enum": [
+                          "map-attributes"
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "errorMessage": {
+                  "discriminator": "value of tag \"subtype\" must be one of: map-attributes"
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "type",
+              "params"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique identifier of the processor within the route. Used to preserve processor identity during updates."
+              },
+              "description": {
+                "type": "string",
+                "description": "Optional user-provided processor note."
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "key",
+                    "value"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "description": "Tag key attached to the resource. Consumers can use key/value tags for filtering, ownership context, and policy checks."
+                    },
+                    "value": {
+                      "type": "string",
+                      "description": "Tag value attached to the resource for this key. Tsuga returns the value exactly as stored."
+                    }
+                  },
+                  "title": "Tag"
+                },
+                "title": "Tags",
+                "description": "Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies."
+              },
+              "updatedAt": {
+                "description": "Timestamp when Tsuga last updated the processor.",
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "description": "Parse processor. It extracts structured fields from a text attribute.",
+                "enum": [
+                  "parse-attribute"
+                ]
+              },
+              "params": {
+                "description": "Parse processor configuration. The `subtype` discriminator selects which parser reads the source text attribute and which fields it extracts.",
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "subtype"
+                },
+                "required": [
+                  "subtype"
+                ],
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "attributeName",
+                      "rules",
+                      "subtype"
+                    ],
+                    "properties": {
+                      "attributeName": {
+                        "type": "string",
+                        "description": "Attribute whose value will be parsed with Grok rules"
+                      },
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "description": "Grok rule applied to parse text. Route processing sends rules as engine patterns."
+                        },
+                        "description": "Ordered Grok rules evaluated until one matches."
+                      },
+                      "samples": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Example log lines for validating the Grok rules. Samples are not sent to the ingestion engine."
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "description": "Extracts fields from unstructured text using ordered Grok rules.",
+                        "enum": [
+                          "grok"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "sourceAttribute",
+                      "subtype"
+                    ],
+                    "properties": {
+                      "sourceAttribute": {
+                        "type": "string",
+                        "description": "Attribute containing the URL to parse"
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "description": "Parses a URL attribute and writes URL detail fields.",
+                        "enum": [
+                          "url"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "sourceAttribute",
+                      "subtype"
+                    ],
+                    "properties": {
+                      "sourceAttribute": {
+                        "type": "string",
+                        "description": "Attribute containing the user agent string to parse"
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "description": "Parses a user-agent string and writes browser, operating system, and device details.",
+                        "enum": [
+                          "user-agent"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "sourceAttribute",
+                      "targetAttribute",
+                      "redactSource",
+                      "subtype"
+                    ],
+                    "properties": {
+                      "sourceAttribute": {
+                        "type": "string",
+                        "description": "Attribute containing the IP address to look up"
+                      },
+                      "targetAttribute": {
+                        "type": "string",
+                        "description": "Target map attribute where geolocation details will be written"
+                      },
+                      "redactSource": {
+                        "type": "boolean",
+                        "description": "Whether to replace a public IP address in the source attribute with `[REDACTED_IP]`. Private IP addresses and non-IP values are left unchanged."
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "description": "Resolves an IP address attribute to geolocation details.",
+                        "enum": [
+                          "geo-ip"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "sourceAttribute",
+                      "targetAttribute",
+                      "keyValueSplitter",
+                      "pairsSplitter",
+                      "acceptStandaloneKey",
+                      "subtype"
+                    ],
+                    "properties": {
+                      "sourceAttribute": {
+                        "type": "string",
+                        "description": "Attribute containing the key/value string segment to parse"
+                      },
+                      "targetAttribute": {
+                        "type": "string",
+                        "description": "Target map attribute where extracted key/value pairs will be written"
+                      },
+                      "keyValueSplitter": {
+                        "type": "string",
+                        "description": "Delimiter separating keys from values in the source string"
+                      },
+                      "pairsSplitter": {
+                        "type": "string",
+                        "description": "Delimiter separating each key/value pair in the source string."
+                      },
+                      "acceptStandaloneKey": {
+                        "type": "boolean",
+                        "description": "Whether keys without explicit values are accepted by the parser."
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "description": "Parses delimited key/value text into attributes.",
+                        "enum": [
+                          "key-value"
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "errorMessage": {
+                  "discriminator": "value of tag \"subtype\" must be one of: grok, url, user-agent, geo-ip, key-value"
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "type",
+              "params"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique identifier of the processor within the route. Used to preserve processor identity during updates."
+              },
+              "description": {
+                "type": "string",
+                "description": "Optional user-provided processor note."
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "key",
+                    "value"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "description": "Tag key attached to the resource. Consumers can use key/value tags for filtering, ownership context, and policy checks."
+                    },
+                    "value": {
+                      "type": "string",
+                      "description": "Tag value attached to the resource for this key. Tsuga returns the value exactly as stored."
+                    }
+                  },
+                  "title": "Tag"
+                },
+                "title": "Tags",
+                "description": "Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies."
+              },
+              "updatedAt": {
+                "description": "Timestamp when Tsuga last updated the processor.",
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "description": "Create processor. It writes a new attribute from a format string, formula, or category rule.",
+                "enum": [
+                  "creator"
+                ]
+              },
+              "params": {
+                "description": "Create processor configuration. The `subtype` discriminator selects how the value written to `targetAttribute` is built and which fields are required.",
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "subtype",
+                  "mapping": {
+                    "format-string": "#/components/schemas/ProcessorParamsCreatorFormatString",
+                    "math-formula": "#/components/schemas/ProcessorParamsCreatorMathFormula",
+                    "category": "#/components/schemas/ProcessorParamsCreatorCategory"
+                  }
+                },
+                "required": [
+                  "subtype"
+                ],
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/ProcessorParamsCreatorFormatString"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ProcessorParamsCreatorMathFormula"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ProcessorParamsCreatorCategory"
+                  }
+                ],
+                "errorMessage": {
+                  "discriminator": "value of tag \"subtype\" must be one of: format-string, math-formula, category"
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "params",
+              "type"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique identifier of the processor within the route. Used to preserve processor identity during updates."
+              },
+              "description": {
+                "type": "string",
+                "description": "Optional user-provided processor note."
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "key",
+                    "value"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "description": "Tag key attached to the resource. Consumers can use key/value tags for filtering, ownership context, and policy checks."
+                    },
+                    "value": {
+                      "type": "string",
+                      "description": "Tag value attached to the resource for this key. Tsuga returns the value exactly as stored."
+                    }
+                  },
+                  "title": "Tag"
+                },
+                "title": "Tags",
+                "description": "Key/value tags applied to the resource. Use them to organize resources and to satisfy tag policies."
+              },
+              "updatedAt": {
+                "description": "Timestamp when Tsuga last updated the processor.",
+                "type": "string"
+              },
+              "params": {
+                "type": "object",
+                "required": [
+                  "items"
+                ],
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "query",
+                        "processors"
+                      ],
+                      "properties": {
+                        "query": {
+                          "type": "string",
+                          "description": "Query that determines whether spans enter this branch"
+                        },
+                        "processors": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/OutputSpansProcessor"
+                          },
+                          "description": "Processors executed when the branch query matches"
+                        }
+                      }
+                    },
+                    "description": "Conditional branches evaluated in order before falling back to the default"
+                  }
+                }
+              },
+              "type": {
+                "type": "string",
+                "description": "Split processor. It sends each span through the first matching conditional branch.",
+                "enum": [
+                  "split"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "ListSpanRoutesResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpanRoute"
+            }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
+          }
+        }
+      },
+      "GetSpanRouteResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/SpanRoute"
+          }
+        }
+      },
+      "CreateSpanRouteResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/SpanRoute"
+          }
+        }
+      },
+      "UpdateSpanRouteResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "data"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier used to trace the lifecycle of this API request"
+          },
+          "data": {
+            "$ref": "#/components/schemas/SpanRoute"
+          }
+        }
+      },
+      "DeleteSpanRouteResponse": {
         "type": "object",
         "required": [
           "requestId",
@@ -44620,6 +46361,493 @@
           }
         }
       },
+      "OperationApiKeyIdentity": {
+        "type": "object",
+        "required": [
+          "type",
+          "id",
+          "name",
+          "owner",
+          "scope",
+          "permissions",
+          "keyLastCharacters"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Credential type for this response variant. Set by Tsuga from the bearer token used on the request. Returned as `operation-api-key` when the request authenticated with an operation API key.",
+            "enum": [
+              "operation-api-key"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the operation API key. Generated by Tsuga when the key is created. Use this as the stable key identifier when correlating API calls with audit logs or key-management records."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the operation API key. Set by the user who created or last updated the key. Returned for every operation-key-authenticated request so clients can show which saved key is active."
+          },
+          "owner": {
+            "type": "string",
+            "description": "Identifier of the team that owns the operation API key. Set when the key is created or updated. Combined with `scope`, it determines which team-owned resources the key can reach."
+          },
+          "scope": {
+            "enum": [
+              "all",
+              "owning-team-and-public",
+              "owning-team-only"
+            ],
+            "description": "Team-access boundary for the operation API key. Set when the key is created or updated. `all` can reach all teams, `owning-team-and-public` can reach the owning team and public teams, and `owning-team-only` can reach only the owning team.",
+            "type": "string"
+          },
+          "permissions": {
+            "type": "object",
+            "properties": {
+              "dashboard": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Dashboards and the graphs they contain.",
+                "type": "string"
+              },
+              "dashboard-folder": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Folders organizing dashboards.",
+                "type": "string"
+              },
+              "monitor-folder": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Folders organizing monitors.",
+                "type": "string"
+              },
+              "documentation": {
+                "type": "string",
+                "description": "Tsuga documentation and API reference pages, which are public content rather than account data.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "ingestion-api-key": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Ingestion API keys, used to send telemetry data to Tsuga.",
+                "type": "string"
+              },
+              "rum-public-token": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "RUM public tokens, embedded in web and mobile applications to send real user monitoring telemetry.",
+                "type": "string"
+              },
+              "operation-api-key": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Operation API keys, used to authenticate API, Terraform, MCP, and Tsuga CLI clients.",
+                "type": "string"
+              },
+              "inventory": {
+                "type": "string",
+                "description": "Cloud resources discovered by inventory scans.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "cloud-account": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Cloud accounts Tsuga scans to discover resources.",
+                "type": "string"
+              },
+              "custom-role": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Custom global roles, which define what their holders can access across the organization.",
+                "type": "string"
+              },
+              "data-deletion-request": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Data deletion requests, which delete the telemetry events matching a query on a cluster.",
+                "type": "string"
+              },
+              "logs": {
+                "type": "string",
+                "description": "Ingested log events, through search and aggregation endpoints.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "log-route": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Log routes, which select newly ingested logs and apply processors to them.",
+                "type": "string"
+              },
+              "metrics": {
+                "type": "string",
+                "description": "Ingested metrics, through query and aggregation endpoints.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "metric-route": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Metric routes, which select newly ingested metrics by name and apply processors to them.",
+                "type": "string"
+              },
+              "span-route": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Span routes, which select newly ingested spans and apply processors to them.",
+                "type": "string"
+              },
+              "monitor": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Monitors, the alert definitions evaluated against telemetry.",
+                "type": "string"
+              },
+              "allowed-domains": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Email domains whose users are allowed to join the organization.",
+                "type": "string"
+              },
+              "queue": {
+                "type": "string",
+                "description": "Message queues of the catalog, inferred from telemetry.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "quality-report": {
+                "type": "string",
+                "description": "Telemetry quality reports.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "billing": {
+                "type": "string",
+                "description": "Ingested data volume billed to the organization.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "service": {
+                "type": "string",
+                "description": "Services of the catalog, inferred from telemetry.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "service-target": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Notification targets attached to a service.",
+                "type": "string"
+              },
+              "slo": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Service level objectives and the alerts attached to them.",
+                "type": "string"
+              },
+              "notification-rule": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Notification rules, which route alert transitions to notification targets.",
+                "type": "string"
+              },
+              "adaptive-notification-rule": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Adaptive notification rules, which page the owners of the failing service when one of their monitors or SLOs fires.",
+                "type": "string"
+              },
+              "notification-integration": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Notification integrations, containing the credentials Tsuga uses when sending notifications.",
+                "type": "string"
+              },
+              "notification-silence": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Notification silences, which suppress matching notification delivery.",
+                "type": "string"
+              },
+              "custom-usage-tag": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Custom usage tags, the telemetry tag keys tracked as usage dimensions.",
+                "type": "string"
+              },
+              "retention-policy": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Retention policies applied to logs, metrics, and traces.",
+                "type": "string"
+              },
+              "sandbox-configuration": {
+                "type": "string",
+                "description": "Sandbox agent configurations of the key's teams, and the sandbox agent runs launched with them.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "tag-policy": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Tag policies, which enforce tag requirements on Tsuga-managed assets and telemetry data.",
+                "type": "string"
+              },
+              "team": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Teams, their settings and their memberships.",
+                "type": "string"
+              },
+              "traces": {
+                "type": "string",
+                "description": "Ingested spans, through search and aggregation endpoints.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "rum": {
+                "type": "string",
+                "description": "Ingested RUM events, through search and aggregation endpoints.",
+                "enum": [
+                  "read"
+                ]
+              },
+              "user": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "User accounts of the organization.",
+                "type": "string"
+              },
+              "user-invitation": {
+                "enum": [
+                  "read",
+                  "write"
+                ],
+                "description": "Invitations for people who do not belong to the organization yet.",
+                "type": "string"
+              }
+            },
+            "description": "Resource types the key can act on, each mapped to `read` or `write`. `write` also grants read access. A resource type absent from the map is not accessible to the key at all."
+          },
+          "keyLastCharacters": {
+            "type": "string",
+            "description": "Last characters of the operation API key secret. Set by Tsuga from the generated secret and returned because the full secret is only shown once at creation. Use this to distinguish saved keys without exposing the secret."
+          },
+          "expiresAt": {
+            "description": "Timestamp after which the operation API key stops authenticating. Set when the key is created or updated. Returned only for keys that have an expiration date.",
+            "type": "string"
+          }
+        },
+        "description": "Identity and effective access for the operation API key used on the request. Returned when the bearer token is an operation API key. See [API keys](/documentation/account-and-settings/api-keys).",
+        "examples": [
+          {
+            "type": "operation-api-key",
+            "id": "key-123-abc",
+            "name": "ci-deploy",
+            "owner": "team-123-abc",
+            "scope": "owning-team-and-public",
+            "permissions": {
+              "dashboard": "write",
+              "logs": "read",
+              "monitor": "read"
+            },
+            "keyLastCharacters": "a9f2",
+            "expiresAt": "2026-12-01T00:00:00.000Z"
+          }
+        ]
+      },
+      "UserIdentity": {
+        "type": "object",
+        "required": [
+          "type",
+          "email",
+          "id",
+          "name",
+          "role",
+          "orgId",
+          "favoriteDashboards",
+          "favoriteFolders"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Credential type for this response variant. Set by Tsuga from the bearer token used on the request. Returned as `user` when the request authenticated with a user OAuth access token.",
+            "enum": [
+              "user"
+            ]
+          },
+          "email": {
+            "type": "string",
+            "description": "Lowercase email address for the user. Use this for display and invitation matching, not as a stable identifier."
+          },
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the user. Generated by Tsuga and stable for the user lifetime."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the user."
+          },
+          "role": {
+            "description": "Organization role for the user: a built-in role `type`, or `custom` with the `customRoleId` of the custom role.",
+            "type": "object",
+            "discriminator": {
+              "propertyName": "type"
+            },
+            "required": [
+              "type"
+            ],
+            "oneOf": [
+              {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "admin",
+                      "public_editor",
+                      "public_viewer",
+                      "teams_only"
+                    ],
+                    "description": "Built-in organization role: `admin`, `public_editor`, `public_viewer`, or `teams_only`.",
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "type",
+                  "customRoleId"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The user holds a custom role.",
+                    "enum": [
+                      "custom"
+                    ]
+                  },
+                  "customRoleId": {
+                    "type": "string",
+                    "description": "Identifier of the custom role. Use it with the custom role endpoints to read what the role grants."
+                  }
+                }
+              }
+            ],
+            "errorMessage": {
+              "discriminator": "value of tag \"type\" must be one of: admin, public_editor, public_viewer, teams_only, custom"
+            }
+          },
+          "orgId": {
+            "type": "string",
+            "description": "Identifier of the Tsuga organization the user belongs to."
+          },
+          "orgName": {
+            "type": "string",
+            "description": "Display name of the Tsuga organization the user belongs to. Absent when the organization record cannot be resolved."
+          },
+          "favoriteDashboards": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Dashboard IDs the user marked as favorites. Not pruned when a dashboard is deleted, so an ID may no longer resolve."
+          },
+          "favoriteFolders": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Dashboard folder IDs the user marked as favorites. Not pruned when a folder is deleted, so an ID may no longer resolve."
+          }
+        },
+        "description": "Identity for the user OAuth access token used on the request. Returned when the bearer token is a user access token. Access follows the user organization role rather than an operation-key permission map. See [Members](/documentation/account-and-settings/members).",
+        "examples": [
+          {
+            "type": "user",
+            "id": "user-123-abc",
+            "email": "john@tsuga.com",
+            "name": "John Doe",
+            "role": {
+              "type": "public_viewer"
+            },
+            "orgId": "org-123-abc",
+            "orgName": "Acme Inc.",
+            "favoriteDashboards": [
+              "dashboard-123-abc"
+            ],
+            "favoriteFolders": [
+              "folder-123-abc"
+            ]
+          }
+        ]
+      },
       "ObservedServiceGraphNode": {
         "type": "object",
         "required": [
@@ -46308,493 +48536,6 @@
           }
         },
         "description": "SLO alert that is currently open, carrying the breached SLO and the alert configuration that fired."
-      },
-      "OperationApiKeyIdentity": {
-        "type": "object",
-        "required": [
-          "type",
-          "id",
-          "name",
-          "owner",
-          "scope",
-          "permissions",
-          "keyLastCharacters"
-        ],
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "Credential type for this response variant. Set by Tsuga from the bearer token used on the request. Returned as `operation-api-key` when the request authenticated with an operation API key.",
-            "enum": [
-              "operation-api-key"
-            ]
-          },
-          "id": {
-            "type": "string",
-            "description": "Unique identifier of the operation API key. Generated by Tsuga when the key is created. Use this as the stable key identifier when correlating API calls with audit logs or key-management records."
-          },
-          "name": {
-            "type": "string",
-            "description": "Display name of the operation API key. Set by the user who created or last updated the key. Returned for every operation-key-authenticated request so clients can show which saved key is active."
-          },
-          "owner": {
-            "type": "string",
-            "description": "Identifier of the team that owns the operation API key. Set when the key is created or updated. Combined with `scope`, it determines which team-owned resources the key can reach."
-          },
-          "scope": {
-            "enum": [
-              "all",
-              "owning-team-and-public",
-              "owning-team-only"
-            ],
-            "description": "Team-access boundary for the operation API key. Set when the key is created or updated. `all` can reach all teams, `owning-team-and-public` can reach the owning team and public teams, and `owning-team-only` can reach only the owning team.",
-            "type": "string"
-          },
-          "permissions": {
-            "type": "object",
-            "properties": {
-              "dashboard": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Dashboards and the graphs they contain.",
-                "type": "string"
-              },
-              "dashboard-folder": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Folders organizing dashboards.",
-                "type": "string"
-              },
-              "monitor-folder": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Folders organizing monitors.",
-                "type": "string"
-              },
-              "documentation": {
-                "type": "string",
-                "description": "Tsuga documentation and API reference pages, which are public content rather than account data.",
-                "enum": [
-                  "read"
-                ]
-              },
-              "ingestion-api-key": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Ingestion API keys, used to send telemetry data to Tsuga.",
-                "type": "string"
-              },
-              "rum-public-token": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "RUM public tokens, embedded in web and mobile applications to send real user monitoring telemetry.",
-                "type": "string"
-              },
-              "operation-api-key": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Operation API keys, used to authenticate API, Terraform, MCP, and Tsuga CLI clients.",
-                "type": "string"
-              },
-              "inventory": {
-                "type": "string",
-                "description": "Cloud resources discovered by inventory scans.",
-                "enum": [
-                  "read"
-                ]
-              },
-              "cloud-account": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Cloud accounts Tsuga scans to discover resources.",
-                "type": "string"
-              },
-              "custom-role": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Custom global roles, which define what their holders can access across the organization.",
-                "type": "string"
-              },
-              "data-deletion-request": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Data deletion requests, which delete the telemetry events matching a query on a cluster.",
-                "type": "string"
-              },
-              "logs": {
-                "type": "string",
-                "description": "Ingested log events, through search and aggregation endpoints.",
-                "enum": [
-                  "read"
-                ]
-              },
-              "log-route": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Log routes, which select newly ingested logs and apply processors to them.",
-                "type": "string"
-              },
-              "metrics": {
-                "type": "string",
-                "description": "Ingested metrics, through query and aggregation endpoints.",
-                "enum": [
-                  "read"
-                ]
-              },
-              "metric-route": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Metric routes, which select newly ingested metrics by name and apply processors to them.",
-                "type": "string"
-              },
-              "span-route": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Span routes, which select newly ingested spans and apply processors to them.",
-                "type": "string"
-              },
-              "monitor": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Monitors, the alert definitions evaluated against telemetry.",
-                "type": "string"
-              },
-              "allowed-domains": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Email domains whose users are allowed to join the organization.",
-                "type": "string"
-              },
-              "queue": {
-                "type": "string",
-                "description": "Message queues of the catalog, inferred from telemetry.",
-                "enum": [
-                  "read"
-                ]
-              },
-              "quality-report": {
-                "type": "string",
-                "description": "Telemetry quality reports.",
-                "enum": [
-                  "read"
-                ]
-              },
-              "billing": {
-                "type": "string",
-                "description": "Ingested data volume billed to the organization.",
-                "enum": [
-                  "read"
-                ]
-              },
-              "service": {
-                "type": "string",
-                "description": "Services of the catalog, inferred from telemetry.",
-                "enum": [
-                  "read"
-                ]
-              },
-              "service-target": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Notification targets attached to a service.",
-                "type": "string"
-              },
-              "slo": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Service level objectives and the alerts attached to them.",
-                "type": "string"
-              },
-              "notification-rule": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Notification rules, which route alert transitions to notification targets.",
-                "type": "string"
-              },
-              "adaptive-notification-rule": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Adaptive notification rules, which page the owners of the failing service when one of their monitors or SLOs fires.",
-                "type": "string"
-              },
-              "notification-integration": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Notification integrations, containing the credentials Tsuga uses when sending notifications.",
-                "type": "string"
-              },
-              "notification-silence": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Notification silences, which suppress matching notification delivery.",
-                "type": "string"
-              },
-              "custom-usage-tag": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Custom usage tags, the telemetry tag keys tracked as usage dimensions.",
-                "type": "string"
-              },
-              "retention-policy": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Retention policies applied to logs, metrics, and traces.",
-                "type": "string"
-              },
-              "sandbox-configuration": {
-                "type": "string",
-                "description": "Sandbox agent configurations of the key's teams, and the sandbox agent runs launched with them.",
-                "enum": [
-                  "read"
-                ]
-              },
-              "tag-policy": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Tag policies, which enforce tag requirements on Tsuga-managed assets and telemetry data.",
-                "type": "string"
-              },
-              "team": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Teams, their settings and their memberships.",
-                "type": "string"
-              },
-              "traces": {
-                "type": "string",
-                "description": "Ingested spans, through search and aggregation endpoints.",
-                "enum": [
-                  "read"
-                ]
-              },
-              "rum": {
-                "type": "string",
-                "description": "Ingested RUM events, through search and aggregation endpoints.",
-                "enum": [
-                  "read"
-                ]
-              },
-              "user": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "User accounts of the organization.",
-                "type": "string"
-              },
-              "user-invitation": {
-                "enum": [
-                  "read",
-                  "write"
-                ],
-                "description": "Invitations for people who do not belong to the organization yet.",
-                "type": "string"
-              }
-            },
-            "description": "Resource types the key can act on, each mapped to `read` or `write`. `write` also grants read access. A resource type absent from the map is not accessible to the key at all."
-          },
-          "keyLastCharacters": {
-            "type": "string",
-            "description": "Last characters of the operation API key secret. Set by Tsuga from the generated secret and returned because the full secret is only shown once at creation. Use this to distinguish saved keys without exposing the secret."
-          },
-          "expiresAt": {
-            "description": "Timestamp after which the operation API key stops authenticating. Set when the key is created or updated. Returned only for keys that have an expiration date.",
-            "type": "string"
-          }
-        },
-        "description": "Identity and effective access for the operation API key used on the request. Returned when the bearer token is an operation API key. See [API keys](/documentation/account-and-settings/api-keys).",
-        "examples": [
-          {
-            "type": "operation-api-key",
-            "id": "key-123-abc",
-            "name": "ci-deploy",
-            "owner": "team-123-abc",
-            "scope": "owning-team-and-public",
-            "permissions": {
-              "dashboard": "write",
-              "logs": "read",
-              "monitor": "read"
-            },
-            "keyLastCharacters": "a9f2",
-            "expiresAt": "2026-12-01T00:00:00.000Z"
-          }
-        ]
-      },
-      "UserIdentity": {
-        "type": "object",
-        "required": [
-          "type",
-          "email",
-          "id",
-          "name",
-          "role",
-          "orgId",
-          "favoriteDashboards",
-          "favoriteFolders"
-        ],
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "Credential type for this response variant. Set by Tsuga from the bearer token used on the request. Returned as `user` when the request authenticated with a user OAuth access token.",
-            "enum": [
-              "user"
-            ]
-          },
-          "email": {
-            "type": "string",
-            "description": "Lowercase email address for the user. Use this for display and invitation matching, not as a stable identifier."
-          },
-          "id": {
-            "type": "string",
-            "description": "Unique identifier of the user. Generated by Tsuga and stable for the user lifetime."
-          },
-          "name": {
-            "type": "string",
-            "description": "Display name of the user."
-          },
-          "role": {
-            "description": "Organization role for the user: a built-in role `type`, or `custom` with the `customRoleId` of the custom role.",
-            "type": "object",
-            "discriminator": {
-              "propertyName": "type"
-            },
-            "required": [
-              "type"
-            ],
-            "oneOf": [
-              {
-                "type": "object",
-                "required": [
-                  "type"
-                ],
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "admin",
-                      "public_editor",
-                      "public_viewer",
-                      "teams_only"
-                    ],
-                    "description": "Built-in organization role: `admin`, `public_editor`, `public_viewer`, or `teams_only`.",
-                    "type": "string"
-                  }
-                }
-              },
-              {
-                "type": "object",
-                "required": [
-                  "type",
-                  "customRoleId"
-                ],
-                "properties": {
-                  "type": {
-                    "type": "string",
-                    "description": "The user holds a custom role.",
-                    "enum": [
-                      "custom"
-                    ]
-                  },
-                  "customRoleId": {
-                    "type": "string",
-                    "description": "Identifier of the custom role. Use it with the custom role endpoints to read what the role grants."
-                  }
-                }
-              }
-            ],
-            "errorMessage": {
-              "discriminator": "value of tag \"type\" must be one of: admin, public_editor, public_viewer, teams_only, custom"
-            }
-          },
-          "orgId": {
-            "type": "string",
-            "description": "Identifier of the Tsuga organization the user belongs to."
-          },
-          "orgName": {
-            "type": "string",
-            "description": "Display name of the Tsuga organization the user belongs to. Absent when the organization record cannot be resolved."
-          },
-          "favoriteDashboards": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Dashboard IDs the user marked as favorites. Not pruned when a dashboard is deleted, so an ID may no longer resolve."
-          },
-          "favoriteFolders": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Dashboard folder IDs the user marked as favorites. Not pruned when a folder is deleted, so an ID may no longer resolve."
-          }
-        },
-        "description": "Identity for the user OAuth access token used on the request. Returned when the bearer token is a user access token. Access follows the user organization role rather than an operation-key permission map. See [Members](/documentation/account-and-settings/members).",
-        "examples": [
-          {
-            "type": "user",
-            "id": "user-123-abc",
-            "email": "john@tsuga.com",
-            "name": "John Doe",
-            "role": {
-              "type": "public_viewer"
-            },
-            "orgId": "org-123-abc",
-            "orgName": "Acme Inc.",
-            "favoriteDashboards": [
-              "dashboard-123-abc"
-            ],
-            "favoriteFolders": [
-              "folder-123-abc"
-            ]
-          }
-        ]
       }
     }
   },
@@ -50585,7 +52326,7 @@
         "tags": [
           "rum"
         ],
-        "description": "Lists the RUM attribute dot-paths that can be queried: the fields to search, filter or group RUM events by. See [RUM views](/documentation/categorize/rum-views/index).",
+        "description": "Lists the RUM attribute dot-paths that can be queried: the fields to search, filter or group RUM events by. The list is the fixed RUM schema: keys an app sends itself, such as `context.user.attributes.<KEY>`, are not listed. See [RUM views](/documentation/categorize/rum-views/index).",
         "parameters": [
           {
             "schema": {
@@ -53519,7 +55260,7 @@
         "tags": [
           "dashboards"
         ],
-        "description": "Lists or searches dashboards by name or ID substring, owning team, tags or folder. Results omit widgets (`graphs`) and give `widgetCount`; get a dashboard by ID to read its widgets. See [Dashboards](/documentation/visualize/dashboards/index).",
+        "description": "Lists or searches dashboards by name or ID substring, by what their widgets query (a service, field, metric or function), owning team, tags or folder. Results omit widgets (`graphs`) and give `widgetCount`; get a dashboard by ID to read its widgets. See [Dashboards](/documentation/visualize/dashboards/index).",
         "requestBody": {
           "required": true,
           "content": {
@@ -53583,6 +55324,25 @@
                           }
                         },
                         "description": "Text filter for dashboard names or IDs. Optional; `exclude: true` returns dashboards whose name and ID do not match the substring."
+                      },
+                      "widgetQuery": {
+                        "type": "object",
+                        "required": [
+                          "value"
+                        ],
+                        "properties": {
+                          "value": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 250,
+                            "description": "Substring matched case-insensitively against every text value in the widget queries (filters, aggregate types such as `percentile`, fields, metric names and PromQL), in the group-by fields and in the dashboard-wide filters applied to every widget. Display settings, such as the widget type, legend or units, and note text are not matched. Omit the whole `widgetQuery` filter to skip it."
+                          },
+                          "exclude": {
+                            "type": "boolean",
+                            "description": "If true, exclude dashboards with a matching widget or dashboard-wide filter instead of including them"
+                          }
+                        },
+                        "description": "Text filter for what dashboard widgets query, such as a service, field, metric or function. Returns dashboards with at least one matching widget or dashboard-wide filter; get a returned dashboard by ID to read its widgets."
                       },
                       "tags": {
                         "type": "object",
@@ -53679,6 +55439,9 @@
                   },
                   "searchQuery": {
                     "value": "API"
+                  },
+                  "widgetQuery": {
+                    "value": "service:api-gateway"
                   },
                   "tags": {
                     "values": [
@@ -58133,7 +59896,7 @@
         "tags": [
           "inventory"
         ],
-        "description": "Registers a cloud account for inventory scanning. Connection settings are stored as provided and are not validated at creation time; scan failures surface through `lastScanStatus`.",
+        "description": "Registers a cloud account for inventory scanning. Connection settings are stored as provided and are not validated at creation time.",
         "requestBody": {
           "required": true,
           "content": {
@@ -58174,7 +59937,7 @@
                     "description": "Team ID that will own the account."
                   },
                   "connectionSettings": {
-                    "description": "Credentials Tsuga uses to scan the account, in the provider-specific shape selected by `type`. Credentials are stored as provided and are not validated at creation time; failures surface through `lastScanStatus`.",
+                    "description": "Credentials Tsuga uses to scan the account, in the provider-specific shape selected by `type`. Credentials are stored as provided and are not validated at creation time.",
                     "type": "object",
                     "discriminator": {
                       "propertyName": "type",
@@ -58359,7 +60122,7 @@
         "tags": [
           "inventory"
         ],
-        "description": "Updates the friendly name of a cloud account by ID.",
+        "description": "Updates the friendly name and owning team of a cloud account by ID.",
         "requestBody": {
           "required": true,
           "content": {
@@ -61728,7 +63491,7 @@
         "tags": [
           "metric-routes"
         ],
-        "description": "Updates an existing metric route by ID without changing its evaluation order. Fields omitted from the request keep their existing values. Metric routes affect only newly ingested metrics after the cluster receives the updated configuration.",
+        "description": "Updates an existing metric route by ID without changing its evaluation order. An omitted `description` or `tags` keeps its existing value. Metric routes affect only newly ingested metrics after the cluster receives the updated configuration.",
         "requestBody": {
           "required": true,
           "content": {
@@ -69852,7 +71615,7 @@
         "tags": [
           "routes"
         ],
-        "description": "Updates an existing log route by ID without changing its evaluation order. Fields omitted from the request keep their existing values. Routes affect only newly ingested logs after the cluster receives the updated configuration.",
+        "description": "Updates an existing log route by ID without changing its evaluation order. An omitted `description` or `tags` keeps its existing value. Routes affect only newly ingested logs after the cluster receives the updated configuration.",
         "requestBody": {
           "required": true,
           "content": {
@@ -74112,6 +75875,634 @@
         }
       }
     },
+    "/v1/spans/routes": {
+      "get": {
+        "operationId": "listSpanRoutes",
+        "tags": [
+          "span-routes"
+        ],
+        "description": "Lists span routes: ingest pipelines that rename, parse or create attributes on incoming spans, in evaluation order, earlier routes first.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Maximum number of items to return in this page. Omit to use the public API default of 100."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "description": "Zero-based index of the first matching item to return. Increase it with `limit` to request later pages. If `limit` is provided without `offset`, the offset defaults to 0."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListSpanRoutesResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createSpanRoute",
+        "tags": [
+          "span-routes"
+        ],
+        "description": "Creates a span route, an ingest pipeline that renames, parses or creates attributes on incoming spans, at the end of the evaluation order. It applies only to spans ingested after the cluster receives the updated configuration.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "isEnabled",
+                  "query",
+                  "owner",
+                  "processors"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "description": "Human-readable span route name shown in Tsuga."
+                  },
+                  "description": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 50000
+                      }
+                    ],
+                    "description": "Optional free-text note about the span route's purpose. This metadata is not evaluated when matching or processing spans."
+                  },
+                  "isEnabled": {
+                    "type": "boolean",
+                    "description": "Set to true for the span route to process newly ingested matching spans. Set to false to save it without running it."
+                  },
+                  "query": {
+                    "type": "string",
+                    "format": "tsuga-query",
+                    "minLength": 0,
+                    "maxLength": 10000,
+                    "description": "Tsuga query that selects which newly ingested spans enter the span route processor chain."
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "key",
+                        "value"
+                      ],
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "maxLength": 128,
+                          "description": "Tag key to attach to the resource."
+                        },
+                        "value": {
+                          "type": "string",
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$",
+                          "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected."
+                        }
+                      },
+                      "title": "Tag"
+                    },
+                    "title": "Tags",
+                    "maxItems": 50,
+                    "description": "Key/value tags to apply to the resource. Tag policies may require specific keys or values."
+                  },
+                  "owner": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "description": "ID of the team that will own the span route, determining which team members can view and manage it and which tag policies apply. Only an org admin or an admin of this team may change fields other than `processors`, or delete the route."
+                  },
+                  "processors": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/InputSpansProcessor"
+                    },
+                    "maxItems": 50,
+                    "description": "Processors applied in array order to spans that match the span route, each transforming the output of the previous one. A `split` processor forks the chain into branches and cannot be followed by another processor at the same level. Up to 50 are accepted."
+                  }
+                },
+                "description": "Span route create or update request. Provide the route metadata, source query, owner team, enabled state, tags, and ordered processors."
+              },
+              "example": {
+                "name": "Normalize Checkout Spans",
+                "description": "Maps legacy attribute names onto the OpenTelemetry conventions",
+                "isEnabled": true,
+                "query": "context.service.name:checkout",
+                "tags": [
+                  {
+                    "key": "category",
+                    "value": "normalization"
+                  }
+                ],
+                "owner": "team-123-abc",
+                "processors": [
+                  {
+                    "id": "map-http-method",
+                    "type": "mapper",
+                    "tags": [],
+                    "params": {
+                      "subtype": "map-attributes",
+                      "attributes": [
+                        {
+                          "originAttribute": "http.method",
+                          "targetAttribute": "http.request.method",
+                          "keepOrigin": false,
+                          "overrideTarget": true
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "description": "Span route create or update request. Provide the route metadata, source query, owner team, enabled state, tags, and ordered processors."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSpanRouteResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/spans/routes/{id}": {
+      "get": {
+        "operationId": "getSpanRoute",
+        "tags": [
+          "span-routes"
+        ],
+        "description": "Retrieves one span route by ID.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identifier of the span route to retrieve. Use the `id` returned by span route list or create responses."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSpanRouteResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateSpanRoute",
+        "tags": [
+          "span-routes"
+        ],
+        "description": "Updates an existing span route by ID without changing its evaluation order. An omitted `description` or `tags` keeps its existing value. Span routes affect only newly ingested spans after the cluster receives the updated configuration.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "isEnabled",
+                  "query",
+                  "owner",
+                  "processors"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "description": "Human-readable span route name shown in Tsuga."
+                  },
+                  "description": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 50000
+                      }
+                    ],
+                    "description": "Optional free-text note about the span route's purpose. This metadata is not evaluated when matching or processing spans."
+                  },
+                  "isEnabled": {
+                    "type": "boolean",
+                    "description": "Set to true for the span route to process newly ingested matching spans. Set to false to save it without running it."
+                  },
+                  "query": {
+                    "type": "string",
+                    "format": "tsuga-query",
+                    "minLength": 0,
+                    "maxLength": 10000,
+                    "description": "Tsuga query that selects which newly ingested spans enter the span route processor chain."
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "key",
+                        "value"
+                      ],
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "maxLength": 128,
+                          "description": "Tag key to attach to the resource."
+                        },
+                        "value": {
+                          "type": "string",
+                          "maxLength": 256,
+                          "pattern": "^\\S(.*\\S)?$",
+                          "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected."
+                        }
+                      },
+                      "title": "Tag"
+                    },
+                    "title": "Tags",
+                    "maxItems": 50,
+                    "description": "Key/value tags to apply to the resource. Tag policies may require specific keys or values."
+                  },
+                  "owner": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 250,
+                    "description": "ID of the team that will own the span route, determining which team members can view and manage it and which tag policies apply. Only an org admin or an admin of this team may change fields other than `processors`, or delete the route."
+                  },
+                  "processors": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/InputSpansProcessor"
+                    },
+                    "maxItems": 50,
+                    "description": "Processors applied in array order to spans that match the span route, each transforming the output of the previous one. A `split` processor forks the chain into branches and cannot be followed by another processor at the same level. Up to 50 are accepted."
+                  }
+                },
+                "description": "Span route create or update request. Provide the route metadata, source query, owner team, enabled state, tags, and ordered processors."
+              },
+              "example": {
+                "name": "Normalize Checkout Spans",
+                "description": "Maps legacy attribute names onto the OpenTelemetry conventions",
+                "isEnabled": true,
+                "query": "context.service.name:checkout",
+                "tags": [
+                  {
+                    "key": "category",
+                    "value": "normalization"
+                  }
+                ],
+                "owner": "team-123-abc",
+                "processors": [
+                  {
+                    "id": "map-http-method",
+                    "type": "mapper",
+                    "tags": [],
+                    "params": {
+                      "subtype": "map-attributes",
+                      "attributes": [
+                        {
+                          "originAttribute": "http.method",
+                          "targetAttribute": "http.request.method",
+                          "keepOrigin": false,
+                          "overrideTarget": true
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "description": "Span route create or update request. Provide the route metadata, source query, owner team, enabled state, tags, and ordered processors."
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identifier of the span route to update. Use the `id` returned by span route list, get, or create responses."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateSpanRouteResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteSpanRoute",
+        "tags": [
+          "span-routes"
+        ],
+        "description": "Deletes a span route by ID and compacts the evaluation order for remaining routes. The route stops processing future spans after the cluster receives the updated configuration.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identifier of the span route to delete. Use the `id` returned by span route list, create, or update responses."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteSpanRouteResponse"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorEnvelope"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Server error",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Unique identifier for this API request, useful for debugging and support"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/tag-policies": {
       "get": {
         "operationId": "listTagPolicies",
@@ -76255,13 +78646,13 @@
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 10000,
+              "maximum": 1000,
               "default": 100
             },
             "in": "query",
             "name": "maxResults",
             "required": false,
-            "description": "Maximum number of spans to return. Defaults to 100. Valid values are 1 through 10000."
+            "description": "Maximum number of spans to return. Defaults to 100. Valid values are 1 through 1000."
           },
           {
             "schema": {
@@ -77354,6 +79745,10 @@
     {
       "name": "short-urls",
       "description": "Operations for short links copied from the Logs and Traces pages. Use these endpoints to resolve a short link to the app URL it opens. See [Logs](/documentation/explore/logs#share-the-current-search)."
+    },
+    {
+      "name": "span-routes",
+      "description": "Operations for span routes and route processors. Use these endpoints to manage ingest-time span processing definitions. See [Routes](/documentation/process/routes/index)."
     },
     {
       "name": "tag-policies",
