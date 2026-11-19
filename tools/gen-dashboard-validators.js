@@ -77,17 +77,6 @@ function enumFromMapping(node) {
   return Object.keys(node.discriminator.mapping);
 }
 
-function enumFromOneOfTypes(node) {
-  if (!node.oneOf) fail(`expected oneOf, found none on ${JSON.stringify(node).slice(0, 120)}`);
-  const values = [];
-  for (const branch of node.oneOf) {
-    const t = branch.properties && branch.properties.type;
-    if (!t || !t.enum) fail("oneOf branch missing properties.type.enum");
-    values.push(...t.enum);
-  }
-  return values;
-}
-
 // Extracts the constraint signature used for a given mode, so multiple spec
 // paths claiming to describe "the same" attribute can be compared for
 // equality.
@@ -97,8 +86,6 @@ function signature(mode, node) {
     return { enum: enumOf(node) };
   case "enumMapping":
     return { enum: enumFromMapping(node) };
-  case "enumOneOfType":
-    return { enum: enumFromOneOfTypes(node) };
   case "string":
   case "nullableString": {
     const n = mode === "nullableString" ? unwrapNullable(node) : node;
@@ -126,8 +113,6 @@ function renderValidators(mode, node) {
     return [`stringvalidator.OneOf(${goStringSlice(enumOf(node))})`];
   case "enumMapping":
     return [`stringvalidator.OneOf(${goStringSlice(enumFromMapping(node))})`];
-  case "enumOneOfType":
-    return [`stringvalidator.OneOf(${goStringSlice(enumFromOneOfTypes(node))})`];
   case "string":
   case "nullableString": {
     const n = mode === "nullableString" ? unwrapNullable(node) : node;
@@ -182,7 +167,6 @@ function renderValidators(mode, node) {
 const elementType = {
   enum: "validator.String",
   enumMapping: "validator.String",
-  enumOneOfType: "validator.String",
   string: "validator.String",
   nullableString: "validator.String",
   int64: "validator.Int64",
@@ -342,16 +326,16 @@ const ATTRS = {
 
   // Y-axis settings (timeseries, bar, timeseries_connection, bar_connection)
   yAxisBoundTypeValidators: {
-    mode: "enumOneOfType",
+    mode: "enumMapping",
     paths: ["InputGraphVisualizationTimeseries.properties.yAxisSettings.properties.min"],
   },
   yAxisScaleTypeValidators: {
-    mode: "enumOneOfType",
+    mode: "enumMapping",
     paths: ["InputGraphVisualizationTimeseries.properties.yAxisSettings.properties.scale"],
   },
   yAxisScaleExponentValidators: {
     mode: "float64",
-    paths: ["InputGraphVisualizationTimeseries.properties.yAxisSettings.properties.scale.oneOf.0.properties.exponent"],
+    paths: ["InputAxisScalePower.properties.exponent"],
   },
 
   // Table
