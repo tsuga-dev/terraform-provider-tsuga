@@ -80,6 +80,7 @@ func flattenAPIResponse(model *resource_cloud_account.CloudAccountModel, data cl
 	model.CloudType = types.StringValue(data.CloudType)
 	model.CloudAccountId = types.StringValue(data.CloudAccountId)
 	model.AccountFriendlyName = stringValueOrNull(data.AccountFriendlyName)
+	model.Owner = stringValueOrNull(data.Owner)
 }
 
 func (r *cloudAccountResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -98,6 +99,9 @@ func (r *cloudAccountResource) Create(ctx context.Context, req resource.CreateRe
 	}
 	if !plan.AccountFriendlyName.IsNull() && !plan.AccountFriendlyName.IsUnknown() && plan.AccountFriendlyName.ValueString() != "" {
 		requestBody["accountFriendlyName"] = plan.AccountFriendlyName.ValueString()
+	}
+	if !plan.Owner.IsNull() && !plan.Owner.IsUnknown() {
+		requestBody["owner"] = plan.Owner.ValueString()
 	}
 
 	httpResp, err := r.client.doRequest(ctx, http.MethodPost, cloudAccountBasePath, requestBody)
@@ -180,6 +184,9 @@ func (r *cloudAccountResource) Update(ctx context.Context, req resource.UpdateRe
 	requestBody := map[string]interface{}{
 		"accountFriendlyName": plan.AccountFriendlyName.ValueString(),
 	}
+	if !plan.Owner.IsNull() && !plan.Owner.IsUnknown() {
+		requestBody["owner"] = plan.Owner.ValueString()
+	}
 
 	apiPath := fmt.Sprintf("%s/%s", cloudAccountBasePath, state.Id.ValueString())
 	httpResp, err := r.client.doRequest(ctx, http.MethodPut, apiPath, requestBody)
@@ -254,4 +261,5 @@ type cloudAccountData struct {
 	CloudType           string `json:"cloudType"`
 	CloudAccountId      string `json:"cloudAccountId"`
 	AccountFriendlyName string `json:"accountFriendlyName"`
+	Owner               string `json:"owner"`
 }
