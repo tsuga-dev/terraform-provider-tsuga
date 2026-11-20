@@ -118,7 +118,7 @@ resource "tsuga_adaptive_notification_rule" "adaptive-notification-rule" {
 
 - `monitor_ids` (List of String) Monitors the rule reacts to. Only trace monitors and metric monitors over OTel span metrics are eligible. Set at least one monitor or SLO.
 - `slo_ids` (List of String) SLOs the rule reacts to. Only SLOs over traces or OTel span metrics are eligible. Set at least one monitor or SLO.
-- `tags` (Attributes List) List of key/value tags applied to the resource (see [below for nested schema](#nestedatt--tags))
+- `tags` (Attributes List) Key/value tags to apply to the resource. Tag policies may require specific keys or values. (see [below for nested schema](#nestedatt--tags))
 
 ### Read-Only
 
@@ -130,11 +130,11 @@ resource "tsuga_adaptive_notification_rule" "adaptive-notification-rule" {
 Required:
 
 - `config` (Attributes) (see [below for nested schema](#nestedatt--fallback_target--config))
-- `id` (String) Identifier of the notification target
+- `id` (String) Identifier of the notification target within this rule. Choose a stable ID that is unique among this rule's targets; Tsuga uses it with the rule ID for per-target delivery state such as rate limiting.
 
 Optional:
 
-- `rate_limit` (Attributes) (see [below for nested schema](#nestedatt--fallback_target--rate_limit))
+- `rate_limit` (Attributes) Per-target rate limit used when sending notifications. If omitted, Tsuga allows up to 1000 notifications every 10 minutes for this target. (see [below for nested schema](#nestedatt--fallback_target--rate_limit))
 
 <a id="nestedatt--fallback_target--config"></a>
 ### Nested Schema for `fallback_target.config`
@@ -145,10 +145,10 @@ Optional:
 - `google_chat` (Attributes) (see [below for nested schema](#nestedatt--fallback_target--config--google_chat))
 - `grafana_irm` (Attributes) (see [below for nested schema](#nestedatt--fallback_target--config--grafana_irm))
 - `incident_io` (Attributes) (see [below for nested schema](#nestedatt--fallback_target--config--incident_io))
-- `jira` (Attributes) Files one Jira issue per notification. Cannot be combined with renotify. (see [below for nested schema](#nestedatt--fallback_target--config--jira))
+- `jira` (Attributes) (see [below for nested schema](#nestedatt--fallback_target--config--jira))
 - `microsoft_teams` (Attributes) (see [below for nested schema](#nestedatt--fallback_target--config--microsoft_teams))
 - `pagerduty` (Attributes) (see [below for nested schema](#nestedatt--fallback_target--config--pagerduty))
-- `renotify` (Attributes) (see [below for nested schema](#nestedatt--fallback_target--config--renotify))
+- `renotify` (Attributes) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--fallback_target--config--renotify))
 - `servicenow` (Attributes) (see [below for nested schema](#nestedatt--fallback_target--config--servicenow))
 - `slack` (Attributes) (see [below for nested schema](#nestedatt--fallback_target--config--slack))
 - `squadcast` (Attributes) (see [below for nested schema](#nestedatt--fallback_target--config--squadcast))
@@ -159,11 +159,11 @@ Optional:
 
 Required:
 
-- `addresses` (List of String)
+- `addresses` (List of String) Email addresses that will receive the alert
 
 Read-Only:
 
-- `type` (String)
+- `type` (String) Email target that sends directly to the listed addresses and does not require an integration.
 
 
 <a id="nestedatt--fallback_target--config--google_chat"></a>
@@ -171,12 +171,12 @@ Read-Only:
 
 Required:
 
-- `integration_id` (String)
+- `integration_id` (String) Identifier of the Google Chat integration to use
 
 Read-Only:
 
-- `integration_name` (String)
-- `type` (String)
+- `integration_name` (String) Human readable name of the Google Chat integration
+- `type` (String) Google Chat target backed by a configured Google Chat integration.
 
 
 <a id="nestedatt--fallback_target--config--grafana_irm"></a>
@@ -184,12 +184,12 @@ Read-Only:
 
 Required:
 
-- `integration_id` (String)
+- `integration_id` (String) Identifier of the Grafana IRM integration to use
 
 Read-Only:
 
-- `integration_name` (String)
-- `type` (String)
+- `integration_name` (String) Human readable name of the Grafana IRM integration
+- `type` (String) Grafana IRM target backed by a configured Grafana IRM integration.
 
 
 <a id="nestedatt--fallback_target--config--incident_io"></a>
@@ -197,12 +197,12 @@ Read-Only:
 
 Required:
 
-- `integration_id` (String)
+- `integration_id` (String) Identifier of the incident.io integration to use
 
 Read-Only:
 
-- `integration_name` (String)
-- `type` (String)
+- `integration_name` (String) Human readable name of the incident.io integration
+- `type` (String) incident.io target backed by a configured incident.io integration.
 
 
 <a id="nestedatt--fallback_target--config--jira"></a>
@@ -210,19 +210,19 @@ Read-Only:
 
 Required:
 
-- `integration_id` (String)
-- `issue_type` (String) Jira issue type used when creating issues
-- `project_key` (String) Key of the Jira project the issues are created in
+- `integration_id` (String) Identifier of the Jira integration to use
+- `issue_type` (String) Name of the Jira issue type created for alerts, like "Bug" or "Task".
+- `project_key` (String) Key of the Jira project that alert issues are filed into, like "OPS".
 
 Optional:
 
-- `closed_status` (String) Jira status applied when the alert resolves
-- `open_status` (String) Jira status applied when the alert triggers
+- `closed_status` (String) Jira status the alert ticket is moved to when the alert resolves. Only takes effect when the rule delivers recovery transitions.
+- `open_status` (String) Jira status the alert ticket is moved to right after it is filed for a firing alert. A later transition between two firing states leaves the ticket status alone.
 
 Read-Only:
 
-- `integration_name` (String)
-- `type` (String)
+- `integration_name` (String) Human readable name of the Jira integration
+- `type` (String) Jira target backed by a configured Jira integration. Jira targets file one issue per notification and do not support renotification.
 
 
 <a id="nestedatt--fallback_target--config--microsoft_teams"></a>
@@ -230,12 +230,12 @@ Read-Only:
 
 Required:
 
-- `integration_id` (String)
+- `integration_id` (String) Identifier of the Microsoft Teams integration to use
 
 Read-Only:
 
-- `integration_name` (String)
-- `type` (String)
+- `integration_name` (String) Human readable name of the Microsoft Teams integration
+- `type` (String) Microsoft Teams target backed by a configured Microsoft Teams integration.
 
 
 <a id="nestedatt--fallback_target--config--pagerduty"></a>
@@ -243,12 +243,12 @@ Read-Only:
 
 Required:
 
-- `integration_id` (String)
+- `integration_id` (String) Identifier of the PagerDuty integration to use
 
 Read-Only:
 
-- `integration_name` (String)
-- `type` (String)
+- `integration_name` (String) Human readable name of the PagerDuty integration
+- `type` (String) PagerDuty target backed by a configured PagerDuty integration.
 
 
 <a id="nestedatt--fallback_target--config--renotify"></a>
@@ -256,9 +256,9 @@ Read-Only:
 
 Required:
 
-- `mode` (String)
-- `renotification_states` (List of String)
-- `renotify_interval_minutes` (Number)
+- `mode` (String) Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
+- `renotification_states` (List of String) Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
+- `renotify_interval_minutes` (Number) Minimum number of minutes to wait after the previous notification.
 
 
 <a id="nestedatt--fallback_target--config--servicenow"></a>
@@ -266,12 +266,12 @@ Required:
 
 Required:
 
-- `integration_id` (String)
+- `integration_id` (String) Identifier of the ServiceNow integration to use
 
 Read-Only:
 
-- `integration_name` (String)
-- `type` (String)
+- `integration_name` (String) Human readable name of the ServiceNow integration
+- `type` (String) ServiceNow target backed by a configured ServiceNow integration.
 
 
 <a id="nestedatt--fallback_target--config--slack"></a>
@@ -279,18 +279,13 @@ Read-Only:
 
 Required:
 
-- `channel` (String)
-- `integration_id` (String)
-
-Optional:
-
-- `hide_time` (Boolean) When true, the timestamp is hidden from the Slack message
-- `hide_transition` (Boolean) When true, the transition info is hidden from the Slack message
+- `channel` (String) Slack channel ID that receives the notification
+- `integration_id` (String) Slack workspace ID that receives the notification
 
 Read-Only:
 
-- `integration_name` (String)
-- `type` (String)
+- `integration_name` (String) Human readable name of the Slack integration
+- `type` (String) Slack target backed by a configured Slack integration.
 
 
 <a id="nestedatt--fallback_target--config--squadcast"></a>
@@ -298,12 +293,12 @@ Read-Only:
 
 Required:
 
-- `integration_id` (String)
+- `integration_id` (String) Identifier of the Squadcast integration to use
 
 Read-Only:
 
-- `integration_name` (String)
-- `type` (String)
+- `integration_name` (String) Human readable name of the Squadcast integration
+- `type` (String) Squadcast target backed by a configured Squadcast integration.
 
 
 <a id="nestedatt--fallback_target--config--webhook"></a>
@@ -311,12 +306,12 @@ Read-Only:
 
 Required:
 
-- `integration_id` (String)
+- `integration_id` (String) Identifier of the webhook integration to use
 
 Read-Only:
 
-- `integration_name` (String)
-- `type` (String)
+- `integration_name` (String) Human readable name of the webhook integration
+- `type` (String) Webhook target backed by a configured webhook integration.
 
 
 
@@ -325,8 +320,8 @@ Read-Only:
 
 Required:
 
-- `max_messages` (Number)
-- `minutes` (Number)
+- `max_messages` (Number) Maximum number of notifications this target can send during the rate-limiting window. The ratio of `maxMessages` to `minutes` cannot exceed 100 notifications per minute.
+- `minutes` (Number) Length of the rate-limiting window, in minutes. The ratio of `maxMessages` to `minutes` cannot exceed 100 notifications per minute.
 
 
 
@@ -335,5 +330,5 @@ Required:
 
 Required:
 
-- `key` (String)
-- `value` (String)
+- `key` (String) Tag key to attach to the resource.
+- `value` (String) Tag value to attach to the resource. Leading or trailing whitespace is rejected.

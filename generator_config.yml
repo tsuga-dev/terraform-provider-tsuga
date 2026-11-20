@@ -113,6 +113,19 @@ resources:
     delete:
       path: /v1/inventory/cloud-accounts/{id}
       method: DELETE
+  notification_rule:
+    create:
+      path: /v1/notification-rules
+      method: POST
+    read:
+      path: /v1/notification-rules/{id}
+      method: GET
+    update:
+      path: /v1/notification-rules/{id}
+      method: PUT
+    delete:
+      path: /v1/notification-rules/{id}
+      method: DELETE
   operation_api_key:
     create:
       path: /v1/operation-api-keys

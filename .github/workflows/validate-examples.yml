@@ -98,6 +98,7 @@ jobs:
           sed -i 's/123-abc-456/${{ vars.TSUGA_TEAM_ID }}/g' test-re-${{ matrix.resource_example }}/resource.tf
           sed -i 's/usr-abc-123/${{ vars.TSUGA_USER_ID }}/g' test-re-${{ matrix.resource_example }}/resource.tf
           sed -i 's/"platform-on-call"/"platform-on-call-${{ github.run_id }}-${{ github.run_attempt }}"/' test-re-${{ matrix.resource_example }}/resource.tf
+          sed -i -E 's/(name *= *"(backend|my-team-name))"/\1-${{ github.run_id }}-${{ github.run_attempt }}"/' test-re-${{ matrix.resource_example }}/resource.tf
 
       - name: Terraform init
         working-directory: test-re-${{ matrix.resource_example }}

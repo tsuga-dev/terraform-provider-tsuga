@@ -1,8 +1,9 @@
 resource "tsuga_notification_rule" "notification_rule" {
-  is_active         = true
-  name              = "Example"
-  owner             = "team-123"
-  priorities_filter = [1, 2]
+  cluster_ids_filter = []
+  is_active          = true
+  name               = "Example"
+  owner              = "team-123"
+  priorities_filter  = [1, 2]
   targets = [{
     config = {
       email = {

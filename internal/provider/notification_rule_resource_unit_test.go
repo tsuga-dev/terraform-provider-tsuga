@@ -3,350 +3,343 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"reflect"
+	"strings"
 	"testing"
 
+	"terraform-provider-tsuga/internal/apiclient"
 	"terraform-provider-tsuga/internal/resource_notification_rule"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func targetsList(t *testing.T, ctx context.Context, targets ...resource_notification_rule.TargetModel) types.List {
-	t.Helper()
+const renotifyJSON = `{"mode": "each", "renotificationStates": ["alert", "alert_no_data"], "renotifyIntervalMinutes": 30}`
 
-	list, diags := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: resource_notification_rule.TargetAttrTypes(ctx)}, targets)
-	if diags.HasError() {
-		t.Fatalf("failed to build targets list: %v", diags)
+func decodeRule(t *testing.T, targets ...string) apiclient.Rule {
+	t.Helper()
+	raw := `{"id": "rule-1", "teamsFilter": {"type": "all-teams"}, "targets": [` + strings.Join(targets, ",") + `]}`
+	var rule apiclient.Rule
+	if err := json.Unmarshal([]byte(raw), &rule); err != nil {
+		t.Fatalf("failed to decode %s: %v", raw, err)
 	}
-	return list
+	return rule
 }
 
-func renotifyModel(t *testing.T, ctx context.Context, states ...string) *resource_notification_rule.TargetRenotifyModel {
-	t.Helper()
+func target(id, config string) string {
+	return `{"id": "` + id + `", "config": ` + config + `}`
+}
 
-	statesList, diags := types.ListValueFrom(ctx, types.StringType, states)
-	if diags.HasError() {
-		t.Fatalf("failed to build renotification_states list: %v", diags)
+func slackConfig(renotify string) string {
+	config := `{"type": "slack", "channel": "C123", "integrationId": "T123", "integrationName": "workspace"`
+	if renotify != "" {
+		config += `, "renotifyConfig": ` + renotify
 	}
-	return &resource_notification_rule.TargetRenotifyModel{
-		Mode:                    types.StringValue("each"),
-		RenotificationStates:    statesList,
-		RenotifyIntervalMinutes: types.Int64Value(30),
+	return config + `}`
+}
+
+func slackRule(t *testing.T, renotify string) apiclient.Rule {
+	return decodeRule(t, target("slack", slackConfig(renotify)))
+}
+
+func assertJSON(t *testing.T, got []byte, want string) {
+	t.Helper()
+	var g, w any
+	if err := json.Unmarshal(got, &g); err != nil {
+		t.Fatalf("invalid JSON %s: %v", got, err)
+	}
+	if err := json.Unmarshal([]byte(want), &w); err != nil {
+		t.Fatalf("invalid JSON %s: %v", want, err)
+	}
+	if !reflect.DeepEqual(g, w) {
+		t.Fatalf("expected %s, got %s", want, got)
 	}
 }
 
-func slackTarget(id string) resource_notification_rule.TargetModel {
-	return resource_notification_rule.TargetModel{
-		Id: types.StringValue(id),
-		Config: resource_notification_rule.TargetConfigModel{
-			Slack: &resource_notification_rule.SlackConfigModel{
-				Channel:       types.StringValue("C123"),
-				IntegrationID: types.StringValue("T123"),
-			},
-		},
-	}
-}
-
-func expandOneTarget(t *testing.T, ctx context.Context, target resource_notification_rule.TargetModel) notificationRuleAPITarget {
+// roundTrip flattens the targets of an API rule to Terraform values, then expands them back to the
+// request body, returned as JSON.
+func roundTrip(t *testing.T, ctx context.Context, rule apiclient.Rule) ([]byte, resource_notification_rule.TargetsValue) {
 	t.Helper()
 
-	expanded, diags := expandNotificationRuleTargets(ctx, targetsList(t, ctx, target))
-	if diags.HasError() {
-		t.Fatalf("unexpected diagnostics: %v", diags)
-	}
-	if len(expanded) != 1 {
-		t.Fatalf("expected 1 expanded target, got %d", len(expanded))
-	}
-	return expanded[0]
-}
-
-func flattenOneTarget(t *testing.T, ctx context.Context, target notificationRuleAPITarget) resource_notification_rule.TargetModel {
-	t.Helper()
-
-	flattened, diags := flattenNotificationRuleTargets(ctx, []notificationRuleAPITarget{target})
+	flattened, diags := flattenNotificationRuleTargets(ctx, rule)
 	if diags.HasError() {
 		t.Fatalf("unexpected diagnostics: %v", diags)
 	}
 
-	var models []resource_notification_rule.TargetModel
+	var models []resource_notification_rule.TargetsValue
 	if d := flattened.ElementsAs(ctx, &models, false); d.HasError() {
 		t.Fatalf("failed to decode flattened targets: %v", d)
 	}
 	if len(models) != 1 {
 		t.Fatalf("expected 1 flattened target, got %d", len(models))
 	}
-	return models[0]
+
+	var body apiclient.CreateNotificationRuleJSONBody
+	if diags := expandNotificationRuleTargets(ctx, flattened, &body); diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	raw, err := json.Marshal(body.Targets[0])
+	if err != nil {
+		t.Fatalf("failed to marshal expanded target: %v", err)
+	}
+	return raw, models[0]
 }
 
 func TestExpandNotificationRuleTargets_RenotifyIsNestedInConfig(t *testing.T) {
 	// The API reads renotifyConfig from targets[].config, not from the target itself.
-	ctx := context.Background()
-
-	target := slackTarget("slack")
-	target.Config.Renotify = renotifyModel(t, ctx, "alert", "alert_no_data")
-
-	raw, err := json.Marshal(expandOneTarget(t, ctx, target))
-	if err != nil {
-		t.Fatalf("failed to marshal expanded target: %v", err)
-	}
-
-	var wire struct {
-		RenotifyConfig json.RawMessage `json:"renotifyConfig"`
-		Config         struct {
-			RenotifyConfig *notificationRuleAPITargetRenotify `json:"renotifyConfig"`
-		} `json:"config"`
-	}
-	if err := json.Unmarshal(raw, &wire); err != nil {
-		t.Fatalf("failed to unmarshal wire payload: %v", err)
-	}
-
-	if wire.RenotifyConfig != nil {
-		t.Fatalf("expected no target-level renotifyConfig, got %s", wire.RenotifyConfig)
-	}
-	if wire.Config.RenotifyConfig == nil {
-		t.Fatalf("expected config.renotifyConfig to be set, got payload %s", raw)
-	}
-	if wire.Config.RenotifyConfig.Mode != "each" {
-		t.Fatalf("expected config.renotifyConfig.mode to be each, got %q", wire.Config.RenotifyConfig.Mode)
-	}
-	if wire.Config.RenotifyConfig.RenotifyIntervalMinutes != 30 {
-		t.Fatalf("expected config.renotifyConfig.renotifyIntervalMinutes to be 30, got %d", wire.Config.RenotifyConfig.RenotifyIntervalMinutes)
-	}
-	if len(wire.Config.RenotifyConfig.RenotificationStates) != 2 {
-		t.Fatalf("expected 2 renotificationStates, got %#v", wire.Config.RenotifyConfig.RenotificationStates)
-	}
+	raw, _ := roundTrip(t, context.Background(), slackRule(t, renotifyJSON))
+	assertJSON(t, raw, `{"id": "slack", "config": {"type": "slack", "channel": "C123", "integrationId": "T123", "renotifyConfig": `+renotifyJSON+`}}`)
 }
 
-func TestExpandFlattenNotificationRuleTargets_RenotifyRoundTrips(t *testing.T) {
-	ctx := context.Background()
+func TestFlattenNotificationRuleTargets_ReadsRenotifyFromConfig(t *testing.T) {
+	_, back := roundTrip(t, context.Background(), slackRule(t, renotifyJSON))
 
-	target := slackTarget("slack")
-	target.Config.Renotify = renotifyModel(t, ctx, "alert")
-
-	back := flattenOneTarget(t, ctx, expandOneTarget(t, ctx, target))
-	if back.Config.Renotify == nil {
-		t.Fatal("expected renotify to survive the round-trip")
+	renotify := objectAttribute(back.Config, "renotify")
+	if renotify.IsNull() {
+		t.Fatal("expected config.renotifyConfig to flatten onto config.renotify")
 	}
-	if back.Config.Renotify.Mode.ValueString() != "each" {
-		t.Fatalf("expected mode each, got %v", back.Config.Renotify.Mode)
+	if got := renotify.Attributes()["renotify_interval_minutes"].(types.Int64).ValueInt64(); got != 30 {
+		t.Fatalf("expected renotify_interval_minutes 30, got %d", got)
 	}
-	if back.Config.Renotify.RenotifyIntervalMinutes.ValueInt64() != 30 {
-		t.Fatalf("expected renotify_interval_minutes 30, got %v", back.Config.Renotify.RenotifyIntervalMinutes)
-	}
-
-	var states []string
-	if d := back.Config.Renotify.RenotificationStates.ElementsAs(ctx, &states, false); d.HasError() {
-		t.Fatalf("failed to decode renotification_states: %v", d)
-	}
-	if len(states) != 1 || states[0] != "alert" {
-		t.Fatalf("expected renotification_states [alert], got %#v", states)
+	states := renotify.Attributes()["renotification_states"].(types.List)
+	if len(states.Elements()) != 2 || states.Elements()[0].(types.String).ValueString() != "alert" {
+		t.Fatalf("expected renotification_states [alert alert_no_data], got %s", states)
 	}
 }
 
 func TestExpandNotificationRuleTargets_WithoutRenotifyOmitsTheKey(t *testing.T) {
-	ctx := context.Background()
-
-	expanded := expandOneTarget(t, ctx, slackTarget("slack"))
-	if expanded.Config.RenotifyConfig != nil {
-		t.Fatalf("expected no renotify config, got %#v", expanded.Config.RenotifyConfig)
-	}
-
-	raw, err := json.Marshal(expanded)
-	if err != nil {
-		t.Fatalf("failed to marshal expanded target: %v", err)
-	}
-
-	var wire map[string]any
-	if err := json.Unmarshal(raw, &wire); err != nil {
-		t.Fatalf("failed to unmarshal wire payload: %v", err)
-	}
-	if _, exists := wire["renotifyConfig"]; exists {
-		t.Fatalf("expected renotifyConfig to be omitted at target level, got %s", raw)
-	}
-	if _, exists := wire["config"].(map[string]any)["renotifyConfig"]; exists {
+	raw, back := roundTrip(t, context.Background(), slackRule(t, ""))
+	if strings.Contains(string(raw), "renotifyConfig") {
 		t.Fatalf("expected renotifyConfig to be omitted from config, got %s", raw)
 	}
-
-	back := flattenOneTarget(t, ctx, expanded)
-	if back.Config.Renotify != nil {
-		t.Fatalf("expected renotify to flatten back to null, got %#v", back.Config.Renotify)
+	if !objectAttribute(back.Config, "renotify").IsNull() {
+		t.Fatalf("expected renotify to flatten back to null, got %s", objectAttribute(back.Config, "renotify"))
 	}
 }
 
-func TestFlattenNotificationRuleTargets_ReadsRenotifyFromConfig(t *testing.T) {
+func TestExpandFlattenNotificationRuleTargets_WireTypeAndComputedFields(t *testing.T) {
 	ctx := context.Background()
 
-	back := flattenOneTarget(t, ctx, notificationRuleAPITarget{
-		ID: "slack",
-		Config: notificationRuleAPITargetConfig{
-			Type:          "slack",
-			Channel:       "C123",
-			IntegrationID: "T123",
-			RenotifyConfig: &notificationRuleAPITargetRenotify{
-				Mode:                    "each",
-				RenotificationStates:    []string{"alert_no_data"},
-				RenotifyIntervalMinutes: 45,
-			},
-		},
-	})
+	for _, c := range []struct{ block, wireType string }{
+		{"pagerduty", "pagerduty"},
+		{"servicenow", "servicenow"},
+		{"google_chat", "google-chat"},
+		{"microsoft_teams", "microsoft-teams"},
+		{"grafana_irm", "grafana-irm"},
+		{"incident_io", "incident-io"},
+		{"squadcast", "squadcast"},
+		{"webhook", "webhook"},
+	} {
+		t.Run(c.block, func(t *testing.T) {
+			rule := decodeRule(t, target(c.block, `{"type": "`+c.wireType+`", "integrationId": "int-123", "integrationName": "name"}`))
+			raw, back := roundTrip(t, ctx, rule)
 
-	if back.Config.Renotify == nil {
-		t.Fatal("expected config.renotifyConfig to flatten onto config.renotify")
-	}
-	if back.Config.Renotify.RenotifyIntervalMinutes.ValueInt64() != 45 {
-		t.Fatalf("expected renotify_interval_minutes 45, got %v", back.Config.Renotify.RenotifyIntervalMinutes)
-	}
-}
+			assertJSON(t, raw, `{"id": "`+c.block+`", "config": {"type": "`+c.wireType+`", "integrationId": "int-123"}}`)
 
-func TestExpandFlattenNotificationRuleTargets_ServiceNow(t *testing.T) {
-	ctx := context.Background()
-
-	expanded := expandOneTarget(t, ctx, resource_notification_rule.TargetModel{
-		Id: types.StringValue("servicenow"),
-		Config: resource_notification_rule.TargetConfigModel{
-			ServiceNow: &resource_notification_rule.IntegrationOnlyConfigModel{
-				IntegrationID: types.StringValue("snow-123"),
-			},
-		},
-	})
-	if expanded.Config.Type != "servicenow" {
-		t.Fatalf("expected wire type servicenow, got %q", expanded.Config.Type)
-	}
-
-	back := flattenOneTarget(t, ctx, expanded)
-	if back.Config.ServiceNow == nil {
-		t.Fatal("expected servicenow config to survive the round-trip")
-	}
-	if back.Config.ServiceNow.IntegrationID.ValueString() != "snow-123" {
-		t.Fatalf("expected integration_id snow-123, got %v", back.Config.ServiceNow.IntegrationID)
-	}
-	if back.Config.ServiceNow.Type.ValueString() != "servicenow" {
-		t.Fatalf("expected type servicenow, got %v", back.Config.ServiceNow.Type)
-	}
-}
-
-func TestExpandFlattenNotificationRuleTargets_GoogleChatUsesKebabCaseWireType(t *testing.T) {
-	ctx := context.Background()
-
-	expanded := expandOneTarget(t, ctx, resource_notification_rule.TargetModel{
-		Id: types.StringValue("google-chat"),
-		Config: resource_notification_rule.TargetConfigModel{
-			GoogleChat: &resource_notification_rule.IntegrationOnlyConfigModel{
-				IntegrationID: types.StringValue("gchat-123"),
-			},
-		},
-	})
-	if expanded.Config.Type != "google-chat" {
-		t.Fatalf("expected wire type google-chat, got %q", expanded.Config.Type)
-	}
-
-	back := flattenOneTarget(t, ctx, expanded)
-	if back.Config.GoogleChat == nil {
-		t.Fatal("expected google_chat config to survive the round-trip")
-	}
-	if back.Config.GoogleChat.IntegrationID.ValueString() != "gchat-123" {
-		t.Fatalf("expected integration_id gchat-123, got %v", back.Config.GoogleChat.IntegrationID)
-	}
-	if back.Config.GoogleChat.Type.ValueString() != "google-chat" {
-		t.Fatalf("expected type google-chat, got %v", back.Config.GoogleChat.Type)
+			block := objectAttribute(back.Config, c.block).Attributes()
+			if block["integration_id"].(types.String).ValueString() != "int-123" {
+				t.Fatalf("expected integration_id int-123, got %v", block["integration_id"])
+			}
+			if block["type"].(types.String).ValueString() != c.wireType {
+				t.Fatalf("expected type %s, got %v", c.wireType, block["type"])
+			}
+			if block["integration_name"].(types.String).ValueString() != "name" {
+				t.Fatalf("expected integration_name name, got %v", block["integration_name"])
+			}
+		})
 	}
 }
 
 func TestExpandFlattenNotificationRuleTargets_Jira(t *testing.T) {
-	ctx := context.Background()
+	config := `{"type": "jira", "integrationId": "jira-123", "integrationName": "jira", "projectKey": "OPS", "issueType": "Bug", "openStatus": "To Do", "closedStatus": "Done"}`
+	raw, back := roundTrip(t, context.Background(), decodeRule(t, target("jira", config)))
+	assertJSON(t, raw, `{"id": "jira", "config": {"type": "jira", "integrationId": "jira-123", "projectKey": "OPS", "issueType": "Bug", "openStatus": "To Do", "closedStatus": "Done"}}`)
 
-	expanded := expandOneTarget(t, ctx, resource_notification_rule.TargetModel{
-		Id: types.StringValue("jira"),
-		Config: resource_notification_rule.TargetConfigModel{
-			Jira: &resource_notification_rule.JiraConfigModel{
-				IntegrationID: types.StringValue("jira-123"),
-				ProjectKey:    types.StringValue("OPS"),
-				IssueType:     types.StringValue("Bug"),
-				OpenStatus:    types.StringValue("To Do"),
-				ClosedStatus:  types.StringValue("Done"),
-			},
-		},
-	})
-	if expanded.Config.Type != "jira" {
-		t.Fatalf("expected wire type jira, got %q", expanded.Config.Type)
-	}
-	if expanded.Config.ProjectKey != "OPS" || expanded.Config.IssueType != "Bug" {
-		t.Fatalf("expected projectKey OPS and issueType Bug, got %q and %q", expanded.Config.ProjectKey, expanded.Config.IssueType)
-	}
-	if expanded.Config.OpenStatus != "To Do" || expanded.Config.ClosedStatus != "Done" {
-		t.Fatalf("expected openStatus 'To Do' and closedStatus Done, got %q and %q", expanded.Config.OpenStatus, expanded.Config.ClosedStatus)
-	}
-
-	back := flattenOneTarget(t, ctx, expanded)
-	if back.Config.Jira == nil {
-		t.Fatal("expected jira config to survive the round-trip")
-	}
-	if back.Config.Jira.ProjectKey.ValueString() != "OPS" {
-		t.Fatalf("expected project_key OPS, got %v", back.Config.Jira.ProjectKey)
-	}
-	if back.Config.Jira.IssueType.ValueString() != "Bug" {
-		t.Fatalf("expected issue_type Bug, got %v", back.Config.Jira.IssueType)
-	}
-	if back.Config.Jira.OpenStatus.ValueString() != "To Do" {
-		t.Fatalf("expected open_status 'To Do', got %v", back.Config.Jira.OpenStatus)
-	}
-	if back.Config.Jira.ClosedStatus.ValueString() != "Done" {
-		t.Fatalf("expected closed_status Done, got %v", back.Config.Jira.ClosedStatus)
+	jira := objectAttribute(back.Config, "jira").Attributes()
+	for name, want := range map[string]string{"project_key": "OPS", "issue_type": "Bug", "open_status": "To Do", "closed_status": "Done"} {
+		if got := jira[name].(types.String).ValueString(); got != want {
+			t.Fatalf("expected %s %q, got %q", name, want, got)
+		}
 	}
 }
 
 func TestExpandNotificationRuleTargets_JiraOmitsUnsetStatuses(t *testing.T) {
-	ctx := context.Background()
+	config := `{"type": "jira", "integrationId": "jira-123", "projectKey": "OPS", "issueType": "Bug"}`
+	raw, back := roundTrip(t, context.Background(), decodeRule(t, target("jira", config)))
+	for _, key := range []string{"openStatus", "closedStatus"} {
+		if strings.Contains(string(raw), key) {
+			t.Fatalf("expected %s to be omitted when unset, got %s", key, raw)
+		}
+	}
+	if !objectAttribute(back.Config, "jira").Attributes()["open_status"].IsNull() {
+		t.Fatal("expected an absent openStatus to flatten to null")
+	}
+}
 
-	expanded := expandOneTarget(t, ctx, resource_notification_rule.TargetModel{
-		Id: types.StringValue("jira"),
-		Config: resource_notification_rule.TargetConfigModel{
-			Jira: &resource_notification_rule.JiraConfigModel{
-				IntegrationID: types.StringValue("jira-123"),
-				ProjectKey:    types.StringValue("OPS"),
-				IssueType:     types.StringValue("Bug"),
-			},
-		},
+func TestExpandFlattenNotificationRuleTargets_RateLimit(t *testing.T) {
+	rule := decodeRule(t, `{"id": "email", "config": {"type": "email", "addresses": ["a@example.com"]}, "rateLimit": {"maxMessages": 5, "minutes": 10}}`)
+	raw, _ := roundTrip(t, context.Background(), rule)
+	assertJSON(t, raw, `{"id": "email", "config": {"type": "email", "addresses": ["a@example.com"]}, "rateLimit": {"maxMessages": 5, "minutes": 10}}`)
+}
+
+func TestFlattenNotificationRuleTargets_UnsupportedDestinationIsADiagnostic(t *testing.T) {
+	_, diags := flattenNotificationRuleTargets(context.Background(), decodeRule(t, target("x", `{"type": "carrier-pigeon"}`)))
+	if !diags.HasError() || !strings.Contains(diags.Errors()[0].Detail(), "carrier-pigeon") {
+		t.Fatalf("expected an unsupported destination diagnostic, got %v", diags)
+	}
+}
+
+func renotifyObject(ctx context.Context) types.Object {
+	return types.ObjectValueMust(resource_notification_rule.RenotifyValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"mode":                      types.StringValue("each"),
+		"renotification_states":     types.ListValueMust(types.StringType, []attr.Value{types.StringValue("alert")}),
+		"renotify_interval_minutes": types.Int64Value(30),
 	})
-
-	raw, err := json.Marshal(expanded.Config)
-	if err != nil {
-		t.Fatalf("failed to marshal expanded config: %v", err)
-	}
-
-	var wire map[string]any
-	if err := json.Unmarshal(raw, &wire); err != nil {
-		t.Fatalf("failed to unmarshal wire payload: %v", err)
-	}
-	if _, exists := wire["openStatus"]; exists {
-		t.Fatalf("expected openStatus to be omitted when unset, got %s", raw)
-	}
-	if _, exists := wire["closedStatus"]; exists {
-		t.Fatalf("expected closedStatus to be omitted when unset, got %s", raw)
-	}
 }
 
 func TestValidateTargetConfig_JiraRejectsRenotify(t *testing.T) {
 	ctx := context.Background()
 	r := &notificationRuleResource{}
-
-	cfg := resource_notification_rule.TargetConfigModel{
-		Jira: &resource_notification_rule.JiraConfigModel{
-			IntegrationID: types.StringValue("jira-123"),
-			ProjectKey:    types.StringValue("OPS"),
-			IssueType:     types.StringValue("Bug"),
-		},
+	configOf := func(renotify bool) types.Object {
+		config := `{"type": "jira", "integrationId": "jira-123", "projectKey": "OPS", "issueType": "Bug"}`
+		_, back := roundTrip(t, ctx, decodeRule(t, target("jira", config)))
+		attrs := back.Config.Attributes()
+		if renotify {
+			attrs["renotify"] = renotifyObject(ctx)
+		}
+		return types.ObjectValueMust(back.Config.AttributeTypes(ctx), attrs)
 	}
 
-	if diags := r.validateTargetConfig(cfg, 0); diags.HasError() {
+	if diags := r.validateTargetConfig(configOf(false), 0); diags.HasError() {
 		t.Fatalf("expected a jira target without renotify to validate, got %v", diags)
 	}
 
-	cfg.Renotify = renotifyModel(t, ctx, "alert")
-	diags := r.validateTargetConfig(cfg, 0)
+	diags := r.validateTargetConfig(configOf(true), 0)
 	if !diags.HasError() {
 		t.Fatal("expected an error for a jira target combined with renotify")
 	}
 	if got := diags.Errors()[0].Detail(); got != "renotify is not supported on a jira destination." {
 		t.Fatalf("unexpected error detail: %q", got)
 	}
+
+	cfg := configOf(true)
+	attrs := cfg.Attributes()
+	attrs["jira"] = types.ObjectUnknown(objectAttribute(cfg, "jira").AttributeTypes(ctx))
+	unknownJira, d := types.ObjectValue(cfg.AttributeTypes(ctx), attrs)
+	if d.HasError() {
+		t.Fatalf("failed to build config: %v", d)
+	}
+	if diags := r.validateTargetConfig(unknownJira, 0); diags.HasError() {
+		t.Fatalf("expected an unknown jira with renotify to validate, got %v", diags)
+	}
+}
+
+func TestExactlyOneDestination(t *testing.T) {
+	ctx := context.Background()
+	_, back := roundTrip(t, ctx, slackRule(t, renotifyJSON))
+	validate := func(cfg types.Object) string {
+		resp := &validator.ObjectResponse{}
+		resource_notification_rule.ExactlyOneDestination("renotify").ValidateObject(ctx, validator.ObjectRequest{ConfigValue: cfg}, resp)
+		if !resp.Diagnostics.HasError() {
+			return ""
+		}
+		return resp.Diagnostics.Errors()[0].Detail()
+	}
+
+	if got := validate(back.Config); got != "" {
+		t.Fatalf("expected one destination to validate, got %q", got)
+	}
+
+	attrs := back.Config.Attributes()
+	attrs["email"] = types.ObjectValueMust(objectAttribute(back.Config, "email").AttributeTypes(ctx), map[string]attr.Value{
+		"addresses": types.ListNull(types.StringType),
+		"type":      types.StringNull(),
+	})
+	two := types.ObjectValueMust(back.Config.AttributeTypes(ctx), attrs)
+	want := "Exactly one destination must be set, one of: email, google_chat, grafana_irm, incident_io, jira, microsoft_teams, pagerduty, servicenow, slack, squadcast, webhook. Set: email, slack."
+	if got := validate(two); got != want {
+		t.Fatalf("expected %q, got %q", want, got)
+	}
+}
+
+func TestFlattenNotificationRule_FitsTheGeneratedSchema(t *testing.T) {
+	ctx := context.Background()
+
+	rule := slackRule(t, renotifyJSON)
+	rule.Name = "rule"
+	rule.PrioritiesFilter = []apiclient.RulePrioritiesFilter{1, 2}
+	rule.TransitionTypesFilter = []apiclient.RuleTransitionTypesFilter{"triggered"}
+	rule.Owner = "team-1"
+	rule.IsActive = true
+	state, diags := flattenNotificationRule(ctx, rule)
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+
+	schema := resource_notification_rule.NotificationRuleResourceSchema(ctx)
+	got := tfsdk.State{Schema: schema}
+	if d := got.Set(ctx, &state); d.HasError() {
+		t.Fatalf("flattened rule does not fit the schema: %v", d)
+	}
+
+	var back resource_notification_rule.NotificationRuleModel
+	if d := got.Get(ctx, &back); d.HasError() {
+		t.Fatalf("failed to read the state back: %v", d)
+	}
+	if back.ClusterIdsFilter.IsNull() || len(back.ClusterIdsFilter.Elements()) != 0 {
+		t.Fatalf("expected an absent clusterIdsFilter to flatten to an empty list, got %s", back.ClusterIdsFilter)
+	}
+}
+
+func TestBuildNotificationRuleRequestBody_OmittedClusterIdsFilterSendsEmptyList(t *testing.T) {
+	ctx := context.Background()
+	r := &notificationRuleResource{}
+
+	flattened, diags := flattenNotificationRule(ctx, slackRule(t, ""))
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+
+	// The default turns an omitted attribute into an empty list in the plan; an unset one is null.
+	for name, list := range map[string]types.List{
+		"planned default": flattened.ClusterIdsFilter,
+		"null":            types.ListNull(types.StringType),
+	} {
+		t.Run(name, func(t *testing.T) {
+			flattened.ClusterIdsFilter = list
+			body, diags := r.buildNotificationRuleRequestBody(ctx, flattened)
+			if diags.HasError() {
+				t.Fatalf("unexpected diagnostics: %v", diags)
+			}
+			if got, ok := body["clusterIdsFilter"].([]string); !ok || len(got) != 0 {
+				t.Fatalf("expected clusterIdsFilter to be an empty list, got %#v", body["clusterIdsFilter"])
+			}
+		})
+	}
+}
+
+func TestExpandTarget_UnknownComputedFieldsAreNotSent(t *testing.T) {
+	ctx := context.Background()
+	_, back := roundTrip(t, ctx, slackRule(t, ""))
+
+	slack := objectAttribute(back.Config, "slack")
+	slackAttrs := slack.Attributes()
+	slackAttrs["integration_name"] = types.StringUnknown()
+	slackAttrs["type"] = types.StringUnknown()
+	configAttrs := back.Config.Attributes()
+	configAttrs["slack"] = types.ObjectValueMust(slack.AttributeTypes(ctx), slackAttrs)
+	config := types.ObjectValueMust(back.Config.AttributeTypes(ctx), configAttrs)
+
+	var body apiclient.CreateNotificationRuleJSONBody
+	target := grow(&body.Targets)
+	if diags := expandTarget(ctx, types.StringUnknown(), config, back.RateLimit, &target.Id, &target.Config, &target.RateLimit); diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	raw, err := json.Marshal(body.Targets[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertJSON(t, raw, `{"id": "", "config": {"type": "slack", "channel": "C123", "integrationId": "T123"}}`)
 }

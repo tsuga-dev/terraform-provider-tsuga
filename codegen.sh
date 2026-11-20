@@ -17,11 +17,10 @@ go tool -modfile=tools/go.mod tfplugingen-openapi generate \
 	--output ./provider-code-spec.json \
 	"$TMP_SPEC"
 
-rm -f "$TMP_SPEC"
-
 # Patch the provider code spec before Go generation
 # - team datasource: sets $(id) and $(name) to computed_optional so users can look up a team by either field.
-node ./tools/patch-provider-code-spec.js ./provider-code-spec.json
+node ./tools/patch-provider-code-spec.js ./provider-code-spec.json "$TMP_SPEC"
+rm -f "$TMP_SPEC"
 
 # Generate the resources code
 go tool -modfile=tools/go.mod tfplugingen-framework generate resources \
@@ -32,6 +31,10 @@ go tool -modfile=tools/go.mod tfplugingen-framework generate resources \
 go tool -modfile=tools/go.mod tfplugingen-framework generate data-sources \
 	--input ./provider-code-spec.json \
 	--output ./internal
+
+# Generate the API types of the notification rules (request and response bodies, discriminated
+# target configs) from the unmodified spec, see oapi-codegen.yml.
+go tool -modfile=tools/go.mod oapi-codegen --config ./oapi-codegen.yml ./public-open-api.json
 
 # tsuga_dashboard is hand-written (absent from generator_config.yml), so it gets
 # no spec-derived validators from tfplugingen: generate them from the spec here.

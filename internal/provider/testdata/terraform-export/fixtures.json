@@ -219,6 +219,7 @@
       "transitionTypesFilter": [
         "triggered"
       ],
+      "clusterIdsFilter": [],
       "targets": [
         {
           "id": "target-1",

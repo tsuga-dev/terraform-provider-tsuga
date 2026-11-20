@@ -62,8 +62,8 @@ function fail(message) {
   process.exit(1);
 }
 
-if (process.argv.length < 3) {
-  fail("Usage: patch-provider-code-spec.js <provider-code-spec.json>");
+if (process.argv.length < 4) {
+  fail("Usage: patch-provider-code-spec.js <provider-code-spec.json> <expanded-openapi.json>");
 }
 
 const specPath = process.argv[2];
@@ -191,7 +191,7 @@ for (const name of ["id", "key_last_characters"]) {
   );
 }
 
-for (const tagsResourceName of ["operation_api_key", "rum_public_token"]) {
+for (const tagsResourceName of ["operation_api_key", "rum_public_token", "notification_rule"]) {
   requireAttr(requireResource(tagsResourceName), "tags").list_nested.nested_object.custom_type = {
     import: {path: "terraform-provider-tsuga/internal/resource_team"},
     type: "resource_team.TagsType{ObjectType: types.ObjectType{AttrTypes: resource_team.TagsValue{}.AttributeTypes(ctx)}}",
@@ -233,5 +233,112 @@ requireAttr(cloudAccount, "aws").single_nested.validators = [
     },
   },
 ];
+
+const kindOf = (attr) => Object.keys(attr).find((key) => key !== "name");
+
+// Calls fn(attr, kind, name) on every attribute, nested ones included.
+function walkAttrs(attributes, fn) {
+  for (const attr of attributes) {
+    const kind = kindOf(attr);
+    fn(attr[kind], kind, attr.name);
+    const nested = attr[kind].attributes || attr[kind].nested_object?.attributes;
+    if (nested) walkAttrs(nested, fn);
+  }
+}
+
+const notificationRule = requireResource("notification_rule");
+const targetItem = requireAttr(notificationRule, "targets").list_nested.nested_object.attributes;
+const targetConfig = requireEntry(targetItem, "attribute", "config").single_nested;
+walkAttrs(notificationRule.schema.attributes, (attr, kind, name) => {
+  const isOptionalByName = ["query_string", "teams", "open_status", "closed_status"].includes(name);
+  if ((kind === "single_nested" || isOptionalByName) && attr.computed_optional_required === "computed_optional") {
+    attr.computed_optional_required = "optional";
+  }
+});
+// Omitting cluster_ids_filter clears it: the API treats an omitted or empty filter alike, so the
+// attribute defaults to an empty list.
+requireAttr(notificationRule, "cluster_ids_filter").list.default = {
+  custom: {
+    imports: [
+      {path: "github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"},
+      {path: "github.com/hashicorp/terraform-plugin-framework/attr"},
+      {path: "github.com/hashicorp/terraform-plugin-framework/types"},
+    ],
+    schema_definition: "listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{}))",
+  },
+};
+
+// The spec cannot express that exactly one destination is set; the validator lives next to the
+// generated code (resource_notification_rule/validators.go) and names the destinations in its error.
+targetConfig.validators = [{custom: {schema_definition: 'ExactlyOneDestination("renotify")'}}];
+
+// tfplugingen skips the item enums of list attributes: add a OneOf validator for each, derived
+// from the expanded OpenAPI spec (argv[3]) along the create request body of every resource in
+// generator_config.yml.
+function createRequestPaths() {
+  const paths = {};
+  let section = null;
+  let resource = null;
+  let operation = null;
+  for (const line of fs.readFileSync("generator_config.yml", "utf8").split("\n")) {
+    let m;
+    if ((m = line.match(/^(\w+):$/))) section = m[1];
+    else if (section === "resources" && (m = line.match(/^  (\w+):$/))) resource = m[1];
+    else if ((m = line.match(/^    (\w+):$/))) operation = m[1];
+    else if (section === "resources" && operation === "create" && (m = line.match(/^      path: (.+)$/))) paths[resource] = m[1];
+  }
+  return paths;
+}
+
+const apiSpec = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
+const deref = (schema) =>
+  schema?.$ref ? schema.$ref.replace(/^#\//, "").split("/").reduce((node, part) => node[part], apiSpec) : schema;
+const nonNull = (schema) => deref(schema?.anyOf ? schema.anyOf.find((s) => s.type !== "null") : schema);
+const snakeCase = (name) => name.replace(/[A-Z]/g, (c) => "_" + c.toLowerCase());
+const propertyFor = (schema, name) => {
+  const properties = nonNull(schema)?.properties || {};
+  const key = Object.keys(properties).find((k) => snakeCase(k) === name);
+  return key && nonNull(properties[key]);
+};
+
+const ITEM_VALIDATORS = {
+  string: {pkg: "stringvalidator", each: "ValueStringsAre", literal: (v) => JSON.stringify(v)},
+  int64: {pkg: "int64validator", each: "ValueInt64sAre", literal: (v) => String(v)},
+};
+
+function addItemEnumValidators(attributes, schema) {
+  for (const attr of attributes) {
+    const kind = kindOf(attr);
+    const prop = propertyFor(schema, attr.name);
+    if (!prop) continue;
+    if (kind === "list") {
+      const items = nonNull(prop.items);
+      const handler = ITEM_VALIDATORS[Object.keys(attr.list.element_type)[0]];
+      if (items?.enum && handler) {
+        attr.list.validators = [
+          ...(attr.list.validators || []),
+          {
+            custom: {
+              imports: [
+                {path: "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"},
+                {path: `github.com/hashicorp/terraform-plugin-framework-validators/${handler.pkg}`},
+              ],
+              schema_definition: `listvalidator.${handler.each}(${handler.pkg}.OneOf(${items.enum.map(handler.literal).join(", ")}))`,
+            },
+          },
+        ];
+      }
+    } else if (kind === "single_nested") {
+      addItemEnumValidators(attr.single_nested.attributes, prop);
+    } else if (kind === "list_nested") {
+      addItemEnumValidators(attr.list_nested.nested_object.attributes, nonNull(prop.items));
+    }
+  }
+}
+
+for (const [name, apiPath] of Object.entries(createRequestPaths())) {
+  const body = apiSpec.paths[apiPath].post.requestBody.content["application/json"].schema;
+  addItemEnumValidators(requireResource(name).schema.attributes, body);
+}
 
 fs.writeFileSync(specPath, JSON.stringify(spec, null, 2) + "\n");

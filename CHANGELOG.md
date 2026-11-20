@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `tsuga_notification_rule`: `cluster_ids_filter`, the cluster IDs that must match for the rule to fire. Omitting it, or leaving it empty, matches every cluster; removing it from a rule clears the filter.
+
+### Removed
+
+- **Breaking:** `hide_time` and `hide_transition` were removed from `slack` targets of `tsuga_notification_rule` and `tsuga_adaptive_notification_rule`, because the Tsuga API no longer supports them. Remove them from your configuration.
+
 ## [3.2.0] - 2026-11-18
 
 ### Added

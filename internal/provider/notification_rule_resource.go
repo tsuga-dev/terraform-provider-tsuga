@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 
+	"terraform-provider-tsuga/internal/apiclient"
 	"terraform-provider-tsuga/internal/resource_notification_rule"
 	"terraform-provider-tsuga/internal/teamsfilter"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 var _ resource.Resource = (*notificationRuleResource)(nil)
@@ -63,89 +65,48 @@ func (r *notificationRuleResource) ValidateConfig(ctx context.Context, req resou
 	}
 
 	// Validate teams_filter: teams is required when type is "specific-teams"
-	if config.TeamsFilter != nil && !config.TeamsFilter.Type.IsNull() && !config.TeamsFilter.Type.IsUnknown() {
-		filterType := config.TeamsFilter.Type.ValueString()
-		if filterType == "specific-teams" {
-			if config.TeamsFilter.Teams.IsNull() {
-				resp.Diagnostics.AddAttributeError(
-					path.Root("teams_filter").AtName("teams"),
-					"Missing required attribute",
-					"teams is required when teams_filter.type is 'specific-teams'",
-				)
-			} else if !config.TeamsFilter.Teams.IsUnknown() && len(config.TeamsFilter.Teams.Elements()) == 0 {
-				resp.Diagnostics.AddAttributeError(
-					path.Root("teams_filter").AtName("teams"),
-					"Invalid attribute value",
-					"teams must contain at least one team ID when teams_filter.type is 'specific-teams'",
-				)
-			}
+	filter := config.TeamsFilter
+	if !filter.TeamsFilterType.IsNull() && !filter.TeamsFilterType.IsUnknown() && filter.TeamsFilterType.ValueString() == "specific-teams" {
+		if filter.Teams.IsNull() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("teams_filter").AtName("teams"),
+				"Missing required attribute",
+				"teams is required when teams_filter.type is 'specific-teams'",
+			)
+		} else if !filter.Teams.IsUnknown() && len(filter.Teams.Elements()) == 0 {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("teams_filter").AtName("teams"),
+				"Invalid attribute value",
+				"teams must contain at least one team ID when teams_filter.type is 'specific-teams'",
+			)
 		}
 	}
 
-	// Validate targets: each target's config must have exactly one config type set
 	if !config.Targets.IsNull() && !config.Targets.IsUnknown() {
-		var targets []resource_notification_rule.TargetModel
+		var targets []resource_notification_rule.TargetsValue
 		resp.Diagnostics.Append(config.Targets.ElementsAs(ctx, &targets, false)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
 		for i, target := range targets {
-			diags := r.validateTargetConfig(target.Config, i)
-			resp.Diagnostics.Append(diags...)
+			resp.Diagnostics.Append(r.validateTargetConfig(target.Config, i)...)
 		}
 	}
 }
 
-func (r *notificationRuleResource) validateTargetConfig(cfg resource_notification_rule.TargetConfigModel, index int) diag.Diagnostics {
+// objectAttribute returns the named attribute of an object, or a null object when it is absent.
+func objectAttribute(obj basetypes.ObjectValue, name string) basetypes.ObjectValue {
+	value, _ := obj.Attributes()[name].(basetypes.ObjectValue)
+	return value
+}
+
+func (r *notificationRuleResource) validateTargetConfig(cfg basetypes.ObjectValue, index int) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	pathPrefix := fmt.Sprintf("targets[%d].config", index)
-
-	setCount := 0
-	if cfg.Slack != nil {
-		setCount++
-	}
-	if cfg.IncidentIO != nil {
-		setCount++
-	}
-	if cfg.PagerDuty != nil {
-		setCount++
-	}
-	if cfg.Email != nil {
-		setCount++
-	}
-	if cfg.GrafanaIRM != nil {
-		setCount++
-	}
-	if cfg.MicrosoftTeams != nil {
-		setCount++
-	}
-	if cfg.Webhook != nil {
-		setCount++
-	}
-	if cfg.Squadcast != nil {
-		setCount++
-	}
-	if cfg.ServiceNow != nil {
-		setCount++
-	}
-	if cfg.GoogleChat != nil {
-		setCount++
-	}
-	if cfg.Jira != nil {
-		setCount++
-	}
-
-	if setCount != 1 {
-		diags.AddError(
-			"Invalid target config configuration",
-			fmt.Sprintf("%s: exactly one of slack, incident_io, pagerduty, email, grafana_irm, microsoft_teams, webhook, squadcast, servicenow, google_chat, or jira must be set.", pathPrefix),
-		)
-	}
-
 	// Jira files one issue per notification, so the API rejects renotify on it.
-	if cfg.Jira != nil && cfg.Renotify != nil {
+	known := func(v basetypes.ObjectValue) bool { return !v.IsNull() && !v.IsUnknown() }
+	if known(objectAttribute(cfg, "jira")) && known(objectAttribute(cfg, "renotify")) {
 		diags.AddAttributeError(
 			path.Root("targets").AtListIndex(index).AtName("config").AtName("renotify"),
 			"Unsupported attribute combination",
@@ -219,7 +180,7 @@ func (r *notificationRuleResource) readJSON(ctx context.Context, bodyReader io.R
 		return
 	}
 
-	var apiResp notificationRuleAPIResponse
+	var apiResp apiclient.GetNotificationRuleResponse
 	if err := json.Unmarshal(body, &apiResp); err != nil {
 		resp.Diagnostics.AddError("Parse Error", fmt.Sprintf("Unable to parse response: %s", err))
 		return
@@ -263,14 +224,16 @@ func (r *notificationRuleResource) Update(ctx context.Context, req resource.Upda
 func (r *notificationRuleResource) buildNotificationRuleRequestBody(ctx context.Context, plan resource_notification_rule.NotificationRuleModel) (map[string]any, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	teamsFilter, expandDiags := teamsfilter.Expand(ctx, plan.TeamsFilter)
+	teamsFilter, expandDiags := teamsfilter.Expand(ctx, &teamsfilter.Model{Type: plan.TeamsFilter.TeamsFilterType, Teams: plan.TeamsFilter.Teams})
+	diags.Append(expandDiags...)
+	clusterIdsFilter, expandDiags := expandStringList(ctx, plan.ClusterIdsFilter)
 	diags.Append(expandDiags...)
 	prioritiesFilter, expandDiags := expandIntList(ctx, plan.PrioritiesFilter)
 	diags.Append(expandDiags...)
 	transitionTypesFilter, expandDiags := expandStringList(ctx, plan.TransitionTypesFilter)
 	diags.Append(expandDiags...)
-	targets, expandDiags := expandNotificationRuleTargets(ctx, plan.Targets)
-	diags.Append(expandDiags...)
+	var targetsBody apiclient.CreateNotificationRuleJSONBody
+	diags.Append(expandNotificationRuleTargets(ctx, plan.Targets, &targetsBody)...)
 	if diags.HasError() {
 		return nil, diags
 	}
@@ -282,8 +245,14 @@ func (r *notificationRuleResource) buildNotificationRuleRequestBody(ctx context.
 		"transitionTypesFilter": transitionTypesFilter,
 		"owner":                 plan.Owner.ValueString(),
 		"isActive":              plan.IsActive.ValueBool(),
-		"targets":               targets,
+		"targets":               targetsBody.Targets,
 	}
+
+	// An omitted attribute plans as an empty list, which the API reads as "every cluster".
+	if clusterIdsFilter == nil {
+		clusterIdsFilter = []string{}
+	}
+	requestBody["clusterIdsFilter"] = clusterIdsFilter
 
 	// Send an explicit empty string when the value is absent: the API keeps
 	// omitted optional fields on update, so omitting it would leave a previously
@@ -323,7 +292,7 @@ func (r *notificationRuleResource) createOrUpdateNotificationRule(ctx context.Co
 		return resource_notification_rule.NotificationRuleModel{}, diags
 	}
 
-	var apiResp notificationRuleAPIResponse
+	var apiResp apiclient.GetNotificationRuleResponse
 	if err := json.Unmarshal(body, &apiResp); err != nil {
 		diags.AddError("Parse Error", fmt.Sprintf("Unable to parse response: %s", err))
 		return resource_notification_rule.NotificationRuleModel{}, diags
@@ -361,451 +330,83 @@ func (r *notificationRuleResource) Delete(ctx context.Context, req resource.Dele
 	}
 }
 
-type notificationRuleAPIResponse struct {
-	Data notificationRuleAPIData `json:"data"`
-}
-
-type notificationRuleAPIData struct {
-	ID                    string                      `json:"id"`
-	Name                  string                      `json:"name"`
-	QueryString           string                      `json:"queryString,omitempty"`
-	TeamsFilter           teamsfilter.APITeamsFilter  `json:"teamsFilter"`
-	PrioritiesFilter      []int64                     `json:"prioritiesFilter"`
-	TransitionTypesFilter []string                    `json:"transitionTypesFilter"`
-	Owner                 string                      `json:"owner"`
-	IsActive              bool                        `json:"isActive"`
-	Tags                  []apiTag                    `json:"tags"`
-	Targets               []notificationRuleAPITarget `json:"targets"`
-}
-
-type notificationRuleAPITarget struct {
-	ID        string                              `json:"id"`
-	Config    notificationRuleAPITargetConfig     `json:"config"`
-	RateLimit *notificationRuleAPITargetRateLimit `json:"rateLimit,omitempty"`
-}
-
-type notificationRuleAPITargetConfig struct {
-	Type            string                             `json:"type"`
-	Channel         string                             `json:"channel,omitempty"`
-	Addresses       []string                           `json:"addresses,omitempty"`
-	IntegrationID   string                             `json:"integrationId,omitempty"`
-	IntegrationName string                             `json:"integrationName,omitempty"`
-	ProjectKey      string                             `json:"projectKey,omitempty"`
-	IssueType       string                             `json:"issueType,omitempty"`
-	OpenStatus      string                             `json:"openStatus,omitempty"`
-	ClosedStatus    string                             `json:"closedStatus,omitempty"`
-	HideTime        *bool                              `json:"hideTime,omitempty"`
-	HideTransition  *bool                              `json:"hideTransition,omitempty"`
-	RenotifyConfig  *notificationRuleAPITargetRenotify `json:"renotifyConfig,omitempty"`
-}
-
-type notificationRuleAPITargetRateLimit struct {
-	MaxMessages int64 `json:"maxMessages"`
-	Minutes     int64 `json:"minutes"`
-}
-
-type notificationRuleAPITargetRenotify struct {
-	Mode                    string   `json:"mode"`
-	RenotificationStates    []string `json:"renotificationStates"`
-	RenotifyIntervalMinutes int64    `json:"renotifyIntervalMinutes"`
-}
-
-func expandNotificationRuleTargets(ctx context.Context, targets types.List) ([]notificationRuleAPITarget, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	if targets.IsNull() || targets.IsUnknown() {
-		return nil, diags
-	}
-
-	var targetModels []resource_notification_rule.TargetModel
-	diags.Append(targets.ElementsAs(ctx, &targetModels, false)...)
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	result := make([]notificationRuleAPITarget, 0, len(targetModels))
-	for _, t := range targetModels {
-		apiTarget := notificationRuleAPITarget{
-			ID: t.Id.ValueString(),
-		}
-
-		conf, confDiags := expandTargetConfig(ctx, t.Config)
-		diags.Append(confDiags...)
-		if diags.HasError() {
-			return nil, diags
-		}
-		apiTarget.Config = conf
-
-		if t.RateLimit != nil {
-			apiTarget.RateLimit = &notificationRuleAPITargetRateLimit{
-				MaxMessages: t.RateLimit.MaxMessages.ValueInt64(),
-				Minutes:     t.RateLimit.Minutes.ValueInt64(),
-			}
-		}
-
-		result = append(result, apiTarget)
-	}
-
-	return result, diags
-}
-
-func flattenNotificationRule(ctx context.Context, data notificationRuleAPIData) (resource_notification_rule.NotificationRuleModel, diag.Diagnostics) {
+func flattenNotificationRule(ctx context.Context, data apiclient.Rule) (resource_notification_rule.NotificationRuleModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tags, tagDiags := flattenTags(ctx, data.Tags)
+	tagsList, tagDiags := flattenTags(ctx, tagsFromAPI(data.Tags))
 	diags.Append(tagDiags...)
 
-	targets, targetDiags := flattenNotificationRuleTargets(ctx, data.Targets)
+	targets, targetDiags := flattenNotificationRuleTargets(ctx, data)
 	diags.Append(targetDiags...)
 
-	teamsFilter, teamDiags := teamsfilter.Flatten(ctx, data.TeamsFilter)
-	diags.Append(teamDiags...)
-	prioritiesFilter, priorityDiags := types.ListValueFrom(ctx, types.Int64Type, data.PrioritiesFilter)
+	teamsFilterAPI, err := flattenAPITeamsFilter(data.TeamsFilter)
+	if err != nil {
+		diags.AddError("Unsupported teams filter", err.Error())
+		return resource_notification_rule.NotificationRuleModel{}, diags
+	}
+	filter, filterDiags := teamsfilter.Flatten(ctx, teamsFilterAPI)
+	diags.Append(filterDiags...)
+	prioritiesFilter, priorityDiags := types.ListValueFrom(ctx, types.Int64Type, convertInts[int64](data.PrioritiesFilter))
 	diags.Append(priorityDiags...)
-	transitionTypesFilter, transitionDiags := types.ListValueFrom(ctx, types.StringType, data.TransitionTypesFilter)
+	transitionTypesFilter, transitionDiags := types.ListValueFrom(ctx, types.StringType, stringsOf(data.TransitionTypesFilter))
 	diags.Append(transitionDiags...)
-
-	state := resource_notification_rule.NotificationRuleModel{
-		Id:                    types.StringValue(data.ID),
-		Name:                  types.StringValue(data.Name),
-		QueryString:           stringValueOrNull(data.QueryString),
-		TeamsFilter:           teamsFilter,
-		PrioritiesFilter:      prioritiesFilter,
-		TransitionTypesFilter: transitionTypesFilter,
-		Owner:                 types.StringValue(data.Owner),
-		IsActive:              types.BoolValue(data.IsActive),
-		Tags:                  tags,
-		Targets:               targets,
+	if data.ClusterIdsFilter == nil {
+		data.ClusterIdsFilter = []string{}
 	}
-
-	return state, diags
-}
-
-func flattenNotificationRuleTargets(ctx context.Context, targets []notificationRuleAPITarget) (types.List, diag.Diagnostics) {
-	elemType := types.ObjectType{AttrTypes: resource_notification_rule.TargetAttrTypes(ctx)}
-	if len(targets) == 0 {
-		return types.ListNull(elemType), nil
-	}
-
-	configTypes := resource_notification_rule.TargetConfigAttrTypes(ctx)
-	rateLimitType := types.ObjectType{AttrTypes: resource_notification_rule.TargetRateLimitAttrTypes(ctx)}
-	renotifyType := types.ObjectType{AttrTypes: resource_notification_rule.TargetRenotifyAttrTypes(ctx)}
-
-	values := make([]attr.Value, 0, len(targets))
-	for _, t := range targets {
-		configValues := map[string]attr.Value{
-			"slack":           types.ObjectNull(resource_notification_rule.SlackAttrTypes(ctx)),
-			"incident_io":     types.ObjectNull(resource_notification_rule.IntegrationConfigAttrTypes(ctx)),
-			"pagerduty":       types.ObjectNull(resource_notification_rule.IntegrationConfigAttrTypes(ctx)),
-			"email":           types.ObjectNull(resource_notification_rule.EmailAttrTypes(ctx)),
-			"grafana_irm":     types.ObjectNull(resource_notification_rule.IntegrationConfigAttrTypes(ctx)),
-			"microsoft_teams": types.ObjectNull(resource_notification_rule.IntegrationConfigAttrTypes(ctx)),
-			"webhook":         types.ObjectNull(resource_notification_rule.IntegrationConfigAttrTypes(ctx)),
-			"squadcast":       types.ObjectNull(resource_notification_rule.IntegrationConfigAttrTypes(ctx)),
-			"servicenow":      types.ObjectNull(resource_notification_rule.IntegrationConfigAttrTypes(ctx)),
-			"google_chat":     types.ObjectNull(resource_notification_rule.IntegrationConfigAttrTypes(ctx)),
-			"jira":            types.ObjectNull(resource_notification_rule.JiraAttrTypes(ctx)),
-			"renotify":        types.ObjectNull(renotifyType.AttrTypes),
-		}
-
-		if t.Config.RenotifyConfig != nil {
-			renotifyStates, diags := types.ListValueFrom(ctx, types.StringType, t.Config.RenotifyConfig.RenotificationStates)
-			if diags.HasError() {
-				return types.ListNull(elemType), diags
-			}
-			configValues["renotify"] = types.ObjectValueMust(renotifyType.AttrTypes, map[string]attr.Value{
-				"mode":                      types.StringValue(t.Config.RenotifyConfig.Mode),
-				"renotification_states":     renotifyStates,
-				"renotify_interval_minutes": types.Int64Value(t.Config.RenotifyConfig.RenotifyIntervalMinutes),
-			})
-		}
-
-		switch t.Config.Type {
-		case "slack":
-			hideTime := types.BoolNull()
-			if t.Config.HideTime != nil {
-				hideTime = types.BoolValue(*t.Config.HideTime)
-			}
-			hideTransition := types.BoolNull()
-			if t.Config.HideTransition != nil {
-				hideTransition = types.BoolValue(*t.Config.HideTransition)
-			}
-			configValues["slack"] = types.ObjectValueMust(resource_notification_rule.SlackAttrTypes(ctx), map[string]attr.Value{
-				"type":             types.StringValue("slack"),
-				"channel":          types.StringValue(t.Config.Channel),
-				"integration_id":   types.StringValue(t.Config.IntegrationID),
-				"integration_name": stringValueOrNull(t.Config.IntegrationName),
-				"hide_time":        hideTime,
-				"hide_transition":  hideTransition,
-			})
-		case "incident-io":
-			configValues["incident_io"] = types.ObjectValueMust(resource_notification_rule.IntegrationConfigAttrTypes(ctx), map[string]attr.Value{
-				"type":             types.StringValue("incident-io"),
-				"integration_id":   types.StringValue(t.Config.IntegrationID),
-				"integration_name": stringValueOrNull(t.Config.IntegrationName),
-			})
-		case "pagerduty":
-			configValues["pagerduty"] = types.ObjectValueMust(resource_notification_rule.IntegrationConfigAttrTypes(ctx), map[string]attr.Value{
-				"type":             types.StringValue("pagerduty"),
-				"integration_id":   types.StringValue(t.Config.IntegrationID),
-				"integration_name": stringValueOrNull(t.Config.IntegrationName),
-			})
-		case "grafana-irm":
-			configValues["grafana_irm"] = types.ObjectValueMust(resource_notification_rule.IntegrationConfigAttrTypes(ctx), map[string]attr.Value{
-				"type":             types.StringValue("grafana-irm"),
-				"integration_id":   types.StringValue(t.Config.IntegrationID),
-				"integration_name": stringValueOrNull(t.Config.IntegrationName),
-			})
-		case "microsoft-teams":
-			configValues["microsoft_teams"] = types.ObjectValueMust(resource_notification_rule.IntegrationConfigAttrTypes(ctx), map[string]attr.Value{
-				"type":             types.StringValue("microsoft-teams"),
-				"integration_id":   types.StringValue(t.Config.IntegrationID),
-				"integration_name": stringValueOrNull(t.Config.IntegrationName),
-			})
-		case "webhook":
-			configValues["webhook"] = types.ObjectValueMust(resource_notification_rule.IntegrationConfigAttrTypes(ctx), map[string]attr.Value{
-				"type":             types.StringValue("webhook"),
-				"integration_id":   types.StringValue(t.Config.IntegrationID),
-				"integration_name": stringValueOrNull(t.Config.IntegrationName),
-			})
-		case "email":
-			addresses, diags := types.ListValueFrom(ctx, types.StringType, t.Config.Addresses)
-			if diags.HasError() {
-				return types.ListNull(elemType), diags
-			}
-			configValues["email"] = types.ObjectValueMust(resource_notification_rule.EmailAttrTypes(ctx), map[string]attr.Value{
-				"type":      types.StringValue("email"),
-				"addresses": addresses,
-			})
-		case "squadcast":
-			configValues["squadcast"] = types.ObjectValueMust(resource_notification_rule.IntegrationConfigAttrTypes(ctx), map[string]attr.Value{
-				"type":             types.StringValue("squadcast"),
-				"integration_id":   types.StringValue(t.Config.IntegrationID),
-				"integration_name": stringValueOrNull(t.Config.IntegrationName),
-			})
-		case "servicenow":
-			configValues["servicenow"] = types.ObjectValueMust(resource_notification_rule.IntegrationConfigAttrTypes(ctx), map[string]attr.Value{
-				"type":             types.StringValue("servicenow"),
-				"integration_id":   types.StringValue(t.Config.IntegrationID),
-				"integration_name": stringValueOrNull(t.Config.IntegrationName),
-			})
-		case "google-chat":
-			configValues["google_chat"] = types.ObjectValueMust(resource_notification_rule.IntegrationConfigAttrTypes(ctx), map[string]attr.Value{
-				"type":             types.StringValue("google-chat"),
-				"integration_id":   types.StringValue(t.Config.IntegrationID),
-				"integration_name": stringValueOrNull(t.Config.IntegrationName),
-			})
-		case "jira":
-			configValues["jira"] = types.ObjectValueMust(resource_notification_rule.JiraAttrTypes(ctx), map[string]attr.Value{
-				"type":             types.StringValue("jira"),
-				"integration_id":   types.StringValue(t.Config.IntegrationID),
-				"integration_name": stringValueOrNull(t.Config.IntegrationName),
-				"project_key":      types.StringValue(t.Config.ProjectKey),
-				"issue_type":       types.StringValue(t.Config.IssueType),
-				"open_status":      stringValueOrNull(t.Config.OpenStatus),
-				"closed_status":    stringValueOrNull(t.Config.ClosedStatus),
-			})
-		}
-
-		rateLimitValue := types.ObjectNull(rateLimitType.AttrTypes)
-		if t.RateLimit != nil {
-			rateLimitValue = types.ObjectValueMust(rateLimitType.AttrTypes, map[string]attr.Value{
-				"max_messages": types.Int64Value(t.RateLimit.MaxMessages),
-				"minutes":      types.Int64Value(t.RateLimit.Minutes),
-			})
-		}
-
-		values = append(values, types.ObjectValueMust(resource_notification_rule.TargetAttrTypes(ctx), map[string]attr.Value{
-			"id":         types.StringValue(t.ID),
-			"config":     types.ObjectValueMust(configTypes, configValues),
-			"rate_limit": rateLimitValue,
-		}))
-	}
-
-	return types.ListValue(elemType, values)
-}
-
-func expandTargetConfig(ctx context.Context, cfg resource_notification_rule.TargetConfigModel) (notificationRuleAPITargetConfig, diag.Diagnostics) {
-	conf, diags := expandTargetDestinationConfig(ctx, cfg)
+	clusterIdsFilter, clusterDiags := types.ListValueFrom(ctx, types.StringType, data.ClusterIdsFilter)
+	diags.Append(clusterDiags...)
 	if diags.HasError() {
-		return notificationRuleAPITargetConfig{}, diags
+		return resource_notification_rule.NotificationRuleModel{}, diags
 	}
 
-	if cfg.Renotify != nil {
-		renotifyStates, renotifyDiags := expandStringList(ctx, cfg.Renotify.RenotificationStates)
-		diags.Append(renotifyDiags...)
-		if diags.HasError() {
-			return notificationRuleAPITargetConfig{}, diags
-		}
-		conf.RenotifyConfig = &notificationRuleAPITargetRenotify{
-			Mode:                    cfg.Renotify.Mode.ValueString(),
-			RenotificationStates:    renotifyStates,
-			RenotifyIntervalMinutes: cfg.Renotify.RenotifyIntervalMinutes.ValueInt64(),
-		}
-	}
+	teamsFilter, teamsFilterDiags := resource_notification_rule.NewTeamsFilterValue(
+		resource_notification_rule.TeamsFilterValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{"type": filter.Type, "teams": filter.Teams},
+	)
+	diags.Append(teamsFilterDiags...)
 
-	return conf, diags
+	return resource_notification_rule.NotificationRuleModel{
+		ClusterIdsFilter:      clusterIdsFilter,
+		Id:                    types.StringValue(data.Id),
+		IsActive:              types.BoolValue(data.IsActive),
+		Name:                  types.StringValue(data.Name),
+		Owner:                 types.StringValue(data.Owner),
+		PrioritiesFilter:      prioritiesFilter,
+		QueryString:           stringValueOrNull(derefString(data.QueryString)),
+		Tags:                  tagsList,
+		Targets:               targets,
+		TeamsFilter:           teamsFilter,
+		TransitionTypesFilter: transitionTypesFilter,
+	}, diags
 }
 
-func expandTargetDestinationConfig(ctx context.Context, cfg resource_notification_rule.TargetConfigModel) (notificationRuleAPITargetConfig, diag.Diagnostics) {
-	var diags diag.Diagnostics
+func convertInts[To ~int | ~int64, From ~int](in []From) []To {
+	out := make([]To, len(in))
+	for i, n := range in {
+		out[i] = To(n)
+	}
+	return out
+}
 
-	setCount := 0
-	if cfg.Slack != nil {
-		setCount++
+func flattenAPITeamsFilter(filter apiclient.Rule_TeamsFilter) (teamsfilter.APITeamsFilter, error) {
+	value, err := filter.ValueByDiscriminator()
+	if err != nil {
+		return teamsfilter.APITeamsFilter{}, err
 	}
-	if cfg.IncidentIO != nil {
-		setCount++
+	switch v := value.(type) {
+	case apiclient.TeamsFilterSpecificTeams:
+		return teamsfilter.APITeamsFilter{Type: string(v.Type), Teams: v.Teams}, nil
+	case apiclient.TeamsFilterAllTeams:
+		return teamsfilter.APITeamsFilter{Type: string(v.Type)}, nil
+	case apiclient.TeamsFilterAllPublicTeams:
+		return teamsfilter.APITeamsFilter{Type: string(v.Type)}, nil
 	}
-	if cfg.PagerDuty != nil {
-		setCount++
-	}
-	if cfg.Email != nil {
-		setCount++
-	}
-	if cfg.GrafanaIRM != nil {
-		setCount++
-	}
-	if cfg.MicrosoftTeams != nil {
-		setCount++
-	}
-	if cfg.Webhook != nil {
-		setCount++
-	}
-	if cfg.Squadcast != nil {
-		setCount++
-	}
-	if cfg.ServiceNow != nil {
-		setCount++
-	}
-	if cfg.GoogleChat != nil {
-		setCount++
-	}
-	if cfg.Jira != nil {
-		setCount++
-	}
+	return teamsfilter.APITeamsFilter{}, fmt.Errorf("unexpected teams filter type %T", value)
+}
 
-	if setCount != 1 {
-		diags.AddError("Invalid target config", "Exactly one of slack, incident_io, pagerduty, email, grafana_irm, microsoft_teams, webhook, squadcast, servicenow, google_chat, jira must be set in config.")
-		return notificationRuleAPITargetConfig{}, diags
+func derefString(s *string) string {
+	if s == nil {
+		return ""
 	}
-
-	switch {
-	case cfg.Slack != nil:
-		conf := notificationRuleAPITargetConfig{
-			Type:          "slack",
-			Channel:       cfg.Slack.Channel.ValueString(),
-			IntegrationID: cfg.Slack.IntegrationID.ValueString(),
-		}
-		if !cfg.Slack.IntegrationName.IsNull() && !cfg.Slack.IntegrationName.IsUnknown() {
-			conf.IntegrationName = cfg.Slack.IntegrationName.ValueString()
-		}
-		if !cfg.Slack.HideTime.IsNull() && !cfg.Slack.HideTime.IsUnknown() {
-			hideTime := cfg.Slack.HideTime.ValueBool()
-			conf.HideTime = &hideTime
-		}
-		if !cfg.Slack.HideTransition.IsNull() && !cfg.Slack.HideTransition.IsUnknown() {
-			hideTransition := cfg.Slack.HideTransition.ValueBool()
-			conf.HideTransition = &hideTransition
-		}
-		return conf, diags
-	case cfg.IncidentIO != nil:
-		conf := notificationRuleAPITargetConfig{
-			Type:          "incident-io",
-			IntegrationID: cfg.IncidentIO.IntegrationID.ValueString(),
-		}
-		if !cfg.IncidentIO.IntegrationName.IsNull() && !cfg.IncidentIO.IntegrationName.IsUnknown() {
-			conf.IntegrationName = cfg.IncidentIO.IntegrationName.ValueString()
-		}
-		return conf, diags
-	case cfg.PagerDuty != nil:
-		conf := notificationRuleAPITargetConfig{
-			Type:          "pagerduty",
-			IntegrationID: cfg.PagerDuty.IntegrationID.ValueString(),
-		}
-		if !cfg.PagerDuty.IntegrationName.IsNull() && !cfg.PagerDuty.IntegrationName.IsUnknown() {
-			conf.IntegrationName = cfg.PagerDuty.IntegrationName.ValueString()
-		}
-		return conf, diags
-	case cfg.Email != nil:
-		addresses, addrDiags := expandStringList(ctx, cfg.Email.Addresses)
-		diags.Append(addrDiags...)
-		return notificationRuleAPITargetConfig{
-			Type:      "email",
-			Addresses: addresses,
-		}, diags
-	case cfg.GrafanaIRM != nil:
-		conf := notificationRuleAPITargetConfig{
-			Type:          "grafana-irm",
-			IntegrationID: cfg.GrafanaIRM.IntegrationID.ValueString(),
-		}
-		if !cfg.GrafanaIRM.IntegrationName.IsNull() && !cfg.GrafanaIRM.IntegrationName.IsUnknown() {
-			conf.IntegrationName = cfg.GrafanaIRM.IntegrationName.ValueString()
-		}
-		return conf, diags
-	case cfg.MicrosoftTeams != nil:
-		conf := notificationRuleAPITargetConfig{
-			Type:          "microsoft-teams",
-			IntegrationID: cfg.MicrosoftTeams.IntegrationID.ValueString(),
-		}
-		if !cfg.MicrosoftTeams.IntegrationName.IsNull() && !cfg.MicrosoftTeams.IntegrationName.IsUnknown() {
-			conf.IntegrationName = cfg.MicrosoftTeams.IntegrationName.ValueString()
-		}
-		return conf, diags
-	case cfg.Webhook != nil:
-		conf := notificationRuleAPITargetConfig{
-			Type:          "webhook",
-			IntegrationID: cfg.Webhook.IntegrationID.ValueString(),
-		}
-		if !cfg.Webhook.IntegrationName.IsNull() && !cfg.Webhook.IntegrationName.IsUnknown() {
-			conf.IntegrationName = cfg.Webhook.IntegrationName.ValueString()
-		}
-		return conf, diags
-	case cfg.Squadcast != nil:
-		conf := notificationRuleAPITargetConfig{
-			Type:          "squadcast",
-			IntegrationID: cfg.Squadcast.IntegrationID.ValueString(),
-		}
-		if !cfg.Squadcast.IntegrationName.IsNull() && !cfg.Squadcast.IntegrationName.IsUnknown() {
-			conf.IntegrationName = cfg.Squadcast.IntegrationName.ValueString()
-		}
-		return conf, diags
-	case cfg.ServiceNow != nil:
-		conf := notificationRuleAPITargetConfig{
-			Type:          "servicenow",
-			IntegrationID: cfg.ServiceNow.IntegrationID.ValueString(),
-		}
-		if !cfg.ServiceNow.IntegrationName.IsNull() && !cfg.ServiceNow.IntegrationName.IsUnknown() {
-			conf.IntegrationName = cfg.ServiceNow.IntegrationName.ValueString()
-		}
-		return conf, diags
-	case cfg.GoogleChat != nil:
-		conf := notificationRuleAPITargetConfig{
-			Type:          "google-chat",
-			IntegrationID: cfg.GoogleChat.IntegrationID.ValueString(),
-		}
-		if !cfg.GoogleChat.IntegrationName.IsNull() && !cfg.GoogleChat.IntegrationName.IsUnknown() {
-			conf.IntegrationName = cfg.GoogleChat.IntegrationName.ValueString()
-		}
-		return conf, diags
-	case cfg.Jira != nil:
-		conf := notificationRuleAPITargetConfig{
-			Type:          "jira",
-			IntegrationID: cfg.Jira.IntegrationID.ValueString(),
-			ProjectKey:    cfg.Jira.ProjectKey.ValueString(),
-			IssueType:     cfg.Jira.IssueType.ValueString(),
-		}
-		if !cfg.Jira.IntegrationName.IsNull() && !cfg.Jira.IntegrationName.IsUnknown() {
-			conf.IntegrationName = cfg.Jira.IntegrationName.ValueString()
-		}
-		if !cfg.Jira.OpenStatus.IsNull() && !cfg.Jira.OpenStatus.IsUnknown() {
-			conf.OpenStatus = cfg.Jira.OpenStatus.ValueString()
-		}
-		if !cfg.Jira.ClosedStatus.IsNull() && !cfg.Jira.ClosedStatus.IsUnknown() {
-			conf.ClosedStatus = cfg.Jira.ClosedStatus.ValueString()
-		}
-		return conf, diags
-	default:
-		diags.AddError("Invalid target config", "Exactly one config block must be set for each target.")
-		return notificationRuleAPITargetConfig{}, diags
-	}
+	return *s
 }

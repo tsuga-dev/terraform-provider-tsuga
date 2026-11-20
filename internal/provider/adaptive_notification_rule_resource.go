@@ -7,8 +7,8 @@ import (
 	"io"
 	"net/http"
 
+	"terraform-provider-tsuga/internal/apiclient"
 	"terraform-provider-tsuga/internal/resource_adaptive_notification_rule"
-	"terraform-provider-tsuga/internal/resource_notification_rule"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -235,32 +235,19 @@ func (r *adaptiveNotificationRuleResource) createOrUpdate(ctx context.Context, m
 	return flattenAdaptiveNotificationRule(ctx, data, plan)
 }
 
-type adaptiveNotificationRuleAPIData struct {
-	ID             string                    `json:"id"`
-	Name           string                    `json:"name"`
-	Owner          string                    `json:"owner"`
-	IsActive       bool                      `json:"isActive"`
-	Tags           []apiTag                  `json:"tags"`
-	MonitorIDs     []string                  `json:"monitorIds"`
-	SloIDs         []string                  `json:"sloIds"`
-	FallbackTarget notificationRuleAPITarget `json:"fallbackTarget"`
-}
-
-func decodeAdaptiveNotificationRule(bodyReader io.Reader) (adaptiveNotificationRuleAPIData, diag.Diagnostics) {
+func decodeAdaptiveNotificationRule(bodyReader io.Reader) (apiclient.AdaptiveRule, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	body, err := io.ReadAll(bodyReader)
 	if err != nil {
 		diags.AddError("Parse Error", fmt.Sprintf("Unable to read response body: %s", err))
-		return adaptiveNotificationRuleAPIData{}, diags
+		return apiclient.AdaptiveRule{}, diags
 	}
 
-	var apiResp struct {
-		Data adaptiveNotificationRuleAPIData `json:"data"`
-	}
+	var apiResp apiclient.GetAdaptiveNotificationRuleResponse
 	if err := json.Unmarshal(body, &apiResp); err != nil {
 		diags.AddError("Parse Error", fmt.Sprintf("Unable to parse response: %s", err))
-		return adaptiveNotificationRuleAPIData{}, diags
+		return apiclient.AdaptiveRule{}, diags
 	}
 
 	return apiResp.Data, diags
@@ -275,8 +262,8 @@ func buildAdaptiveNotificationRuleRequestBody(ctx context.Context, plan resource
 	diags.Append(expandDiags...)
 	sloIDs, expandDiags := expandStringList(ctx, plan.SloIds)
 	diags.Append(expandDiags...)
-	fallbackTarget, expandDiags := expandAdaptiveNotificationRuleFallbackTarget(ctx, plan.FallbackTarget)
-	diags.Append(expandDiags...)
+	var fallbackBody apiclient.CreateAdaptiveNotificationRuleJSONBody
+	diags.Append(expandAdaptiveNotificationRuleFallbackTarget(ctx, plan.FallbackTarget, &fallbackBody)...)
 	if diags.HasError() {
 		return nil, diags
 	}
@@ -293,7 +280,7 @@ func buildAdaptiveNotificationRuleRequestBody(ctx context.Context, plan resource
 		"isActive":       plan.IsActive.ValueBool(),
 		"monitorIds":     monitorIDs,
 		"sloIds":         sloIDs,
-		"fallbackTarget": fallbackTarget,
+		"fallbackTarget": fallbackBody.FallbackTarget,
 	}
 
 	if tags, tagDiags := expandTags(ctx, plan.Tags); tagDiags.HasError() {
@@ -306,57 +293,56 @@ func buildAdaptiveNotificationRuleRequestBody(ctx context.Context, plan resource
 	return requestBody, diags
 }
 
-func expandAdaptiveNotificationRuleFallbackTarget(ctx context.Context, target *resource_notification_rule.TargetModel) (notificationRuleAPITarget, diag.Diagnostics) {
-	conf, diags := expandTargetConfig(ctx, target.Config)
-	if diags.HasError() {
-		return notificationRuleAPITarget{}, diags
-	}
-
-	apiTarget := notificationRuleAPITarget{ID: target.Id.ValueString(), Config: conf}
-	if target.RateLimit != nil {
-		apiTarget.RateLimit = &notificationRuleAPITargetRateLimit{
-			MaxMessages: target.RateLimit.MaxMessages.ValueInt64(),
-			Minutes:     target.RateLimit.Minutes.ValueInt64(),
+// The schema gives config and rate_limit custom types (ConfigValue, RateLimitValue), so they are
+// converted to plain objects rather than asserted.
+func expandAdaptiveNotificationRuleFallbackTarget(ctx context.Context, target types.Object, body *apiclient.CreateAdaptiveNotificationRuleJSONBody) diag.Diagnostics {
+	var diags diag.Diagnostics
+	attrs := target.Attributes()
+	id, _ := attrs["id"].(types.String)
+	objects := map[string]types.Object{}
+	for _, name := range []string{"config", "rate_limit"} {
+		value, ok := attrs[name].(basetypes.ObjectValuable)
+		if !ok {
+			diags.AddError("Invalid fallback target", fmt.Sprintf("Unexpected type %T for %s.", attrs[name], name))
+			return diags
 		}
+		object, objectDiags := value.ToObjectValue(ctx)
+		diags.Append(objectDiags...)
+		objects[name] = object
 	}
-
-	return apiTarget, diags
+	if diags.HasError() {
+		return diags
+	}
+	fallback := &body.FallbackTarget
+	diags.Append(expandTarget(ctx, id, objects["config"], objects["rate_limit"], &fallback.Id, &fallback.Config, &fallback.RateLimit)...)
+	return diags
 }
 
 // flattenAdaptiveNotificationRule takes the prior plan or state so an empty list keeps the form
 // the configuration used: null when the attribute is omitted, an empty list when it is set to [].
-func flattenAdaptiveNotificationRule(ctx context.Context, data adaptiveNotificationRuleAPIData, prior resource_adaptive_notification_rule.AdaptiveNotificationRuleModel) (resource_adaptive_notification_rule.AdaptiveNotificationRuleModel, diag.Diagnostics) {
+func flattenAdaptiveNotificationRule(ctx context.Context, data apiclient.AdaptiveRule, prior resource_adaptive_notification_rule.AdaptiveNotificationRuleModel) (resource_adaptive_notification_rule.AdaptiveNotificationRuleModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	tags, tagDiags := flattenTags(ctx, data.Tags)
+	tags, tagDiags := flattenTags(ctx, tagsFromAPI(data.Tags))
 	diags.Append(tagDiags...)
-	monitorIDs, listDiags := flattenAdaptiveNotificationRuleIDs(ctx, data.MonitorIDs, prior.MonitorIds)
+	monitorIDs, listDiags := flattenAdaptiveNotificationRuleIDs(ctx, data.MonitorIds, prior.MonitorIds)
 	diags.Append(listDiags...)
-	sloIDs, listDiags := flattenAdaptiveNotificationRuleIDs(ctx, data.SloIDs, prior.SloIds)
+	sloIDs, listDiags := flattenAdaptiveNotificationRuleIDs(ctx, data.SloIds, prior.SloIds)
 	diags.Append(listDiags...)
 
-	// The fallback target has the shape of one notification rule target, so it reuses that
-	// flattener on a one-element list.
-	targets, targetDiags := flattenNotificationRuleTargets(ctx, []notificationRuleAPITarget{data.FallbackTarget})
+	// The fallback target has the shape of one notification rule target, so it reuses that flattener.
+	fallbackTarget, targetDiags := flattenNotificationRuleTarget(ctx, data.FallbackTarget.Id, data.FallbackTarget.Config, data.FallbackTarget.RateLimit)
 	diags.Append(targetDiags...)
-	if diags.HasError() {
-		return resource_adaptive_notification_rule.AdaptiveNotificationRuleModel{}, diags
-	}
-	var fallbackTarget resource_notification_rule.TargetModel
-	diags.Append(targets.Elements()[0].(types.Object).As(ctx, &fallbackTarget, basetypes.ObjectAsOptions{})...)
-	if diags.HasError() {
-		return resource_adaptive_notification_rule.AdaptiveNotificationRuleModel{}, diags
-	}
 
 	return resource_adaptive_notification_rule.AdaptiveNotificationRuleModel{
-		Id:             types.StringValue(data.ID),
+		Id:             types.StringValue(data.Id),
 		Name:           types.StringValue(data.Name),
 		Owner:          types.StringValue(data.Owner),
 		Tags:           tags,
 		IsActive:       types.BoolValue(data.IsActive),
 		MonitorIds:     monitorIDs,
 		SloIds:         sloIDs,
-		FallbackTarget: &fallbackTarget,
+		FallbackTarget: fallbackTarget,
 	}, diags
 }
 

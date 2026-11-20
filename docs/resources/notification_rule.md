@@ -50,22 +50,23 @@ resource "tsuga_notification_rule" "notification-rule" {
 
 ### Required
 
-- `is_active` (Boolean)
-- `name` (String) Display name of the notification rule
+- `is_active` (Boolean) Set to true for the rule to send notifications when its filters match.
+- `name` (String) Display name of the notification rule.
 - `owner` (String) Team ID that owns and manages the rule
-- `priorities_filter` (List of Number) Priorities that narrow down the alerts that can trigger a notification
-- `targets` (Attributes List) Notification targets that can receive notifications when the rule matches (see [below for nested schema](#nestedatt--targets))
-- `teams_filter` (Attributes) Team filter that narrows down the teams that can receive notifications from this rule (see [below for nested schema](#nestedatt--teams_filter))
-- `transition_types_filter` (List of String) Alert state transitions that can trigger a notification
+- `priorities_filter` (List of Number) Monitor priorities that must match for this rule to fire. An empty array matches every priority.
+- `targets` (Attributes List) Destinations that receive a notification whenever this rule matches an alert transition. This list replaces the existing targets on update. (see [below for nested schema](#nestedatt--targets))
+- `teams_filter` (Attributes) Team visibility filter used when matching alert transitions. Tsuga validates create and update requests against the caller permissions. (see [below for nested schema](#nestedatt--teams_filter))
+- `transition_types_filter` (List of String) Alert state transitions that must match for this rule to fire. An empty array matches every transition type.
 
 ### Optional
 
+- `cluster_ids_filter` (List of String) Cluster IDs that must match for this rule to fire. Omit it, or leave it empty, to match every cluster.
 - `query_string` (String) Optional query that narrows which alert transitions trigger the rule. Matches on the monitor transition group key and the monitor tags, e.g. `env:prod service:api`. Omit or leave empty to match regardless of tags.
-- `tags` (Attributes List) List of key/value tags applied to the resource (see [below for nested schema](#nestedatt--tags))
+- `tags` (Attributes List) Key/value tags to apply to the resource. Tag policies may require specific keys or values. (see [below for nested schema](#nestedatt--tags))
 
 ### Read-Only
 
-- `id` (String) Identifier of the notification rule
+- `id` (String) Tsuga-generated notification rule ID assigned when the rule is created.
 
 <a id="nestedatt--targets"></a>
 ### Nested Schema for `targets`
@@ -73,11 +74,11 @@ resource "tsuga_notification_rule" "notification-rule" {
 Required:
 
 - `config` (Attributes) (see [below for nested schema](#nestedatt--targets--config))
-- `id` (String) Identifier of the notification target
+- `id` (String) Identifier of the notification target within this rule. Choose a stable ID that is unique among this rule's targets; Tsuga uses it with the rule ID for per-target delivery state such as rate limiting.
 
 Optional:
 
-- `rate_limit` (Attributes) (see [below for nested schema](#nestedatt--targets--rate_limit))
+- `rate_limit` (Attributes) Per-target rate limit used when sending notifications. If omitted, Tsuga allows up to 1000 notifications every 10 minutes for this target. (see [below for nested schema](#nestedatt--targets--rate_limit))
 
 <a id="nestedatt--targets--config"></a>
 ### Nested Schema for `targets.config`
@@ -88,10 +89,10 @@ Optional:
 - `google_chat` (Attributes) (see [below for nested schema](#nestedatt--targets--config--google_chat))
 - `grafana_irm` (Attributes) (see [below for nested schema](#nestedatt--targets--config--grafana_irm))
 - `incident_io` (Attributes) (see [below for nested schema](#nestedatt--targets--config--incident_io))
-- `jira` (Attributes) Files one Jira issue per notification. Cannot be combined with renotify. (see [below for nested schema](#nestedatt--targets--config--jira))
+- `jira` (Attributes) (see [below for nested schema](#nestedatt--targets--config--jira))
 - `microsoft_teams` (Attributes) (see [below for nested schema](#nestedatt--targets--config--microsoft_teams))
 - `pagerduty` (Attributes) (see [below for nested schema](#nestedatt--targets--config--pagerduty))
-- `renotify` (Attributes) (see [below for nested schema](#nestedatt--targets--config--renotify))
+- `renotify` (Attributes) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--targets--config--renotify))
 - `servicenow` (Attributes) (see [below for nested schema](#nestedatt--targets--config--servicenow))
 - `slack` (Attributes) (see [below for nested schema](#nestedatt--targets--config--slack))
 - `squadcast` (Attributes) (see [below for nested schema](#nestedatt--targets--config--squadcast))
@@ -102,11 +103,11 @@ Optional:
 
 Required:
 
-- `addresses` (List of String)
+- `addresses` (List of String) Email addresses that will receive the alert
 
 Read-Only:
 
-- `type` (String)
+- `type` (String) Email target that sends directly to the listed addresses and does not require an integration.
 
 
 <a id="nestedatt--targets--config--google_chat"></a>
@@ -114,12 +115,12 @@ Read-Only:
 
 Required:
 
-- `integration_id` (String)
+- `integration_id` (String) Identifier of the Google Chat integration to use
 
 Read-Only:
 
-- `integration_name` (String)
-- `type` (String)
+- `integration_name` (String) Human readable name of the Google Chat integration
+- `type` (String) Google Chat target backed by a configured Google Chat integration.
 
 
 <a id="nestedatt--targets--config--grafana_irm"></a>
@@ -127,12 +128,12 @@ Read-Only:
 
 Required:
 
-- `integration_id` (String)
+- `integration_id` (String) Identifier of the Grafana IRM integration to use
 
 Read-Only:
 
-- `integration_name` (String)
-- `type` (String)
+- `integration_name` (String) Human readable name of the Grafana IRM integration
+- `type` (String) Grafana IRM target backed by a configured Grafana IRM integration.
 
 
 <a id="nestedatt--targets--config--incident_io"></a>
@@ -140,12 +141,12 @@ Read-Only:
 
 Required:
 
-- `integration_id` (String)
+- `integration_id` (String) Identifier of the incident.io integration to use
 
 Read-Only:
 
-- `integration_name` (String)
-- `type` (String)
+- `integration_name` (String) Human readable name of the incident.io integration
+- `type` (String) incident.io target backed by a configured incident.io integration.
 
 
 <a id="nestedatt--targets--config--jira"></a>
@@ -153,19 +154,19 @@ Read-Only:
 
 Required:
 
-- `integration_id` (String)
-- `issue_type` (String) Jira issue type used when creating issues
-- `project_key` (String) Key of the Jira project the issues are created in
+- `integration_id` (String) Identifier of the Jira integration to use
+- `issue_type` (String) Name of the Jira issue type created for alerts, like "Bug" or "Task".
+- `project_key` (String) Key of the Jira project that alert issues are filed into, like "OPS".
 
 Optional:
 
-- `closed_status` (String) Jira status applied when the alert resolves
-- `open_status` (String) Jira status applied when the alert triggers
+- `closed_status` (String) Jira status the alert ticket is moved to when the alert resolves. Only takes effect when the rule delivers recovery transitions.
+- `open_status` (String) Jira status the alert ticket is moved to right after it is filed for a firing alert. A later transition between two firing states leaves the ticket status alone.
 
 Read-Only:
 
-- `integration_name` (String)
-- `type` (String)
+- `integration_name` (String) Human readable name of the Jira integration
+- `type` (String) Jira target backed by a configured Jira integration. Jira targets file one issue per notification and do not support renotification.
 
 
 <a id="nestedatt--targets--config--microsoft_teams"></a>
@@ -173,12 +174,12 @@ Read-Only:
 
 Required:
 
-- `integration_id` (String)
+- `integration_id` (String) Identifier of the Microsoft Teams integration to use
 
 Read-Only:
 
-- `integration_name` (String)
-- `type` (String)
+- `integration_name` (String) Human readable name of the Microsoft Teams integration
+- `type` (String) Microsoft Teams target backed by a configured Microsoft Teams integration.
 
 
 <a id="nestedatt--targets--config--pagerduty"></a>
@@ -186,12 +187,12 @@ Read-Only:
 
 Required:
 
-- `integration_id` (String)
+- `integration_id` (String) Identifier of the PagerDuty integration to use
 
 Read-Only:
 
-- `integration_name` (String)
-- `type` (String)
+- `integration_name` (String) Human readable name of the PagerDuty integration
+- `type` (String) PagerDuty target backed by a configured PagerDuty integration.
 
 
 <a id="nestedatt--targets--config--renotify"></a>
@@ -199,9 +200,9 @@ Read-Only:
 
 Required:
 
-- `mode` (String)
-- `renotification_states` (List of String)
-- `renotify_interval_minutes` (Number)
+- `mode` (String) Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
+- `renotification_states` (List of String) Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
+- `renotify_interval_minutes` (Number) Minimum number of minutes to wait after the previous notification.
 
 
 <a id="nestedatt--targets--config--servicenow"></a>
@@ -209,12 +210,12 @@ Required:
 
 Required:
 
-- `integration_id` (String)
+- `integration_id` (String) Identifier of the ServiceNow integration to use
 
 Read-Only:
 
-- `integration_name` (String)
-- `type` (String)
+- `integration_name` (String) Human readable name of the ServiceNow integration
+- `type` (String) ServiceNow target backed by a configured ServiceNow integration.
 
 
 <a id="nestedatt--targets--config--slack"></a>
@@ -222,18 +223,13 @@ Read-Only:
 
 Required:
 
-- `channel` (String)
-- `integration_id` (String)
-
-Optional:
-
-- `hide_time` (Boolean) When true, the timestamp is hidden from the Slack message
-- `hide_transition` (Boolean) When true, the transition info is hidden from the Slack message
+- `channel` (String) Slack channel ID that receives the notification
+- `integration_id` (String) Slack workspace ID that receives the notification
 
 Read-Only:
 
-- `integration_name` (String)
-- `type` (String)
+- `integration_name` (String) Human readable name of the Slack integration
+- `type` (String) Slack target backed by a configured Slack integration.
 
 
 <a id="nestedatt--targets--config--squadcast"></a>
@@ -241,12 +237,12 @@ Read-Only:
 
 Required:
 
-- `integration_id` (String)
+- `integration_id` (String) Identifier of the Squadcast integration to use
 
 Read-Only:
 
-- `integration_name` (String)
-- `type` (String)
+- `integration_name` (String) Human readable name of the Squadcast integration
+- `type` (String) Squadcast target backed by a configured Squadcast integration.
 
 
 <a id="nestedatt--targets--config--webhook"></a>
@@ -254,12 +250,12 @@ Read-Only:
 
 Required:
 
-- `integration_id` (String)
+- `integration_id` (String) Identifier of the webhook integration to use
 
 Read-Only:
 
-- `integration_name` (String)
-- `type` (String)
+- `integration_name` (String) Human readable name of the webhook integration
+- `type` (String) Webhook target backed by a configured webhook integration.
 
 
 
@@ -268,8 +264,8 @@ Read-Only:
 
 Required:
 
-- `max_messages` (Number)
-- `minutes` (Number)
+- `max_messages` (Number) Maximum number of notifications this target can send during the rate-limiting window. The ratio of `maxMessages` to `minutes` cannot exceed 100 notifications per minute.
+- `minutes` (Number) Length of the rate-limiting window, in minutes. The ratio of `maxMessages` to `minutes` cannot exceed 100 notifications per minute.
 
 
 
@@ -278,11 +274,11 @@ Required:
 
 Required:
 
-- `type` (String) Filter type: 'specific-teams' to apply to only specified teams, 'all-teams' to apply to all teams, 'all-public-teams' to apply to all public teams
+- `type` (String) `specific-teams`: Match alert transitions associated with the listed teams. The caller must be allowed to access every listed team. Requires `teams`. `all-teams`: Match alert transitions for every team in the organization. Public API callers need an API key with `all` scope to create or update this filter. `all-public-teams`: Match alert transitions for all public teams. Public API callers need an API key with `all` or `owning-team-and-public` scope to create or update this filter.
 
 Optional:
 
-- `teams` (List of String) Team IDs to select (required when type is 'specific-teams')
+- `teams` (List of String) Team IDs selected by this filter.
 
 
 <a id="nestedatt--tags"></a>
@@ -290,5 +286,5 @@ Optional:
 
 Required:
 
-- `key` (String)
-- `value` (String)
+- `key` (String) Tag key to attach to the resource.
+- `value` (String) Tag value to attach to the resource. Leading or trailing whitespace is rejected.

@@ -70,12 +70,12 @@ func AdaptiveNotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 }
 
 type AdaptiveNotificationRuleModel struct {
-	Id             types.String                            `tfsdk:"id"`
-	Name           types.String                            `tfsdk:"name"`
-	Owner          types.String                            `tfsdk:"owner"`
-	Tags           types.List                              `tfsdk:"tags"`
-	IsActive       types.Bool                              `tfsdk:"is_active"`
-	MonitorIds     types.List                              `tfsdk:"monitor_ids"`
-	SloIds         types.List                              `tfsdk:"slo_ids"`
-	FallbackTarget *resource_notification_rule.TargetModel `tfsdk:"fallback_target"`
+	Id             types.String `tfsdk:"id"`
+	Name           types.String `tfsdk:"name"`
+	Owner          types.String `tfsdk:"owner"`
+	Tags           types.List   `tfsdk:"tags"`
+	IsActive       types.Bool   `tfsdk:"is_active"`
+	MonitorIds     types.List   `tfsdk:"monitor_ids"`
+	SloIds         types.List   `tfsdk:"slo_ids"`
+	FallbackTarget types.Object `tfsdk:"fallback_target"`
 }

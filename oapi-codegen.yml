@@ -1,0 +1,48 @@
+package: apiclient
+output: internal/apiclient/notification_rules_gen.go
+generate:
+  models: true
+output-options:
+  include-tags:
+    - notification-rules
+    - adaptive-notification-rules
+  # Error envelopes pull in unrelated schemas (processors, grok) through their details.
+  exclude-schemas:
+    - ClientErrorEnvelope
+    - ClientErrorResponse
+    - ServerErrorEnvelope
+    - ServerErrorResponse
+    - TagPolicyViolationDetails
+    - InputProcessor
+    - OutputProcessor
+    - InputRumProcessor
+    - OutputRumProcessor
+    - InputSpansProcessor
+    - OutputSpansProcessor
+    - GrokInvalidSyntax
+    - GrokUnknownPattern
+    - GrokInvalidFilter
+    - GrokUnknownFilter
+    - GrokRuleErrorDetails
+    - ProcessorParamsCreatorFormatString
+    - ProcessorParamsCreatorMathFormula
+    - ProcessorParamsCreatorCategory
+    - InputProcessorParamsCreatorFormatString
+    - InputProcessorParamsCreatorMathFormula
+    - InputProcessorParamsCreatorCategory
+    - ProcessorParamsMapperMapAttributes
+    - ProcessorParamsMapperMapLevel
+    - ProcessorParamsMapperMapTimestamp
+    - InputProcessorParamsMapperMapAttributes
+    - InputProcessorParamsMapperMapLevel
+    - InputProcessorParamsMapperMapTimestamp
+    - ProcessorParseGrok
+    - ProcessorParseUrl
+    - ProcessorParseUserAgent
+    - ProcessorParseGeoIp
+    - ProcessorParseKeyValue
+    - InputProcessorParseGrok
+    - InputProcessorParseUrl
+    - InputProcessorParseUserAgent
+    - InputProcessorParseGeoIp
+    - InputProcessorParseKeyValue

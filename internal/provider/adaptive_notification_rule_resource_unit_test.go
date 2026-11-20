@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"testing"
 
+	"terraform-provider-tsuga/internal/apiclient"
 	"terraform-provider-tsuga/internal/resource_adaptive_notification_rule"
-	"terraform-provider-tsuga/internal/resource_notification_rule"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -51,15 +51,35 @@ func TestValidateAdaptiveNotificationRuleTargets(t *testing.T) {
 	}
 }
 
-func emailTarget(id string) *resource_notification_rule.TargetModel {
-	return &resource_notification_rule.TargetModel{
-		Id: types.StringValue(id),
-		Config: resource_notification_rule.TargetConfigModel{
-			Email: &resource_notification_rule.EmailConfigModel{
-				Addresses: types.ListValueMust(types.StringType, []attr.Value{types.StringValue("oncall@example.com")}),
-			},
-		},
+// emailTarget round-trips through the schema type so nested blocks carry the custom value types
+// (ConfigValue, RateLimitValue) Terraform passes in, not plain objects.
+func emailTarget(t *testing.T, id string) types.Object {
+	ctx := context.Background()
+	fallback := emailAPITarget(t, id).FallbackTarget
+	plain, diags := flattenNotificationRuleTarget(ctx, fallback.Id, fallback.Config, fallback.RateLimit)
+	if diags.HasError() {
+		t.Fatalf("failed to flatten fallback target: %v", diags)
 	}
+	raw, err := plain.ToTerraformValue(ctx)
+	if err != nil {
+		t.Fatalf("failed to convert fallback target: %v", err)
+	}
+	typ := resource_adaptive_notification_rule.AdaptiveNotificationRuleResourceSchema(ctx).Attributes["fallback_target"].GetType()
+	value, err := typ.ValueFromTerraform(ctx, raw)
+	if err != nil {
+		t.Fatalf("failed to build fallback target: %v", err)
+	}
+	return value.(types.Object)
+}
+
+func emailAPITarget(t *testing.T, id string) apiclient.AdaptiveRule {
+	t.Helper()
+	var rule apiclient.AdaptiveRule
+	raw := `{"fallbackTarget": {"id": "` + id + `", "config": {"type": "email", "addresses": ["oncall@example.com"]}}}`
+	if err := json.Unmarshal([]byte(raw), &rule); err != nil {
+		t.Fatal(err)
+	}
+	return rule
 }
 
 func TestBuildAdaptiveNotificationRuleRequestBody_SendsEmptyListsForOmittedIDs(t *testing.T) {
@@ -71,7 +91,7 @@ func TestBuildAdaptiveNotificationRuleRequestBody_SendsEmptyListsForOmittedIDs(t
 		Tags:           types.ListNull(types.ObjectType{}),
 		MonitorIds:     types.ListValueMust(types.StringType, []attr.Value{types.StringValue("monitor-1")}),
 		SloIds:         types.ListNull(types.StringType),
-		FallbackTarget: emailTarget("fallback"),
+		FallbackTarget: emailTarget(t, "fallback"),
 	}
 
 	body, diags := buildAdaptiveNotificationRuleRequestBody(ctx, plan)
@@ -106,18 +126,13 @@ func TestBuildAdaptiveNotificationRuleRequestBody_SendsEmptyListsForOmittedIDs(t
 
 func TestFlattenAdaptiveNotificationRule_EmptyListKeepsConfiguredForm(t *testing.T) {
 	ctx := context.Background()
-	data := adaptiveNotificationRuleAPIData{
-		ID:         "rule-1",
-		Name:       "rule",
-		Owner:      "team-1",
-		IsActive:   true,
-		MonitorIDs: []string{"monitor-1"},
-		SloIDs:     []string{},
-		FallbackTarget: notificationRuleAPITarget{
-			ID:     "fallback",
-			Config: notificationRuleAPITargetConfig{Type: "email", Addresses: []string{"oncall@example.com"}},
-		},
-	}
+	data := emailAPITarget(t, "fallback")
+	data.Id = "rule-1"
+	data.Name = "rule"
+	data.Owner = "team-1"
+	data.IsActive = true
+	data.MonitorIds = []string{"monitor-1"}
+	data.SloIds = []string{}
 
 	omitted := resource_adaptive_notification_rule.AdaptiveNotificationRuleModel{SloIds: types.ListNull(types.StringType)}
 	state, diags := flattenAdaptiveNotificationRule(ctx, data, omitted)
@@ -140,7 +155,8 @@ func TestFlattenAdaptiveNotificationRule_EmptyListKeepsConfiguredForm(t *testing
 	if len(state.MonitorIds.Elements()) != 1 {
 		t.Fatalf("expected one monitor id, got %s", state.MonitorIds)
 	}
-	if state.FallbackTarget.Id.ValueString() != "fallback" || state.FallbackTarget.Config.Email == nil {
+	fallbackAttrs := state.FallbackTarget.Attributes()
+	if fallbackAttrs["id"].(types.String).ValueString() != "fallback" || objectAttribute(fallbackAttrs["config"].(types.Object), "email").IsNull() {
 		t.Fatalf("unexpected fallback target: %#v", state.FallbackTarget)
 	}
 }
