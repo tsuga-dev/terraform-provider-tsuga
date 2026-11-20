@@ -25,6 +25,39 @@ func (e DeleteResponseSuccess) Valid() bool {
 	}
 }
 
+// Defines values for InputRenotifyConfigMode.
+const (
+	InputRenotifyConfigModeEach InputRenotifyConfigMode = "each"
+)
+
+// Valid indicates whether the value is a known member of the InputRenotifyConfigMode enum.
+func (e InputRenotifyConfigMode) Valid() bool {
+	switch e {
+	case InputRenotifyConfigModeEach:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for InputRenotifyConfigRenotificationStates.
+const (
+	InputRenotifyConfigRenotificationStatesAlert       InputRenotifyConfigRenotificationStates = "alert"
+	InputRenotifyConfigRenotificationStatesAlertNoData InputRenotifyConfigRenotificationStates = "alert_no_data"
+)
+
+// Valid indicates whether the value is a known member of the InputRenotifyConfigRenotificationStates enum.
+func (e InputRenotifyConfigRenotificationStates) Valid() bool {
+	switch e {
+	case InputRenotifyConfigRenotificationStatesAlert:
+		return true
+	case InputRenotifyConfigRenotificationStatesAlertNoData:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for InputTeamsFilterAllPublicTeamsType.
 const (
 	InputTeamsFilterAllPublicTeamsTypeAllPublicTeams InputTeamsFilterAllPublicTeamsType = "all-public-teams"
@@ -64,6 +97,39 @@ const (
 func (e InputTeamsFilterSpecificTeamsType) Valid() bool {
 	switch e {
 	case InputTeamsFilterSpecificTeamsTypeSpecificTeams:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RenotifyConfigMode.
+const (
+	RenotifyConfigModeEach RenotifyConfigMode = "each"
+)
+
+// Valid indicates whether the value is a known member of the RenotifyConfigMode enum.
+func (e RenotifyConfigMode) Valid() bool {
+	switch e {
+	case RenotifyConfigModeEach:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RenotifyConfigRenotificationStates.
+const (
+	RenotifyConfigRenotificationStatesAlert       RenotifyConfigRenotificationStates = "alert"
+	RenotifyConfigRenotificationStatesAlertNoData RenotifyConfigRenotificationStates = "alert_no_data"
+)
+
+// Valid indicates whether the value is a known member of the RenotifyConfigRenotificationStates enum.
+func (e RenotifyConfigRenotificationStates) Valid() bool {
+	switch e {
+	case RenotifyConfigRenotificationStatesAlert:
+		return true
+	case RenotifyConfigRenotificationStatesAlertNoData:
 		return true
 	default:
 		return false
@@ -118,39 +184,6 @@ func (e RuleTransitionTypesFilter) Valid() bool {
 	}
 }
 
-// Defines values for RuleTargetConfigEmailRenotifyConfigMode.
-const (
-	RuleTargetConfigEmailRenotifyConfigModeEach RuleTargetConfigEmailRenotifyConfigMode = "each"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetConfigEmailRenotifyConfigMode enum.
-func (e RuleTargetConfigEmailRenotifyConfigMode) Valid() bool {
-	switch e {
-	case RuleTargetConfigEmailRenotifyConfigModeEach:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetConfigEmailRenotifyConfigRenotificationStates.
-const (
-	RuleTargetConfigEmailRenotifyConfigRenotificationStatesAlert       RuleTargetConfigEmailRenotifyConfigRenotificationStates = "alert"
-	RuleTargetConfigEmailRenotifyConfigRenotificationStatesAlertNoData RuleTargetConfigEmailRenotifyConfigRenotificationStates = "alert_no_data"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetConfigEmailRenotifyConfigRenotificationStates enum.
-func (e RuleTargetConfigEmailRenotifyConfigRenotificationStates) Valid() bool {
-	switch e {
-	case RuleTargetConfigEmailRenotifyConfigRenotificationStatesAlert:
-		return true
-	case RuleTargetConfigEmailRenotifyConfigRenotificationStatesAlertNoData:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for RuleTargetConfigEmailType.
 const (
 	RuleTargetConfigEmailTypeEmail RuleTargetConfigEmailType = "email"
@@ -160,39 +193,6 @@ const (
 func (e RuleTargetConfigEmailType) Valid() bool {
 	switch e {
 	case RuleTargetConfigEmailTypeEmail:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetConfigGoogleChatRenotifyConfigMode.
-const (
-	RuleTargetConfigGoogleChatRenotifyConfigModeEach RuleTargetConfigGoogleChatRenotifyConfigMode = "each"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetConfigGoogleChatRenotifyConfigMode enum.
-func (e RuleTargetConfigGoogleChatRenotifyConfigMode) Valid() bool {
-	switch e {
-	case RuleTargetConfigGoogleChatRenotifyConfigModeEach:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetConfigGoogleChatRenotifyConfigRenotificationStates.
-const (
-	RuleTargetConfigGoogleChatRenotifyConfigRenotificationStatesAlert       RuleTargetConfigGoogleChatRenotifyConfigRenotificationStates = "alert"
-	RuleTargetConfigGoogleChatRenotifyConfigRenotificationStatesAlertNoData RuleTargetConfigGoogleChatRenotifyConfigRenotificationStates = "alert_no_data"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetConfigGoogleChatRenotifyConfigRenotificationStates enum.
-func (e RuleTargetConfigGoogleChatRenotifyConfigRenotificationStates) Valid() bool {
-	switch e {
-	case RuleTargetConfigGoogleChatRenotifyConfigRenotificationStatesAlert:
-		return true
-	case RuleTargetConfigGoogleChatRenotifyConfigRenotificationStatesAlertNoData:
 		return true
 	default:
 		return false
@@ -214,39 +214,6 @@ func (e RuleTargetConfigGoogleChatType) Valid() bool {
 	}
 }
 
-// Defines values for RuleTargetConfigGrafanaIrmRenotifyConfigMode.
-const (
-	RuleTargetConfigGrafanaIrmRenotifyConfigModeEach RuleTargetConfigGrafanaIrmRenotifyConfigMode = "each"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetConfigGrafanaIrmRenotifyConfigMode enum.
-func (e RuleTargetConfigGrafanaIrmRenotifyConfigMode) Valid() bool {
-	switch e {
-	case RuleTargetConfigGrafanaIrmRenotifyConfigModeEach:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetConfigGrafanaIrmRenotifyConfigRenotificationStates.
-const (
-	RuleTargetConfigGrafanaIrmRenotifyConfigRenotificationStatesAlert       RuleTargetConfigGrafanaIrmRenotifyConfigRenotificationStates = "alert"
-	RuleTargetConfigGrafanaIrmRenotifyConfigRenotificationStatesAlertNoData RuleTargetConfigGrafanaIrmRenotifyConfigRenotificationStates = "alert_no_data"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetConfigGrafanaIrmRenotifyConfigRenotificationStates enum.
-func (e RuleTargetConfigGrafanaIrmRenotifyConfigRenotificationStates) Valid() bool {
-	switch e {
-	case RuleTargetConfigGrafanaIrmRenotifyConfigRenotificationStatesAlert:
-		return true
-	case RuleTargetConfigGrafanaIrmRenotifyConfigRenotificationStatesAlertNoData:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for RuleTargetConfigGrafanaIrmType.
 const (
 	RuleTargetConfigGrafanaIrmTypeGrafanaIrm RuleTargetConfigGrafanaIrmType = "grafana-irm"
@@ -256,39 +223,6 @@ const (
 func (e RuleTargetConfigGrafanaIrmType) Valid() bool {
 	switch e {
 	case RuleTargetConfigGrafanaIrmTypeGrafanaIrm:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetConfigIncidentIoRenotifyConfigMode.
-const (
-	RuleTargetConfigIncidentIoRenotifyConfigModeEach RuleTargetConfigIncidentIoRenotifyConfigMode = "each"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetConfigIncidentIoRenotifyConfigMode enum.
-func (e RuleTargetConfigIncidentIoRenotifyConfigMode) Valid() bool {
-	switch e {
-	case RuleTargetConfigIncidentIoRenotifyConfigModeEach:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetConfigIncidentIoRenotifyConfigRenotificationStates.
-const (
-	RuleTargetConfigIncidentIoRenotifyConfigRenotificationStatesAlert       RuleTargetConfigIncidentIoRenotifyConfigRenotificationStates = "alert"
-	RuleTargetConfigIncidentIoRenotifyConfigRenotificationStatesAlertNoData RuleTargetConfigIncidentIoRenotifyConfigRenotificationStates = "alert_no_data"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetConfigIncidentIoRenotifyConfigRenotificationStates enum.
-func (e RuleTargetConfigIncidentIoRenotifyConfigRenotificationStates) Valid() bool {
-	switch e {
-	case RuleTargetConfigIncidentIoRenotifyConfigRenotificationStatesAlert:
-		return true
-	case RuleTargetConfigIncidentIoRenotifyConfigRenotificationStatesAlertNoData:
 		return true
 	default:
 		return false
@@ -325,39 +259,6 @@ func (e RuleTargetConfigJiraType) Valid() bool {
 	}
 }
 
-// Defines values for RuleTargetConfigMicrosoftTeamsRenotifyConfigMode.
-const (
-	RuleTargetConfigMicrosoftTeamsRenotifyConfigModeEach RuleTargetConfigMicrosoftTeamsRenotifyConfigMode = "each"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetConfigMicrosoftTeamsRenotifyConfigMode enum.
-func (e RuleTargetConfigMicrosoftTeamsRenotifyConfigMode) Valid() bool {
-	switch e {
-	case RuleTargetConfigMicrosoftTeamsRenotifyConfigModeEach:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetConfigMicrosoftTeamsRenotifyConfigRenotificationStates.
-const (
-	RuleTargetConfigMicrosoftTeamsRenotifyConfigRenotificationStatesAlert       RuleTargetConfigMicrosoftTeamsRenotifyConfigRenotificationStates = "alert"
-	RuleTargetConfigMicrosoftTeamsRenotifyConfigRenotificationStatesAlertNoData RuleTargetConfigMicrosoftTeamsRenotifyConfigRenotificationStates = "alert_no_data"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetConfigMicrosoftTeamsRenotifyConfigRenotificationStates enum.
-func (e RuleTargetConfigMicrosoftTeamsRenotifyConfigRenotificationStates) Valid() bool {
-	switch e {
-	case RuleTargetConfigMicrosoftTeamsRenotifyConfigRenotificationStatesAlert:
-		return true
-	case RuleTargetConfigMicrosoftTeamsRenotifyConfigRenotificationStatesAlertNoData:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for RuleTargetConfigMicrosoftTeamsType.
 const (
 	RuleTargetConfigMicrosoftTeamsTypeMicrosoftTeams RuleTargetConfigMicrosoftTeamsType = "microsoft-teams"
@@ -367,39 +268,6 @@ const (
 func (e RuleTargetConfigMicrosoftTeamsType) Valid() bool {
 	switch e {
 	case RuleTargetConfigMicrosoftTeamsTypeMicrosoftTeams:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetConfigPagerDutyRenotifyConfigMode.
-const (
-	RuleTargetConfigPagerDutyRenotifyConfigModeEach RuleTargetConfigPagerDutyRenotifyConfigMode = "each"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetConfigPagerDutyRenotifyConfigMode enum.
-func (e RuleTargetConfigPagerDutyRenotifyConfigMode) Valid() bool {
-	switch e {
-	case RuleTargetConfigPagerDutyRenotifyConfigModeEach:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetConfigPagerDutyRenotifyConfigRenotificationStates.
-const (
-	RuleTargetConfigPagerDutyRenotifyConfigRenotificationStatesAlert       RuleTargetConfigPagerDutyRenotifyConfigRenotificationStates = "alert"
-	RuleTargetConfigPagerDutyRenotifyConfigRenotificationStatesAlertNoData RuleTargetConfigPagerDutyRenotifyConfigRenotificationStates = "alert_no_data"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetConfigPagerDutyRenotifyConfigRenotificationStates enum.
-func (e RuleTargetConfigPagerDutyRenotifyConfigRenotificationStates) Valid() bool {
-	switch e {
-	case RuleTargetConfigPagerDutyRenotifyConfigRenotificationStatesAlert:
-		return true
-	case RuleTargetConfigPagerDutyRenotifyConfigRenotificationStatesAlertNoData:
 		return true
 	default:
 		return false
@@ -421,39 +289,6 @@ func (e RuleTargetConfigPagerDutyType) Valid() bool {
 	}
 }
 
-// Defines values for RuleTargetConfigServiceNowRenotifyConfigMode.
-const (
-	RuleTargetConfigServiceNowRenotifyConfigModeEach RuleTargetConfigServiceNowRenotifyConfigMode = "each"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetConfigServiceNowRenotifyConfigMode enum.
-func (e RuleTargetConfigServiceNowRenotifyConfigMode) Valid() bool {
-	switch e {
-	case RuleTargetConfigServiceNowRenotifyConfigModeEach:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetConfigServiceNowRenotifyConfigRenotificationStates.
-const (
-	RuleTargetConfigServiceNowRenotifyConfigRenotificationStatesAlert       RuleTargetConfigServiceNowRenotifyConfigRenotificationStates = "alert"
-	RuleTargetConfigServiceNowRenotifyConfigRenotificationStatesAlertNoData RuleTargetConfigServiceNowRenotifyConfigRenotificationStates = "alert_no_data"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetConfigServiceNowRenotifyConfigRenotificationStates enum.
-func (e RuleTargetConfigServiceNowRenotifyConfigRenotificationStates) Valid() bool {
-	switch e {
-	case RuleTargetConfigServiceNowRenotifyConfigRenotificationStatesAlert:
-		return true
-	case RuleTargetConfigServiceNowRenotifyConfigRenotificationStatesAlertNoData:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for RuleTargetConfigServiceNowType.
 const (
 	RuleTargetConfigServiceNowTypeServicenow RuleTargetConfigServiceNowType = "servicenow"
@@ -463,39 +298,6 @@ const (
 func (e RuleTargetConfigServiceNowType) Valid() bool {
 	switch e {
 	case RuleTargetConfigServiceNowTypeServicenow:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetConfigSlackRenotifyConfigMode.
-const (
-	RuleTargetConfigSlackRenotifyConfigModeEach RuleTargetConfigSlackRenotifyConfigMode = "each"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetConfigSlackRenotifyConfigMode enum.
-func (e RuleTargetConfigSlackRenotifyConfigMode) Valid() bool {
-	switch e {
-	case RuleTargetConfigSlackRenotifyConfigModeEach:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetConfigSlackRenotifyConfigRenotificationStates.
-const (
-	RuleTargetConfigSlackRenotifyConfigRenotificationStatesAlert       RuleTargetConfigSlackRenotifyConfigRenotificationStates = "alert"
-	RuleTargetConfigSlackRenotifyConfigRenotificationStatesAlertNoData RuleTargetConfigSlackRenotifyConfigRenotificationStates = "alert_no_data"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetConfigSlackRenotifyConfigRenotificationStates enum.
-func (e RuleTargetConfigSlackRenotifyConfigRenotificationStates) Valid() bool {
-	switch e {
-	case RuleTargetConfigSlackRenotifyConfigRenotificationStatesAlert:
-		return true
-	case RuleTargetConfigSlackRenotifyConfigRenotificationStatesAlertNoData:
 		return true
 	default:
 		return false
@@ -517,39 +319,6 @@ func (e RuleTargetConfigSlackType) Valid() bool {
 	}
 }
 
-// Defines values for RuleTargetConfigSquadcastRenotifyConfigMode.
-const (
-	RuleTargetConfigSquadcastRenotifyConfigModeEach RuleTargetConfigSquadcastRenotifyConfigMode = "each"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetConfigSquadcastRenotifyConfigMode enum.
-func (e RuleTargetConfigSquadcastRenotifyConfigMode) Valid() bool {
-	switch e {
-	case RuleTargetConfigSquadcastRenotifyConfigModeEach:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetConfigSquadcastRenotifyConfigRenotificationStates.
-const (
-	RuleTargetConfigSquadcastRenotifyConfigRenotificationStatesAlert       RuleTargetConfigSquadcastRenotifyConfigRenotificationStates = "alert"
-	RuleTargetConfigSquadcastRenotifyConfigRenotificationStatesAlertNoData RuleTargetConfigSquadcastRenotifyConfigRenotificationStates = "alert_no_data"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetConfigSquadcastRenotifyConfigRenotificationStates enum.
-func (e RuleTargetConfigSquadcastRenotifyConfigRenotificationStates) Valid() bool {
-	switch e {
-	case RuleTargetConfigSquadcastRenotifyConfigRenotificationStatesAlert:
-		return true
-	case RuleTargetConfigSquadcastRenotifyConfigRenotificationStatesAlertNoData:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for RuleTargetConfigSquadcastType.
 const (
 	RuleTargetConfigSquadcastTypeSquadcast RuleTargetConfigSquadcastType = "squadcast"
@@ -559,39 +328,6 @@ const (
 func (e RuleTargetConfigSquadcastType) Valid() bool {
 	switch e {
 	case RuleTargetConfigSquadcastTypeSquadcast:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetConfigWebhookRenotifyConfigMode.
-const (
-	RuleTargetConfigWebhookRenotifyConfigModeEach RuleTargetConfigWebhookRenotifyConfigMode = "each"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetConfigWebhookRenotifyConfigMode enum.
-func (e RuleTargetConfigWebhookRenotifyConfigMode) Valid() bool {
-	switch e {
-	case RuleTargetConfigWebhookRenotifyConfigModeEach:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetConfigWebhookRenotifyConfigRenotificationStates.
-const (
-	RuleTargetConfigWebhookRenotifyConfigRenotificationStatesAlert       RuleTargetConfigWebhookRenotifyConfigRenotificationStates = "alert"
-	RuleTargetConfigWebhookRenotifyConfigRenotificationStatesAlertNoData RuleTargetConfigWebhookRenotifyConfigRenotificationStates = "alert_no_data"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetConfigWebhookRenotifyConfigRenotificationStates enum.
-func (e RuleTargetConfigWebhookRenotifyConfigRenotificationStates) Valid() bool {
-	switch e {
-	case RuleTargetConfigWebhookRenotifyConfigRenotificationStatesAlert:
-		return true
-	case RuleTargetConfigWebhookRenotifyConfigRenotificationStatesAlertNoData:
 		return true
 	default:
 		return false
@@ -613,39 +349,6 @@ func (e RuleTargetConfigWebhookType) Valid() bool {
 	}
 }
 
-// Defines values for RuleTargetInputEmailRenotifyConfigMode.
-const (
-	RuleTargetInputEmailRenotifyConfigModeEach RuleTargetInputEmailRenotifyConfigMode = "each"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetInputEmailRenotifyConfigMode enum.
-func (e RuleTargetInputEmailRenotifyConfigMode) Valid() bool {
-	switch e {
-	case RuleTargetInputEmailRenotifyConfigModeEach:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetInputEmailRenotifyConfigRenotificationStates.
-const (
-	RuleTargetInputEmailRenotifyConfigRenotificationStatesAlert       RuleTargetInputEmailRenotifyConfigRenotificationStates = "alert"
-	RuleTargetInputEmailRenotifyConfigRenotificationStatesAlertNoData RuleTargetInputEmailRenotifyConfigRenotificationStates = "alert_no_data"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetInputEmailRenotifyConfigRenotificationStates enum.
-func (e RuleTargetInputEmailRenotifyConfigRenotificationStates) Valid() bool {
-	switch e {
-	case RuleTargetInputEmailRenotifyConfigRenotificationStatesAlert:
-		return true
-	case RuleTargetInputEmailRenotifyConfigRenotificationStatesAlertNoData:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for RuleTargetInputEmailType.
 const (
 	RuleTargetInputEmailTypeEmail RuleTargetInputEmailType = "email"
@@ -655,39 +358,6 @@ const (
 func (e RuleTargetInputEmailType) Valid() bool {
 	switch e {
 	case RuleTargetInputEmailTypeEmail:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetInputGoogleChatRenotifyConfigMode.
-const (
-	RuleTargetInputGoogleChatRenotifyConfigModeEach RuleTargetInputGoogleChatRenotifyConfigMode = "each"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetInputGoogleChatRenotifyConfigMode enum.
-func (e RuleTargetInputGoogleChatRenotifyConfigMode) Valid() bool {
-	switch e {
-	case RuleTargetInputGoogleChatRenotifyConfigModeEach:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetInputGoogleChatRenotifyConfigRenotificationStates.
-const (
-	RuleTargetInputGoogleChatRenotifyConfigRenotificationStatesAlert       RuleTargetInputGoogleChatRenotifyConfigRenotificationStates = "alert"
-	RuleTargetInputGoogleChatRenotifyConfigRenotificationStatesAlertNoData RuleTargetInputGoogleChatRenotifyConfigRenotificationStates = "alert_no_data"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetInputGoogleChatRenotifyConfigRenotificationStates enum.
-func (e RuleTargetInputGoogleChatRenotifyConfigRenotificationStates) Valid() bool {
-	switch e {
-	case RuleTargetInputGoogleChatRenotifyConfigRenotificationStatesAlert:
-		return true
-	case RuleTargetInputGoogleChatRenotifyConfigRenotificationStatesAlertNoData:
 		return true
 	default:
 		return false
@@ -709,39 +379,6 @@ func (e RuleTargetInputGoogleChatType) Valid() bool {
 	}
 }
 
-// Defines values for RuleTargetInputGrafanaIrmRenotifyConfigMode.
-const (
-	RuleTargetInputGrafanaIrmRenotifyConfigModeEach RuleTargetInputGrafanaIrmRenotifyConfigMode = "each"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetInputGrafanaIrmRenotifyConfigMode enum.
-func (e RuleTargetInputGrafanaIrmRenotifyConfigMode) Valid() bool {
-	switch e {
-	case RuleTargetInputGrafanaIrmRenotifyConfigModeEach:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetInputGrafanaIrmRenotifyConfigRenotificationStates.
-const (
-	RuleTargetInputGrafanaIrmRenotifyConfigRenotificationStatesAlert       RuleTargetInputGrafanaIrmRenotifyConfigRenotificationStates = "alert"
-	RuleTargetInputGrafanaIrmRenotifyConfigRenotificationStatesAlertNoData RuleTargetInputGrafanaIrmRenotifyConfigRenotificationStates = "alert_no_data"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetInputGrafanaIrmRenotifyConfigRenotificationStates enum.
-func (e RuleTargetInputGrafanaIrmRenotifyConfigRenotificationStates) Valid() bool {
-	switch e {
-	case RuleTargetInputGrafanaIrmRenotifyConfigRenotificationStatesAlert:
-		return true
-	case RuleTargetInputGrafanaIrmRenotifyConfigRenotificationStatesAlertNoData:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for RuleTargetInputGrafanaIrmType.
 const (
 	RuleTargetInputGrafanaIrmTypeGrafanaIrm RuleTargetInputGrafanaIrmType = "grafana-irm"
@@ -751,39 +388,6 @@ const (
 func (e RuleTargetInputGrafanaIrmType) Valid() bool {
 	switch e {
 	case RuleTargetInputGrafanaIrmTypeGrafanaIrm:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetInputIncidentIoRenotifyConfigMode.
-const (
-	RuleTargetInputIncidentIoRenotifyConfigModeEach RuleTargetInputIncidentIoRenotifyConfigMode = "each"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetInputIncidentIoRenotifyConfigMode enum.
-func (e RuleTargetInputIncidentIoRenotifyConfigMode) Valid() bool {
-	switch e {
-	case RuleTargetInputIncidentIoRenotifyConfigModeEach:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetInputIncidentIoRenotifyConfigRenotificationStates.
-const (
-	RuleTargetInputIncidentIoRenotifyConfigRenotificationStatesAlert       RuleTargetInputIncidentIoRenotifyConfigRenotificationStates = "alert"
-	RuleTargetInputIncidentIoRenotifyConfigRenotificationStatesAlertNoData RuleTargetInputIncidentIoRenotifyConfigRenotificationStates = "alert_no_data"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetInputIncidentIoRenotifyConfigRenotificationStates enum.
-func (e RuleTargetInputIncidentIoRenotifyConfigRenotificationStates) Valid() bool {
-	switch e {
-	case RuleTargetInputIncidentIoRenotifyConfigRenotificationStatesAlert:
-		return true
-	case RuleTargetInputIncidentIoRenotifyConfigRenotificationStatesAlertNoData:
 		return true
 	default:
 		return false
@@ -820,39 +424,6 @@ func (e RuleTargetInputJiraType) Valid() bool {
 	}
 }
 
-// Defines values for RuleTargetInputMicrosoftTeamsRenotifyConfigMode.
-const (
-	RuleTargetInputMicrosoftTeamsRenotifyConfigModeEach RuleTargetInputMicrosoftTeamsRenotifyConfigMode = "each"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetInputMicrosoftTeamsRenotifyConfigMode enum.
-func (e RuleTargetInputMicrosoftTeamsRenotifyConfigMode) Valid() bool {
-	switch e {
-	case RuleTargetInputMicrosoftTeamsRenotifyConfigModeEach:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetInputMicrosoftTeamsRenotifyConfigRenotificationStates.
-const (
-	RuleTargetInputMicrosoftTeamsRenotifyConfigRenotificationStatesAlert       RuleTargetInputMicrosoftTeamsRenotifyConfigRenotificationStates = "alert"
-	RuleTargetInputMicrosoftTeamsRenotifyConfigRenotificationStatesAlertNoData RuleTargetInputMicrosoftTeamsRenotifyConfigRenotificationStates = "alert_no_data"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetInputMicrosoftTeamsRenotifyConfigRenotificationStates enum.
-func (e RuleTargetInputMicrosoftTeamsRenotifyConfigRenotificationStates) Valid() bool {
-	switch e {
-	case RuleTargetInputMicrosoftTeamsRenotifyConfigRenotificationStatesAlert:
-		return true
-	case RuleTargetInputMicrosoftTeamsRenotifyConfigRenotificationStatesAlertNoData:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for RuleTargetInputMicrosoftTeamsType.
 const (
 	RuleTargetInputMicrosoftTeamsTypeMicrosoftTeams RuleTargetInputMicrosoftTeamsType = "microsoft-teams"
@@ -862,39 +433,6 @@ const (
 func (e RuleTargetInputMicrosoftTeamsType) Valid() bool {
 	switch e {
 	case RuleTargetInputMicrosoftTeamsTypeMicrosoftTeams:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetInputPagerDutyRenotifyConfigMode.
-const (
-	RuleTargetInputPagerDutyRenotifyConfigModeEach RuleTargetInputPagerDutyRenotifyConfigMode = "each"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetInputPagerDutyRenotifyConfigMode enum.
-func (e RuleTargetInputPagerDutyRenotifyConfigMode) Valid() bool {
-	switch e {
-	case RuleTargetInputPagerDutyRenotifyConfigModeEach:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetInputPagerDutyRenotifyConfigRenotificationStates.
-const (
-	RuleTargetInputPagerDutyRenotifyConfigRenotificationStatesAlert       RuleTargetInputPagerDutyRenotifyConfigRenotificationStates = "alert"
-	RuleTargetInputPagerDutyRenotifyConfigRenotificationStatesAlertNoData RuleTargetInputPagerDutyRenotifyConfigRenotificationStates = "alert_no_data"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetInputPagerDutyRenotifyConfigRenotificationStates enum.
-func (e RuleTargetInputPagerDutyRenotifyConfigRenotificationStates) Valid() bool {
-	switch e {
-	case RuleTargetInputPagerDutyRenotifyConfigRenotificationStatesAlert:
-		return true
-	case RuleTargetInputPagerDutyRenotifyConfigRenotificationStatesAlertNoData:
 		return true
 	default:
 		return false
@@ -916,39 +454,6 @@ func (e RuleTargetInputPagerDutyType) Valid() bool {
 	}
 }
 
-// Defines values for RuleTargetInputServiceNowRenotifyConfigMode.
-const (
-	RuleTargetInputServiceNowRenotifyConfigModeEach RuleTargetInputServiceNowRenotifyConfigMode = "each"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetInputServiceNowRenotifyConfigMode enum.
-func (e RuleTargetInputServiceNowRenotifyConfigMode) Valid() bool {
-	switch e {
-	case RuleTargetInputServiceNowRenotifyConfigModeEach:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetInputServiceNowRenotifyConfigRenotificationStates.
-const (
-	RuleTargetInputServiceNowRenotifyConfigRenotificationStatesAlert       RuleTargetInputServiceNowRenotifyConfigRenotificationStates = "alert"
-	RuleTargetInputServiceNowRenotifyConfigRenotificationStatesAlertNoData RuleTargetInputServiceNowRenotifyConfigRenotificationStates = "alert_no_data"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetInputServiceNowRenotifyConfigRenotificationStates enum.
-func (e RuleTargetInputServiceNowRenotifyConfigRenotificationStates) Valid() bool {
-	switch e {
-	case RuleTargetInputServiceNowRenotifyConfigRenotificationStatesAlert:
-		return true
-	case RuleTargetInputServiceNowRenotifyConfigRenotificationStatesAlertNoData:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for RuleTargetInputServiceNowType.
 const (
 	RuleTargetInputServiceNowTypeServicenow RuleTargetInputServiceNowType = "servicenow"
@@ -958,39 +463,6 @@ const (
 func (e RuleTargetInputServiceNowType) Valid() bool {
 	switch e {
 	case RuleTargetInputServiceNowTypeServicenow:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetInputSlackRenotifyConfigMode.
-const (
-	RuleTargetInputSlackRenotifyConfigModeEach RuleTargetInputSlackRenotifyConfigMode = "each"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetInputSlackRenotifyConfigMode enum.
-func (e RuleTargetInputSlackRenotifyConfigMode) Valid() bool {
-	switch e {
-	case RuleTargetInputSlackRenotifyConfigModeEach:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetInputSlackRenotifyConfigRenotificationStates.
-const (
-	RuleTargetInputSlackRenotifyConfigRenotificationStatesAlert       RuleTargetInputSlackRenotifyConfigRenotificationStates = "alert"
-	RuleTargetInputSlackRenotifyConfigRenotificationStatesAlertNoData RuleTargetInputSlackRenotifyConfigRenotificationStates = "alert_no_data"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetInputSlackRenotifyConfigRenotificationStates enum.
-func (e RuleTargetInputSlackRenotifyConfigRenotificationStates) Valid() bool {
-	switch e {
-	case RuleTargetInputSlackRenotifyConfigRenotificationStatesAlert:
-		return true
-	case RuleTargetInputSlackRenotifyConfigRenotificationStatesAlertNoData:
 		return true
 	default:
 		return false
@@ -1012,39 +484,6 @@ func (e RuleTargetInputSlackType) Valid() bool {
 	}
 }
 
-// Defines values for RuleTargetInputSquadcastRenotifyConfigMode.
-const (
-	RuleTargetInputSquadcastRenotifyConfigModeEach RuleTargetInputSquadcastRenotifyConfigMode = "each"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetInputSquadcastRenotifyConfigMode enum.
-func (e RuleTargetInputSquadcastRenotifyConfigMode) Valid() bool {
-	switch e {
-	case RuleTargetInputSquadcastRenotifyConfigModeEach:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetInputSquadcastRenotifyConfigRenotificationStates.
-const (
-	RuleTargetInputSquadcastRenotifyConfigRenotificationStatesAlert       RuleTargetInputSquadcastRenotifyConfigRenotificationStates = "alert"
-	RuleTargetInputSquadcastRenotifyConfigRenotificationStatesAlertNoData RuleTargetInputSquadcastRenotifyConfigRenotificationStates = "alert_no_data"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetInputSquadcastRenotifyConfigRenotificationStates enum.
-func (e RuleTargetInputSquadcastRenotifyConfigRenotificationStates) Valid() bool {
-	switch e {
-	case RuleTargetInputSquadcastRenotifyConfigRenotificationStatesAlert:
-		return true
-	case RuleTargetInputSquadcastRenotifyConfigRenotificationStatesAlertNoData:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for RuleTargetInputSquadcastType.
 const (
 	RuleTargetInputSquadcastTypeSquadcast RuleTargetInputSquadcastType = "squadcast"
@@ -1054,39 +493,6 @@ const (
 func (e RuleTargetInputSquadcastType) Valid() bool {
 	switch e {
 	case RuleTargetInputSquadcastTypeSquadcast:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetInputWebhookRenotifyConfigMode.
-const (
-	RuleTargetInputWebhookRenotifyConfigModeEach RuleTargetInputWebhookRenotifyConfigMode = "each"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetInputWebhookRenotifyConfigMode enum.
-func (e RuleTargetInputWebhookRenotifyConfigMode) Valid() bool {
-	switch e {
-	case RuleTargetInputWebhookRenotifyConfigModeEach:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RuleTargetInputWebhookRenotifyConfigRenotificationStates.
-const (
-	RuleTargetInputWebhookRenotifyConfigRenotificationStatesAlert       RuleTargetInputWebhookRenotifyConfigRenotificationStates = "alert"
-	RuleTargetInputWebhookRenotifyConfigRenotificationStatesAlertNoData RuleTargetInputWebhookRenotifyConfigRenotificationStates = "alert_no_data"
-)
-
-// Valid indicates whether the value is a known member of the RuleTargetInputWebhookRenotifyConfigRenotificationStates enum.
-func (e RuleTargetInputWebhookRenotifyConfigRenotificationStates) Valid() bool {
-	switch e {
-	case RuleTargetInputWebhookRenotifyConfigRenotificationStatesAlert:
-		return true
-	case RuleTargetInputWebhookRenotifyConfigRenotificationStatesAlertNoData:
 		return true
 	default:
 		return false
@@ -1374,6 +780,24 @@ type GetNotificationRuleResponse struct {
 	RequestId string `json:"requestId"`
 }
 
+// InputRenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
+type InputRenotifyConfig struct {
+	// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
+	Mode InputRenotifyConfigMode `json:"mode"`
+
+	// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
+	RenotificationStates []InputRenotifyConfigRenotificationStates `json:"renotificationStates"`
+
+	// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
+	RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
+}
+
+// InputRenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
+type InputRenotifyConfigMode string
+
+// InputRenotifyConfigRenotificationStates defines model for InputRenotifyConfig.RenotificationStates.
+type InputRenotifyConfigRenotificationStates string
+
 // InputTeamsFilterAllPublicTeams defines model for InputTeamsFilterAllPublicTeams.
 type InputTeamsFilterAllPublicTeams struct {
 	// Type Match alert transitions for all public teams. Public API callers need an API key with `all` or `owning-team-and-public` scope to create or update this filter.
@@ -1425,6 +849,24 @@ type ListNotificationRulesResponse struct {
 	// RequestId Identifier used to trace the lifecycle of this API request
 	RequestId string `json:"requestId"`
 }
+
+// RenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
+type RenotifyConfig struct {
+	// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
+	Mode RenotifyConfigMode `json:"mode"`
+
+	// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
+	RenotificationStates []RenotifyConfigRenotificationStates `json:"renotificationStates"`
+
+	// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
+	RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
+}
+
+// RenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
+type RenotifyConfigMode string
+
+// RenotifyConfigRenotificationStates defines model for RenotifyConfig.RenotificationStates.
+type RenotifyConfigRenotificationStates string
 
 // ResponseMetadata Metadata accompanying `data` on paginated operations, describing the full result set the page was taken from.
 type ResponseMetadata struct {
@@ -1519,26 +961,11 @@ type RuleTargetConfigEmail struct {
 	Addresses []string `json:"addresses"`
 
 	// RenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
-	RenotifyConfig *struct {
-		// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-		Mode RuleTargetConfigEmailRenotifyConfigMode `json:"mode"`
-
-		// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
-		RenotificationStates []RuleTargetConfigEmailRenotifyConfigRenotificationStates `json:"renotificationStates"`
-
-		// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
-		RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
-	} `json:"renotifyConfig,omitempty"`
+	RenotifyConfig *RenotifyConfig `json:"renotifyConfig,omitempty"`
 
 	// Type Email target that sends directly to the listed addresses and does not require an integration.
 	Type RuleTargetConfigEmailType `json:"type"`
 }
-
-// RuleTargetConfigEmailRenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-type RuleTargetConfigEmailRenotifyConfigMode string
-
-// RuleTargetConfigEmailRenotifyConfigRenotificationStates defines model for RuleTargetConfigEmail.RenotifyConfig.RenotificationStates.
-type RuleTargetConfigEmailRenotifyConfigRenotificationStates string
 
 // RuleTargetConfigEmailType Email target that sends directly to the listed addresses and does not require an integration.
 type RuleTargetConfigEmailType string
@@ -1552,26 +979,11 @@ type RuleTargetConfigGoogleChat struct {
 	IntegrationName string `json:"integrationName"`
 
 	// RenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
-	RenotifyConfig *struct {
-		// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-		Mode RuleTargetConfigGoogleChatRenotifyConfigMode `json:"mode"`
-
-		// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
-		RenotificationStates []RuleTargetConfigGoogleChatRenotifyConfigRenotificationStates `json:"renotificationStates"`
-
-		// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
-		RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
-	} `json:"renotifyConfig,omitempty"`
+	RenotifyConfig *RenotifyConfig `json:"renotifyConfig,omitempty"`
 
 	// Type Google Chat target backed by a configured Google Chat integration.
 	Type RuleTargetConfigGoogleChatType `json:"type"`
 }
-
-// RuleTargetConfigGoogleChatRenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-type RuleTargetConfigGoogleChatRenotifyConfigMode string
-
-// RuleTargetConfigGoogleChatRenotifyConfigRenotificationStates defines model for RuleTargetConfigGoogleChat.RenotifyConfig.RenotificationStates.
-type RuleTargetConfigGoogleChatRenotifyConfigRenotificationStates string
 
 // RuleTargetConfigGoogleChatType Google Chat target backed by a configured Google Chat integration.
 type RuleTargetConfigGoogleChatType string
@@ -1585,26 +997,11 @@ type RuleTargetConfigGrafanaIrm struct {
 	IntegrationName string `json:"integrationName"`
 
 	// RenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
-	RenotifyConfig *struct {
-		// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-		Mode RuleTargetConfigGrafanaIrmRenotifyConfigMode `json:"mode"`
-
-		// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
-		RenotificationStates []RuleTargetConfigGrafanaIrmRenotifyConfigRenotificationStates `json:"renotificationStates"`
-
-		// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
-		RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
-	} `json:"renotifyConfig,omitempty"`
+	RenotifyConfig *RenotifyConfig `json:"renotifyConfig,omitempty"`
 
 	// Type Grafana IRM target backed by a configured Grafana IRM integration.
 	Type RuleTargetConfigGrafanaIrmType `json:"type"`
 }
-
-// RuleTargetConfigGrafanaIrmRenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-type RuleTargetConfigGrafanaIrmRenotifyConfigMode string
-
-// RuleTargetConfigGrafanaIrmRenotifyConfigRenotificationStates defines model for RuleTargetConfigGrafanaIrm.RenotifyConfig.RenotificationStates.
-type RuleTargetConfigGrafanaIrmRenotifyConfigRenotificationStates string
 
 // RuleTargetConfigGrafanaIrmType Grafana IRM target backed by a configured Grafana IRM integration.
 type RuleTargetConfigGrafanaIrmType string
@@ -1618,26 +1015,11 @@ type RuleTargetConfigIncidentIo struct {
 	IntegrationName string `json:"integrationName"`
 
 	// RenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
-	RenotifyConfig *struct {
-		// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-		Mode RuleTargetConfigIncidentIoRenotifyConfigMode `json:"mode"`
-
-		// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
-		RenotificationStates []RuleTargetConfigIncidentIoRenotifyConfigRenotificationStates `json:"renotificationStates"`
-
-		// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
-		RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
-	} `json:"renotifyConfig,omitempty"`
+	RenotifyConfig *RenotifyConfig `json:"renotifyConfig,omitempty"`
 
 	// Type incident.io target backed by a configured incident.io integration.
 	Type RuleTargetConfigIncidentIoType `json:"type"`
 }
-
-// RuleTargetConfigIncidentIoRenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-type RuleTargetConfigIncidentIoRenotifyConfigMode string
-
-// RuleTargetConfigIncidentIoRenotifyConfigRenotificationStates defines model for RuleTargetConfigIncidentIo.RenotifyConfig.RenotificationStates.
-type RuleTargetConfigIncidentIoRenotifyConfigRenotificationStates string
 
 // RuleTargetConfigIncidentIoType incident.io target backed by a configured incident.io integration.
 type RuleTargetConfigIncidentIoType string
@@ -1678,26 +1060,11 @@ type RuleTargetConfigMicrosoftTeams struct {
 	IntegrationName string `json:"integrationName"`
 
 	// RenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
-	RenotifyConfig *struct {
-		// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-		Mode RuleTargetConfigMicrosoftTeamsRenotifyConfigMode `json:"mode"`
-
-		// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
-		RenotificationStates []RuleTargetConfigMicrosoftTeamsRenotifyConfigRenotificationStates `json:"renotificationStates"`
-
-		// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
-		RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
-	} `json:"renotifyConfig,omitempty"`
+	RenotifyConfig *RenotifyConfig `json:"renotifyConfig,omitempty"`
 
 	// Type Microsoft Teams target backed by a configured Microsoft Teams integration.
 	Type RuleTargetConfigMicrosoftTeamsType `json:"type"`
 }
-
-// RuleTargetConfigMicrosoftTeamsRenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-type RuleTargetConfigMicrosoftTeamsRenotifyConfigMode string
-
-// RuleTargetConfigMicrosoftTeamsRenotifyConfigRenotificationStates defines model for RuleTargetConfigMicrosoftTeams.RenotifyConfig.RenotificationStates.
-type RuleTargetConfigMicrosoftTeamsRenotifyConfigRenotificationStates string
 
 // RuleTargetConfigMicrosoftTeamsType Microsoft Teams target backed by a configured Microsoft Teams integration.
 type RuleTargetConfigMicrosoftTeamsType string
@@ -1711,26 +1078,11 @@ type RuleTargetConfigPagerDuty struct {
 	IntegrationName string `json:"integrationName"`
 
 	// RenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
-	RenotifyConfig *struct {
-		// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-		Mode RuleTargetConfigPagerDutyRenotifyConfigMode `json:"mode"`
-
-		// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
-		RenotificationStates []RuleTargetConfigPagerDutyRenotifyConfigRenotificationStates `json:"renotificationStates"`
-
-		// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
-		RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
-	} `json:"renotifyConfig,omitempty"`
+	RenotifyConfig *RenotifyConfig `json:"renotifyConfig,omitempty"`
 
 	// Type PagerDuty target backed by a configured PagerDuty integration.
 	Type RuleTargetConfigPagerDutyType `json:"type"`
 }
-
-// RuleTargetConfigPagerDutyRenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-type RuleTargetConfigPagerDutyRenotifyConfigMode string
-
-// RuleTargetConfigPagerDutyRenotifyConfigRenotificationStates defines model for RuleTargetConfigPagerDuty.RenotifyConfig.RenotificationStates.
-type RuleTargetConfigPagerDutyRenotifyConfigRenotificationStates string
 
 // RuleTargetConfigPagerDutyType PagerDuty target backed by a configured PagerDuty integration.
 type RuleTargetConfigPagerDutyType string
@@ -1744,26 +1096,11 @@ type RuleTargetConfigServiceNow struct {
 	IntegrationName string `json:"integrationName"`
 
 	// RenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
-	RenotifyConfig *struct {
-		// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-		Mode RuleTargetConfigServiceNowRenotifyConfigMode `json:"mode"`
-
-		// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
-		RenotificationStates []RuleTargetConfigServiceNowRenotifyConfigRenotificationStates `json:"renotificationStates"`
-
-		// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
-		RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
-	} `json:"renotifyConfig,omitempty"`
+	RenotifyConfig *RenotifyConfig `json:"renotifyConfig,omitempty"`
 
 	// Type ServiceNow target backed by a configured ServiceNow integration.
 	Type RuleTargetConfigServiceNowType `json:"type"`
 }
-
-// RuleTargetConfigServiceNowRenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-type RuleTargetConfigServiceNowRenotifyConfigMode string
-
-// RuleTargetConfigServiceNowRenotifyConfigRenotificationStates defines model for RuleTargetConfigServiceNow.RenotifyConfig.RenotificationStates.
-type RuleTargetConfigServiceNowRenotifyConfigRenotificationStates string
 
 // RuleTargetConfigServiceNowType ServiceNow target backed by a configured ServiceNow integration.
 type RuleTargetConfigServiceNowType string
@@ -1780,26 +1117,11 @@ type RuleTargetConfigSlack struct {
 	IntegrationName string `json:"integrationName"`
 
 	// RenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
-	RenotifyConfig *struct {
-		// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-		Mode RuleTargetConfigSlackRenotifyConfigMode `json:"mode"`
-
-		// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
-		RenotificationStates []RuleTargetConfigSlackRenotifyConfigRenotificationStates `json:"renotificationStates"`
-
-		// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
-		RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
-	} `json:"renotifyConfig,omitempty"`
+	RenotifyConfig *RenotifyConfig `json:"renotifyConfig,omitempty"`
 
 	// Type Slack target backed by a configured Slack integration.
 	Type RuleTargetConfigSlackType `json:"type"`
 }
-
-// RuleTargetConfigSlackRenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-type RuleTargetConfigSlackRenotifyConfigMode string
-
-// RuleTargetConfigSlackRenotifyConfigRenotificationStates defines model for RuleTargetConfigSlack.RenotifyConfig.RenotificationStates.
-type RuleTargetConfigSlackRenotifyConfigRenotificationStates string
 
 // RuleTargetConfigSlackType Slack target backed by a configured Slack integration.
 type RuleTargetConfigSlackType string
@@ -1813,26 +1135,11 @@ type RuleTargetConfigSquadcast struct {
 	IntegrationName string `json:"integrationName"`
 
 	// RenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
-	RenotifyConfig *struct {
-		// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-		Mode RuleTargetConfigSquadcastRenotifyConfigMode `json:"mode"`
-
-		// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
-		RenotificationStates []RuleTargetConfigSquadcastRenotifyConfigRenotificationStates `json:"renotificationStates"`
-
-		// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
-		RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
-	} `json:"renotifyConfig,omitempty"`
+	RenotifyConfig *RenotifyConfig `json:"renotifyConfig,omitempty"`
 
 	// Type Squadcast target backed by a configured Squadcast integration.
 	Type RuleTargetConfigSquadcastType `json:"type"`
 }
-
-// RuleTargetConfigSquadcastRenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-type RuleTargetConfigSquadcastRenotifyConfigMode string
-
-// RuleTargetConfigSquadcastRenotifyConfigRenotificationStates defines model for RuleTargetConfigSquadcast.RenotifyConfig.RenotificationStates.
-type RuleTargetConfigSquadcastRenotifyConfigRenotificationStates string
 
 // RuleTargetConfigSquadcastType Squadcast target backed by a configured Squadcast integration.
 type RuleTargetConfigSquadcastType string
@@ -1846,26 +1153,11 @@ type RuleTargetConfigWebhook struct {
 	IntegrationName string `json:"integrationName"`
 
 	// RenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
-	RenotifyConfig *struct {
-		// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-		Mode RuleTargetConfigWebhookRenotifyConfigMode `json:"mode"`
-
-		// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
-		RenotificationStates []RuleTargetConfigWebhookRenotifyConfigRenotificationStates `json:"renotificationStates"`
-
-		// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
-		RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
-	} `json:"renotifyConfig,omitempty"`
+	RenotifyConfig *RenotifyConfig `json:"renotifyConfig,omitempty"`
 
 	// Type Webhook target backed by a configured webhook integration.
 	Type RuleTargetConfigWebhookType `json:"type"`
 }
-
-// RuleTargetConfigWebhookRenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-type RuleTargetConfigWebhookRenotifyConfigMode string
-
-// RuleTargetConfigWebhookRenotifyConfigRenotificationStates defines model for RuleTargetConfigWebhook.RenotifyConfig.RenotificationStates.
-type RuleTargetConfigWebhookRenotifyConfigRenotificationStates string
 
 // RuleTargetConfigWebhookType Webhook target backed by a configured webhook integration.
 type RuleTargetConfigWebhookType string
@@ -1876,26 +1168,11 @@ type RuleTargetInputEmail struct {
 	Addresses []string `json:"addresses"`
 
 	// RenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
-	RenotifyConfig *struct {
-		// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-		Mode RuleTargetInputEmailRenotifyConfigMode `json:"mode"`
-
-		// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
-		RenotificationStates []RuleTargetInputEmailRenotifyConfigRenotificationStates `json:"renotificationStates"`
-
-		// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
-		RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
-	} `json:"renotifyConfig,omitempty"`
+	RenotifyConfig *InputRenotifyConfig `json:"renotifyConfig,omitempty"`
 
 	// Type Email target that sends directly to the listed addresses and does not require an integration.
 	Type RuleTargetInputEmailType `json:"type"`
 }
-
-// RuleTargetInputEmailRenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-type RuleTargetInputEmailRenotifyConfigMode string
-
-// RuleTargetInputEmailRenotifyConfigRenotificationStates defines model for RuleTargetInputEmail.RenotifyConfig.RenotificationStates.
-type RuleTargetInputEmailRenotifyConfigRenotificationStates string
 
 // RuleTargetInputEmailType Email target that sends directly to the listed addresses and does not require an integration.
 type RuleTargetInputEmailType string
@@ -1906,26 +1183,11 @@ type RuleTargetInputGoogleChat struct {
 	IntegrationId string `json:"integrationId"`
 
 	// RenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
-	RenotifyConfig *struct {
-		// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-		Mode RuleTargetInputGoogleChatRenotifyConfigMode `json:"mode"`
-
-		// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
-		RenotificationStates []RuleTargetInputGoogleChatRenotifyConfigRenotificationStates `json:"renotificationStates"`
-
-		// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
-		RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
-	} `json:"renotifyConfig,omitempty"`
+	RenotifyConfig *InputRenotifyConfig `json:"renotifyConfig,omitempty"`
 
 	// Type Google Chat target backed by a configured Google Chat integration.
 	Type RuleTargetInputGoogleChatType `json:"type"`
 }
-
-// RuleTargetInputGoogleChatRenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-type RuleTargetInputGoogleChatRenotifyConfigMode string
-
-// RuleTargetInputGoogleChatRenotifyConfigRenotificationStates defines model for RuleTargetInputGoogleChat.RenotifyConfig.RenotificationStates.
-type RuleTargetInputGoogleChatRenotifyConfigRenotificationStates string
 
 // RuleTargetInputGoogleChatType Google Chat target backed by a configured Google Chat integration.
 type RuleTargetInputGoogleChatType string
@@ -1936,26 +1198,11 @@ type RuleTargetInputGrafanaIrm struct {
 	IntegrationId string `json:"integrationId"`
 
 	// RenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
-	RenotifyConfig *struct {
-		// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-		Mode RuleTargetInputGrafanaIrmRenotifyConfigMode `json:"mode"`
-
-		// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
-		RenotificationStates []RuleTargetInputGrafanaIrmRenotifyConfigRenotificationStates `json:"renotificationStates"`
-
-		// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
-		RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
-	} `json:"renotifyConfig,omitempty"`
+	RenotifyConfig *InputRenotifyConfig `json:"renotifyConfig,omitempty"`
 
 	// Type Grafana IRM target backed by a configured Grafana IRM integration.
 	Type RuleTargetInputGrafanaIrmType `json:"type"`
 }
-
-// RuleTargetInputGrafanaIrmRenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-type RuleTargetInputGrafanaIrmRenotifyConfigMode string
-
-// RuleTargetInputGrafanaIrmRenotifyConfigRenotificationStates defines model for RuleTargetInputGrafanaIrm.RenotifyConfig.RenotificationStates.
-type RuleTargetInputGrafanaIrmRenotifyConfigRenotificationStates string
 
 // RuleTargetInputGrafanaIrmType Grafana IRM target backed by a configured Grafana IRM integration.
 type RuleTargetInputGrafanaIrmType string
@@ -1966,26 +1213,11 @@ type RuleTargetInputIncidentIo struct {
 	IntegrationId string `json:"integrationId"`
 
 	// RenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
-	RenotifyConfig *struct {
-		// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-		Mode RuleTargetInputIncidentIoRenotifyConfigMode `json:"mode"`
-
-		// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
-		RenotificationStates []RuleTargetInputIncidentIoRenotifyConfigRenotificationStates `json:"renotificationStates"`
-
-		// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
-		RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
-	} `json:"renotifyConfig,omitempty"`
+	RenotifyConfig *InputRenotifyConfig `json:"renotifyConfig,omitempty"`
 
 	// Type incident.io target backed by a configured incident.io integration.
 	Type RuleTargetInputIncidentIoType `json:"type"`
 }
-
-// RuleTargetInputIncidentIoRenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-type RuleTargetInputIncidentIoRenotifyConfigMode string
-
-// RuleTargetInputIncidentIoRenotifyConfigRenotificationStates defines model for RuleTargetInputIncidentIo.RenotifyConfig.RenotificationStates.
-type RuleTargetInputIncidentIoRenotifyConfigRenotificationStates string
 
 // RuleTargetInputIncidentIoType incident.io target backed by a configured incident.io integration.
 type RuleTargetInputIncidentIoType string
@@ -2020,26 +1252,11 @@ type RuleTargetInputMicrosoftTeams struct {
 	IntegrationId string `json:"integrationId"`
 
 	// RenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
-	RenotifyConfig *struct {
-		// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-		Mode RuleTargetInputMicrosoftTeamsRenotifyConfigMode `json:"mode"`
-
-		// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
-		RenotificationStates []RuleTargetInputMicrosoftTeamsRenotifyConfigRenotificationStates `json:"renotificationStates"`
-
-		// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
-		RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
-	} `json:"renotifyConfig,omitempty"`
+	RenotifyConfig *InputRenotifyConfig `json:"renotifyConfig,omitempty"`
 
 	// Type Microsoft Teams target backed by a configured Microsoft Teams integration.
 	Type RuleTargetInputMicrosoftTeamsType `json:"type"`
 }
-
-// RuleTargetInputMicrosoftTeamsRenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-type RuleTargetInputMicrosoftTeamsRenotifyConfigMode string
-
-// RuleTargetInputMicrosoftTeamsRenotifyConfigRenotificationStates defines model for RuleTargetInputMicrosoftTeams.RenotifyConfig.RenotificationStates.
-type RuleTargetInputMicrosoftTeamsRenotifyConfigRenotificationStates string
 
 // RuleTargetInputMicrosoftTeamsType Microsoft Teams target backed by a configured Microsoft Teams integration.
 type RuleTargetInputMicrosoftTeamsType string
@@ -2050,26 +1267,11 @@ type RuleTargetInputPagerDuty struct {
 	IntegrationId string `json:"integrationId"`
 
 	// RenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
-	RenotifyConfig *struct {
-		// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-		Mode RuleTargetInputPagerDutyRenotifyConfigMode `json:"mode"`
-
-		// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
-		RenotificationStates []RuleTargetInputPagerDutyRenotifyConfigRenotificationStates `json:"renotificationStates"`
-
-		// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
-		RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
-	} `json:"renotifyConfig,omitempty"`
+	RenotifyConfig *InputRenotifyConfig `json:"renotifyConfig,omitempty"`
 
 	// Type PagerDuty target backed by a configured PagerDuty integration.
 	Type RuleTargetInputPagerDutyType `json:"type"`
 }
-
-// RuleTargetInputPagerDutyRenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-type RuleTargetInputPagerDutyRenotifyConfigMode string
-
-// RuleTargetInputPagerDutyRenotifyConfigRenotificationStates defines model for RuleTargetInputPagerDuty.RenotifyConfig.RenotificationStates.
-type RuleTargetInputPagerDutyRenotifyConfigRenotificationStates string
 
 // RuleTargetInputPagerDutyType PagerDuty target backed by a configured PagerDuty integration.
 type RuleTargetInputPagerDutyType string
@@ -2080,26 +1282,11 @@ type RuleTargetInputServiceNow struct {
 	IntegrationId string `json:"integrationId"`
 
 	// RenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
-	RenotifyConfig *struct {
-		// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-		Mode RuleTargetInputServiceNowRenotifyConfigMode `json:"mode"`
-
-		// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
-		RenotificationStates []RuleTargetInputServiceNowRenotifyConfigRenotificationStates `json:"renotificationStates"`
-
-		// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
-		RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
-	} `json:"renotifyConfig,omitempty"`
+	RenotifyConfig *InputRenotifyConfig `json:"renotifyConfig,omitempty"`
 
 	// Type ServiceNow target backed by a configured ServiceNow integration.
 	Type RuleTargetInputServiceNowType `json:"type"`
 }
-
-// RuleTargetInputServiceNowRenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-type RuleTargetInputServiceNowRenotifyConfigMode string
-
-// RuleTargetInputServiceNowRenotifyConfigRenotificationStates defines model for RuleTargetInputServiceNow.RenotifyConfig.RenotificationStates.
-type RuleTargetInputServiceNowRenotifyConfigRenotificationStates string
 
 // RuleTargetInputServiceNowType ServiceNow target backed by a configured ServiceNow integration.
 type RuleTargetInputServiceNowType string
@@ -2113,26 +1300,11 @@ type RuleTargetInputSlack struct {
 	IntegrationId string `json:"integrationId"`
 
 	// RenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
-	RenotifyConfig *struct {
-		// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-		Mode RuleTargetInputSlackRenotifyConfigMode `json:"mode"`
-
-		// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
-		RenotificationStates []RuleTargetInputSlackRenotifyConfigRenotificationStates `json:"renotificationStates"`
-
-		// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
-		RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
-	} `json:"renotifyConfig,omitempty"`
+	RenotifyConfig *InputRenotifyConfig `json:"renotifyConfig,omitempty"`
 
 	// Type Slack target backed by a configured Slack integration.
 	Type RuleTargetInputSlackType `json:"type"`
 }
-
-// RuleTargetInputSlackRenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-type RuleTargetInputSlackRenotifyConfigMode string
-
-// RuleTargetInputSlackRenotifyConfigRenotificationStates defines model for RuleTargetInputSlack.RenotifyConfig.RenotificationStates.
-type RuleTargetInputSlackRenotifyConfigRenotificationStates string
 
 // RuleTargetInputSlackType Slack target backed by a configured Slack integration.
 type RuleTargetInputSlackType string
@@ -2143,26 +1315,11 @@ type RuleTargetInputSquadcast struct {
 	IntegrationId string `json:"integrationId"`
 
 	// RenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
-	RenotifyConfig *struct {
-		// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-		Mode RuleTargetInputSquadcastRenotifyConfigMode `json:"mode"`
-
-		// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
-		RenotificationStates []RuleTargetInputSquadcastRenotifyConfigRenotificationStates `json:"renotificationStates"`
-
-		// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
-		RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
-	} `json:"renotifyConfig,omitempty"`
+	RenotifyConfig *InputRenotifyConfig `json:"renotifyConfig,omitempty"`
 
 	// Type Squadcast target backed by a configured Squadcast integration.
 	Type RuleTargetInputSquadcastType `json:"type"`
 }
-
-// RuleTargetInputSquadcastRenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-type RuleTargetInputSquadcastRenotifyConfigMode string
-
-// RuleTargetInputSquadcastRenotifyConfigRenotificationStates defines model for RuleTargetInputSquadcast.RenotifyConfig.RenotificationStates.
-type RuleTargetInputSquadcastRenotifyConfigRenotificationStates string
 
 // RuleTargetInputSquadcastType Squadcast target backed by a configured Squadcast integration.
 type RuleTargetInputSquadcastType string
@@ -2173,26 +1330,11 @@ type RuleTargetInputWebhook struct {
 	IntegrationId string `json:"integrationId"`
 
 	// RenotifyConfig Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.
-	RenotifyConfig *struct {
-		// Mode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-		Mode RuleTargetInputWebhookRenotifyConfigMode `json:"mode"`
-
-		// RenotificationStates Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
-		RenotificationStates []RuleTargetInputWebhookRenotifyConfigRenotificationStates `json:"renotificationStates"`
-
-		// RenotifyIntervalMinutes Minimum number of minutes to wait after the previous notification.
-		RenotifyIntervalMinutes int `json:"renotifyIntervalMinutes"`
-	} `json:"renotifyConfig,omitempty"`
+	RenotifyConfig *InputRenotifyConfig `json:"renotifyConfig,omitempty"`
 
 	// Type Webhook target backed by a configured webhook integration.
 	Type RuleTargetInputWebhookType `json:"type"`
 }
-
-// RuleTargetInputWebhookRenotifyConfigMode Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-type RuleTargetInputWebhookRenotifyConfigMode string
-
-// RuleTargetInputWebhookRenotifyConfigRenotificationStates defines model for RuleTargetInputWebhook.RenotifyConfig.RenotificationStates.
-type RuleTargetInputWebhookRenotifyConfigRenotificationStates string
 
 // RuleTargetInputWebhookType Webhook target backed by a configured webhook integration.
 type RuleTargetInputWebhookType string

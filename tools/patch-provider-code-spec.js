@@ -268,9 +268,34 @@ requireAttr(notificationRule, "cluster_ids_filter").list.default = {
   },
 };
 
+// Every destination block has the same `renotify` block (a shared $ref schema), but tfplugingen
+// names a nested type after its attribute and would redeclare it per block: the first block
+// generates the type, the others become plain objects of that type. Their fields are checked by
+// RenotifyConfigValid (resource_notification_rule/validators.go), which mirrors the spec constraints.
+const renotifyAttrs = targetConfig.attributes
+  .flatMap((block) => block.single_nested.attributes.filter((attr) => attr.name === "renotify"));
+const objectAttrType = ({name, ...rest}) => {
+  const kind = kindOf(rest);
+  return {name, [kind]: kind === "list" ? {element_type: rest[kind].element_type} : {}};
+};
+renotifyAttrs.slice(1).forEach((renotify) => {
+  const {attributes, description} = renotify.single_nested;
+  delete renotify.single_nested;
+  renotify.object = {
+    attribute_types: attributes.map(objectAttrType),
+    computed_optional_required: "optional",
+    description,
+    custom_type: {
+      type: "RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}}",
+      value_type: "RenotifyValue",
+    },
+    validators: [{custom: {schema_definition: "RenotifyConfigValid()"}}],
+  };
+});
+
 // The spec cannot express that exactly one destination is set; the validator lives next to the
 // generated code (resource_notification_rule/validators.go) and names the destinations in its error.
-targetConfig.validators = [{custom: {schema_definition: 'ExactlyOneDestination("renotify")'}}];
+targetConfig.validators = [{custom: {schema_definition: 'ExactlyOneDestination()'}}];
 
 // tfplugingen skips the item enums of list attributes: add a OneOf validator for each, derived
 // from the expanded OpenAPI spec (argv[3]) along the create request body of every resource in

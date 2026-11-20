@@ -124,6 +124,45 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 												listvalidator.SizeBetween(1, 20),
 											},
 										},
+										"renotify": schema.SingleNestedAttribute{
+											Attributes: map[string]schema.Attribute{
+												"mode": schema.StringAttribute{
+													Required:            true,
+													Description:         "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+													MarkdownDescription: "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+													Validators: []validator.String{
+														stringvalidator.OneOf(
+															"each",
+														),
+													},
+												},
+												"renotification_states": schema.ListAttribute{
+													ElementType:         types.StringType,
+													Required:            true,
+													Description:         "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+													MarkdownDescription: "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+													Validators: []validator.List{
+														listvalidator.ValueStringsAre(stringvalidator.OneOf("alert", "alert_no_data")),
+													},
+												},
+												"renotify_interval_minutes": schema.Int64Attribute{
+													Required:            true,
+													Description:         "Minimum number of minutes to wait after the previous notification.",
+													MarkdownDescription: "Minimum number of minutes to wait after the previous notification.",
+													Validators: []validator.Int64{
+														int64validator.AtLeast(1),
+													},
+												},
+											},
+											CustomType: RenotifyType{
+												ObjectType: types.ObjectType{
+													AttrTypes: RenotifyValue{}.AttributeTypes(ctx),
+												},
+											},
+											Optional:            true,
+											Description:         "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+											MarkdownDescription: "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+										},
 										"type": schema.StringAttribute{
 											Computed:            true,
 											Description:         "Email target that sends directly to the listed addresses and does not require an integration.",
@@ -151,6 +190,15 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 											Computed:            true,
 											Description:         "Human readable name of the Google Chat integration",
 											MarkdownDescription: "Human readable name of the Google Chat integration",
+										},
+										"renotify": schema.ObjectAttribute{
+											CustomType:          RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}},
+											Optional:            true,
+											Description:         "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+											MarkdownDescription: "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+											Validators: []validator.Object{
+												RenotifyConfigValid(),
+											},
 										},
 										"type": schema.StringAttribute{
 											Computed:            true,
@@ -180,6 +228,15 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 											Description:         "Human readable name of the Grafana IRM integration",
 											MarkdownDescription: "Human readable name of the Grafana IRM integration",
 										},
+										"renotify": schema.ObjectAttribute{
+											CustomType:          RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}},
+											Optional:            true,
+											Description:         "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+											MarkdownDescription: "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+											Validators: []validator.Object{
+												RenotifyConfigValid(),
+											},
+										},
 										"type": schema.StringAttribute{
 											Computed:            true,
 											Description:         "Grafana IRM target backed by a configured Grafana IRM integration.",
@@ -207,6 +264,15 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 											Computed:            true,
 											Description:         "Human readable name of the incident.io integration",
 											MarkdownDescription: "Human readable name of the incident.io integration",
+										},
+										"renotify": schema.ObjectAttribute{
+											CustomType:          RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}},
+											Optional:            true,
+											Description:         "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+											MarkdownDescription: "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+											Validators: []validator.Object{
+												RenotifyConfigValid(),
+											},
 										},
 										"type": schema.StringAttribute{
 											Computed:            true,
@@ -296,6 +362,15 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 											Description:         "Human readable name of the Microsoft Teams integration",
 											MarkdownDescription: "Human readable name of the Microsoft Teams integration",
 										},
+										"renotify": schema.ObjectAttribute{
+											CustomType:          RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}},
+											Optional:            true,
+											Description:         "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+											MarkdownDescription: "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+											Validators: []validator.Object{
+												RenotifyConfigValid(),
+											},
+										},
 										"type": schema.StringAttribute{
 											Computed:            true,
 											Description:         "Microsoft Teams target backed by a configured Microsoft Teams integration.",
@@ -324,6 +399,15 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 											Description:         "Human readable name of the PagerDuty integration",
 											MarkdownDescription: "Human readable name of the PagerDuty integration",
 										},
+										"renotify": schema.ObjectAttribute{
+											CustomType:          RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}},
+											Optional:            true,
+											Description:         "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+											MarkdownDescription: "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+											Validators: []validator.Object{
+												RenotifyConfigValid(),
+											},
+										},
 										"type": schema.StringAttribute{
 											Computed:            true,
 											Description:         "PagerDuty target backed by a configured PagerDuty integration.",
@@ -336,45 +420,6 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 										},
 									},
 									Optional: true,
-								},
-								"renotify": schema.SingleNestedAttribute{
-									Attributes: map[string]schema.Attribute{
-										"mode": schema.StringAttribute{
-											Required:            true,
-											Description:         "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-											MarkdownDescription: "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-											Validators: []validator.String{
-												stringvalidator.OneOf(
-													"each",
-												),
-											},
-										},
-										"renotification_states": schema.ListAttribute{
-											ElementType:         types.StringType,
-											Required:            true,
-											Description:         "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
-											MarkdownDescription: "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
-											Validators: []validator.List{
-												listvalidator.ValueStringsAre(stringvalidator.OneOf("alert", "alert_no_data")),
-											},
-										},
-										"renotify_interval_minutes": schema.Int64Attribute{
-											Required:            true,
-											Description:         "Minimum number of minutes to wait after the previous notification.",
-											MarkdownDescription: "Minimum number of minutes to wait after the previous notification.",
-											Validators: []validator.Int64{
-												int64validator.AtLeast(1),
-											},
-										},
-									},
-									CustomType: RenotifyType{
-										ObjectType: types.ObjectType{
-											AttrTypes: RenotifyValue{}.AttributeTypes(ctx),
-										},
-									},
-									Optional:            true,
-									Description:         "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
-									MarkdownDescription: "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
 								},
 								"servicenow": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
@@ -390,6 +435,15 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 											Computed:            true,
 											Description:         "Human readable name of the ServiceNow integration",
 											MarkdownDescription: "Human readable name of the ServiceNow integration",
+										},
+										"renotify": schema.ObjectAttribute{
+											CustomType:          RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}},
+											Optional:            true,
+											Description:         "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+											MarkdownDescription: "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+											Validators: []validator.Object{
+												RenotifyConfigValid(),
+											},
 										},
 										"type": schema.StringAttribute{
 											Computed:            true,
@@ -427,6 +481,15 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 											Description:         "Human readable name of the Slack integration",
 											MarkdownDescription: "Human readable name of the Slack integration",
 										},
+										"renotify": schema.ObjectAttribute{
+											CustomType:          RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}},
+											Optional:            true,
+											Description:         "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+											MarkdownDescription: "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+											Validators: []validator.Object{
+												RenotifyConfigValid(),
+											},
+										},
 										"type": schema.StringAttribute{
 											Computed:            true,
 											Description:         "Slack target backed by a configured Slack integration.",
@@ -454,6 +517,15 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 											Computed:            true,
 											Description:         "Human readable name of the Squadcast integration",
 											MarkdownDescription: "Human readable name of the Squadcast integration",
+										},
+										"renotify": schema.ObjectAttribute{
+											CustomType:          RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}},
+											Optional:            true,
+											Description:         "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+											MarkdownDescription: "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+											Validators: []validator.Object{
+												RenotifyConfigValid(),
+											},
 										},
 										"type": schema.StringAttribute{
 											Computed:            true,
@@ -483,6 +555,15 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 											Description:         "Human readable name of the webhook integration",
 											MarkdownDescription: "Human readable name of the webhook integration",
 										},
+										"renotify": schema.ObjectAttribute{
+											CustomType:          RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}},
+											Optional:            true,
+											Description:         "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+											MarkdownDescription: "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+											Validators: []validator.Object{
+												RenotifyConfigValid(),
+											},
+										},
 										"type": schema.StringAttribute{
 											Computed:            true,
 											Description:         "Webhook target backed by a configured webhook integration.",
@@ -504,7 +585,7 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 							},
 							Required: true,
 							Validators: []validator.Object{
-								ExactlyOneDestination("renotify"),
+								ExactlyOneDestination(),
 							},
 						},
 						"id": schema.StringAttribute{
@@ -1636,24 +1717,6 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 			fmt.Sprintf(`pagerduty expected to be basetypes.ObjectValue, was: %T`, pagerdutyAttribute))
 	}
 
-	renotifyAttribute, ok := attributes["renotify"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`renotify is missing from object`)
-
-		return nil, diags
-	}
-
-	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
-	}
-
 	servicenowAttribute, ok := attributes["servicenow"]
 
 	if !ok {
@@ -1738,7 +1801,6 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		Jira:           jiraVal,
 		MicrosoftTeams: microsoftTeamsVal,
 		Pagerduty:      pagerdutyVal,
-		Renotify:       renotifyVal,
 		Servicenow:     servicenowVal,
 		Slack:          slackVal,
 		Squadcast:      squadcastVal,
@@ -1936,24 +1998,6 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 			fmt.Sprintf(`pagerduty expected to be basetypes.ObjectValue, was: %T`, pagerdutyAttribute))
 	}
 
-	renotifyAttribute, ok := attributes["renotify"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`renotify is missing from object`)
-
-		return NewConfigValueUnknown(), diags
-	}
-
-	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
-	}
-
 	servicenowAttribute, ok := attributes["servicenow"]
 
 	if !ok {
@@ -2038,7 +2082,6 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		Jira:           jiraVal,
 		MicrosoftTeams: microsoftTeamsVal,
 		Pagerduty:      pagerdutyVal,
-		Renotify:       renotifyVal,
 		Servicenow:     servicenowVal,
 		Slack:          slackVal,
 		Squadcast:      squadcastVal,
@@ -2122,7 +2165,6 @@ type ConfigValue struct {
 	Jira           basetypes.ObjectValue `tfsdk:"jira"`
 	MicrosoftTeams basetypes.ObjectValue `tfsdk:"microsoft_teams"`
 	Pagerduty      basetypes.ObjectValue `tfsdk:"pagerduty"`
-	Renotify       basetypes.ObjectValue `tfsdk:"renotify"`
 	Servicenow     basetypes.ObjectValue `tfsdk:"servicenow"`
 	Slack          basetypes.ObjectValue `tfsdk:"slack"`
 	Squadcast      basetypes.ObjectValue `tfsdk:"squadcast"`
@@ -2131,7 +2173,7 @@ type ConfigValue struct {
 }
 
 func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 12)
+	attrTypes := make(map[string]tftypes.Type, 11)
 
 	var val tftypes.Value
 	var err error
@@ -2157,9 +2199,6 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 	attrTypes["pagerduty"] = basetypes.ObjectType{
 		AttrTypes: PagerdutyValue{}.AttributeTypes(ctx),
 	}.TerraformType(ctx)
-	attrTypes["renotify"] = basetypes.ObjectType{
-		AttrTypes: RenotifyValue{}.AttributeTypes(ctx),
-	}.TerraformType(ctx)
 	attrTypes["servicenow"] = basetypes.ObjectType{
 		AttrTypes: ServicenowValue{}.AttributeTypes(ctx),
 	}.TerraformType(ctx)
@@ -2177,7 +2216,7 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 12)
+		vals := make(map[string]tftypes.Value, 11)
 
 		val, err = v.Email.ToTerraformValue(ctx)
 
@@ -2234,14 +2273,6 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 		}
 
 		vals["pagerduty"] = val
-
-		val, err = v.Renotify.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["renotify"] = val
 
 		val, err = v.Servicenow.ToTerraformValue(ctx)
 
@@ -2451,27 +2482,6 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		)
 	}
 
-	var renotify basetypes.ObjectValue
-
-	if v.Renotify.IsNull() {
-		renotify = types.ObjectNull(
-			RenotifyValue{}.AttributeTypes(ctx),
-		)
-	}
-
-	if v.Renotify.IsUnknown() {
-		renotify = types.ObjectUnknown(
-			RenotifyValue{}.AttributeTypes(ctx),
-		)
-	}
-
-	if !v.Renotify.IsNull() && !v.Renotify.IsUnknown() {
-		renotify = types.ObjectValueMust(
-			RenotifyValue{}.AttributeTypes(ctx),
-			v.Renotify.Attributes(),
-		)
-	}
-
 	var servicenow basetypes.ObjectValue
 
 	if v.Servicenow.IsNull() {
@@ -2578,9 +2588,6 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		"pagerduty": basetypes.ObjectType{
 			AttrTypes: PagerdutyValue{}.AttributeTypes(ctx),
 		},
-		"renotify": basetypes.ObjectType{
-			AttrTypes: RenotifyValue{}.AttributeTypes(ctx),
-		},
 		"servicenow": basetypes.ObjectType{
 			AttrTypes: ServicenowValue{}.AttributeTypes(ctx),
 		},
@@ -2613,7 +2620,6 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 			"jira":            jira,
 			"microsoft_teams": microsoftTeams,
 			"pagerduty":       pagerduty,
-			"renotify":        renotify,
 			"servicenow":      servicenow,
 			"slack":           slack,
 			"squadcast":       squadcast,
@@ -2666,10 +2672,6 @@ func (v ConfigValue) Equal(o attr.Value) bool {
 		return false
 	}
 
-	if !v.Renotify.Equal(other.Renotify) {
-		return false
-	}
-
 	if !v.Servicenow.Equal(other.Servicenow) {
 		return false
 	}
@@ -2719,9 +2721,6 @@ func (v ConfigValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		},
 		"pagerduty": basetypes.ObjectType{
 			AttrTypes: PagerdutyValue{}.AttributeTypes(ctx),
-		},
-		"renotify": basetypes.ObjectType{
-			AttrTypes: RenotifyValue{}.AttributeTypes(ctx),
 		},
 		"servicenow": basetypes.ObjectType{
 			AttrTypes: ServicenowValue{}.AttributeTypes(ctx),
@@ -2781,6 +2780,24 @@ func (t EmailType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 			fmt.Sprintf(`addresses expected to be basetypes.ListValue, was: %T`, addressesAttribute))
 	}
 
+	renotifyAttribute, ok := attributes["renotify"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify is missing from object`)
+
+		return nil, diags
+	}
+
+	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
+	}
+
 	typeAttribute, ok := attributes["type"]
 
 	if !ok {
@@ -2805,6 +2822,7 @@ func (t EmailType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 
 	return EmailValue{
 		Addresses: addressesVal,
+		Renotify:  renotifyVal,
 		EmailType: typeVal,
 		state:     attr.ValueStateKnown,
 	}, diags
@@ -2891,6 +2909,24 @@ func NewEmailValue(attributeTypes map[string]attr.Type, attributes map[string]at
 			fmt.Sprintf(`addresses expected to be basetypes.ListValue, was: %T`, addressesAttribute))
 	}
 
+	renotifyAttribute, ok := attributes["renotify"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify is missing from object`)
+
+		return NewEmailValueUnknown(), diags
+	}
+
+	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
+	}
+
 	typeAttribute, ok := attributes["type"]
 
 	if !ok {
@@ -2915,6 +2951,7 @@ func NewEmailValue(attributeTypes map[string]attr.Type, attributes map[string]at
 
 	return EmailValue{
 		Addresses: addressesVal,
+		Renotify:  renotifyVal,
 		EmailType: typeVal,
 		state:     attr.ValueStateKnown,
 	}, diags
@@ -2989,12 +3026,13 @@ var _ basetypes.ObjectValuable = EmailValue{}
 
 type EmailValue struct {
 	Addresses basetypes.ListValue   `tfsdk:"addresses"`
+	Renotify  basetypes.ObjectValue `tfsdk:"renotify"`
 	EmailType basetypes.StringValue `tfsdk:"type"`
 	state     attr.ValueState
 }
 
 func (v EmailValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 2)
+	attrTypes := make(map[string]tftypes.Type, 3)
 
 	var val tftypes.Value
 	var err error
@@ -3002,13 +3040,16 @@ func (v EmailValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 	attrTypes["addresses"] = basetypes.ListType{
 		ElemType: types.StringType,
 	}.TerraformType(ctx)
+	attrTypes["renotify"] = basetypes.ObjectType{
+		AttrTypes: RenotifyValue{}.AttributeTypes(ctx),
+	}.TerraformType(ctx)
 	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 2)
+		vals := make(map[string]tftypes.Value, 3)
 
 		val, err = v.Addresses.ToTerraformValue(ctx)
 
@@ -3017,6 +3058,14 @@ func (v EmailValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 		}
 
 		vals["addresses"] = val
+
+		val, err = v.Renotify.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["renotify"] = val
 
 		val, err = v.EmailType.ToTerraformValue(ctx)
 
@@ -3055,6 +3104,27 @@ func (v EmailValue) String() string {
 func (v EmailValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var renotify basetypes.ObjectValue
+
+	if v.Renotify.IsNull() {
+		renotify = types.ObjectNull(
+			RenotifyValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if v.Renotify.IsUnknown() {
+		renotify = types.ObjectUnknown(
+			RenotifyValue{}.AttributeTypes(ctx),
+		)
+	}
+
+	if !v.Renotify.IsNull() && !v.Renotify.IsUnknown() {
+		renotify = types.ObjectValueMust(
+			RenotifyValue{}.AttributeTypes(ctx),
+			v.Renotify.Attributes(),
+		)
+	}
+
 	var addressesVal basetypes.ListValue
 	switch {
 	case v.Addresses.IsUnknown():
@@ -3072,6 +3142,9 @@ func (v EmailValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 			"addresses": basetypes.ListType{
 				ElemType: types.StringType,
 			},
+			"renotify": basetypes.ObjectType{
+				AttrTypes: RenotifyValue{}.AttributeTypes(ctx),
+			},
 			"type": basetypes.StringType{},
 		}), diags
 	}
@@ -3079,6 +3152,9 @@ func (v EmailValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 	attributeTypes := map[string]attr.Type{
 		"addresses": basetypes.ListType{
 			ElemType: types.StringType,
+		},
+		"renotify": basetypes.ObjectType{
+			AttrTypes: RenotifyValue{}.AttributeTypes(ctx),
 		},
 		"type": basetypes.StringType{},
 	}
@@ -3095,6 +3171,7 @@ func (v EmailValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 		attributeTypes,
 		map[string]attr.Value{
 			"addresses": addressesVal,
+			"renotify":  renotify,
 			"type":      v.EmailType,
 		})
 
@@ -3120,6 +3197,10 @@ func (v EmailValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Renotify.Equal(other.Renotify) {
+		return false
+	}
+
 	if !v.EmailType.Equal(other.EmailType) {
 		return false
 	}
@@ -3140,7 +3221,472 @@ func (v EmailValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"addresses": basetypes.ListType{
 			ElemType: types.StringType,
 		},
+		"renotify": basetypes.ObjectType{
+			AttrTypes: RenotifyValue{}.AttributeTypes(ctx),
+		},
 		"type": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = RenotifyType{}
+
+type RenotifyType struct {
+	basetypes.ObjectType
+}
+
+func (t RenotifyType) Equal(o attr.Type) bool {
+	other, ok := o.(RenotifyType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t RenotifyType) String() string {
+	return "RenotifyType"
+}
+
+func (t RenotifyType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	modeAttribute, ok := attributes["mode"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`mode is missing from object`)
+
+		return nil, diags
+	}
+
+	modeVal, ok := modeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`mode expected to be basetypes.StringValue, was: %T`, modeAttribute))
+	}
+
+	renotificationStatesAttribute, ok := attributes["renotification_states"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotification_states is missing from object`)
+
+		return nil, diags
+	}
+
+	renotificationStatesVal, ok := renotificationStatesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotification_states expected to be basetypes.ListValue, was: %T`, renotificationStatesAttribute))
+	}
+
+	renotifyIntervalMinutesAttribute, ok := attributes["renotify_interval_minutes"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify_interval_minutes is missing from object`)
+
+		return nil, diags
+	}
+
+	renotifyIntervalMinutesVal, ok := renotifyIntervalMinutesAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify_interval_minutes expected to be basetypes.Int64Value, was: %T`, renotifyIntervalMinutesAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return RenotifyValue{
+		Mode:                    modeVal,
+		RenotificationStates:    renotificationStatesVal,
+		RenotifyIntervalMinutes: renotifyIntervalMinutesVal,
+		state:                   attr.ValueStateKnown,
+	}, diags
+}
+
+func NewRenotifyValueNull() RenotifyValue {
+	return RenotifyValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewRenotifyValueUnknown() RenotifyValue {
+	return RenotifyValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewRenotifyValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (RenotifyValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing RenotifyValue Attribute Value",
+				"While creating a RenotifyValue value, a missing attribute value was detected. "+
+					"A RenotifyValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("RenotifyValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid RenotifyValue Attribute Type",
+				"While creating a RenotifyValue value, an invalid attribute value was detected. "+
+					"A RenotifyValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("RenotifyValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("RenotifyValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra RenotifyValue Attribute Value",
+				"While creating a RenotifyValue value, an extra attribute value was detected. "+
+					"A RenotifyValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra RenotifyValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewRenotifyValueUnknown(), diags
+	}
+
+	modeAttribute, ok := attributes["mode"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`mode is missing from object`)
+
+		return NewRenotifyValueUnknown(), diags
+	}
+
+	modeVal, ok := modeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`mode expected to be basetypes.StringValue, was: %T`, modeAttribute))
+	}
+
+	renotificationStatesAttribute, ok := attributes["renotification_states"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotification_states is missing from object`)
+
+		return NewRenotifyValueUnknown(), diags
+	}
+
+	renotificationStatesVal, ok := renotificationStatesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotification_states expected to be basetypes.ListValue, was: %T`, renotificationStatesAttribute))
+	}
+
+	renotifyIntervalMinutesAttribute, ok := attributes["renotify_interval_minutes"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify_interval_minutes is missing from object`)
+
+		return NewRenotifyValueUnknown(), diags
+	}
+
+	renotifyIntervalMinutesVal, ok := renotifyIntervalMinutesAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify_interval_minutes expected to be basetypes.Int64Value, was: %T`, renotifyIntervalMinutesAttribute))
+	}
+
+	if diags.HasError() {
+		return NewRenotifyValueUnknown(), diags
+	}
+
+	return RenotifyValue{
+		Mode:                    modeVal,
+		RenotificationStates:    renotificationStatesVal,
+		RenotifyIntervalMinutes: renotifyIntervalMinutesVal,
+		state:                   attr.ValueStateKnown,
+	}, diags
+}
+
+func NewRenotifyValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) RenotifyValue {
+	object, diags := NewRenotifyValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewRenotifyValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t RenotifyType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewRenotifyValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewRenotifyValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewRenotifyValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewRenotifyValueMust(RenotifyValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t RenotifyType) ValueType(ctx context.Context) attr.Value {
+	return RenotifyValue{}
+}
+
+var _ basetypes.ObjectValuable = RenotifyValue{}
+
+type RenotifyValue struct {
+	Mode                    basetypes.StringValue `tfsdk:"mode"`
+	RenotificationStates    basetypes.ListValue   `tfsdk:"renotification_states"`
+	RenotifyIntervalMinutes basetypes.Int64Value  `tfsdk:"renotify_interval_minutes"`
+	state                   attr.ValueState
+}
+
+func (v RenotifyValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 3)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["mode"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["renotification_states"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+	attrTypes["renotify_interval_minutes"] = basetypes.Int64Type{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 3)
+
+		val, err = v.Mode.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["mode"] = val
+
+		val, err = v.RenotificationStates.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["renotification_states"] = val
+
+		val, err = v.RenotifyIntervalMinutes.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["renotify_interval_minutes"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v RenotifyValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v RenotifyValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v RenotifyValue) String() string {
+	return "RenotifyValue"
+}
+
+func (v RenotifyValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var renotificationStatesVal basetypes.ListValue
+	switch {
+	case v.RenotificationStates.IsUnknown():
+		renotificationStatesVal = types.ListUnknown(types.StringType)
+	case v.RenotificationStates.IsNull():
+		renotificationStatesVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		renotificationStatesVal, d = types.ListValue(types.StringType, v.RenotificationStates.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"mode": basetypes.StringType{},
+			"renotification_states": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"renotify_interval_minutes": basetypes.Int64Type{},
+		}), diags
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"mode": basetypes.StringType{},
+		"renotification_states": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"renotify_interval_minutes": basetypes.Int64Type{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"mode":                      v.Mode,
+			"renotification_states":     renotificationStatesVal,
+			"renotify_interval_minutes": v.RenotifyIntervalMinutes,
+		})
+
+	return objVal, diags
+}
+
+func (v RenotifyValue) Equal(o attr.Value) bool {
+	other, ok := o.(RenotifyValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Mode.Equal(other.Mode) {
+		return false
+	}
+
+	if !v.RenotificationStates.Equal(other.RenotificationStates) {
+		return false
+	}
+
+	if !v.RenotifyIntervalMinutes.Equal(other.RenotifyIntervalMinutes) {
+		return false
+	}
+
+	return true
+}
+
+func (v RenotifyValue) Type(ctx context.Context) attr.Type {
+	return RenotifyType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v RenotifyValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"mode": basetypes.StringType{},
+		"renotification_states": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"renotify_interval_minutes": basetypes.Int64Type{},
 	}
 }
 
@@ -3205,6 +3751,24 @@ func (t GoogleChatType) ValueFromObject(ctx context.Context, in basetypes.Object
 			fmt.Sprintf(`integration_name expected to be basetypes.StringValue, was: %T`, integrationNameAttribute))
 	}
 
+	renotifyAttribute, ok := attributes["renotify"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify is missing from object`)
+
+		return nil, diags
+	}
+
+	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
+	}
+
 	typeAttribute, ok := attributes["type"]
 
 	if !ok {
@@ -3230,6 +3794,7 @@ func (t GoogleChatType) ValueFromObject(ctx context.Context, in basetypes.Object
 	return GoogleChatValue{
 		IntegrationId:   integrationIdVal,
 		IntegrationName: integrationNameVal,
+		Renotify:        renotifyVal,
 		GoogleChatType:  typeVal,
 		state:           attr.ValueStateKnown,
 	}, diags
@@ -3334,6 +3899,24 @@ func NewGoogleChatValue(attributeTypes map[string]attr.Type, attributes map[stri
 			fmt.Sprintf(`integration_name expected to be basetypes.StringValue, was: %T`, integrationNameAttribute))
 	}
 
+	renotifyAttribute, ok := attributes["renotify"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify is missing from object`)
+
+		return NewGoogleChatValueUnknown(), diags
+	}
+
+	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
+	}
+
 	typeAttribute, ok := attributes["type"]
 
 	if !ok {
@@ -3359,6 +3942,7 @@ func NewGoogleChatValue(attributeTypes map[string]attr.Type, attributes map[stri
 	return GoogleChatValue{
 		IntegrationId:   integrationIdVal,
 		IntegrationName: integrationNameVal,
+		Renotify:        renotifyVal,
 		GoogleChatType:  typeVal,
 		state:           attr.ValueStateKnown,
 	}, diags
@@ -3434,25 +4018,35 @@ var _ basetypes.ObjectValuable = GoogleChatValue{}
 type GoogleChatValue struct {
 	IntegrationId   basetypes.StringValue `tfsdk:"integration_id"`
 	IntegrationName basetypes.StringValue `tfsdk:"integration_name"`
+	Renotify        basetypes.ObjectValue `tfsdk:"renotify"`
 	GoogleChatType  basetypes.StringValue `tfsdk:"type"`
 	state           attr.ValueState
 }
 
 func (v GoogleChatValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 3)
+	attrTypes := make(map[string]tftypes.Type, 4)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["integration_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["integration_name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["renotify"] = basetypes.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"mode": types.StringType,
+			"renotification_states": types.ListType{
+				ElemType: types.StringType,
+			},
+			"renotify_interval_minutes": types.Int64Type,
+		},
+	}.TerraformType(ctx)
 	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 3)
+		vals := make(map[string]tftypes.Value, 4)
 
 		val, err = v.IntegrationId.ToTerraformValue(ctx)
 
@@ -3469,6 +4063,14 @@ func (v GoogleChatValue) ToTerraformValue(ctx context.Context) (tftypes.Value, e
 		}
 
 		vals["integration_name"] = val
+
+		val, err = v.Renotify.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["renotify"] = val
 
 		val, err = v.GoogleChatType.ToTerraformValue(ctx)
 
@@ -3507,10 +4109,43 @@ func (v GoogleChatValue) String() string {
 func (v GoogleChatValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var renotifyVal basetypes.ObjectValue
+	var d diag.Diagnostics
+	switch {
+	case v.Renotify.IsNull():
+		renotifyVal = types.ObjectNull(RenotifyValue{}.AttributeTypes(ctx))
+	case v.Renotify.IsUnknown():
+		renotifyVal = types.ObjectUnknown(RenotifyValue{}.AttributeTypes(ctx))
+	default:
+		renotifyVal, d = types.ObjectValue(RenotifyValue{}.AttributeTypes(ctx), v.Renotify.Attributes())
+	}
+
+	diags.Append(d...)
+
+	if d.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"integration_id": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"integration_name": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"renotify": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"type": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+		}), diags
+	}
+
 	attributeTypes := map[string]attr.Type{
 		"integration_id":   basetypes.StringType{},
 		"integration_name": basetypes.StringType{},
-		"type":             basetypes.StringType{},
+		"renotify": basetypes.ObjectType{
+			AttrTypes: v.Renotify.AttributeTypes(ctx),
+		},
+		"type": basetypes.StringType{},
 	}
 
 	if v.IsNull() {
@@ -3526,6 +4161,7 @@ func (v GoogleChatValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVal
 		map[string]attr.Value{
 			"integration_id":   v.IntegrationId,
 			"integration_name": v.IntegrationName,
+			"renotify":         renotifyVal,
 			"type":             v.GoogleChatType,
 		})
 
@@ -3555,6 +4191,10 @@ func (v GoogleChatValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Renotify.Equal(other.Renotify) {
+		return false
+	}
+
 	if !v.GoogleChatType.Equal(other.GoogleChatType) {
 		return false
 	}
@@ -3574,7 +4214,16 @@ func (v GoogleChatValue) AttributeTypes(ctx context.Context) map[string]attr.Typ
 	return map[string]attr.Type{
 		"integration_id":   basetypes.StringType{},
 		"integration_name": basetypes.StringType{},
-		"type":             basetypes.StringType{},
+		"renotify": basetypes.ObjectType{
+			AttrTypes: map[string]attr.Type{
+				"mode": types.StringType,
+				"renotification_states": types.ListType{
+					ElemType: types.StringType,
+				},
+				"renotify_interval_minutes": types.Int64Type,
+			},
+		},
+		"type": basetypes.StringType{},
 	}
 }
 
@@ -3639,6 +4288,24 @@ func (t GrafanaIrmType) ValueFromObject(ctx context.Context, in basetypes.Object
 			fmt.Sprintf(`integration_name expected to be basetypes.StringValue, was: %T`, integrationNameAttribute))
 	}
 
+	renotifyAttribute, ok := attributes["renotify"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify is missing from object`)
+
+		return nil, diags
+	}
+
+	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
+	}
+
 	typeAttribute, ok := attributes["type"]
 
 	if !ok {
@@ -3664,6 +4331,7 @@ func (t GrafanaIrmType) ValueFromObject(ctx context.Context, in basetypes.Object
 	return GrafanaIrmValue{
 		IntegrationId:   integrationIdVal,
 		IntegrationName: integrationNameVal,
+		Renotify:        renotifyVal,
 		GrafanaIrmType:  typeVal,
 		state:           attr.ValueStateKnown,
 	}, diags
@@ -3768,6 +4436,24 @@ func NewGrafanaIrmValue(attributeTypes map[string]attr.Type, attributes map[stri
 			fmt.Sprintf(`integration_name expected to be basetypes.StringValue, was: %T`, integrationNameAttribute))
 	}
 
+	renotifyAttribute, ok := attributes["renotify"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify is missing from object`)
+
+		return NewGrafanaIrmValueUnknown(), diags
+	}
+
+	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
+	}
+
 	typeAttribute, ok := attributes["type"]
 
 	if !ok {
@@ -3793,6 +4479,7 @@ func NewGrafanaIrmValue(attributeTypes map[string]attr.Type, attributes map[stri
 	return GrafanaIrmValue{
 		IntegrationId:   integrationIdVal,
 		IntegrationName: integrationNameVal,
+		Renotify:        renotifyVal,
 		GrafanaIrmType:  typeVal,
 		state:           attr.ValueStateKnown,
 	}, diags
@@ -3868,25 +4555,35 @@ var _ basetypes.ObjectValuable = GrafanaIrmValue{}
 type GrafanaIrmValue struct {
 	IntegrationId   basetypes.StringValue `tfsdk:"integration_id"`
 	IntegrationName basetypes.StringValue `tfsdk:"integration_name"`
+	Renotify        basetypes.ObjectValue `tfsdk:"renotify"`
 	GrafanaIrmType  basetypes.StringValue `tfsdk:"type"`
 	state           attr.ValueState
 }
 
 func (v GrafanaIrmValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 3)
+	attrTypes := make(map[string]tftypes.Type, 4)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["integration_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["integration_name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["renotify"] = basetypes.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"mode": types.StringType,
+			"renotification_states": types.ListType{
+				ElemType: types.StringType,
+			},
+			"renotify_interval_minutes": types.Int64Type,
+		},
+	}.TerraformType(ctx)
 	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 3)
+		vals := make(map[string]tftypes.Value, 4)
 
 		val, err = v.IntegrationId.ToTerraformValue(ctx)
 
@@ -3903,6 +4600,14 @@ func (v GrafanaIrmValue) ToTerraformValue(ctx context.Context) (tftypes.Value, e
 		}
 
 		vals["integration_name"] = val
+
+		val, err = v.Renotify.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["renotify"] = val
 
 		val, err = v.GrafanaIrmType.ToTerraformValue(ctx)
 
@@ -3941,10 +4646,43 @@ func (v GrafanaIrmValue) String() string {
 func (v GrafanaIrmValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var renotifyVal basetypes.ObjectValue
+	var d diag.Diagnostics
+	switch {
+	case v.Renotify.IsNull():
+		renotifyVal = types.ObjectNull(RenotifyValue{}.AttributeTypes(ctx))
+	case v.Renotify.IsUnknown():
+		renotifyVal = types.ObjectUnknown(RenotifyValue{}.AttributeTypes(ctx))
+	default:
+		renotifyVal, d = types.ObjectValue(RenotifyValue{}.AttributeTypes(ctx), v.Renotify.Attributes())
+	}
+
+	diags.Append(d...)
+
+	if d.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"integration_id": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"integration_name": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"renotify": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"type": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+		}), diags
+	}
+
 	attributeTypes := map[string]attr.Type{
 		"integration_id":   basetypes.StringType{},
 		"integration_name": basetypes.StringType{},
-		"type":             basetypes.StringType{},
+		"renotify": basetypes.ObjectType{
+			AttrTypes: v.Renotify.AttributeTypes(ctx),
+		},
+		"type": basetypes.StringType{},
 	}
 
 	if v.IsNull() {
@@ -3960,6 +4698,7 @@ func (v GrafanaIrmValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVal
 		map[string]attr.Value{
 			"integration_id":   v.IntegrationId,
 			"integration_name": v.IntegrationName,
+			"renotify":         renotifyVal,
 			"type":             v.GrafanaIrmType,
 		})
 
@@ -3989,6 +4728,10 @@ func (v GrafanaIrmValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Renotify.Equal(other.Renotify) {
+		return false
+	}
+
 	if !v.GrafanaIrmType.Equal(other.GrafanaIrmType) {
 		return false
 	}
@@ -4008,7 +4751,16 @@ func (v GrafanaIrmValue) AttributeTypes(ctx context.Context) map[string]attr.Typ
 	return map[string]attr.Type{
 		"integration_id":   basetypes.StringType{},
 		"integration_name": basetypes.StringType{},
-		"type":             basetypes.StringType{},
+		"renotify": basetypes.ObjectType{
+			AttrTypes: map[string]attr.Type{
+				"mode": types.StringType,
+				"renotification_states": types.ListType{
+					ElemType: types.StringType,
+				},
+				"renotify_interval_minutes": types.Int64Type,
+			},
+		},
+		"type": basetypes.StringType{},
 	}
 }
 
@@ -4073,6 +4825,24 @@ func (t IncidentIoType) ValueFromObject(ctx context.Context, in basetypes.Object
 			fmt.Sprintf(`integration_name expected to be basetypes.StringValue, was: %T`, integrationNameAttribute))
 	}
 
+	renotifyAttribute, ok := attributes["renotify"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify is missing from object`)
+
+		return nil, diags
+	}
+
+	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
+	}
+
 	typeAttribute, ok := attributes["type"]
 
 	if !ok {
@@ -4098,6 +4868,7 @@ func (t IncidentIoType) ValueFromObject(ctx context.Context, in basetypes.Object
 	return IncidentIoValue{
 		IntegrationId:   integrationIdVal,
 		IntegrationName: integrationNameVal,
+		Renotify:        renotifyVal,
 		IncidentIoType:  typeVal,
 		state:           attr.ValueStateKnown,
 	}, diags
@@ -4202,6 +4973,24 @@ func NewIncidentIoValue(attributeTypes map[string]attr.Type, attributes map[stri
 			fmt.Sprintf(`integration_name expected to be basetypes.StringValue, was: %T`, integrationNameAttribute))
 	}
 
+	renotifyAttribute, ok := attributes["renotify"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify is missing from object`)
+
+		return NewIncidentIoValueUnknown(), diags
+	}
+
+	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
+	}
+
 	typeAttribute, ok := attributes["type"]
 
 	if !ok {
@@ -4227,6 +5016,7 @@ func NewIncidentIoValue(attributeTypes map[string]attr.Type, attributes map[stri
 	return IncidentIoValue{
 		IntegrationId:   integrationIdVal,
 		IntegrationName: integrationNameVal,
+		Renotify:        renotifyVal,
 		IncidentIoType:  typeVal,
 		state:           attr.ValueStateKnown,
 	}, diags
@@ -4302,25 +5092,35 @@ var _ basetypes.ObjectValuable = IncidentIoValue{}
 type IncidentIoValue struct {
 	IntegrationId   basetypes.StringValue `tfsdk:"integration_id"`
 	IntegrationName basetypes.StringValue `tfsdk:"integration_name"`
+	Renotify        basetypes.ObjectValue `tfsdk:"renotify"`
 	IncidentIoType  basetypes.StringValue `tfsdk:"type"`
 	state           attr.ValueState
 }
 
 func (v IncidentIoValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 3)
+	attrTypes := make(map[string]tftypes.Type, 4)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["integration_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["integration_name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["renotify"] = basetypes.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"mode": types.StringType,
+			"renotification_states": types.ListType{
+				ElemType: types.StringType,
+			},
+			"renotify_interval_minutes": types.Int64Type,
+		},
+	}.TerraformType(ctx)
 	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 3)
+		vals := make(map[string]tftypes.Value, 4)
 
 		val, err = v.IntegrationId.ToTerraformValue(ctx)
 
@@ -4337,6 +5137,14 @@ func (v IncidentIoValue) ToTerraformValue(ctx context.Context) (tftypes.Value, e
 		}
 
 		vals["integration_name"] = val
+
+		val, err = v.Renotify.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["renotify"] = val
 
 		val, err = v.IncidentIoType.ToTerraformValue(ctx)
 
@@ -4375,10 +5183,43 @@ func (v IncidentIoValue) String() string {
 func (v IncidentIoValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var renotifyVal basetypes.ObjectValue
+	var d diag.Diagnostics
+	switch {
+	case v.Renotify.IsNull():
+		renotifyVal = types.ObjectNull(RenotifyValue{}.AttributeTypes(ctx))
+	case v.Renotify.IsUnknown():
+		renotifyVal = types.ObjectUnknown(RenotifyValue{}.AttributeTypes(ctx))
+	default:
+		renotifyVal, d = types.ObjectValue(RenotifyValue{}.AttributeTypes(ctx), v.Renotify.Attributes())
+	}
+
+	diags.Append(d...)
+
+	if d.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"integration_id": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"integration_name": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"renotify": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"type": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+		}), diags
+	}
+
 	attributeTypes := map[string]attr.Type{
 		"integration_id":   basetypes.StringType{},
 		"integration_name": basetypes.StringType{},
-		"type":             basetypes.StringType{},
+		"renotify": basetypes.ObjectType{
+			AttrTypes: v.Renotify.AttributeTypes(ctx),
+		},
+		"type": basetypes.StringType{},
 	}
 
 	if v.IsNull() {
@@ -4394,6 +5235,7 @@ func (v IncidentIoValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVal
 		map[string]attr.Value{
 			"integration_id":   v.IntegrationId,
 			"integration_name": v.IntegrationName,
+			"renotify":         renotifyVal,
 			"type":             v.IncidentIoType,
 		})
 
@@ -4423,6 +5265,10 @@ func (v IncidentIoValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Renotify.Equal(other.Renotify) {
+		return false
+	}
+
 	if !v.IncidentIoType.Equal(other.IncidentIoType) {
 		return false
 	}
@@ -4442,7 +5288,16 @@ func (v IncidentIoValue) AttributeTypes(ctx context.Context) map[string]attr.Typ
 	return map[string]attr.Type{
 		"integration_id":   basetypes.StringType{},
 		"integration_name": basetypes.StringType{},
-		"type":             basetypes.StringType{},
+		"renotify": basetypes.ObjectType{
+			AttrTypes: map[string]attr.Type{
+				"mode": types.StringType,
+				"renotification_states": types.ListType{
+					ElemType: types.StringType,
+				},
+				"renotify_interval_minutes": types.Int64Type,
+			},
+		},
+		"type": basetypes.StringType{},
 	}
 }
 
@@ -5161,6 +6016,24 @@ func (t MicrosoftTeamsType) ValueFromObject(ctx context.Context, in basetypes.Ob
 			fmt.Sprintf(`integration_name expected to be basetypes.StringValue, was: %T`, integrationNameAttribute))
 	}
 
+	renotifyAttribute, ok := attributes["renotify"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify is missing from object`)
+
+		return nil, diags
+	}
+
+	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
+	}
+
 	typeAttribute, ok := attributes["type"]
 
 	if !ok {
@@ -5186,6 +6059,7 @@ func (t MicrosoftTeamsType) ValueFromObject(ctx context.Context, in basetypes.Ob
 	return MicrosoftTeamsValue{
 		IntegrationId:      integrationIdVal,
 		IntegrationName:    integrationNameVal,
+		Renotify:           renotifyVal,
 		MicrosoftTeamsType: typeVal,
 		state:              attr.ValueStateKnown,
 	}, diags
@@ -5290,6 +6164,24 @@ func NewMicrosoftTeamsValue(attributeTypes map[string]attr.Type, attributes map[
 			fmt.Sprintf(`integration_name expected to be basetypes.StringValue, was: %T`, integrationNameAttribute))
 	}
 
+	renotifyAttribute, ok := attributes["renotify"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify is missing from object`)
+
+		return NewMicrosoftTeamsValueUnknown(), diags
+	}
+
+	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
+	}
+
 	typeAttribute, ok := attributes["type"]
 
 	if !ok {
@@ -5315,6 +6207,7 @@ func NewMicrosoftTeamsValue(attributeTypes map[string]attr.Type, attributes map[
 	return MicrosoftTeamsValue{
 		IntegrationId:      integrationIdVal,
 		IntegrationName:    integrationNameVal,
+		Renotify:           renotifyVal,
 		MicrosoftTeamsType: typeVal,
 		state:              attr.ValueStateKnown,
 	}, diags
@@ -5390,25 +6283,35 @@ var _ basetypes.ObjectValuable = MicrosoftTeamsValue{}
 type MicrosoftTeamsValue struct {
 	IntegrationId      basetypes.StringValue `tfsdk:"integration_id"`
 	IntegrationName    basetypes.StringValue `tfsdk:"integration_name"`
+	Renotify           basetypes.ObjectValue `tfsdk:"renotify"`
 	MicrosoftTeamsType basetypes.StringValue `tfsdk:"type"`
 	state              attr.ValueState
 }
 
 func (v MicrosoftTeamsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 3)
+	attrTypes := make(map[string]tftypes.Type, 4)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["integration_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["integration_name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["renotify"] = basetypes.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"mode": types.StringType,
+			"renotification_states": types.ListType{
+				ElemType: types.StringType,
+			},
+			"renotify_interval_minutes": types.Int64Type,
+		},
+	}.TerraformType(ctx)
 	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 3)
+		vals := make(map[string]tftypes.Value, 4)
 
 		val, err = v.IntegrationId.ToTerraformValue(ctx)
 
@@ -5425,6 +6328,14 @@ func (v MicrosoftTeamsValue) ToTerraformValue(ctx context.Context) (tftypes.Valu
 		}
 
 		vals["integration_name"] = val
+
+		val, err = v.Renotify.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["renotify"] = val
 
 		val, err = v.MicrosoftTeamsType.ToTerraformValue(ctx)
 
@@ -5463,10 +6374,43 @@ func (v MicrosoftTeamsValue) String() string {
 func (v MicrosoftTeamsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var renotifyVal basetypes.ObjectValue
+	var d diag.Diagnostics
+	switch {
+	case v.Renotify.IsNull():
+		renotifyVal = types.ObjectNull(RenotifyValue{}.AttributeTypes(ctx))
+	case v.Renotify.IsUnknown():
+		renotifyVal = types.ObjectUnknown(RenotifyValue{}.AttributeTypes(ctx))
+	default:
+		renotifyVal, d = types.ObjectValue(RenotifyValue{}.AttributeTypes(ctx), v.Renotify.Attributes())
+	}
+
+	diags.Append(d...)
+
+	if d.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"integration_id": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"integration_name": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"renotify": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"type": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+		}), diags
+	}
+
 	attributeTypes := map[string]attr.Type{
 		"integration_id":   basetypes.StringType{},
 		"integration_name": basetypes.StringType{},
-		"type":             basetypes.StringType{},
+		"renotify": basetypes.ObjectType{
+			AttrTypes: v.Renotify.AttributeTypes(ctx),
+		},
+		"type": basetypes.StringType{},
 	}
 
 	if v.IsNull() {
@@ -5482,6 +6426,7 @@ func (v MicrosoftTeamsValue) ToObjectValue(ctx context.Context) (basetypes.Objec
 		map[string]attr.Value{
 			"integration_id":   v.IntegrationId,
 			"integration_name": v.IntegrationName,
+			"renotify":         renotifyVal,
 			"type":             v.MicrosoftTeamsType,
 		})
 
@@ -5511,6 +6456,10 @@ func (v MicrosoftTeamsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Renotify.Equal(other.Renotify) {
+		return false
+	}
+
 	if !v.MicrosoftTeamsType.Equal(other.MicrosoftTeamsType) {
 		return false
 	}
@@ -5530,7 +6479,16 @@ func (v MicrosoftTeamsValue) AttributeTypes(ctx context.Context) map[string]attr
 	return map[string]attr.Type{
 		"integration_id":   basetypes.StringType{},
 		"integration_name": basetypes.StringType{},
-		"type":             basetypes.StringType{},
+		"renotify": basetypes.ObjectType{
+			AttrTypes: map[string]attr.Type{
+				"mode": types.StringType,
+				"renotification_states": types.ListType{
+					ElemType: types.StringType,
+				},
+				"renotify_interval_minutes": types.Int64Type,
+			},
+		},
+		"type": basetypes.StringType{},
 	}
 }
 
@@ -5595,6 +6553,24 @@ func (t PagerdutyType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 			fmt.Sprintf(`integration_name expected to be basetypes.StringValue, was: %T`, integrationNameAttribute))
 	}
 
+	renotifyAttribute, ok := attributes["renotify"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify is missing from object`)
+
+		return nil, diags
+	}
+
+	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
+	}
+
 	typeAttribute, ok := attributes["type"]
 
 	if !ok {
@@ -5620,6 +6596,7 @@ func (t PagerdutyType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 	return PagerdutyValue{
 		IntegrationId:   integrationIdVal,
 		IntegrationName: integrationNameVal,
+		Renotify:        renotifyVal,
 		PagerdutyType:   typeVal,
 		state:           attr.ValueStateKnown,
 	}, diags
@@ -5724,6 +6701,24 @@ func NewPagerdutyValue(attributeTypes map[string]attr.Type, attributes map[strin
 			fmt.Sprintf(`integration_name expected to be basetypes.StringValue, was: %T`, integrationNameAttribute))
 	}
 
+	renotifyAttribute, ok := attributes["renotify"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify is missing from object`)
+
+		return NewPagerdutyValueUnknown(), diags
+	}
+
+	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
+	}
+
 	typeAttribute, ok := attributes["type"]
 
 	if !ok {
@@ -5749,6 +6744,7 @@ func NewPagerdutyValue(attributeTypes map[string]attr.Type, attributes map[strin
 	return PagerdutyValue{
 		IntegrationId:   integrationIdVal,
 		IntegrationName: integrationNameVal,
+		Renotify:        renotifyVal,
 		PagerdutyType:   typeVal,
 		state:           attr.ValueStateKnown,
 	}, diags
@@ -5824,25 +6820,35 @@ var _ basetypes.ObjectValuable = PagerdutyValue{}
 type PagerdutyValue struct {
 	IntegrationId   basetypes.StringValue `tfsdk:"integration_id"`
 	IntegrationName basetypes.StringValue `tfsdk:"integration_name"`
+	Renotify        basetypes.ObjectValue `tfsdk:"renotify"`
 	PagerdutyType   basetypes.StringValue `tfsdk:"type"`
 	state           attr.ValueState
 }
 
 func (v PagerdutyValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 3)
+	attrTypes := make(map[string]tftypes.Type, 4)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["integration_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["integration_name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["renotify"] = basetypes.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"mode": types.StringType,
+			"renotification_states": types.ListType{
+				ElemType: types.StringType,
+			},
+			"renotify_interval_minutes": types.Int64Type,
+		},
+	}.TerraformType(ctx)
 	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 3)
+		vals := make(map[string]tftypes.Value, 4)
 
 		val, err = v.IntegrationId.ToTerraformValue(ctx)
 
@@ -5859,6 +6865,14 @@ func (v PagerdutyValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 		}
 
 		vals["integration_name"] = val
+
+		val, err = v.Renotify.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["renotify"] = val
 
 		val, err = v.PagerdutyType.ToTerraformValue(ctx)
 
@@ -5897,10 +6911,43 @@ func (v PagerdutyValue) String() string {
 func (v PagerdutyValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var renotifyVal basetypes.ObjectValue
+	var d diag.Diagnostics
+	switch {
+	case v.Renotify.IsNull():
+		renotifyVal = types.ObjectNull(RenotifyValue{}.AttributeTypes(ctx))
+	case v.Renotify.IsUnknown():
+		renotifyVal = types.ObjectUnknown(RenotifyValue{}.AttributeTypes(ctx))
+	default:
+		renotifyVal, d = types.ObjectValue(RenotifyValue{}.AttributeTypes(ctx), v.Renotify.Attributes())
+	}
+
+	diags.Append(d...)
+
+	if d.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"integration_id": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"integration_name": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"renotify": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"type": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+		}), diags
+	}
+
 	attributeTypes := map[string]attr.Type{
 		"integration_id":   basetypes.StringType{},
 		"integration_name": basetypes.StringType{},
-		"type":             basetypes.StringType{},
+		"renotify": basetypes.ObjectType{
+			AttrTypes: v.Renotify.AttributeTypes(ctx),
+		},
+		"type": basetypes.StringType{},
 	}
 
 	if v.IsNull() {
@@ -5916,6 +6963,7 @@ func (v PagerdutyValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 		map[string]attr.Value{
 			"integration_id":   v.IntegrationId,
 			"integration_name": v.IntegrationName,
+			"renotify":         renotifyVal,
 			"type":             v.PagerdutyType,
 		})
 
@@ -5945,6 +6993,10 @@ func (v PagerdutyValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Renotify.Equal(other.Renotify) {
+		return false
+	}
+
 	if !v.PagerdutyType.Equal(other.PagerdutyType) {
 		return false
 	}
@@ -5964,469 +7016,16 @@ func (v PagerdutyValue) AttributeTypes(ctx context.Context) map[string]attr.Type
 	return map[string]attr.Type{
 		"integration_id":   basetypes.StringType{},
 		"integration_name": basetypes.StringType{},
-		"type":             basetypes.StringType{},
-	}
-}
-
-var _ basetypes.ObjectTypable = RenotifyType{}
-
-type RenotifyType struct {
-	basetypes.ObjectType
-}
-
-func (t RenotifyType) Equal(o attr.Type) bool {
-	other, ok := o.(RenotifyType)
-
-	if !ok {
-		return false
-	}
-
-	return t.ObjectType.Equal(other.ObjectType)
-}
-
-func (t RenotifyType) String() string {
-	return "RenotifyType"
-}
-
-func (t RenotifyType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	attributes := in.Attributes()
-
-	modeAttribute, ok := attributes["mode"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`mode is missing from object`)
-
-		return nil, diags
-	}
-
-	modeVal, ok := modeAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`mode expected to be basetypes.StringValue, was: %T`, modeAttribute))
-	}
-
-	renotificationStatesAttribute, ok := attributes["renotification_states"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`renotification_states is missing from object`)
-
-		return nil, diags
-	}
-
-	renotificationStatesVal, ok := renotificationStatesAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`renotification_states expected to be basetypes.ListValue, was: %T`, renotificationStatesAttribute))
-	}
-
-	renotifyIntervalMinutesAttribute, ok := attributes["renotify_interval_minutes"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`renotify_interval_minutes is missing from object`)
-
-		return nil, diags
-	}
-
-	renotifyIntervalMinutesVal, ok := renotifyIntervalMinutesAttribute.(basetypes.Int64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`renotify_interval_minutes expected to be basetypes.Int64Value, was: %T`, renotifyIntervalMinutesAttribute))
-	}
-
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	return RenotifyValue{
-		Mode:                    modeVal,
-		RenotificationStates:    renotificationStatesVal,
-		RenotifyIntervalMinutes: renotifyIntervalMinutesVal,
-		state:                   attr.ValueStateKnown,
-	}, diags
-}
-
-func NewRenotifyValueNull() RenotifyValue {
-	return RenotifyValue{
-		state: attr.ValueStateNull,
-	}
-}
-
-func NewRenotifyValueUnknown() RenotifyValue {
-	return RenotifyValue{
-		state: attr.ValueStateUnknown,
-	}
-}
-
-func NewRenotifyValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (RenotifyValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
-	ctx := context.Background()
-
-	for name, attributeType := range attributeTypes {
-		attribute, ok := attributes[name]
-
-		if !ok {
-			diags.AddError(
-				"Missing RenotifyValue Attribute Value",
-				"While creating a RenotifyValue value, a missing attribute value was detected. "+
-					"A RenotifyValue must contain values for all attributes, even if null or unknown. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("RenotifyValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
-			)
-
-			continue
-		}
-
-		if !attributeType.Equal(attribute.Type(ctx)) {
-			diags.AddError(
-				"Invalid RenotifyValue Attribute Type",
-				"While creating a RenotifyValue value, an invalid attribute value was detected. "+
-					"A RenotifyValue must use a matching attribute type for the value. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("RenotifyValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
-					fmt.Sprintf("RenotifyValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
-			)
-		}
-	}
-
-	for name := range attributes {
-		_, ok := attributeTypes[name]
-
-		if !ok {
-			diags.AddError(
-				"Extra RenotifyValue Attribute Value",
-				"While creating a RenotifyValue value, an extra attribute value was detected. "+
-					"A RenotifyValue must not contain values beyond the expected attribute types. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("Extra RenotifyValue Attribute Name: %s", name),
-			)
-		}
-	}
-
-	if diags.HasError() {
-		return NewRenotifyValueUnknown(), diags
-	}
-
-	modeAttribute, ok := attributes["mode"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`mode is missing from object`)
-
-		return NewRenotifyValueUnknown(), diags
-	}
-
-	modeVal, ok := modeAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`mode expected to be basetypes.StringValue, was: %T`, modeAttribute))
-	}
-
-	renotificationStatesAttribute, ok := attributes["renotification_states"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`renotification_states is missing from object`)
-
-		return NewRenotifyValueUnknown(), diags
-	}
-
-	renotificationStatesVal, ok := renotificationStatesAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`renotification_states expected to be basetypes.ListValue, was: %T`, renotificationStatesAttribute))
-	}
-
-	renotifyIntervalMinutesAttribute, ok := attributes["renotify_interval_minutes"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`renotify_interval_minutes is missing from object`)
-
-		return NewRenotifyValueUnknown(), diags
-	}
-
-	renotifyIntervalMinutesVal, ok := renotifyIntervalMinutesAttribute.(basetypes.Int64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`renotify_interval_minutes expected to be basetypes.Int64Value, was: %T`, renotifyIntervalMinutesAttribute))
-	}
-
-	if diags.HasError() {
-		return NewRenotifyValueUnknown(), diags
-	}
-
-	return RenotifyValue{
-		Mode:                    modeVal,
-		RenotificationStates:    renotificationStatesVal,
-		RenotifyIntervalMinutes: renotifyIntervalMinutesVal,
-		state:                   attr.ValueStateKnown,
-	}, diags
-}
-
-func NewRenotifyValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) RenotifyValue {
-	object, diags := NewRenotifyValue(attributeTypes, attributes)
-
-	if diags.HasError() {
-		// This could potentially be added to the diag package.
-		diagsStrings := make([]string, 0, len(diags))
-
-		for _, diagnostic := range diags {
-			diagsStrings = append(diagsStrings, fmt.Sprintf(
-				"%s | %s | %s",
-				diagnostic.Severity(),
-				diagnostic.Summary(),
-				diagnostic.Detail()))
-		}
-
-		panic("NewRenotifyValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
-	}
-
-	return object
-}
-
-func (t RenotifyType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
-	if in.Type() == nil {
-		return NewRenotifyValueNull(), nil
-	}
-
-	if !in.Type().Equal(t.TerraformType(ctx)) {
-		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
-	}
-
-	if !in.IsKnown() {
-		return NewRenotifyValueUnknown(), nil
-	}
-
-	if in.IsNull() {
-		return NewRenotifyValueNull(), nil
-	}
-
-	attributes := map[string]attr.Value{}
-
-	val := map[string]tftypes.Value{}
-
-	err := in.As(&val)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for k, v := range val {
-		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
-
-		if err != nil {
-			return nil, err
-		}
-
-		attributes[k] = a
-	}
-
-	return NewRenotifyValueMust(RenotifyValue{}.AttributeTypes(ctx), attributes), nil
-}
-
-func (t RenotifyType) ValueType(ctx context.Context) attr.Value {
-	return RenotifyValue{}
-}
-
-var _ basetypes.ObjectValuable = RenotifyValue{}
-
-type RenotifyValue struct {
-	Mode                    basetypes.StringValue `tfsdk:"mode"`
-	RenotificationStates    basetypes.ListValue   `tfsdk:"renotification_states"`
-	RenotifyIntervalMinutes basetypes.Int64Value  `tfsdk:"renotify_interval_minutes"`
-	state                   attr.ValueState
-}
-
-func (v RenotifyValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 3)
-
-	var val tftypes.Value
-	var err error
-
-	attrTypes["mode"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["renotification_states"] = basetypes.ListType{
-		ElemType: types.StringType,
-	}.TerraformType(ctx)
-	attrTypes["renotify_interval_minutes"] = basetypes.Int64Type{}.TerraformType(ctx)
-
-	objectType := tftypes.Object{AttributeTypes: attrTypes}
-
-	switch v.state {
-	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 3)
-
-		val, err = v.Mode.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["mode"] = val
-
-		val, err = v.RenotificationStates.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["renotification_states"] = val
-
-		val, err = v.RenotifyIntervalMinutes.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["renotify_interval_minutes"] = val
-
-		if err := tftypes.ValidateValue(objectType, vals); err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		return tftypes.NewValue(objectType, vals), nil
-	case attr.ValueStateNull:
-		return tftypes.NewValue(objectType, nil), nil
-	case attr.ValueStateUnknown:
-		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
-	default:
-		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
-	}
-}
-
-func (v RenotifyValue) IsNull() bool {
-	return v.state == attr.ValueStateNull
-}
-
-func (v RenotifyValue) IsUnknown() bool {
-	return v.state == attr.ValueStateUnknown
-}
-
-func (v RenotifyValue) String() string {
-	return "RenotifyValue"
-}
-
-func (v RenotifyValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	var renotificationStatesVal basetypes.ListValue
-	switch {
-	case v.RenotificationStates.IsUnknown():
-		renotificationStatesVal = types.ListUnknown(types.StringType)
-	case v.RenotificationStates.IsNull():
-		renotificationStatesVal = types.ListNull(types.StringType)
-	default:
-		var d diag.Diagnostics
-		renotificationStatesVal, d = types.ListValue(types.StringType, v.RenotificationStates.Elements())
-		diags.Append(d...)
-	}
-
-	if diags.HasError() {
-		return types.ObjectUnknown(map[string]attr.Type{
-			"mode": basetypes.StringType{},
-			"renotification_states": basetypes.ListType{
-				ElemType: types.StringType,
+		"renotify": basetypes.ObjectType{
+			AttrTypes: map[string]attr.Type{
+				"mode": types.StringType,
+				"renotification_states": types.ListType{
+					ElemType: types.StringType,
+				},
+				"renotify_interval_minutes": types.Int64Type,
 			},
-			"renotify_interval_minutes": basetypes.Int64Type{},
-		}), diags
-	}
-
-	attributeTypes := map[string]attr.Type{
-		"mode": basetypes.StringType{},
-		"renotification_states": basetypes.ListType{
-			ElemType: types.StringType,
 		},
-		"renotify_interval_minutes": basetypes.Int64Type{},
-	}
-
-	if v.IsNull() {
-		return types.ObjectNull(attributeTypes), diags
-	}
-
-	if v.IsUnknown() {
-		return types.ObjectUnknown(attributeTypes), diags
-	}
-
-	objVal, diags := types.ObjectValue(
-		attributeTypes,
-		map[string]attr.Value{
-			"mode":                      v.Mode,
-			"renotification_states":     renotificationStatesVal,
-			"renotify_interval_minutes": v.RenotifyIntervalMinutes,
-		})
-
-	return objVal, diags
-}
-
-func (v RenotifyValue) Equal(o attr.Value) bool {
-	other, ok := o.(RenotifyValue)
-
-	if !ok {
-		return false
-	}
-
-	if v.state != other.state {
-		return false
-	}
-
-	if v.state != attr.ValueStateKnown {
-		return true
-	}
-
-	if !v.Mode.Equal(other.Mode) {
-		return false
-	}
-
-	if !v.RenotificationStates.Equal(other.RenotificationStates) {
-		return false
-	}
-
-	if !v.RenotifyIntervalMinutes.Equal(other.RenotifyIntervalMinutes) {
-		return false
-	}
-
-	return true
-}
-
-func (v RenotifyValue) Type(ctx context.Context) attr.Type {
-	return RenotifyType{
-		basetypes.ObjectType{
-			AttrTypes: v.AttributeTypes(ctx),
-		},
-	}
-}
-
-func (v RenotifyValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
-	return map[string]attr.Type{
-		"mode": basetypes.StringType{},
-		"renotification_states": basetypes.ListType{
-			ElemType: types.StringType,
-		},
-		"renotify_interval_minutes": basetypes.Int64Type{},
+		"type": basetypes.StringType{},
 	}
 }
 
@@ -6491,6 +7090,24 @@ func (t ServicenowType) ValueFromObject(ctx context.Context, in basetypes.Object
 			fmt.Sprintf(`integration_name expected to be basetypes.StringValue, was: %T`, integrationNameAttribute))
 	}
 
+	renotifyAttribute, ok := attributes["renotify"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify is missing from object`)
+
+		return nil, diags
+	}
+
+	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
+	}
+
 	typeAttribute, ok := attributes["type"]
 
 	if !ok {
@@ -6516,6 +7133,7 @@ func (t ServicenowType) ValueFromObject(ctx context.Context, in basetypes.Object
 	return ServicenowValue{
 		IntegrationId:   integrationIdVal,
 		IntegrationName: integrationNameVal,
+		Renotify:        renotifyVal,
 		ServicenowType:  typeVal,
 		state:           attr.ValueStateKnown,
 	}, diags
@@ -6620,6 +7238,24 @@ func NewServicenowValue(attributeTypes map[string]attr.Type, attributes map[stri
 			fmt.Sprintf(`integration_name expected to be basetypes.StringValue, was: %T`, integrationNameAttribute))
 	}
 
+	renotifyAttribute, ok := attributes["renotify"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify is missing from object`)
+
+		return NewServicenowValueUnknown(), diags
+	}
+
+	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
+	}
+
 	typeAttribute, ok := attributes["type"]
 
 	if !ok {
@@ -6645,6 +7281,7 @@ func NewServicenowValue(attributeTypes map[string]attr.Type, attributes map[stri
 	return ServicenowValue{
 		IntegrationId:   integrationIdVal,
 		IntegrationName: integrationNameVal,
+		Renotify:        renotifyVal,
 		ServicenowType:  typeVal,
 		state:           attr.ValueStateKnown,
 	}, diags
@@ -6720,25 +7357,35 @@ var _ basetypes.ObjectValuable = ServicenowValue{}
 type ServicenowValue struct {
 	IntegrationId   basetypes.StringValue `tfsdk:"integration_id"`
 	IntegrationName basetypes.StringValue `tfsdk:"integration_name"`
+	Renotify        basetypes.ObjectValue `tfsdk:"renotify"`
 	ServicenowType  basetypes.StringValue `tfsdk:"type"`
 	state           attr.ValueState
 }
 
 func (v ServicenowValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 3)
+	attrTypes := make(map[string]tftypes.Type, 4)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["integration_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["integration_name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["renotify"] = basetypes.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"mode": types.StringType,
+			"renotification_states": types.ListType{
+				ElemType: types.StringType,
+			},
+			"renotify_interval_minutes": types.Int64Type,
+		},
+	}.TerraformType(ctx)
 	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 3)
+		vals := make(map[string]tftypes.Value, 4)
 
 		val, err = v.IntegrationId.ToTerraformValue(ctx)
 
@@ -6755,6 +7402,14 @@ func (v ServicenowValue) ToTerraformValue(ctx context.Context) (tftypes.Value, e
 		}
 
 		vals["integration_name"] = val
+
+		val, err = v.Renotify.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["renotify"] = val
 
 		val, err = v.ServicenowType.ToTerraformValue(ctx)
 
@@ -6793,10 +7448,43 @@ func (v ServicenowValue) String() string {
 func (v ServicenowValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var renotifyVal basetypes.ObjectValue
+	var d diag.Diagnostics
+	switch {
+	case v.Renotify.IsNull():
+		renotifyVal = types.ObjectNull(RenotifyValue{}.AttributeTypes(ctx))
+	case v.Renotify.IsUnknown():
+		renotifyVal = types.ObjectUnknown(RenotifyValue{}.AttributeTypes(ctx))
+	default:
+		renotifyVal, d = types.ObjectValue(RenotifyValue{}.AttributeTypes(ctx), v.Renotify.Attributes())
+	}
+
+	diags.Append(d...)
+
+	if d.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"integration_id": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"integration_name": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"renotify": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"type": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+		}), diags
+	}
+
 	attributeTypes := map[string]attr.Type{
 		"integration_id":   basetypes.StringType{},
 		"integration_name": basetypes.StringType{},
-		"type":             basetypes.StringType{},
+		"renotify": basetypes.ObjectType{
+			AttrTypes: v.Renotify.AttributeTypes(ctx),
+		},
+		"type": basetypes.StringType{},
 	}
 
 	if v.IsNull() {
@@ -6812,6 +7500,7 @@ func (v ServicenowValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVal
 		map[string]attr.Value{
 			"integration_id":   v.IntegrationId,
 			"integration_name": v.IntegrationName,
+			"renotify":         renotifyVal,
 			"type":             v.ServicenowType,
 		})
 
@@ -6841,6 +7530,10 @@ func (v ServicenowValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Renotify.Equal(other.Renotify) {
+		return false
+	}
+
 	if !v.ServicenowType.Equal(other.ServicenowType) {
 		return false
 	}
@@ -6860,7 +7553,16 @@ func (v ServicenowValue) AttributeTypes(ctx context.Context) map[string]attr.Typ
 	return map[string]attr.Type{
 		"integration_id":   basetypes.StringType{},
 		"integration_name": basetypes.StringType{},
-		"type":             basetypes.StringType{},
+		"renotify": basetypes.ObjectType{
+			AttrTypes: map[string]attr.Type{
+				"mode": types.StringType,
+				"renotification_states": types.ListType{
+					ElemType: types.StringType,
+				},
+				"renotify_interval_minutes": types.Int64Type,
+			},
+		},
+		"type": basetypes.StringType{},
 	}
 }
 
@@ -6943,6 +7645,24 @@ func (t SlackType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 			fmt.Sprintf(`integration_name expected to be basetypes.StringValue, was: %T`, integrationNameAttribute))
 	}
 
+	renotifyAttribute, ok := attributes["renotify"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify is missing from object`)
+
+		return nil, diags
+	}
+
+	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
+	}
+
 	typeAttribute, ok := attributes["type"]
 
 	if !ok {
@@ -6969,6 +7689,7 @@ func (t SlackType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		Channel:         channelVal,
 		IntegrationId:   integrationIdVal,
 		IntegrationName: integrationNameVal,
+		Renotify:        renotifyVal,
 		SlackType:       typeVal,
 		state:           attr.ValueStateKnown,
 	}, diags
@@ -7091,6 +7812,24 @@ func NewSlackValue(attributeTypes map[string]attr.Type, attributes map[string]at
 			fmt.Sprintf(`integration_name expected to be basetypes.StringValue, was: %T`, integrationNameAttribute))
 	}
 
+	renotifyAttribute, ok := attributes["renotify"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify is missing from object`)
+
+		return NewSlackValueUnknown(), diags
+	}
+
+	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
+	}
+
 	typeAttribute, ok := attributes["type"]
 
 	if !ok {
@@ -7117,6 +7856,7 @@ func NewSlackValue(attributeTypes map[string]attr.Type, attributes map[string]at
 		Channel:         channelVal,
 		IntegrationId:   integrationIdVal,
 		IntegrationName: integrationNameVal,
+		Renotify:        renotifyVal,
 		SlackType:       typeVal,
 		state:           attr.ValueStateKnown,
 	}, diags
@@ -7193,12 +7933,13 @@ type SlackValue struct {
 	Channel         basetypes.StringValue `tfsdk:"channel"`
 	IntegrationId   basetypes.StringValue `tfsdk:"integration_id"`
 	IntegrationName basetypes.StringValue `tfsdk:"integration_name"`
+	Renotify        basetypes.ObjectValue `tfsdk:"renotify"`
 	SlackType       basetypes.StringValue `tfsdk:"type"`
 	state           attr.ValueState
 }
 
 func (v SlackValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 4)
+	attrTypes := make(map[string]tftypes.Type, 5)
 
 	var val tftypes.Value
 	var err error
@@ -7206,13 +7947,22 @@ func (v SlackValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 	attrTypes["channel"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["integration_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["integration_name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["renotify"] = basetypes.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"mode": types.StringType,
+			"renotification_states": types.ListType{
+				ElemType: types.StringType,
+			},
+			"renotify_interval_minutes": types.Int64Type,
+		},
+	}.TerraformType(ctx)
 	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 4)
+		vals := make(map[string]tftypes.Value, 5)
 
 		val, err = v.Channel.ToTerraformValue(ctx)
 
@@ -7237,6 +7987,14 @@ func (v SlackValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 		}
 
 		vals["integration_name"] = val
+
+		val, err = v.Renotify.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["renotify"] = val
 
 		val, err = v.SlackType.ToTerraformValue(ctx)
 
@@ -7275,11 +8033,47 @@ func (v SlackValue) String() string {
 func (v SlackValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var renotifyVal basetypes.ObjectValue
+	var d diag.Diagnostics
+	switch {
+	case v.Renotify.IsNull():
+		renotifyVal = types.ObjectNull(RenotifyValue{}.AttributeTypes(ctx))
+	case v.Renotify.IsUnknown():
+		renotifyVal = types.ObjectUnknown(RenotifyValue{}.AttributeTypes(ctx))
+	default:
+		renotifyVal, d = types.ObjectValue(RenotifyValue{}.AttributeTypes(ctx), v.Renotify.Attributes())
+	}
+
+	diags.Append(d...)
+
+	if d.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"channel": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"integration_id": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"integration_name": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"renotify": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"type": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+		}), diags
+	}
+
 	attributeTypes := map[string]attr.Type{
 		"channel":          basetypes.StringType{},
 		"integration_id":   basetypes.StringType{},
 		"integration_name": basetypes.StringType{},
-		"type":             basetypes.StringType{},
+		"renotify": basetypes.ObjectType{
+			AttrTypes: v.Renotify.AttributeTypes(ctx),
+		},
+		"type": basetypes.StringType{},
 	}
 
 	if v.IsNull() {
@@ -7296,6 +8090,7 @@ func (v SlackValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 			"channel":          v.Channel,
 			"integration_id":   v.IntegrationId,
 			"integration_name": v.IntegrationName,
+			"renotify":         renotifyVal,
 			"type":             v.SlackType,
 		})
 
@@ -7329,6 +8124,10 @@ func (v SlackValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Renotify.Equal(other.Renotify) {
+		return false
+	}
+
 	if !v.SlackType.Equal(other.SlackType) {
 		return false
 	}
@@ -7349,7 +8148,16 @@ func (v SlackValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"channel":          basetypes.StringType{},
 		"integration_id":   basetypes.StringType{},
 		"integration_name": basetypes.StringType{},
-		"type":             basetypes.StringType{},
+		"renotify": basetypes.ObjectType{
+			AttrTypes: map[string]attr.Type{
+				"mode": types.StringType,
+				"renotification_states": types.ListType{
+					ElemType: types.StringType,
+				},
+				"renotify_interval_minutes": types.Int64Type,
+			},
+		},
+		"type": basetypes.StringType{},
 	}
 }
 
@@ -7414,6 +8222,24 @@ func (t SquadcastType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 			fmt.Sprintf(`integration_name expected to be basetypes.StringValue, was: %T`, integrationNameAttribute))
 	}
 
+	renotifyAttribute, ok := attributes["renotify"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify is missing from object`)
+
+		return nil, diags
+	}
+
+	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
+	}
+
 	typeAttribute, ok := attributes["type"]
 
 	if !ok {
@@ -7439,6 +8265,7 @@ func (t SquadcastType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 	return SquadcastValue{
 		IntegrationId:   integrationIdVal,
 		IntegrationName: integrationNameVal,
+		Renotify:        renotifyVal,
 		SquadcastType:   typeVal,
 		state:           attr.ValueStateKnown,
 	}, diags
@@ -7543,6 +8370,24 @@ func NewSquadcastValue(attributeTypes map[string]attr.Type, attributes map[strin
 			fmt.Sprintf(`integration_name expected to be basetypes.StringValue, was: %T`, integrationNameAttribute))
 	}
 
+	renotifyAttribute, ok := attributes["renotify"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify is missing from object`)
+
+		return NewSquadcastValueUnknown(), diags
+	}
+
+	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
+	}
+
 	typeAttribute, ok := attributes["type"]
 
 	if !ok {
@@ -7568,6 +8413,7 @@ func NewSquadcastValue(attributeTypes map[string]attr.Type, attributes map[strin
 	return SquadcastValue{
 		IntegrationId:   integrationIdVal,
 		IntegrationName: integrationNameVal,
+		Renotify:        renotifyVal,
 		SquadcastType:   typeVal,
 		state:           attr.ValueStateKnown,
 	}, diags
@@ -7643,25 +8489,35 @@ var _ basetypes.ObjectValuable = SquadcastValue{}
 type SquadcastValue struct {
 	IntegrationId   basetypes.StringValue `tfsdk:"integration_id"`
 	IntegrationName basetypes.StringValue `tfsdk:"integration_name"`
+	Renotify        basetypes.ObjectValue `tfsdk:"renotify"`
 	SquadcastType   basetypes.StringValue `tfsdk:"type"`
 	state           attr.ValueState
 }
 
 func (v SquadcastValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 3)
+	attrTypes := make(map[string]tftypes.Type, 4)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["integration_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["integration_name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["renotify"] = basetypes.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"mode": types.StringType,
+			"renotification_states": types.ListType{
+				ElemType: types.StringType,
+			},
+			"renotify_interval_minutes": types.Int64Type,
+		},
+	}.TerraformType(ctx)
 	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 3)
+		vals := make(map[string]tftypes.Value, 4)
 
 		val, err = v.IntegrationId.ToTerraformValue(ctx)
 
@@ -7678,6 +8534,14 @@ func (v SquadcastValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 		}
 
 		vals["integration_name"] = val
+
+		val, err = v.Renotify.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["renotify"] = val
 
 		val, err = v.SquadcastType.ToTerraformValue(ctx)
 
@@ -7716,10 +8580,43 @@ func (v SquadcastValue) String() string {
 func (v SquadcastValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var renotifyVal basetypes.ObjectValue
+	var d diag.Diagnostics
+	switch {
+	case v.Renotify.IsNull():
+		renotifyVal = types.ObjectNull(RenotifyValue{}.AttributeTypes(ctx))
+	case v.Renotify.IsUnknown():
+		renotifyVal = types.ObjectUnknown(RenotifyValue{}.AttributeTypes(ctx))
+	default:
+		renotifyVal, d = types.ObjectValue(RenotifyValue{}.AttributeTypes(ctx), v.Renotify.Attributes())
+	}
+
+	diags.Append(d...)
+
+	if d.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"integration_id": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"integration_name": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"renotify": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"type": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+		}), diags
+	}
+
 	attributeTypes := map[string]attr.Type{
 		"integration_id":   basetypes.StringType{},
 		"integration_name": basetypes.StringType{},
-		"type":             basetypes.StringType{},
+		"renotify": basetypes.ObjectType{
+			AttrTypes: v.Renotify.AttributeTypes(ctx),
+		},
+		"type": basetypes.StringType{},
 	}
 
 	if v.IsNull() {
@@ -7735,6 +8632,7 @@ func (v SquadcastValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 		map[string]attr.Value{
 			"integration_id":   v.IntegrationId,
 			"integration_name": v.IntegrationName,
+			"renotify":         renotifyVal,
 			"type":             v.SquadcastType,
 		})
 
@@ -7764,6 +8662,10 @@ func (v SquadcastValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Renotify.Equal(other.Renotify) {
+		return false
+	}
+
 	if !v.SquadcastType.Equal(other.SquadcastType) {
 		return false
 	}
@@ -7783,7 +8685,16 @@ func (v SquadcastValue) AttributeTypes(ctx context.Context) map[string]attr.Type
 	return map[string]attr.Type{
 		"integration_id":   basetypes.StringType{},
 		"integration_name": basetypes.StringType{},
-		"type":             basetypes.StringType{},
+		"renotify": basetypes.ObjectType{
+			AttrTypes: map[string]attr.Type{
+				"mode": types.StringType,
+				"renotification_states": types.ListType{
+					ElemType: types.StringType,
+				},
+				"renotify_interval_minutes": types.Int64Type,
+			},
+		},
+		"type": basetypes.StringType{},
 	}
 }
 
@@ -7848,6 +8759,24 @@ func (t WebhookType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 			fmt.Sprintf(`integration_name expected to be basetypes.StringValue, was: %T`, integrationNameAttribute))
 	}
 
+	renotifyAttribute, ok := attributes["renotify"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify is missing from object`)
+
+		return nil, diags
+	}
+
+	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
+	}
+
 	typeAttribute, ok := attributes["type"]
 
 	if !ok {
@@ -7873,6 +8802,7 @@ func (t WebhookType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 	return WebhookValue{
 		IntegrationId:   integrationIdVal,
 		IntegrationName: integrationNameVal,
+		Renotify:        renotifyVal,
 		WebhookType:     typeVal,
 		state:           attr.ValueStateKnown,
 	}, diags
@@ -7977,6 +8907,24 @@ func NewWebhookValue(attributeTypes map[string]attr.Type, attributes map[string]
 			fmt.Sprintf(`integration_name expected to be basetypes.StringValue, was: %T`, integrationNameAttribute))
 	}
 
+	renotifyAttribute, ok := attributes["renotify"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`renotify is missing from object`)
+
+		return NewWebhookValueUnknown(), diags
+	}
+
+	renotifyVal, ok := renotifyAttribute.(basetypes.ObjectValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`renotify expected to be basetypes.ObjectValue, was: %T`, renotifyAttribute))
+	}
+
 	typeAttribute, ok := attributes["type"]
 
 	if !ok {
@@ -8002,6 +8950,7 @@ func NewWebhookValue(attributeTypes map[string]attr.Type, attributes map[string]
 	return WebhookValue{
 		IntegrationId:   integrationIdVal,
 		IntegrationName: integrationNameVal,
+		Renotify:        renotifyVal,
 		WebhookType:     typeVal,
 		state:           attr.ValueStateKnown,
 	}, diags
@@ -8077,25 +9026,35 @@ var _ basetypes.ObjectValuable = WebhookValue{}
 type WebhookValue struct {
 	IntegrationId   basetypes.StringValue `tfsdk:"integration_id"`
 	IntegrationName basetypes.StringValue `tfsdk:"integration_name"`
+	Renotify        basetypes.ObjectValue `tfsdk:"renotify"`
 	WebhookType     basetypes.StringValue `tfsdk:"type"`
 	state           attr.ValueState
 }
 
 func (v WebhookValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 3)
+	attrTypes := make(map[string]tftypes.Type, 4)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["integration_id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["integration_name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["renotify"] = basetypes.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"mode": types.StringType,
+			"renotification_states": types.ListType{
+				ElemType: types.StringType,
+			},
+			"renotify_interval_minutes": types.Int64Type,
+		},
+	}.TerraformType(ctx)
 	attrTypes["type"] = basetypes.StringType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 3)
+		vals := make(map[string]tftypes.Value, 4)
 
 		val, err = v.IntegrationId.ToTerraformValue(ctx)
 
@@ -8112,6 +9071,14 @@ func (v WebhookValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 		}
 
 		vals["integration_name"] = val
+
+		val, err = v.Renotify.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["renotify"] = val
 
 		val, err = v.WebhookType.ToTerraformValue(ctx)
 
@@ -8150,10 +9117,43 @@ func (v WebhookValue) String() string {
 func (v WebhookValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var renotifyVal basetypes.ObjectValue
+	var d diag.Diagnostics
+	switch {
+	case v.Renotify.IsNull():
+		renotifyVal = types.ObjectNull(RenotifyValue{}.AttributeTypes(ctx))
+	case v.Renotify.IsUnknown():
+		renotifyVal = types.ObjectUnknown(RenotifyValue{}.AttributeTypes(ctx))
+	default:
+		renotifyVal, d = types.ObjectValue(RenotifyValue{}.AttributeTypes(ctx), v.Renotify.Attributes())
+	}
+
+	diags.Append(d...)
+
+	if d.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"integration_id": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"integration_name": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"renotify": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+			"type": basetypes.ObjectType{
+				AttrTypes: v.Renotify.AttributeTypes(ctx),
+			},
+		}), diags
+	}
+
 	attributeTypes := map[string]attr.Type{
 		"integration_id":   basetypes.StringType{},
 		"integration_name": basetypes.StringType{},
-		"type":             basetypes.StringType{},
+		"renotify": basetypes.ObjectType{
+			AttrTypes: v.Renotify.AttributeTypes(ctx),
+		},
+		"type": basetypes.StringType{},
 	}
 
 	if v.IsNull() {
@@ -8169,6 +9169,7 @@ func (v WebhookValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 		map[string]attr.Value{
 			"integration_id":   v.IntegrationId,
 			"integration_name": v.IntegrationName,
+			"renotify":         renotifyVal,
 			"type":             v.WebhookType,
 		})
 
@@ -8198,6 +9199,10 @@ func (v WebhookValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Renotify.Equal(other.Renotify) {
+		return false
+	}
+
 	if !v.WebhookType.Equal(other.WebhookType) {
 		return false
 	}
@@ -8217,7 +9222,16 @@ func (v WebhookValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
 		"integration_id":   basetypes.StringType{},
 		"integration_name": basetypes.StringType{},
-		"type":             basetypes.StringType{},
+		"renotify": basetypes.ObjectType{
+			AttrTypes: map[string]attr.Type{
+				"mode": types.StringType,
+				"renotification_states": types.ListType{
+					ElemType: types.StringType,
+				},
+				"renotify_interval_minutes": types.Int64Type,
+			},
+		},
+		"type": basetypes.StringType{},
 	}
 }
 

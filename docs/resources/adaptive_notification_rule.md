@@ -148,7 +148,6 @@ Optional:
 - `jira` (Attributes) (see [below for nested schema](#nestedatt--fallback_target--config--jira))
 - `microsoft_teams` (Attributes) (see [below for nested schema](#nestedatt--fallback_target--config--microsoft_teams))
 - `pagerduty` (Attributes) (see [below for nested schema](#nestedatt--fallback_target--config--pagerduty))
-- `renotify` (Attributes) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--fallback_target--config--renotify))
 - `servicenow` (Attributes) (see [below for nested schema](#nestedatt--fallback_target--config--servicenow))
 - `slack` (Attributes) (see [below for nested schema](#nestedatt--fallback_target--config--slack))
 - `squadcast` (Attributes) (see [below for nested schema](#nestedatt--fallback_target--config--squadcast))
@@ -161,9 +160,23 @@ Required:
 
 - `addresses` (List of String) Email addresses that will receive the alert
 
+Optional:
+
+- `renotify` (Attributes) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--fallback_target--config--email--renotify))
+
 Read-Only:
 
 - `type` (String) Email target that sends directly to the listed addresses and does not require an integration.
+
+<a id="nestedatt--fallback_target--config--email--renotify"></a>
+### Nested Schema for `fallback_target.config.email.renotify`
+
+Required:
+
+- `mode` (String) Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
+- `renotification_states` (List of String) Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
+- `renotify_interval_minutes` (Number) Minimum number of minutes to wait after the previous notification.
+
 
 
 <a id="nestedatt--fallback_target--config--google_chat"></a>
@@ -173,10 +186,24 @@ Required:
 
 - `integration_id` (String) Identifier of the Google Chat integration to use
 
+Optional:
+
+- `renotify` (Object) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--fallback_target--config--google_chat--renotify))
+
 Read-Only:
 
 - `integration_name` (String) Human readable name of the Google Chat integration
 - `type` (String) Google Chat target backed by a configured Google Chat integration.
+
+<a id="nestedatt--fallback_target--config--google_chat--renotify"></a>
+### Nested Schema for `fallback_target.config.google_chat.renotify`
+
+Required:
+
+- `mode` (String)
+- `renotification_states` (List of String)
+- `renotify_interval_minutes` (Number)
+
 
 
 <a id="nestedatt--fallback_target--config--grafana_irm"></a>
@@ -186,10 +213,24 @@ Required:
 
 - `integration_id` (String) Identifier of the Grafana IRM integration to use
 
+Optional:
+
+- `renotify` (Object) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--fallback_target--config--grafana_irm--renotify))
+
 Read-Only:
 
 - `integration_name` (String) Human readable name of the Grafana IRM integration
 - `type` (String) Grafana IRM target backed by a configured Grafana IRM integration.
+
+<a id="nestedatt--fallback_target--config--grafana_irm--renotify"></a>
+### Nested Schema for `fallback_target.config.grafana_irm.renotify`
+
+Required:
+
+- `mode` (String)
+- `renotification_states` (List of String)
+- `renotify_interval_minutes` (Number)
+
 
 
 <a id="nestedatt--fallback_target--config--incident_io"></a>
@@ -199,10 +240,24 @@ Required:
 
 - `integration_id` (String) Identifier of the incident.io integration to use
 
+Optional:
+
+- `renotify` (Object) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--fallback_target--config--incident_io--renotify))
+
 Read-Only:
 
 - `integration_name` (String) Human readable name of the incident.io integration
 - `type` (String) incident.io target backed by a configured incident.io integration.
+
+<a id="nestedatt--fallback_target--config--incident_io--renotify"></a>
+### Nested Schema for `fallback_target.config.incident_io.renotify`
+
+Required:
+
+- `mode` (String)
+- `renotification_states` (List of String)
+- `renotify_interval_minutes` (Number)
+
 
 
 <a id="nestedatt--fallback_target--config--jira"></a>
@@ -232,10 +287,24 @@ Required:
 
 - `integration_id` (String) Identifier of the Microsoft Teams integration to use
 
+Optional:
+
+- `renotify` (Object) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--fallback_target--config--microsoft_teams--renotify))
+
 Read-Only:
 
 - `integration_name` (String) Human readable name of the Microsoft Teams integration
 - `type` (String) Microsoft Teams target backed by a configured Microsoft Teams integration.
+
+<a id="nestedatt--fallback_target--config--microsoft_teams--renotify"></a>
+### Nested Schema for `fallback_target.config.microsoft_teams.renotify`
+
+Required:
+
+- `mode` (String)
+- `renotification_states` (List of String)
+- `renotify_interval_minutes` (Number)
+
 
 
 <a id="nestedatt--fallback_target--config--pagerduty"></a>
@@ -245,20 +314,24 @@ Required:
 
 - `integration_id` (String) Identifier of the PagerDuty integration to use
 
+Optional:
+
+- `renotify` (Object) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--fallback_target--config--pagerduty--renotify))
+
 Read-Only:
 
 - `integration_name` (String) Human readable name of the PagerDuty integration
 - `type` (String) PagerDuty target backed by a configured PagerDuty integration.
 
-
-<a id="nestedatt--fallback_target--config--renotify"></a>
-### Nested Schema for `fallback_target.config.renotify`
+<a id="nestedatt--fallback_target--config--pagerduty--renotify"></a>
+### Nested Schema for `fallback_target.config.pagerduty.renotify`
 
 Required:
 
-- `mode` (String) Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
-- `renotification_states` (List of String) Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
-- `renotify_interval_minutes` (Number) Minimum number of minutes to wait after the previous notification.
+- `mode` (String)
+- `renotification_states` (List of String)
+- `renotify_interval_minutes` (Number)
+
 
 
 <a id="nestedatt--fallback_target--config--servicenow"></a>
@@ -268,10 +341,24 @@ Required:
 
 - `integration_id` (String) Identifier of the ServiceNow integration to use
 
+Optional:
+
+- `renotify` (Object) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--fallback_target--config--servicenow--renotify))
+
 Read-Only:
 
 - `integration_name` (String) Human readable name of the ServiceNow integration
 - `type` (String) ServiceNow target backed by a configured ServiceNow integration.
+
+<a id="nestedatt--fallback_target--config--servicenow--renotify"></a>
+### Nested Schema for `fallback_target.config.servicenow.renotify`
+
+Required:
+
+- `mode` (String)
+- `renotification_states` (List of String)
+- `renotify_interval_minutes` (Number)
+
 
 
 <a id="nestedatt--fallback_target--config--slack"></a>
@@ -282,10 +369,24 @@ Required:
 - `channel` (String) Slack channel ID that receives the notification
 - `integration_id` (String) Slack workspace ID that receives the notification
 
+Optional:
+
+- `renotify` (Object) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--fallback_target--config--slack--renotify))
+
 Read-Only:
 
 - `integration_name` (String) Human readable name of the Slack integration
 - `type` (String) Slack target backed by a configured Slack integration.
+
+<a id="nestedatt--fallback_target--config--slack--renotify"></a>
+### Nested Schema for `fallback_target.config.slack.renotify`
+
+Required:
+
+- `mode` (String)
+- `renotification_states` (List of String)
+- `renotify_interval_minutes` (Number)
+
 
 
 <a id="nestedatt--fallback_target--config--squadcast"></a>
@@ -295,10 +396,24 @@ Required:
 
 - `integration_id` (String) Identifier of the Squadcast integration to use
 
+Optional:
+
+- `renotify` (Object) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--fallback_target--config--squadcast--renotify))
+
 Read-Only:
 
 - `integration_name` (String) Human readable name of the Squadcast integration
 - `type` (String) Squadcast target backed by a configured Squadcast integration.
+
+<a id="nestedatt--fallback_target--config--squadcast--renotify"></a>
+### Nested Schema for `fallback_target.config.squadcast.renotify`
+
+Required:
+
+- `mode` (String)
+- `renotification_states` (List of String)
+- `renotify_interval_minutes` (Number)
+
 
 
 <a id="nestedatt--fallback_target--config--webhook"></a>
@@ -308,10 +423,24 @@ Required:
 
 - `integration_id` (String) Identifier of the webhook integration to use
 
+Optional:
+
+- `renotify` (Object) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--fallback_target--config--webhook--renotify))
+
 Read-Only:
 
 - `integration_name` (String) Human readable name of the webhook integration
 - `type` (String) Webhook target backed by a configured webhook integration.
+
+<a id="nestedatt--fallback_target--config--webhook--renotify"></a>
+### Nested Schema for `fallback_target.config.webhook.renotify`
+
+Required:
+
+- `mode` (String)
+- `renotification_states` (List of String)
+- `renotify_interval_minutes` (Number)
+
 
 
 

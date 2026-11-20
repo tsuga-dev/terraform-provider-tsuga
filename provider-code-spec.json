@@ -1374,6 +1374,78 @@
                                 }
                               },
                               {
+                                "name": "renotify",
+                                "single_nested": {
+                                  "computed_optional_required": "optional",
+                                  "attributes": [
+                                    {
+                                      "name": "mode",
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                                }
+                                              ],
+                                              "schema_definition": "stringvalidator.OneOf(\n\"each\",\n)"
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "name": "renotification_states",
+                                      "list": {
+                                        "computed_optional_required": "required",
+                                        "element_type": {
+                                          "string": {}
+                                        },
+                                        "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                                },
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                                }
+                                              ],
+                                              "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"alert\", \"alert_no_data\"))"
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "name": "renotify_interval_minutes",
+                                      "int64": {
+                                        "computed_optional_required": "required",
+                                        "description": "Minimum number of minutes to wait after the previous notification.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                                }
+                                              ],
+                                              "schema_definition": "int64validator.AtLeast(1)"
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ],
+                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+                                }
+                              },
+                              {
                                 "name": "type",
                                 "string": {
                                   "computed_optional_required": "computed",
@@ -1402,6 +1474,42 @@
                                           }
                                         ],
                                         "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "name": "renotify",
+                                "object": {
+                                  "attribute_types": [
+                                    {
+                                      "name": "mode",
+                                      "string": {}
+                                    },
+                                    {
+                                      "name": "renotification_states",
+                                      "list": {
+                                        "element_type": {
+                                          "string": {}
+                                        }
+                                      }
+                                    },
+                                    {
+                                      "name": "renotify_interval_minutes",
+                                      "int64": {}
+                                    }
+                                  ],
+                                  "computed_optional_required": "optional",
+                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+                                  "custom_type": {
+                                    "type": "RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}}",
+                                    "value_type": "RenotifyValue"
+                                  },
+                                  "validators": [
+                                    {
+                                      "custom": {
+                                        "schema_definition": "RenotifyConfigValid()"
                                       }
                                     }
                                   ]
@@ -1449,6 +1557,42 @@
                                 }
                               },
                               {
+                                "name": "renotify",
+                                "object": {
+                                  "attribute_types": [
+                                    {
+                                      "name": "mode",
+                                      "string": {}
+                                    },
+                                    {
+                                      "name": "renotification_states",
+                                      "list": {
+                                        "element_type": {
+                                          "string": {}
+                                        }
+                                      }
+                                    },
+                                    {
+                                      "name": "renotify_interval_minutes",
+                                      "int64": {}
+                                    }
+                                  ],
+                                  "computed_optional_required": "optional",
+                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+                                  "custom_type": {
+                                    "type": "RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}}",
+                                    "value_type": "RenotifyValue"
+                                  },
+                                  "validators": [
+                                    {
+                                      "custom": {
+                                        "schema_definition": "RenotifyConfigValid()"
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              {
                                 "name": "integration_name",
                                 "string": {
                                   "computed_optional_required": "computed",
@@ -1484,6 +1628,42 @@
                                           }
                                         ],
                                         "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "name": "renotify",
+                                "object": {
+                                  "attribute_types": [
+                                    {
+                                      "name": "mode",
+                                      "string": {}
+                                    },
+                                    {
+                                      "name": "renotification_states",
+                                      "list": {
+                                        "element_type": {
+                                          "string": {}
+                                        }
+                                      }
+                                    },
+                                    {
+                                      "name": "renotify_interval_minutes",
+                                      "int64": {}
+                                    }
+                                  ],
+                                  "computed_optional_required": "optional",
+                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+                                  "custom_type": {
+                                    "type": "RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}}",
+                                    "value_type": "RenotifyValue"
+                                  },
+                                  "validators": [
+                                    {
+                                      "custom": {
+                                        "schema_definition": "RenotifyConfigValid()"
                                       }
                                     }
                                   ]
@@ -1648,6 +1828,42 @@
                                 }
                               },
                               {
+                                "name": "renotify",
+                                "object": {
+                                  "attribute_types": [
+                                    {
+                                      "name": "mode",
+                                      "string": {}
+                                    },
+                                    {
+                                      "name": "renotification_states",
+                                      "list": {
+                                        "element_type": {
+                                          "string": {}
+                                        }
+                                      }
+                                    },
+                                    {
+                                      "name": "renotify_interval_minutes",
+                                      "int64": {}
+                                    }
+                                  ],
+                                  "computed_optional_required": "optional",
+                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+                                  "custom_type": {
+                                    "type": "RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}}",
+                                    "value_type": "RenotifyValue"
+                                  },
+                                  "validators": [
+                                    {
+                                      "custom": {
+                                        "schema_definition": "RenotifyConfigValid()"
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              {
                                 "name": "integration_name",
                                 "string": {
                                   "computed_optional_required": "computed",
@@ -1689,6 +1905,42 @@
                                 }
                               },
                               {
+                                "name": "renotify",
+                                "object": {
+                                  "attribute_types": [
+                                    {
+                                      "name": "mode",
+                                      "string": {}
+                                    },
+                                    {
+                                      "name": "renotification_states",
+                                      "list": {
+                                        "element_type": {
+                                          "string": {}
+                                        }
+                                      }
+                                    },
+                                    {
+                                      "name": "renotify_interval_minutes",
+                                      "int64": {}
+                                    }
+                                  ],
+                                  "computed_optional_required": "optional",
+                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+                                  "custom_type": {
+                                    "type": "RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}}",
+                                    "value_type": "RenotifyValue"
+                                  },
+                                  "validators": [
+                                    {
+                                      "custom": {
+                                        "schema_definition": "RenotifyConfigValid()"
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              {
                                 "name": "integration_name",
                                 "string": {
                                   "computed_optional_required": "computed",
@@ -1703,78 +1955,6 @@
                                 }
                               }
                             ]
-                          }
-                        },
-                        {
-                          "name": "renotify",
-                          "single_nested": {
-                            "computed_optional_required": "optional",
-                            "attributes": [
-                              {
-                                "name": "mode",
-                                "string": {
-                                  "computed_optional_required": "required",
-                                  "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-                                  "validators": [
-                                    {
-                                      "custom": {
-                                        "imports": [
-                                          {
-                                            "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-                                          }
-                                        ],
-                                        "schema_definition": "stringvalidator.OneOf(\n\"each\",\n)"
-                                      }
-                                    }
-                                  ]
-                                }
-                              },
-                              {
-                                "name": "renotification_states",
-                                "list": {
-                                  "computed_optional_required": "required",
-                                  "element_type": {
-                                    "string": {}
-                                  },
-                                  "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
-                                  "validators": [
-                                    {
-                                      "custom": {
-                                        "imports": [
-                                          {
-                                            "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
-                                          },
-                                          {
-                                            "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-                                          }
-                                        ],
-                                        "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"alert\", \"alert_no_data\"))"
-                                      }
-                                    }
-                                  ]
-                                }
-                              },
-                              {
-                                "name": "renotify_interval_minutes",
-                                "int64": {
-                                  "computed_optional_required": "required",
-                                  "description": "Minimum number of minutes to wait after the previous notification.",
-                                  "validators": [
-                                    {
-                                      "custom": {
-                                        "imports": [
-                                          {
-                                            "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
-                                          }
-                                        ],
-                                        "schema_definition": "int64validator.AtLeast(1)"
-                                      }
-                                    }
-                                  ]
-                                }
-                              }
-                            ],
-                            "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
                           }
                         },
                         {
@@ -1796,6 +1976,42 @@
                                           }
                                         ],
                                         "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "name": "renotify",
+                                "object": {
+                                  "attribute_types": [
+                                    {
+                                      "name": "mode",
+                                      "string": {}
+                                    },
+                                    {
+                                      "name": "renotification_states",
+                                      "list": {
+                                        "element_type": {
+                                          "string": {}
+                                        }
+                                      }
+                                    },
+                                    {
+                                      "name": "renotify_interval_minutes",
+                                      "int64": {}
+                                    }
+                                  ],
+                                  "computed_optional_required": "optional",
+                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+                                  "custom_type": {
+                                    "type": "RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}}",
+                                    "value_type": "RenotifyValue"
+                                  },
+                                  "validators": [
+                                    {
+                                      "custom": {
+                                        "schema_definition": "RenotifyConfigValid()"
                                       }
                                     }
                                   ]
@@ -1862,6 +2078,42 @@
                                 }
                               },
                               {
+                                "name": "renotify",
+                                "object": {
+                                  "attribute_types": [
+                                    {
+                                      "name": "mode",
+                                      "string": {}
+                                    },
+                                    {
+                                      "name": "renotification_states",
+                                      "list": {
+                                        "element_type": {
+                                          "string": {}
+                                        }
+                                      }
+                                    },
+                                    {
+                                      "name": "renotify_interval_minutes",
+                                      "int64": {}
+                                    }
+                                  ],
+                                  "computed_optional_required": "optional",
+                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+                                  "custom_type": {
+                                    "type": "RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}}",
+                                    "value_type": "RenotifyValue"
+                                  },
+                                  "validators": [
+                                    {
+                                      "custom": {
+                                        "schema_definition": "RenotifyConfigValid()"
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              {
                                 "name": "integration_name",
                                 "string": {
                                   "computed_optional_required": "computed",
@@ -1897,6 +2149,42 @@
                                           }
                                         ],
                                         "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "name": "renotify",
+                                "object": {
+                                  "attribute_types": [
+                                    {
+                                      "name": "mode",
+                                      "string": {}
+                                    },
+                                    {
+                                      "name": "renotification_states",
+                                      "list": {
+                                        "element_type": {
+                                          "string": {}
+                                        }
+                                      }
+                                    },
+                                    {
+                                      "name": "renotify_interval_minutes",
+                                      "int64": {}
+                                    }
+                                  ],
+                                  "computed_optional_required": "optional",
+                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+                                  "custom_type": {
+                                    "type": "RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}}",
+                                    "value_type": "RenotifyValue"
+                                  },
+                                  "validators": [
+                                    {
+                                      "custom": {
+                                        "schema_definition": "RenotifyConfigValid()"
                                       }
                                     }
                                   ]
@@ -1944,6 +2232,42 @@
                                 }
                               },
                               {
+                                "name": "renotify",
+                                "object": {
+                                  "attribute_types": [
+                                    {
+                                      "name": "mode",
+                                      "string": {}
+                                    },
+                                    {
+                                      "name": "renotification_states",
+                                      "list": {
+                                        "element_type": {
+                                          "string": {}
+                                        }
+                                      }
+                                    },
+                                    {
+                                      "name": "renotify_interval_minutes",
+                                      "int64": {}
+                                    }
+                                  ],
+                                  "computed_optional_required": "optional",
+                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+                                  "custom_type": {
+                                    "type": "RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}}",
+                                    "value_type": "RenotifyValue"
+                                  },
+                                  "validators": [
+                                    {
+                                      "custom": {
+                                        "schema_definition": "RenotifyConfigValid()"
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              {
                                 "name": "integration_name",
                                 "string": {
                                   "computed_optional_required": "computed",
@@ -1964,7 +2288,7 @@
                       "validators": [
                         {
                           "custom": {
-                            "schema_definition": "ExactlyOneDestination(\"renotify\")"
+                            "schema_definition": "ExactlyOneDestination()"
                           }
                         }
                       ]

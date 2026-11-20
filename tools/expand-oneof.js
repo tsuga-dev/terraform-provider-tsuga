@@ -94,9 +94,8 @@ const RULES = [
   },
 
   // tsuga_notification_rule: teamsFilter becomes one object with a `type` enum and the union of
-  // the variants' properties. Each target config gets one block per integration; `renotifyConfig`
-  // is the same on every variant that has one, so it becomes a single `renotify` next to the blocks
-  // (tfplugingen names a nested type after its attribute, so one per variant would redeclare it).
+  // the variants' properties. Each target config gets one block per integration, each keeping its
+  // own `renotifyConfig` (a shared `$ref` schema).
   {
     requests: [
       ["/v1/notification-rules", "post"],
@@ -107,8 +106,9 @@ const RULES = [
       rule.properties.teamsFilter = unionOneOf(rule.properties.teamsFilter);
       const target = rule.properties.targets.items;
       const config = expandOneOf(target.properties.config, {keepDiscriminator: role === "response"});
-      config.properties.renotify = config.properties.slack.properties.renotifyConfig;
-      for (const block of Object.values(config.properties)) delete block.properties?.renotifyConfig;
+      for (const block of Object.values(config.properties)) {
+        if (block.properties.renotifyConfig) rename(block, "renotifyConfig", "renotify");
+      }
       config.required = [];
       target.properties.config = config;
     },

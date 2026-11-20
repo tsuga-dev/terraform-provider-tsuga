@@ -14,9 +14,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 const renotifyJSON = `{"mode": "each", "renotificationStates": ["alert", "alert_no_data"], "renotifyIntervalMinutes": 30}`
+
+// objectAttribute returns the named attribute of an object, or a null object when it is absent.
+func objectAttribute(obj types.Object, name string) types.Object {
+	value, _ := obj.Attributes()[name].(types.Object)
+	return value
+}
 
 func decodeRule(t *testing.T, targets ...string) apiclient.Rule {
 	t.Helper()
@@ -87,18 +94,18 @@ func roundTrip(t *testing.T, ctx context.Context, rule apiclient.Rule) ([]byte, 
 	return raw, models[0]
 }
 
-func TestExpandNotificationRuleTargets_RenotifyIsNestedInConfig(t *testing.T) {
-	// The API reads renotifyConfig from targets[].config, not from the target itself.
+func TestExpandNotificationRuleTargets_RenotifyIsNestedInDestination(t *testing.T) {
+	// The API reads renotifyConfig from the destination inside targets[].config.
 	raw, _ := roundTrip(t, context.Background(), slackRule(t, renotifyJSON))
 	assertJSON(t, raw, `{"id": "slack", "config": {"type": "slack", "channel": "C123", "integrationId": "T123", "renotifyConfig": `+renotifyJSON+`}}`)
 }
 
-func TestFlattenNotificationRuleTargets_ReadsRenotifyFromConfig(t *testing.T) {
+func TestFlattenNotificationRuleTargets_ReadsRenotifyFromDestination(t *testing.T) {
 	_, back := roundTrip(t, context.Background(), slackRule(t, renotifyJSON))
 
-	renotify := objectAttribute(back.Config, "renotify")
+	renotify := objectAttribute(objectAttribute(back.Config, "slack"), "renotify")
 	if renotify.IsNull() {
-		t.Fatal("expected config.renotifyConfig to flatten onto config.renotify")
+		t.Fatal("expected renotifyConfig to flatten onto slack.renotify")
 	}
 	if got := renotify.Attributes()["renotify_interval_minutes"].(types.Int64).ValueInt64(); got != 30 {
 		t.Fatalf("expected renotify_interval_minutes 30, got %d", got)
@@ -114,8 +121,74 @@ func TestExpandNotificationRuleTargets_WithoutRenotifyOmitsTheKey(t *testing.T) 
 	if strings.Contains(string(raw), "renotifyConfig") {
 		t.Fatalf("expected renotifyConfig to be omitted from config, got %s", raw)
 	}
-	if !objectAttribute(back.Config, "renotify").IsNull() {
-		t.Fatalf("expected renotify to flatten back to null, got %s", objectAttribute(back.Config, "renotify"))
+	if renotify := objectAttribute(objectAttribute(back.Config, "slack"), "renotify"); !renotify.IsNull() {
+		t.Fatalf("expected renotify to flatten back to null, got %s", renotify)
+	}
+}
+
+func TestExpandFlattenNotificationRuleTargets_RenotifyOnEveryDestination(t *testing.T) {
+	for _, c := range []struct{ block, wireType, fields string }{
+		{"email", "email", `"addresses": ["a@example.com"]`},
+		{"webhook", "webhook", `"integrationId": "int-123", "integrationName": "name"`},
+		{"pagerduty", "pagerduty", `"integrationId": "int-123", "integrationName": "name"`},
+	} {
+		t.Run(c.block, func(t *testing.T) {
+			config := `{"type": "` + c.wireType + `", ` + c.fields + `, "renotifyConfig": ` + renotifyJSON + `}`
+			raw, back := roundTrip(t, context.Background(), decodeRule(t, target(c.block, config)))
+			if !strings.Contains(string(raw), `"renotifyConfig":`) {
+				t.Fatalf("expected renotifyConfig in %s", raw)
+			}
+			if objectAttribute(objectAttribute(back.Config, c.block), "renotify").IsNull() {
+				t.Fatalf("expected %s.renotify to be set", c.block)
+			}
+		})
+	}
+}
+
+func TestRenotifyConfigValid(t *testing.T) {
+	ctx := context.Background()
+	object := func(mode string, minutes int64) types.Object {
+		return types.ObjectValueMust(resource_notification_rule.RenotifyValue{}.AttributeTypes(ctx), map[string]attr.Value{
+			"mode":                      types.StringValue(mode),
+			"renotification_states":     types.ListValueMust(types.StringType, []attr.Value{types.StringValue("alert")}),
+			"renotify_interval_minutes": types.Int64Value(minutes),
+		})
+	}
+	nullInterval := types.ObjectValueMust(resource_notification_rule.RenotifyValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"mode":                      types.StringValue("each"),
+		"renotification_states":     types.ListValueMust(types.StringType, []attr.Value{types.StringValue("alert")}),
+		"renotify_interval_minutes": types.Int64Null(),
+	})
+	for name, c := range map[string]struct {
+		value   types.Object
+		invalid bool
+	}{
+		"valid": {object("each", 30), false}, "bad mode": {object("all", 30), true}, "bad interval": {object("each", 0), true},
+		"null interval": {nullInterval, true},
+	} {
+		resp := &validator.ObjectResponse{}
+		resource_notification_rule.RenotifyConfigValid().ValidateObject(ctx, validator.ObjectRequest{ConfigValue: c.value}, resp)
+		if resp.Diagnostics.HasError() != c.invalid {
+			t.Fatalf("%s: unexpected diagnostics %v", name, resp.Diagnostics)
+		}
+	}
+}
+
+func TestSlackValue_NullRenotifyToObjectValue(t *testing.T) {
+	ctx := context.Background()
+	renotifyTypes := resource_notification_rule.RenotifyValue{}.AttributeTypes(ctx)
+	for name, renotify := range map[string]basetypes.ObjectValue{
+		"null":    types.ObjectNull(renotifyTypes),
+		"unknown": types.ObjectUnknown(renotifyTypes),
+	} {
+		v := resource_notification_rule.NewSlackValueMust(resource_notification_rule.SlackValue{}.AttributeTypes(ctx), map[string]attr.Value{
+			"channel": types.StringValue("C1"), "integration_id": types.StringValue("T1"),
+			"integration_name": types.StringNull(), "type": types.StringNull(),
+			"renotify": renotify,
+		})
+		if _, d := v.ToObjectValue(ctx); d.HasError() {
+			t.Fatalf("%s: %v", name, d)
+		}
 	}
 }
 
@@ -191,57 +264,12 @@ func TestFlattenNotificationRuleTargets_UnsupportedDestinationIsADiagnostic(t *t
 	}
 }
 
-func renotifyObject(ctx context.Context) types.Object {
-	return types.ObjectValueMust(resource_notification_rule.RenotifyValue{}.AttributeTypes(ctx), map[string]attr.Value{
-		"mode":                      types.StringValue("each"),
-		"renotification_states":     types.ListValueMust(types.StringType, []attr.Value{types.StringValue("alert")}),
-		"renotify_interval_minutes": types.Int64Value(30),
-	})
-}
-
-func TestValidateTargetConfig_JiraRejectsRenotify(t *testing.T) {
-	ctx := context.Background()
-	r := &notificationRuleResource{}
-	configOf := func(renotify bool) types.Object {
-		config := `{"type": "jira", "integrationId": "jira-123", "projectKey": "OPS", "issueType": "Bug"}`
-		_, back := roundTrip(t, ctx, decodeRule(t, target("jira", config)))
-		attrs := back.Config.Attributes()
-		if renotify {
-			attrs["renotify"] = renotifyObject(ctx)
-		}
-		return types.ObjectValueMust(back.Config.AttributeTypes(ctx), attrs)
-	}
-
-	if diags := r.validateTargetConfig(configOf(false), 0); diags.HasError() {
-		t.Fatalf("expected a jira target without renotify to validate, got %v", diags)
-	}
-
-	diags := r.validateTargetConfig(configOf(true), 0)
-	if !diags.HasError() {
-		t.Fatal("expected an error for a jira target combined with renotify")
-	}
-	if got := diags.Errors()[0].Detail(); got != "renotify is not supported on a jira destination." {
-		t.Fatalf("unexpected error detail: %q", got)
-	}
-
-	cfg := configOf(true)
-	attrs := cfg.Attributes()
-	attrs["jira"] = types.ObjectUnknown(objectAttribute(cfg, "jira").AttributeTypes(ctx))
-	unknownJira, d := types.ObjectValue(cfg.AttributeTypes(ctx), attrs)
-	if d.HasError() {
-		t.Fatalf("failed to build config: %v", d)
-	}
-	if diags := r.validateTargetConfig(unknownJira, 0); diags.HasError() {
-		t.Fatalf("expected an unknown jira with renotify to validate, got %v", diags)
-	}
-}
-
 func TestExactlyOneDestination(t *testing.T) {
 	ctx := context.Background()
 	_, back := roundTrip(t, ctx, slackRule(t, renotifyJSON))
 	validate := func(cfg types.Object) string {
 		resp := &validator.ObjectResponse{}
-		resource_notification_rule.ExactlyOneDestination("renotify").ValidateObject(ctx, validator.ObjectRequest{ConfigValue: cfg}, resp)
+		resource_notification_rule.ExactlyOneDestination().ValidateObject(ctx, validator.ObjectRequest{ConfigValue: cfg}, resp)
 		if !resp.Diagnostics.HasError() {
 			return ""
 		}
@@ -256,6 +284,7 @@ func TestExactlyOneDestination(t *testing.T) {
 	attrs["email"] = types.ObjectValueMust(objectAttribute(back.Config, "email").AttributeTypes(ctx), map[string]attr.Value{
 		"addresses": types.ListNull(types.StringType),
 		"type":      types.StringNull(),
+		"renotify":  renotifyObject(ctx, nil),
 	})
 	two := types.ObjectValueMust(back.Config.AttributeTypes(ctx), attrs)
 	want := "Exactly one destination must be set, one of: email, google_chat, grafana_irm, incident_io, jira, microsoft_teams, pagerduty, servicenow, slack, squadcast, webhook. Set: email, slack."

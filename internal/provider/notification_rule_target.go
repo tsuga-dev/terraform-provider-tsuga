@@ -79,11 +79,6 @@ type (
 	webhookFields        resource_notification_rule.WebhookValue
 )
 
-func alloc[T any](dst **T) *T {
-	*dst = new(T)
-	return *dst
-}
-
 func grow[T any](dst *[]T) *T {
 	var zero T
 	*dst = append(*dst, zero)
@@ -106,29 +101,42 @@ func valueOf[V any](o basetypes.ObjectValue, ctor func(map[string]attr.Type, map
 	return ctor(o.AttributeTypes(context.Background()), o.Attributes())
 }
 
-// renotifyConfig is the renotification of a target, which the schema hoists out of the destinations.
-type renotifyConfig struct {
-	mode    string
-	states  []string
-	minutes int
+func expandRenotify(ctx context.Context, o basetypes.ObjectValue, diags *diag.Diagnostics) *apiclient.InputRenotifyConfig {
+	if !known(o) {
+		return nil
+	}
+	value, d := valueOf(o, resource_notification_rule.NewRenotifyValue)
+	diags.Append(d...)
+	var states []string
+	diags.Append(value.RenotificationStates.ElementsAs(ctx, &states, false)...)
+	return &apiclient.InputRenotifyConfig{
+		Mode:                    apiclient.InputRenotifyConfigMode(value.Mode.ValueString()),
+		RenotificationStates:    convertStrings[apiclient.InputRenotifyConfigRenotificationStates](states),
+		RenotifyIntervalMinutes: int(value.RenotifyIntervalMinutes.ValueInt64()),
+	}
 }
 
-// expandTargetConfig writes the one destination set in cfg, and the renotification, into the union.
+func renotifyObject(ctx context.Context, rc *apiclient.RenotifyConfig) basetypes.ObjectValue {
+	attrTypes := resource_notification_rule.RenotifyValue{}.AttributeTypes(ctx)
+	if rc == nil {
+		return types.ObjectNull(attrTypes)
+	}
+	states, _ := types.ListValueFrom(ctx, types.StringType, stringsOf(rc.RenotificationStates))
+	object, _ := types.ObjectValueFrom(ctx, attrTypes, renotifyFields{
+		Mode:                    types.StringValue(string(rc.Mode)),
+		RenotificationStates:    states,
+		RenotifyIntervalMinutes: types.Int64Value(int64(rc.RenotifyIntervalMinutes)),
+	})
+	return object
+}
+
+// expandTargetConfig writes the one destination set in cfg, with its renotification, into the union.
 // The computed attributes (type, integration_name) are not read: the API types have no field for
 // the name, and the type comes from the destination.
 func expandTargetConfig(ctx context.Context, cfg basetypes.ObjectValue, dst inputConfig) diag.Diagnostics {
 	config, diags := valueOf(cfg, resource_notification_rule.NewConfigValue)
 	if diags.HasError() {
 		return diags
-	}
-
-	var renotify *renotifyConfig
-	if known(config.Renotify) {
-		value, valueDiags := valueOf(config.Renotify, resource_notification_rule.NewRenotifyValue)
-		diags.Append(valueDiags...)
-		var states []string
-		diags.Append(value.RenotificationStates.ElementsAs(ctx, &states, false)...)
-		renotify = &renotifyConfig{value.Mode.ValueString(), states, int(value.RenotifyIntervalMinutes.ValueInt64())}
 	}
 
 	destinations := []struct {
@@ -142,51 +150,31 @@ func expandTargetConfig(ctx context.Context, cfg basetypes.ObjectValue, dst inpu
 			var addresses []string
 			diags.Append(value.Addresses.ElementsAs(ctx, &addresses, false)...)
 			v := apiclient.RuleTargetInputEmail{Addresses: addresses, Type: apiclient.RuleTargetInputEmailTypeEmail}
-			if renotify != nil {
-				rc := alloc(&v.RenotifyConfig)
-				rc.Mode = apiclient.RuleTargetInputEmailRenotifyConfigMode(renotify.mode)
-				rc.RenotificationStates = convertStrings[apiclient.RuleTargetInputEmailRenotifyConfigRenotificationStates](renotify.states)
-				rc.RenotifyIntervalMinutes = renotify.minutes
-			}
+			v.RenotifyConfig = expandRenotify(ctx, value.Renotify, &diags)
 			return dst.FromRuleTargetInputEmail(v)
 		}},
 		{"google_chat", config.GoogleChat, func(o basetypes.ObjectValue) error {
 			value, d := valueOf(o, resource_notification_rule.NewGoogleChatValue)
 			diags.Append(d...)
 			v := apiclient.RuleTargetInputGoogleChat{IntegrationId: value.IntegrationId.ValueString(), Type: apiclient.RuleTargetInputGoogleChatTypeGoogleChat}
-			if renotify != nil {
-				rc := alloc(&v.RenotifyConfig)
-				rc.Mode = apiclient.RuleTargetInputGoogleChatRenotifyConfigMode(renotify.mode)
-				rc.RenotificationStates = convertStrings[apiclient.RuleTargetInputGoogleChatRenotifyConfigRenotificationStates](renotify.states)
-				rc.RenotifyIntervalMinutes = renotify.minutes
-			}
+			v.RenotifyConfig = expandRenotify(ctx, value.Renotify, &diags)
 			return dst.FromRuleTargetInputGoogleChat(v)
 		}},
 		{"grafana_irm", config.GrafanaIrm, func(o basetypes.ObjectValue) error {
 			value, d := valueOf(o, resource_notification_rule.NewGrafanaIrmValue)
 			diags.Append(d...)
 			v := apiclient.RuleTargetInputGrafanaIrm{IntegrationId: value.IntegrationId.ValueString(), Type: apiclient.RuleTargetInputGrafanaIrmTypeGrafanaIrm}
-			if renotify != nil {
-				rc := alloc(&v.RenotifyConfig)
-				rc.Mode = apiclient.RuleTargetInputGrafanaIrmRenotifyConfigMode(renotify.mode)
-				rc.RenotificationStates = convertStrings[apiclient.RuleTargetInputGrafanaIrmRenotifyConfigRenotificationStates](renotify.states)
-				rc.RenotifyIntervalMinutes = renotify.minutes
-			}
+			v.RenotifyConfig = expandRenotify(ctx, value.Renotify, &diags)
 			return dst.FromRuleTargetInputGrafanaIrm(v)
 		}},
 		{"incident_io", config.IncidentIo, func(o basetypes.ObjectValue) error {
 			value, d := valueOf(o, resource_notification_rule.NewIncidentIoValue)
 			diags.Append(d...)
 			v := apiclient.RuleTargetInputIncidentIo{IntegrationId: value.IntegrationId.ValueString(), Type: apiclient.RuleTargetInputIncidentIoTypeIncidentIo}
-			if renotify != nil {
-				rc := alloc(&v.RenotifyConfig)
-				rc.Mode = apiclient.RuleTargetInputIncidentIoRenotifyConfigMode(renotify.mode)
-				rc.RenotificationStates = convertStrings[apiclient.RuleTargetInputIncidentIoRenotifyConfigRenotificationStates](renotify.states)
-				rc.RenotifyIntervalMinutes = renotify.minutes
-			}
+			v.RenotifyConfig = expandRenotify(ctx, value.Renotify, &diags)
 			return dst.FromRuleTargetInputIncidentIo(v)
 		}},
-		// Jira has no renotification: ValidateConfig rejects the combination at plan time.
+		// Jira has no renotification.
 		{"jira", config.Jira, func(o basetypes.ObjectValue) error {
 			value, d := valueOf(o, resource_notification_rule.NewJiraValue)
 			diags.Append(d...)
@@ -203,72 +191,42 @@ func expandTargetConfig(ctx context.Context, cfg basetypes.ObjectValue, dst inpu
 			value, d := valueOf(o, resource_notification_rule.NewMicrosoftTeamsValue)
 			diags.Append(d...)
 			v := apiclient.RuleTargetInputMicrosoftTeams{IntegrationId: value.IntegrationId.ValueString(), Type: apiclient.RuleTargetInputMicrosoftTeamsTypeMicrosoftTeams}
-			if renotify != nil {
-				rc := alloc(&v.RenotifyConfig)
-				rc.Mode = apiclient.RuleTargetInputMicrosoftTeamsRenotifyConfigMode(renotify.mode)
-				rc.RenotificationStates = convertStrings[apiclient.RuleTargetInputMicrosoftTeamsRenotifyConfigRenotificationStates](renotify.states)
-				rc.RenotifyIntervalMinutes = renotify.minutes
-			}
+			v.RenotifyConfig = expandRenotify(ctx, value.Renotify, &diags)
 			return dst.FromRuleTargetInputMicrosoftTeams(v)
 		}},
 		{"pagerduty", config.Pagerduty, func(o basetypes.ObjectValue) error {
 			value, d := valueOf(o, resource_notification_rule.NewPagerdutyValue)
 			diags.Append(d...)
 			v := apiclient.RuleTargetInputPagerDuty{IntegrationId: value.IntegrationId.ValueString(), Type: apiclient.RuleTargetInputPagerDutyTypePagerduty}
-			if renotify != nil {
-				rc := alloc(&v.RenotifyConfig)
-				rc.Mode = apiclient.RuleTargetInputPagerDutyRenotifyConfigMode(renotify.mode)
-				rc.RenotificationStates = convertStrings[apiclient.RuleTargetInputPagerDutyRenotifyConfigRenotificationStates](renotify.states)
-				rc.RenotifyIntervalMinutes = renotify.minutes
-			}
+			v.RenotifyConfig = expandRenotify(ctx, value.Renotify, &diags)
 			return dst.FromRuleTargetInputPagerDuty(v)
 		}},
 		{"servicenow", config.Servicenow, func(o basetypes.ObjectValue) error {
 			value, d := valueOf(o, resource_notification_rule.NewServicenowValue)
 			diags.Append(d...)
 			v := apiclient.RuleTargetInputServiceNow{IntegrationId: value.IntegrationId.ValueString(), Type: apiclient.RuleTargetInputServiceNowTypeServicenow}
-			if renotify != nil {
-				rc := alloc(&v.RenotifyConfig)
-				rc.Mode = apiclient.RuleTargetInputServiceNowRenotifyConfigMode(renotify.mode)
-				rc.RenotificationStates = convertStrings[apiclient.RuleTargetInputServiceNowRenotifyConfigRenotificationStates](renotify.states)
-				rc.RenotifyIntervalMinutes = renotify.minutes
-			}
+			v.RenotifyConfig = expandRenotify(ctx, value.Renotify, &diags)
 			return dst.FromRuleTargetInputServiceNow(v)
 		}},
 		{"slack", config.Slack, func(o basetypes.ObjectValue) error {
 			value, d := valueOf(o, resource_notification_rule.NewSlackValue)
 			diags.Append(d...)
 			v := apiclient.RuleTargetInputSlack{Channel: value.Channel.ValueString(), IntegrationId: value.IntegrationId.ValueString(), Type: apiclient.RuleTargetInputSlackTypeSlack}
-			if renotify != nil {
-				rc := alloc(&v.RenotifyConfig)
-				rc.Mode = apiclient.RuleTargetInputSlackRenotifyConfigMode(renotify.mode)
-				rc.RenotificationStates = convertStrings[apiclient.RuleTargetInputSlackRenotifyConfigRenotificationStates](renotify.states)
-				rc.RenotifyIntervalMinutes = renotify.minutes
-			}
+			v.RenotifyConfig = expandRenotify(ctx, value.Renotify, &diags)
 			return dst.FromRuleTargetInputSlack(v)
 		}},
 		{"squadcast", config.Squadcast, func(o basetypes.ObjectValue) error {
 			value, d := valueOf(o, resource_notification_rule.NewSquadcastValue)
 			diags.Append(d...)
 			v := apiclient.RuleTargetInputSquadcast{IntegrationId: value.IntegrationId.ValueString(), Type: apiclient.RuleTargetInputSquadcastTypeSquadcast}
-			if renotify != nil {
-				rc := alloc(&v.RenotifyConfig)
-				rc.Mode = apiclient.RuleTargetInputSquadcastRenotifyConfigMode(renotify.mode)
-				rc.RenotificationStates = convertStrings[apiclient.RuleTargetInputSquadcastRenotifyConfigRenotificationStates](renotify.states)
-				rc.RenotifyIntervalMinutes = renotify.minutes
-			}
+			v.RenotifyConfig = expandRenotify(ctx, value.Renotify, &diags)
 			return dst.FromRuleTargetInputSquadcast(v)
 		}},
 		{"webhook", config.Webhook, func(o basetypes.ObjectValue) error {
 			value, d := valueOf(o, resource_notification_rule.NewWebhookValue)
 			diags.Append(d...)
 			v := apiclient.RuleTargetInputWebhook{IntegrationId: value.IntegrationId.ValueString(), Type: apiclient.RuleTargetInputWebhookTypeWebhook}
-			if renotify != nil {
-				rc := alloc(&v.RenotifyConfig)
-				rc.Mode = apiclient.RuleTargetInputWebhookRenotifyConfigMode(renotify.mode)
-				rc.RenotificationStates = convertStrings[apiclient.RuleTargetInputWebhookRenotifyConfigRenotificationStates](renotify.states)
-				rc.RenotifyIntervalMinutes = renotify.minutes
-			}
+			v.RenotifyConfig = expandRenotify(ctx, value.Renotify, &diags)
 			return dst.FromRuleTargetInputWebhook(v)
 		}},
 	}
@@ -339,7 +297,6 @@ func nullConfig(ctx context.Context) configFields {
 		Jira:           null(resource_notification_rule.JiraValue{}.AttributeTypes(ctx)),
 		MicrosoftTeams: null(resource_notification_rule.MicrosoftTeamsValue{}.AttributeTypes(ctx)),
 		Pagerduty:      null(resource_notification_rule.PagerdutyValue{}.AttributeTypes(ctx)),
-		Renotify:       null(resource_notification_rule.RenotifyValue{}.AttributeTypes(ctx)),
 		Servicenow:     null(resource_notification_rule.ServicenowValue{}.AttributeTypes(ctx)),
 		Slack:          null(resource_notification_rule.SlackValue{}.AttributeTypes(ctx)),
 		Squadcast:      null(resource_notification_rule.SquadcastValue{}.AttributeTypes(ctx)),
@@ -348,7 +305,7 @@ func nullConfig(ctx context.Context) configFields {
 }
 
 // flattenTargetConfig reads the destination of a response into its block of the config, and its
-// renotification into the hoisted renotify block. An unsupported destination is a diagnostic.
+// renotification into its renotify block. An unsupported destination is a diagnostic.
 func flattenTargetConfig(ctx context.Context, src outputConfig) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	configTypes := resource_notification_rule.ConfigValue{}.AttributeTypes(ctx)
@@ -360,7 +317,6 @@ func flattenTargetConfig(ctx context.Context, src outputConfig) (basetypes.Objec
 	}
 
 	config := nullConfig(ctx)
-	var renotify *renotifyConfig
 	block := func(attrTypes map[string]attr.Type, fields any) basetypes.ObjectValue {
 		object, d := types.ObjectValueFrom(ctx, attrTypes, fields)
 		diags.Append(d...)
@@ -371,37 +327,28 @@ func flattenTargetConfig(ctx context.Context, src outputConfig) (basetypes.Objec
 	case apiclient.RuleTargetConfigEmail:
 		addresses, d := types.ListValueFrom(ctx, types.StringType, v.Addresses)
 		diags.Append(d...)
-		config.Email = block(resource_notification_rule.EmailValue{}.AttributeTypes(ctx), emailFields{Addresses: addresses, EmailType: types.StringValue(string(v.Type))})
-		if rc := v.RenotifyConfig; rc != nil {
-			renotify = &renotifyConfig{string(rc.Mode), stringsOf(rc.RenotificationStates), rc.RenotifyIntervalMinutes}
-		}
+		config.Email = block(resource_notification_rule.EmailValue{}.AttributeTypes(ctx), emailFields{Addresses: addresses, EmailType: types.StringValue(string(v.Type)), Renotify: renotifyObject(ctx, v.RenotifyConfig)})
 	case apiclient.RuleTargetConfigGoogleChat:
 		config.GoogleChat = block(resource_notification_rule.GoogleChatValue{}.AttributeTypes(ctx), googleChatFields{
 			IntegrationId:   types.StringValue(v.IntegrationId),
 			IntegrationName: types.StringValue(v.IntegrationName),
 			GoogleChatType:  types.StringValue(string(v.Type)),
+			Renotify:        renotifyObject(ctx, v.RenotifyConfig),
 		})
-		if rc := v.RenotifyConfig; rc != nil {
-			renotify = &renotifyConfig{string(rc.Mode), stringsOf(rc.RenotificationStates), rc.RenotifyIntervalMinutes}
-		}
 	case apiclient.RuleTargetConfigGrafanaIrm:
 		config.GrafanaIrm = block(resource_notification_rule.GrafanaIrmValue{}.AttributeTypes(ctx), grafanaIrmFields{
 			IntegrationId:   types.StringValue(v.IntegrationId),
 			IntegrationName: types.StringValue(v.IntegrationName),
 			GrafanaIrmType:  types.StringValue(string(v.Type)),
+			Renotify:        renotifyObject(ctx, v.RenotifyConfig),
 		})
-		if rc := v.RenotifyConfig; rc != nil {
-			renotify = &renotifyConfig{string(rc.Mode), stringsOf(rc.RenotificationStates), rc.RenotifyIntervalMinutes}
-		}
 	case apiclient.RuleTargetConfigIncidentIo:
 		config.IncidentIo = block(resource_notification_rule.IncidentIoValue{}.AttributeTypes(ctx), incidentIoFields{
 			IntegrationId:   types.StringValue(v.IntegrationId),
 			IntegrationName: types.StringValue(v.IntegrationName),
 			IncidentIoType:  types.StringValue(string(v.Type)),
+			Renotify:        renotifyObject(ctx, v.RenotifyConfig),
 		})
-		if rc := v.RenotifyConfig; rc != nil {
-			renotify = &renotifyConfig{string(rc.Mode), stringsOf(rc.RenotificationStates), rc.RenotifyIntervalMinutes}
-		}
 	case apiclient.RuleTargetConfigJira:
 		config.Jira = block(resource_notification_rule.JiraValue{}.AttributeTypes(ctx), jiraFields{
 			ClosedStatus:    types.StringPointerValue(v.ClosedStatus),
@@ -417,68 +364,46 @@ func flattenTargetConfig(ctx context.Context, src outputConfig) (basetypes.Objec
 			IntegrationId:      types.StringValue(v.IntegrationId),
 			IntegrationName:    types.StringValue(v.IntegrationName),
 			MicrosoftTeamsType: types.StringValue(string(v.Type)),
+			Renotify:           renotifyObject(ctx, v.RenotifyConfig),
 		})
-		if rc := v.RenotifyConfig; rc != nil {
-			renotify = &renotifyConfig{string(rc.Mode), stringsOf(rc.RenotificationStates), rc.RenotifyIntervalMinutes}
-		}
 	case apiclient.RuleTargetConfigPagerDuty:
 		config.Pagerduty = block(resource_notification_rule.PagerdutyValue{}.AttributeTypes(ctx), pagerdutyFields{
 			IntegrationId:   types.StringValue(v.IntegrationId),
 			IntegrationName: types.StringValue(v.IntegrationName),
 			PagerdutyType:   types.StringValue(string(v.Type)),
+			Renotify:        renotifyObject(ctx, v.RenotifyConfig),
 		})
-		if rc := v.RenotifyConfig; rc != nil {
-			renotify = &renotifyConfig{string(rc.Mode), stringsOf(rc.RenotificationStates), rc.RenotifyIntervalMinutes}
-		}
 	case apiclient.RuleTargetConfigServiceNow:
 		config.Servicenow = block(resource_notification_rule.ServicenowValue{}.AttributeTypes(ctx), servicenowFields{
 			IntegrationId:   types.StringValue(v.IntegrationId),
 			IntegrationName: types.StringValue(v.IntegrationName),
 			ServicenowType:  types.StringValue(string(v.Type)),
+			Renotify:        renotifyObject(ctx, v.RenotifyConfig),
 		})
-		if rc := v.RenotifyConfig; rc != nil {
-			renotify = &renotifyConfig{string(rc.Mode), stringsOf(rc.RenotificationStates), rc.RenotifyIntervalMinutes}
-		}
 	case apiclient.RuleTargetConfigSlack:
 		config.Slack = block(resource_notification_rule.SlackValue{}.AttributeTypes(ctx), slackFields{
 			Channel:         types.StringValue(v.Channel),
 			IntegrationId:   types.StringValue(v.IntegrationId),
 			IntegrationName: types.StringValue(v.IntegrationName),
 			SlackType:       types.StringValue(string(v.Type)),
+			Renotify:        renotifyObject(ctx, v.RenotifyConfig),
 		})
-		if rc := v.RenotifyConfig; rc != nil {
-			renotify = &renotifyConfig{string(rc.Mode), stringsOf(rc.RenotificationStates), rc.RenotifyIntervalMinutes}
-		}
 	case apiclient.RuleTargetConfigSquadcast:
 		config.Squadcast = block(resource_notification_rule.SquadcastValue{}.AttributeTypes(ctx), squadcastFields{
 			IntegrationId:   types.StringValue(v.IntegrationId),
 			IntegrationName: types.StringValue(v.IntegrationName),
 			SquadcastType:   types.StringValue(string(v.Type)),
+			Renotify:        renotifyObject(ctx, v.RenotifyConfig),
 		})
-		if rc := v.RenotifyConfig; rc != nil {
-			renotify = &renotifyConfig{string(rc.Mode), stringsOf(rc.RenotificationStates), rc.RenotifyIntervalMinutes}
-		}
 	case apiclient.RuleTargetConfigWebhook:
 		config.Webhook = block(resource_notification_rule.WebhookValue{}.AttributeTypes(ctx), webhookFields{
 			IntegrationId:   types.StringValue(v.IntegrationId),
 			IntegrationName: types.StringValue(v.IntegrationName),
 			WebhookType:     types.StringValue(string(v.Type)),
+			Renotify:        renotifyObject(ctx, v.RenotifyConfig),
 		})
-		if rc := v.RenotifyConfig; rc != nil {
-			renotify = &renotifyConfig{string(rc.Mode), stringsOf(rc.RenotificationStates), rc.RenotifyIntervalMinutes}
-		}
 	default:
 		diags.AddError("Unsupported notification destination", fmt.Sprintf("Unexpected destination type %T.", value))
-	}
-
-	if renotify != nil {
-		states, d := types.ListValueFrom(ctx, types.StringType, renotify.states)
-		diags.Append(d...)
-		config.Renotify = block(resource_notification_rule.RenotifyValue{}.AttributeTypes(ctx), renotifyFields{
-			Mode:                    types.StringValue(renotify.mode),
-			RenotificationStates:    states,
-			RenotifyIntervalMinutes: types.Int64Value(int64(renotify.minutes)),
-		})
 	}
 
 	return block(configTypes, config), diags

@@ -16,7 +16,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 var _ resource.Resource = (*notificationRuleResource)(nil)
@@ -81,40 +80,6 @@ func (r *notificationRuleResource) ValidateConfig(ctx context.Context, req resou
 			)
 		}
 	}
-
-	if !config.Targets.IsNull() && !config.Targets.IsUnknown() {
-		var targets []resource_notification_rule.TargetsValue
-		resp.Diagnostics.Append(config.Targets.ElementsAs(ctx, &targets, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		for i, target := range targets {
-			resp.Diagnostics.Append(r.validateTargetConfig(target.Config, i)...)
-		}
-	}
-}
-
-// objectAttribute returns the named attribute of an object, or a null object when it is absent.
-func objectAttribute(obj basetypes.ObjectValue, name string) basetypes.ObjectValue {
-	value, _ := obj.Attributes()[name].(basetypes.ObjectValue)
-	return value
-}
-
-func (r *notificationRuleResource) validateTargetConfig(cfg basetypes.ObjectValue, index int) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	// Jira files one issue per notification, so the API rejects renotify on it.
-	known := func(v basetypes.ObjectValue) bool { return !v.IsNull() && !v.IsUnknown() }
-	if known(objectAttribute(cfg, "jira")) && known(objectAttribute(cfg, "renotify")) {
-		diags.AddAttributeError(
-			path.Root("targets").AtListIndex(index).AtName("config").AtName("renotify"),
-			"Unsupported attribute combination",
-			"renotify is not supported on a jira destination.",
-		)
-	}
-
-	return diags
 }
 
 func (r *notificationRuleResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

@@ -26274,37 +26274,7 @@
             "description": "Human readable name of the Slack integration"
           },
           "renotifyConfig": {
-            "type": "object",
-            "required": [
-              "mode",
-              "renotificationStates",
-              "renotifyIntervalMinutes"
-            ],
-            "properties": {
-              "mode": {
-                "type": "string",
-                "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-                "enum": [
-                  "each"
-                ]
-              },
-              "renotificationStates": {
-                "type": "array",
-                "items": {
-                  "enum": [
-                    "alert",
-                    "alert_no_data"
-                  ],
-                  "type": "string"
-                },
-                "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
-              },
-              "renotifyIntervalMinutes": {
-                "type": "integer",
-                "description": "Minimum number of minutes to wait after the previous notification."
-              }
-            },
-            "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+            "$ref": "#/components/schemas/RenotifyConfig"
           }
         }
       },
@@ -26332,37 +26302,7 @@
             "description": "Human readable name of the incident.io integration"
           },
           "renotifyConfig": {
-            "type": "object",
-            "required": [
-              "mode",
-              "renotificationStates",
-              "renotifyIntervalMinutes"
-            ],
-            "properties": {
-              "mode": {
-                "type": "string",
-                "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-                "enum": [
-                  "each"
-                ]
-              },
-              "renotificationStates": {
-                "type": "array",
-                "items": {
-                  "enum": [
-                    "alert",
-                    "alert_no_data"
-                  ],
-                  "type": "string"
-                },
-                "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
-              },
-              "renotifyIntervalMinutes": {
-                "type": "integer",
-                "description": "Minimum number of minutes to wait after the previous notification."
-              }
-            },
-            "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+            "$ref": "#/components/schemas/RenotifyConfig"
           }
         }
       },
@@ -26388,37 +26328,7 @@
             "description": "Email addresses that will receive the alert"
           },
           "renotifyConfig": {
-            "type": "object",
-            "required": [
-              "mode",
-              "renotificationStates",
-              "renotifyIntervalMinutes"
-            ],
-            "properties": {
-              "mode": {
-                "type": "string",
-                "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-                "enum": [
-                  "each"
-                ]
-              },
-              "renotificationStates": {
-                "type": "array",
-                "items": {
-                  "enum": [
-                    "alert",
-                    "alert_no_data"
-                  ],
-                  "type": "string"
-                },
-                "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
-              },
-              "renotifyIntervalMinutes": {
-                "type": "integer",
-                "description": "Minimum number of minutes to wait after the previous notification."
-              }
-            },
-            "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+            "$ref": "#/components/schemas/RenotifyConfig"
           }
         }
       },
@@ -26446,37 +26356,7 @@
             "description": "Human readable name of the Grafana IRM integration"
           },
           "renotifyConfig": {
-            "type": "object",
-            "required": [
-              "mode",
-              "renotificationStates",
-              "renotifyIntervalMinutes"
-            ],
-            "properties": {
-              "mode": {
-                "type": "string",
-                "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-                "enum": [
-                  "each"
-                ]
-              },
-              "renotificationStates": {
-                "type": "array",
-                "items": {
-                  "enum": [
-                    "alert",
-                    "alert_no_data"
-                  ],
-                  "type": "string"
-                },
-                "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
-              },
-              "renotifyIntervalMinutes": {
-                "type": "integer",
-                "description": "Minimum number of minutes to wait after the previous notification."
-              }
-            },
-            "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+            "$ref": "#/components/schemas/RenotifyConfig"
           }
         }
       },
@@ -26504,37 +26384,7 @@
             "description": "Human readable name of the PagerDuty integration"
           },
           "renotifyConfig": {
-            "type": "object",
-            "required": [
-              "mode",
-              "renotificationStates",
-              "renotifyIntervalMinutes"
-            ],
-            "properties": {
-              "mode": {
-                "type": "string",
-                "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-                "enum": [
-                  "each"
-                ]
-              },
-              "renotificationStates": {
-                "type": "array",
-                "items": {
-                  "enum": [
-                    "alert",
-                    "alert_no_data"
-                  ],
-                  "type": "string"
-                },
-                "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
-              },
-              "renotifyIntervalMinutes": {
-                "type": "integer",
-                "description": "Minimum number of minutes to wait after the previous notification."
-              }
-            },
-            "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+            "$ref": "#/components/schemas/RenotifyConfig"
           }
         }
       },
@@ -26562,37 +26412,7 @@
             "description": "Human readable name of the Microsoft Teams integration"
           },
           "renotifyConfig": {
-            "type": "object",
-            "required": [
-              "mode",
-              "renotificationStates",
-              "renotifyIntervalMinutes"
-            ],
-            "properties": {
-              "mode": {
-                "type": "string",
-                "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-                "enum": [
-                  "each"
-                ]
-              },
-              "renotificationStates": {
-                "type": "array",
-                "items": {
-                  "enum": [
-                    "alert",
-                    "alert_no_data"
-                  ],
-                  "type": "string"
-                },
-                "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
-              },
-              "renotifyIntervalMinutes": {
-                "type": "integer",
-                "description": "Minimum number of minutes to wait after the previous notification."
-              }
-            },
-            "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+            "$ref": "#/components/schemas/RenotifyConfig"
           }
         }
       },
@@ -26620,37 +26440,7 @@
             "description": "Human readable name of the webhook integration"
           },
           "renotifyConfig": {
-            "type": "object",
-            "required": [
-              "mode",
-              "renotificationStates",
-              "renotifyIntervalMinutes"
-            ],
-            "properties": {
-              "mode": {
-                "type": "string",
-                "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-                "enum": [
-                  "each"
-                ]
-              },
-              "renotificationStates": {
-                "type": "array",
-                "items": {
-                  "enum": [
-                    "alert",
-                    "alert_no_data"
-                  ],
-                  "type": "string"
-                },
-                "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
-              },
-              "renotifyIntervalMinutes": {
-                "type": "integer",
-                "description": "Minimum number of minutes to wait after the previous notification."
-              }
-            },
-            "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+            "$ref": "#/components/schemas/RenotifyConfig"
           }
         }
       },
@@ -26678,37 +26468,7 @@
             "description": "Human readable name of the ServiceNow integration"
           },
           "renotifyConfig": {
-            "type": "object",
-            "required": [
-              "mode",
-              "renotificationStates",
-              "renotifyIntervalMinutes"
-            ],
-            "properties": {
-              "mode": {
-                "type": "string",
-                "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-                "enum": [
-                  "each"
-                ]
-              },
-              "renotificationStates": {
-                "type": "array",
-                "items": {
-                  "enum": [
-                    "alert",
-                    "alert_no_data"
-                  ],
-                  "type": "string"
-                },
-                "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
-              },
-              "renotifyIntervalMinutes": {
-                "type": "integer",
-                "description": "Minimum number of minutes to wait after the previous notification."
-              }
-            },
-            "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+            "$ref": "#/components/schemas/RenotifyConfig"
           }
         }
       },
@@ -26736,37 +26496,7 @@
             "description": "Human readable name of the Google Chat integration"
           },
           "renotifyConfig": {
-            "type": "object",
-            "required": [
-              "mode",
-              "renotificationStates",
-              "renotifyIntervalMinutes"
-            ],
-            "properties": {
-              "mode": {
-                "type": "string",
-                "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-                "enum": [
-                  "each"
-                ]
-              },
-              "renotificationStates": {
-                "type": "array",
-                "items": {
-                  "enum": [
-                    "alert",
-                    "alert_no_data"
-                  ],
-                  "type": "string"
-                },
-                "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
-              },
-              "renotifyIntervalMinutes": {
-                "type": "integer",
-                "description": "Minimum number of minutes to wait after the previous notification."
-              }
-            },
-            "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+            "$ref": "#/components/schemas/RenotifyConfig"
           }
         }
       },
@@ -26794,37 +26524,7 @@
             "description": "Human readable name of the Squadcast integration"
           },
           "renotifyConfig": {
-            "type": "object",
-            "required": [
-              "mode",
-              "renotificationStates",
-              "renotifyIntervalMinutes"
-            ],
-            "properties": {
-              "mode": {
-                "type": "string",
-                "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-                "enum": [
-                  "each"
-                ]
-              },
-              "renotificationStates": {
-                "type": "array",
-                "items": {
-                  "enum": [
-                    "alert",
-                    "alert_no_data"
-                  ],
-                  "type": "string"
-                },
-                "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
-              },
-              "renotifyIntervalMinutes": {
-                "type": "integer",
-                "description": "Minimum number of minutes to wait after the previous notification."
-              }
-            },
-            "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+            "$ref": "#/components/schemas/RenotifyConfig"
           }
         }
       },
@@ -26899,38 +26599,7 @@
             "description": "Slack workspace ID that receives the notification"
           },
           "renotifyConfig": {
-            "type": "object",
-            "required": [
-              "mode",
-              "renotificationStates",
-              "renotifyIntervalMinutes"
-            ],
-            "properties": {
-              "mode": {
-                "type": "string",
-                "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-                "enum": [
-                  "each"
-                ]
-              },
-              "renotificationStates": {
-                "type": "array",
-                "items": {
-                  "enum": [
-                    "alert",
-                    "alert_no_data"
-                  ],
-                  "type": "string"
-                },
-                "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
-              },
-              "renotifyIntervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "Minimum number of minutes to wait after the previous notification."
-              }
-            },
-            "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+            "$ref": "#/components/schemas/InputRenotifyConfig"
           }
         }
       },
@@ -26955,38 +26624,7 @@
             "description": "Identifier of the incident.io integration to use"
           },
           "renotifyConfig": {
-            "type": "object",
-            "required": [
-              "mode",
-              "renotificationStates",
-              "renotifyIntervalMinutes"
-            ],
-            "properties": {
-              "mode": {
-                "type": "string",
-                "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-                "enum": [
-                  "each"
-                ]
-              },
-              "renotificationStates": {
-                "type": "array",
-                "items": {
-                  "enum": [
-                    "alert",
-                    "alert_no_data"
-                  ],
-                  "type": "string"
-                },
-                "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
-              },
-              "renotifyIntervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "Minimum number of minutes to wait after the previous notification."
-              }
-            },
-            "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+            "$ref": "#/components/schemas/InputRenotifyConfig"
           }
         }
       },
@@ -27011,38 +26649,7 @@
             "description": "Identifier of the PagerDuty integration to use"
           },
           "renotifyConfig": {
-            "type": "object",
-            "required": [
-              "mode",
-              "renotificationStates",
-              "renotifyIntervalMinutes"
-            ],
-            "properties": {
-              "mode": {
-                "type": "string",
-                "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-                "enum": [
-                  "each"
-                ]
-              },
-              "renotificationStates": {
-                "type": "array",
-                "items": {
-                  "enum": [
-                    "alert",
-                    "alert_no_data"
-                  ],
-                  "type": "string"
-                },
-                "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
-              },
-              "renotifyIntervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "Minimum number of minutes to wait after the previous notification."
-              }
-            },
-            "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+            "$ref": "#/components/schemas/InputRenotifyConfig"
           }
         }
       },
@@ -27076,38 +26683,7 @@
             "description": "Email addresses that will receive the alert"
           },
           "renotifyConfig": {
-            "type": "object",
-            "required": [
-              "mode",
-              "renotificationStates",
-              "renotifyIntervalMinutes"
-            ],
-            "properties": {
-              "mode": {
-                "type": "string",
-                "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-                "enum": [
-                  "each"
-                ]
-              },
-              "renotificationStates": {
-                "type": "array",
-                "items": {
-                  "enum": [
-                    "alert",
-                    "alert_no_data"
-                  ],
-                  "type": "string"
-                },
-                "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
-              },
-              "renotifyIntervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "Minimum number of minutes to wait after the previous notification."
-              }
-            },
-            "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+            "$ref": "#/components/schemas/InputRenotifyConfig"
           }
         }
       },
@@ -27132,38 +26708,7 @@
             "description": "Identifier of the Grafana IRM integration to use"
           },
           "renotifyConfig": {
-            "type": "object",
-            "required": [
-              "mode",
-              "renotificationStates",
-              "renotifyIntervalMinutes"
-            ],
-            "properties": {
-              "mode": {
-                "type": "string",
-                "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-                "enum": [
-                  "each"
-                ]
-              },
-              "renotificationStates": {
-                "type": "array",
-                "items": {
-                  "enum": [
-                    "alert",
-                    "alert_no_data"
-                  ],
-                  "type": "string"
-                },
-                "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
-              },
-              "renotifyIntervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "Minimum number of minutes to wait after the previous notification."
-              }
-            },
-            "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+            "$ref": "#/components/schemas/InputRenotifyConfig"
           }
         }
       },
@@ -27188,38 +26733,7 @@
             "description": "Identifier of the Microsoft Teams integration to use"
           },
           "renotifyConfig": {
-            "type": "object",
-            "required": [
-              "mode",
-              "renotificationStates",
-              "renotifyIntervalMinutes"
-            ],
-            "properties": {
-              "mode": {
-                "type": "string",
-                "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-                "enum": [
-                  "each"
-                ]
-              },
-              "renotificationStates": {
-                "type": "array",
-                "items": {
-                  "enum": [
-                    "alert",
-                    "alert_no_data"
-                  ],
-                  "type": "string"
-                },
-                "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
-              },
-              "renotifyIntervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "Minimum number of minutes to wait after the previous notification."
-              }
-            },
-            "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+            "$ref": "#/components/schemas/InputRenotifyConfig"
           }
         }
       },
@@ -27244,38 +26758,7 @@
             "description": "Identifier of the webhook integration to use"
           },
           "renotifyConfig": {
-            "type": "object",
-            "required": [
-              "mode",
-              "renotificationStates",
-              "renotifyIntervalMinutes"
-            ],
-            "properties": {
-              "mode": {
-                "type": "string",
-                "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-                "enum": [
-                  "each"
-                ]
-              },
-              "renotificationStates": {
-                "type": "array",
-                "items": {
-                  "enum": [
-                    "alert",
-                    "alert_no_data"
-                  ],
-                  "type": "string"
-                },
-                "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
-              },
-              "renotifyIntervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "Minimum number of minutes to wait after the previous notification."
-              }
-            },
-            "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+            "$ref": "#/components/schemas/InputRenotifyConfig"
           }
         }
       },
@@ -27300,38 +26783,7 @@
             "description": "Identifier of the ServiceNow integration to use"
           },
           "renotifyConfig": {
-            "type": "object",
-            "required": [
-              "mode",
-              "renotificationStates",
-              "renotifyIntervalMinutes"
-            ],
-            "properties": {
-              "mode": {
-                "type": "string",
-                "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-                "enum": [
-                  "each"
-                ]
-              },
-              "renotificationStates": {
-                "type": "array",
-                "items": {
-                  "enum": [
-                    "alert",
-                    "alert_no_data"
-                  ],
-                  "type": "string"
-                },
-                "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
-              },
-              "renotifyIntervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "Minimum number of minutes to wait after the previous notification."
-              }
-            },
-            "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+            "$ref": "#/components/schemas/InputRenotifyConfig"
           }
         }
       },
@@ -27356,38 +26808,7 @@
             "description": "Identifier of the Google Chat integration to use"
           },
           "renotifyConfig": {
-            "type": "object",
-            "required": [
-              "mode",
-              "renotificationStates",
-              "renotifyIntervalMinutes"
-            ],
-            "properties": {
-              "mode": {
-                "type": "string",
-                "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-                "enum": [
-                  "each"
-                ]
-              },
-              "renotificationStates": {
-                "type": "array",
-                "items": {
-                  "enum": [
-                    "alert",
-                    "alert_no_data"
-                  ],
-                  "type": "string"
-                },
-                "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
-              },
-              "renotifyIntervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "Minimum number of minutes to wait after the previous notification."
-              }
-            },
-            "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+            "$ref": "#/components/schemas/InputRenotifyConfig"
           }
         }
       },
@@ -27412,38 +26833,7 @@
             "description": "Identifier of the Squadcast integration to use"
           },
           "renotifyConfig": {
-            "type": "object",
-            "required": [
-              "mode",
-              "renotificationStates",
-              "renotifyIntervalMinutes"
-            ],
-            "properties": {
-              "mode": {
-                "type": "string",
-                "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
-                "enum": [
-                  "each"
-                ]
-              },
-              "renotificationStates": {
-                "type": "array",
-                "items": {
-                  "enum": [
-                    "alert",
-                    "alert_no_data"
-                  ],
-                  "type": "string"
-                },
-                "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
-              },
-              "renotifyIntervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "Minimum number of minutes to wait after the previous notification."
-              }
-            },
-            "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+            "$ref": "#/components/schemas/InputRenotifyConfig"
           }
         }
       },
@@ -49352,6 +48742,75 @@
           }
         },
         "description": "SLO alert that is currently open, carrying the breached SLO and the alert configuration that fired."
+      },
+      "RenotifyConfig": {
+        "type": "object",
+        "required": [
+          "mode",
+          "renotificationStates",
+          "renotifyIntervalMinutes"
+        ],
+        "properties": {
+          "mode": {
+            "type": "string",
+            "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+            "enum": [
+              "each"
+            ]
+          },
+          "renotificationStates": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "alert",
+                "alert_no_data"
+              ],
+              "type": "string"
+            },
+            "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
+          },
+          "renotifyIntervalMinutes": {
+            "type": "integer",
+            "description": "Minimum number of minutes to wait after the previous notification."
+          }
+        },
+        "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+        "title": "RenotifyConfig"
+      },
+      "InputRenotifyConfig": {
+        "type": "object",
+        "required": [
+          "mode",
+          "renotificationStates",
+          "renotifyIntervalMinutes"
+        ],
+        "properties": {
+          "mode": {
+            "type": "string",
+            "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+            "enum": [
+              "each"
+            ]
+          },
+          "renotificationStates": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "alert",
+                "alert_no_data"
+              ],
+              "type": "string"
+            },
+            "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification."
+          },
+          "renotifyIntervalMinutes": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Minimum number of minutes to wait after the previous notification."
+          }
+        },
+        "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
+        "title": "RenotifyConfig"
       }
     }
   },
