@@ -45,6 +45,16 @@
  *    add use_state_for_unknown to it. The API returns the key only on creation
  *    and never rotates it, so plans keep the stored value instead of showing
  *    `key -> (known after apply)`.
+ *  - notification_rule and adaptive_notification_rule resources (their target configs are
+ *    expanded from a discriminated oneOf by expand-oneof.js): the oneOf blocks and the free-text
+ *    fields the response echoes (query_string, teams, jira statuses, monitor_ids, slo_ids) are
+ *    plain optional, since computed_optional would plan unselected blocks as `(known after apply)`
+ *    and keep a value dropped from the config. ExactlyOneOf across the destinations, which the
+ *    spec cannot express. tags use the shared resource_team tag type, as for the other
+ *    resources. notification_rule: cluster_ids_filter defaults to an empty list, so omitting it
+ *    clears the filter.
+ *  - every resource: list attributes whose spec items have an enum get a OneOf validator,
+ *    which tfplugingen does not generate.
  *  - cloud_account resource (its request body is expanded from a discriminated
  *    oneOf by expand-oneof.js): the spec cannot express that exactly one of
  *    aws, gcp and azure is set, so adds ExactlyOneOf across them. Also makes
@@ -191,7 +201,7 @@ for (const name of ["id", "key_last_characters"]) {
   );
 }
 
-for (const tagsResourceName of ["operation_api_key", "rum_public_token", "notification_rule"]) {
+for (const tagsResourceName of ["operation_api_key", "rum_public_token", "notification_rule", "adaptive_notification_rule"]) {
   requireAttr(requireResource(tagsResourceName), "tags").list_nested.nested_object.custom_type = {
     import: {path: "terraform-provider-tsuga/internal/resource_team"},
     type: "resource_team.TagsType{ObjectType: types.ObjectType{AttrTypes: resource_team.TagsValue{}.AttributeTypes(ctx)}}",
@@ -246,15 +256,30 @@ function walkAttrs(attributes, fn) {
   }
 }
 
+// Notification rules (notification_rule `targets`, adaptive_notification_rule `fallback_target`).
+// Blocks expanded from a oneOf, and the given optional free text the response echoes, are plain
+// optional: codegen marks them computed_optional, which would plan the unselected blocks as
+// `(known after apply)` on every update and keep a value that was dropped from the config.
+// The spec cannot express that exactly one destination is set: ExactlyOneDestination, in
+// resource_notification_rule/validators.go, so `qualify` prefixes it from other packages.
+function patchNotificationRule(resource, targetAttributes, optionalNames, qualify = false) {
+  walkAttrs(resource.schema.attributes, (attr, kind, name) => {
+    if ((kind === "single_nested" || optionalNames.includes(name)) && attr.computed_optional_required === "computed_optional") {
+      attr.computed_optional_required = "optional";
+    }
+  });
+  const imports = qualify ? [{path: "terraform-provider-tsuga/internal/resource_notification_rule"}] : undefined;
+  const prefix = qualify ? "resource_notification_rule." : "";
+  const targetConfig = requireEntry(targetAttributes, "attribute", "config").single_nested;
+  targetConfig.validators = [{custom: {imports, schema_definition: `${prefix}ExactlyOneDestination()`}}];
+}
+
 const notificationRule = requireResource("notification_rule");
-const targetItem = requireAttr(notificationRule, "targets").list_nested.nested_object.attributes;
-const targetConfig = requireEntry(targetItem, "attribute", "config").single_nested;
-walkAttrs(notificationRule.schema.attributes, (attr, kind, name) => {
-  const isOptionalByName = ["query_string", "teams", "open_status", "closed_status"].includes(name);
-  if ((kind === "single_nested" || isOptionalByName) && attr.computed_optional_required === "computed_optional") {
-    attr.computed_optional_required = "optional";
-  }
-});
+patchNotificationRule(
+  notificationRule,
+  requireAttr(notificationRule, "targets").list_nested.nested_object.attributes,
+  ["query_string", "teams", "open_status", "closed_status"],
+);
 // Omitting cluster_ids_filter clears it: the API treats an omitted or empty filter alike, so the
 // attribute defaults to an empty list.
 requireAttr(notificationRule, "cluster_ids_filter").list.default = {
@@ -268,34 +293,20 @@ requireAttr(notificationRule, "cluster_ids_filter").list.default = {
   },
 };
 
-// Every destination block has the same `renotify` block (a shared $ref schema), but tfplugingen
-// names a nested type after its attribute and would redeclare it per block: the first block
-// generates the type, the others become plain objects of that type. Their fields are checked by
-// RenotifyConfigValid (resource_notification_rule/validators.go), which mirrors the spec constraints.
-const renotifyAttrs = targetConfig.attributes
-  .flatMap((block) => block.single_nested.attributes.filter((attr) => attr.name === "renotify"));
-const objectAttrType = ({name, ...rest}) => {
-  const kind = kindOf(rest);
-  return {name, [kind]: kind === "list" ? {element_type: rest[kind].element_type} : {}};
-};
-renotifyAttrs.slice(1).forEach((renotify) => {
-  const {attributes, description} = renotify.single_nested;
-  delete renotify.single_nested;
-  renotify.object = {
-    attribute_types: attributes.map(objectAttrType),
-    computed_optional_required: "optional",
-    description,
-    custom_type: {
-      type: "RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}}",
-      value_type: "RenotifyValue",
-    },
-    validators: [{custom: {schema_definition: "RenotifyConfigValid()"}}],
-  };
-});
-
-// The spec cannot express that exactly one destination is set; the validator lives next to the
-// generated code (resource_notification_rule/validators.go) and names the destinations in its error.
-targetConfig.validators = [{custom: {schema_definition: 'ExactlyOneDestination()'}}];
+const adaptiveRule = requireResource("adaptive_notification_rule");
+patchNotificationRule(
+  adaptiveRule,
+  requireAttr(adaptiveRule, "fallback_target").single_nested.attributes,
+  ["open_status", "closed_status", "monitor_ids", "slo_ids"],
+  true,
+);
+// The provider always sends both lists, so omitting one clears it instead of keeping it as the API does.
+requireAttr(adaptiveRule, "monitor_ids").list.description =
+  "Monitors this rule reacts to. Only trace monitors and metric monitors over OTel span metrics are eligible. " +
+  "Omitting this attribute removes all monitors from the rule. Set at least one monitor or SLO.";
+requireAttr(adaptiveRule, "slo_ids").list.description =
+  "SLOs this rule reacts to. Only SLOs over traces or OTel span metrics are eligible. " +
+  "Omitting this attribute removes all SLOs from the rule. Set at least one monitor or SLO.";
 
 // tfplugingen skips the item enums of list attributes: add a OneOf validator for each, derived
 // from the expanded OpenAPI spec (argv[3]) along the create request body of every resource in
@@ -317,7 +328,7 @@ function createRequestPaths() {
 
 const apiSpec = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
 const deref = (schema) =>
-  schema?.$ref ? schema.$ref.replace(/^#\//, "").split("/").reduce((node, part) => node[part], apiSpec) : schema;
+      schema?.$ref ? schema.$ref.replace(/^#\//, "").split("/").reduce((node, part) => node[part], apiSpec) : schema;
 const nonNull = (schema) => deref(schema?.anyOf ? schema.anyOf.find((s) => s.type !== "null") : schema);
 const snakeCase = (name) => name.replace(/[A-Z]/g, (c) => "_" + c.toLowerCase());
 const propertyFor = (schema, name) => {

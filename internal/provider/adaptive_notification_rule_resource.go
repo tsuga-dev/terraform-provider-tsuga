@@ -295,9 +295,12 @@ func buildAdaptiveNotificationRuleRequestBody(ctx context.Context, plan resource
 
 // The schema gives config and rate_limit custom types (ConfigValue, RateLimitValue), so they are
 // converted to plain objects rather than asserted.
-func expandAdaptiveNotificationRuleFallbackTarget(ctx context.Context, target types.Object, body *apiclient.CreateAdaptiveNotificationRuleJSONBody) diag.Diagnostics {
-	var diags diag.Diagnostics
-	attrs := target.Attributes()
+func expandAdaptiveNotificationRuleFallbackTarget(ctx context.Context, target resource_adaptive_notification_rule.FallbackTargetValue, body *apiclient.CreateAdaptiveNotificationRuleJSONBody) diag.Diagnostics {
+	plain, diags := target.ToObjectValue(ctx)
+	if diags.HasError() {
+		return diags
+	}
+	attrs := plain.Attributes()
 	id, _ := attrs["id"].(types.String)
 	objects := map[string]types.Object{}
 	for _, name := range []string{"config", "rate_limit"} {
@@ -331,8 +334,18 @@ func flattenAdaptiveNotificationRule(ctx context.Context, data apiclient.Adaptiv
 	diags.Append(listDiags...)
 
 	// The fallback target has the shape of one notification rule target, so it reuses that flattener.
-	fallbackTarget, targetDiags := flattenNotificationRuleTarget(ctx, data.FallbackTarget.Id, data.FallbackTarget.Config, data.FallbackTarget.RateLimit)
+	plainTarget, targetDiags := flattenNotificationRuleTarget(ctx, data.FallbackTarget.Id, data.FallbackTarget.Config, data.FallbackTarget.RateLimit)
 	diags.Append(targetDiags...)
+	if diags.HasError() {
+		return resource_adaptive_notification_rule.AdaptiveNotificationRuleModel{}, diags
+	}
+	fallbackTarget, targetDiags := resource_adaptive_notification_rule.FallbackTargetType{
+		ObjectType: types.ObjectType{AttrTypes: resource_adaptive_notification_rule.FallbackTargetValue{}.AttributeTypes(ctx)},
+	}.ValueFromObject(ctx, plainTarget)
+	diags.Append(targetDiags...)
+	if diags.HasError() {
+		return resource_adaptive_notification_rule.AdaptiveNotificationRuleModel{}, diags
+	}
 
 	return resource_adaptive_notification_rule.AdaptiveNotificationRuleModel{
 		Id:             types.StringValue(data.Id),
@@ -342,7 +355,7 @@ func flattenAdaptiveNotificationRule(ctx context.Context, data apiclient.Adaptiv
 		IsActive:       types.BoolValue(data.IsActive),
 		MonitorIds:     monitorIDs,
 		SloIds:         sloIDs,
-		FallbackTarget: fallbackTarget,
+		FallbackTarget: fallbackTarget.(resource_adaptive_notification_rule.FallbackTargetValue),
 	}, diags
 }
 

@@ -132,7 +132,7 @@ Required:
 
 Optional:
 
-- `renotify` (Object) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--targets--config--google_chat--renotify))
+- `renotify` (Attributes) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--targets--config--google_chat--renotify))
 
 Read-Only:
 
@@ -144,9 +144,9 @@ Read-Only:
 
 Required:
 
-- `mode` (String)
-- `renotification_states` (List of String)
-- `renotify_interval_minutes` (Number)
+- `mode` (String) Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
+- `renotification_states` (List of String) Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
+- `renotify_interval_minutes` (Number) Minimum number of minutes to wait after the previous notification.
 
 
 
@@ -159,7 +159,7 @@ Required:
 
 Optional:
 
-- `renotify` (Object) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--targets--config--grafana_irm--renotify))
+- `renotify` (Attributes) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--targets--config--grafana_irm--renotify))
 
 Read-Only:
 
@@ -171,9 +171,9 @@ Read-Only:
 
 Required:
 
-- `mode` (String)
-- `renotification_states` (List of String)
-- `renotify_interval_minutes` (Number)
+- `mode` (String) Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
+- `renotification_states` (List of String) Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
+- `renotify_interval_minutes` (Number) Minimum number of minutes to wait after the previous notification.
 
 
 
@@ -186,7 +186,7 @@ Required:
 
 Optional:
 
-- `renotify` (Object) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--targets--config--incident_io--renotify))
+- `renotify` (Attributes) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--targets--config--incident_io--renotify))
 
 Read-Only:
 
@@ -198,9 +198,9 @@ Read-Only:
 
 Required:
 
-- `mode` (String)
-- `renotification_states` (List of String)
-- `renotify_interval_minutes` (Number)
+- `mode` (String) Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
+- `renotification_states` (List of String) Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
+- `renotify_interval_minutes` (Number) Minimum number of minutes to wait after the previous notification.
 
 
 
@@ -233,7 +233,7 @@ Required:
 
 Optional:
 
-- `renotify` (Object) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--targets--config--microsoft_teams--renotify))
+- `renotify` (Attributes) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--targets--config--microsoft_teams--renotify))
 
 Read-Only:
 
@@ -245,9 +245,9 @@ Read-Only:
 
 Required:
 
-- `mode` (String)
-- `renotification_states` (List of String)
-- `renotify_interval_minutes` (Number)
+- `mode` (String) Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
+- `renotification_states` (List of String) Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
+- `renotify_interval_minutes` (Number) Minimum number of minutes to wait after the previous notification.
 
 
 
@@ -260,7 +260,7 @@ Required:
 
 Optional:
 
-- `renotify` (Object) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--targets--config--pagerduty--renotify))
+- `renotify` (Attributes) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--targets--config--pagerduty--renotify))
 
 Read-Only:
 
@@ -272,9 +272,9 @@ Read-Only:
 
 Required:
 
-- `mode` (String)
-- `renotification_states` (List of String)
-- `renotify_interval_minutes` (Number)
+- `mode` (String) Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
+- `renotification_states` (List of String) Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
+- `renotify_interval_minutes` (Number) Minimum number of minutes to wait after the previous notification.
 
 
 
@@ -287,7 +287,7 @@ Required:
 
 Optional:
 
-- `renotify` (Object) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--targets--config--servicenow--renotify))
+- `renotify` (Attributes) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--targets--config--servicenow--renotify))
 
 Read-Only:
 
@@ -299,9 +299,9 @@ Read-Only:
 
 Required:
 
-- `mode` (String)
-- `renotification_states` (List of String)
-- `renotify_interval_minutes` (Number)
+- `mode` (String) Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
+- `renotification_states` (List of String) Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
+- `renotify_interval_minutes` (Number) Minimum number of minutes to wait after the previous notification.
 
 
 
@@ -315,7 +315,7 @@ Required:
 
 Optional:
 
-- `renotify` (Object) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--targets--config--slack--renotify))
+- `renotify` (Attributes) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--targets--config--slack--renotify))
 
 Read-Only:
 
@@ -327,9 +327,9 @@ Read-Only:
 
 Required:
 
-- `mode` (String)
-- `renotification_states` (List of String)
-- `renotify_interval_minutes` (Number)
+- `mode` (String) Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
+- `renotification_states` (List of String) Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
+- `renotify_interval_minutes` (Number) Minimum number of minutes to wait after the previous notification.
 
 
 
@@ -342,7 +342,7 @@ Required:
 
 Optional:
 
-- `renotify` (Object) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--targets--config--squadcast--renotify))
+- `renotify` (Attributes) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--targets--config--squadcast--renotify))
 
 Read-Only:
 
@@ -354,9 +354,9 @@ Read-Only:
 
 Required:
 
-- `mode` (String)
-- `renotification_states` (List of String)
-- `renotify_interval_minutes` (Number)
+- `mode` (String) Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
+- `renotification_states` (List of String) Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
+- `renotify_interval_minutes` (Number) Minimum number of minutes to wait after the previous notification.
 
 
 
@@ -369,7 +369,7 @@ Required:
 
 Optional:
 
-- `renotify` (Object) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--targets--config--webhook--renotify))
+- `renotify` (Attributes) Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition. (see [below for nested schema](#nestedatt--targets--config--webhook--renotify))
 
 Read-Only:
 
@@ -381,9 +381,9 @@ Read-Only:
 
 Required:
 
-- `mode` (String)
-- `renotification_states` (List of String)
-- `renotify_interval_minutes` (Number)
+- `mode` (String) Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.
+- `renotification_states` (List of String) Monitor alert states that trigger repeat notifications while the target remains configured for renotification.
+- `renotify_interval_minutes` (Number) Minimum number of minutes to wait after the previous notification.
 
 
 

@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Breaking:** `hide_time` and `hide_transition` were removed from `slack` targets of `tsuga_notification_rule` and `tsuga_adaptive_notification_rule`, because the Tsuga API no longer supports them. Remove them from your configuration.
 
+### Changed
+
+- **Breaking:** `renotify` in `tsuga_notification_rule` targets and the `tsuga_adaptive_notification_rule` fallback target moved from `config` into each destination block (`config.slack.renotify` instead of `config.renotify`), as in the Tsuga API. Move it in your configuration.
+- `tsuga_notification_rule`: schema is now generated from the OpenAPI spec. Apart from `renotify`, attribute names and nesting are unchanged, and the spec's limits (such as the allowed `priorities_filter`, `transition_types_filter` and `renotification_states` values, at most 50 tags, and tag value format) are checked at plan time instead of failing at apply. `tsuga_adaptive_notification_rule` shares the target schema, so its `fallback_target` and `tags` get the same checks and descriptions.
+- `tsuga_adaptive_notification_rule`: schema is now generated from the OpenAPI spec, with its descriptions. Apart from `renotify`, attribute names and nesting are unchanged, and the spec's limits (such as at most 100 `monitor_ids`, at most 50 tags, tag value format and the allowed `renotification_states` values) are checked at plan time instead of failing at apply.
+
 ## [3.2.0] - 2026-11-18
 
 ### Added

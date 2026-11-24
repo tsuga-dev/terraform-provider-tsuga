@@ -81,6 +81,16 @@ function unionOneOf(schema) {
   return {type: "object", description: schema.description, required: [propertyName], properties};
 }
 
+// A notification target: one block per integration in its config, each keeping its `renotify`.
+function reshapeNotificationTarget(target, role) {
+  const config = expandOneOf(target.properties.config, {keepDiscriminator: role === "response"});
+  for (const block of Object.values(config.properties)) {
+    if (block.properties.renotifyConfig) rename(block, "renotifyConfig", "renotify");
+  }
+  config.required = [];
+  target.properties.config = config;
+}
+
 const RULES = [
   // tsuga_cloud_account: connectionSettings variants become top-level blocks;
   // cloudType and cloudAccountId are derived from them, so they are response-only.
@@ -104,13 +114,19 @@ const RULES = [
     responses: [["/v1/notification-rules/{id}", "get"]],
     apply(rule, role) {
       rule.properties.teamsFilter = unionOneOf(rule.properties.teamsFilter);
-      const target = rule.properties.targets.items;
-      const config = expandOneOf(target.properties.config, {keepDiscriminator: role === "response"});
-      for (const block of Object.values(config.properties)) {
-        if (block.properties.renotifyConfig) rename(block, "renotifyConfig", "renotify");
-      }
-      config.required = [];
-      target.properties.config = config;
+      reshapeNotificationTarget(rule.properties.targets.items, role);
+    },
+  },
+
+  // tsuga_adaptive_notification_rule: the fallback target is one notification target.
+  {
+    requests: [
+      ["/v1/adaptive-notification-rules", "post"],
+      ["/v1/adaptive-notification-rules/{id}", "put"],
+    ],
+    responses: [["/v1/adaptive-notification-rules/{id}", "get"]],
+    apply(rule, role) {
+      reshapeNotificationTarget(rule.properties.fallbackTarget, role);
     },
   },
 ];

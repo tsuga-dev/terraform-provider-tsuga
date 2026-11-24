@@ -9,6 +9,7 @@ import (
 	"terraform-provider-tsuga/internal/resource_adaptive_notification_rule"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -51,9 +52,8 @@ func TestValidateAdaptiveNotificationRuleTargets(t *testing.T) {
 	}
 }
 
-// emailTarget round-trips through the schema type so nested blocks carry the custom value types
-// (ConfigValue, RateLimitValue) Terraform passes in, not plain objects.
-func emailTarget(t *testing.T, id string) types.Object {
+// emailTarget round-trips through the schema type, so the value has the types Terraform passes in.
+func emailTarget(t *testing.T, id string) resource_adaptive_notification_rule.FallbackTargetValue {
 	ctx := context.Background()
 	fallback := emailAPITarget(t, id).FallbackTarget
 	plain, diags := flattenNotificationRuleTarget(ctx, fallback.Id, fallback.Config, fallback.RateLimit)
@@ -69,7 +69,7 @@ func emailTarget(t *testing.T, id string) types.Object {
 	if err != nil {
 		t.Fatalf("failed to build fallback target: %v", err)
 	}
-	return value.(types.Object)
+	return value.(resource_adaptive_notification_rule.FallbackTargetValue)
 }
 
 func emailAPITarget(t *testing.T, id string) apiclient.AdaptiveRule {
@@ -155,8 +155,27 @@ func TestFlattenAdaptiveNotificationRule_EmptyListKeepsConfiguredForm(t *testing
 	if len(state.MonitorIds.Elements()) != 1 {
 		t.Fatalf("expected one monitor id, got %s", state.MonitorIds)
 	}
-	fallbackAttrs := state.FallbackTarget.Attributes()
-	if fallbackAttrs["id"].(types.String).ValueString() != "fallback" || objectAttribute(fallbackAttrs["config"].(types.Object), "email").IsNull() {
+	if state.FallbackTarget.Id.ValueString() != "fallback" || objectAttribute(state.FallbackTarget.Config, "email").IsNull() {
 		t.Fatalf("unexpected fallback target: %#v", state.FallbackTarget)
+	}
+}
+
+func TestFlattenAdaptiveNotificationRule_FitsTheGeneratedSchema(t *testing.T) {
+	ctx := context.Background()
+
+	var data apiclient.AdaptiveRule
+	raw := `{"id": "rule-1", "name": "rule", "owner": "team-1", "monitorIds": ["monitor-1"], "tags": [{"key": "k", "value": "v"}],
+		"fallbackTarget": {"id": "fallback", "config": {"type": "email", "addresses": ["oncall@example.com"]}}}`
+	if err := json.Unmarshal([]byte(raw), &data); err != nil {
+		t.Fatal(err)
+	}
+	state, diags := flattenAdaptiveNotificationRule(ctx, data, resource_adaptive_notification_rule.AdaptiveNotificationRuleModel{})
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+
+	got := tfsdk.State{Schema: resource_adaptive_notification_rule.AdaptiveNotificationRuleResourceSchema(ctx)}
+	if d := got.Set(ctx, &state); d.HasError() {
+		t.Fatalf("flattened rule does not fit the schema: %v", d)
 	}
 }

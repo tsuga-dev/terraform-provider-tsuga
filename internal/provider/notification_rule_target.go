@@ -64,7 +64,8 @@ type (
 	configFields    resource_notification_rule.ConfigValue
 	targetFields    resource_notification_rule.TargetsValue
 	rateLimitFields resource_notification_rule.RateLimitValue
-	renotifyFields  resource_notification_rule.RenotifyValue
+	// Every destination has its own renotify type, all with the same fields.
+	renotifyFields resource_notification_rule.EmailRenotifyValue
 
 	emailFields          resource_notification_rule.EmailValue
 	googleChatFields     resource_notification_rule.GoogleChatValue
@@ -105,7 +106,7 @@ func expandRenotify(ctx context.Context, o basetypes.ObjectValue, diags *diag.Di
 	if !known(o) {
 		return nil
 	}
-	value, d := valueOf(o, resource_notification_rule.NewRenotifyValue)
+	value, d := valueOf(o, resource_notification_rule.NewEmailRenotifyValue)
 	diags.Append(d...)
 	var states []string
 	diags.Append(value.RenotificationStates.ElementsAs(ctx, &states, false)...)
@@ -117,7 +118,7 @@ func expandRenotify(ctx context.Context, o basetypes.ObjectValue, diags *diag.Di
 }
 
 func renotifyObject(ctx context.Context, rc *apiclient.RenotifyConfig) basetypes.ObjectValue {
-	attrTypes := resource_notification_rule.RenotifyValue{}.AttributeTypes(ctx)
+	attrTypes := resource_notification_rule.EmailRenotifyValue{}.AttributeTypes(ctx)
 	if rc == nil {
 		return types.ObjectNull(attrTypes)
 	}

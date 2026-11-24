@@ -1,0 +1,16 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Rules that page the owners of the failing service when one of their monitors or SLOs fires
+---
+
+# {{.Name}} ({{.Type}})
+
+Rules that page the owners of the failing service when one of their monitors or SLOs fires
+
+## Example Usage
+
+{{ tffile "examples/resources/tsuga_adaptive_notification_rule/resource.tf" }}
+
+{{ .SchemaMarkdown | trimspace }}

@@ -29,6 +29,24 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Create codegen fork token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        id: codegen-token
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: tsuga-dev
+          repositories: terraform-plugin-codegen-framework
+          permission-contents: read
+
+      # tools/go.mod replaces terraform-plugin-codegen-framework with a private fork
+      - name: Authenticate codegen fork
+        env:
+          TOKEN: ${{ steps.codegen-token.outputs.token }}
+        run: |
+          git config --global url."https://x-access-token:$TOKEN@github.com/tsuga-dev/terraform-plugin-codegen-framework".insteadOf https://github.com/tsuga-dev/terraform-plugin-codegen-framework
+          echo GOPRIVATE=github.com/tsuga-dev/terraform-plugin-codegen-framework >> "$GITHUB_ENV"
+
       - name: Run codegen script
         run: sh codegen.sh
 

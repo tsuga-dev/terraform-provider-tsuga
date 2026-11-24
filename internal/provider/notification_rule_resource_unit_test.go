@@ -145,38 +145,9 @@ func TestExpandFlattenNotificationRuleTargets_RenotifyOnEveryDestination(t *test
 	}
 }
 
-func TestRenotifyConfigValid(t *testing.T) {
-	ctx := context.Background()
-	object := func(mode string, minutes int64) types.Object {
-		return types.ObjectValueMust(resource_notification_rule.RenotifyValue{}.AttributeTypes(ctx), map[string]attr.Value{
-			"mode":                      types.StringValue(mode),
-			"renotification_states":     types.ListValueMust(types.StringType, []attr.Value{types.StringValue("alert")}),
-			"renotify_interval_minutes": types.Int64Value(minutes),
-		})
-	}
-	nullInterval := types.ObjectValueMust(resource_notification_rule.RenotifyValue{}.AttributeTypes(ctx), map[string]attr.Value{
-		"mode":                      types.StringValue("each"),
-		"renotification_states":     types.ListValueMust(types.StringType, []attr.Value{types.StringValue("alert")}),
-		"renotify_interval_minutes": types.Int64Null(),
-	})
-	for name, c := range map[string]struct {
-		value   types.Object
-		invalid bool
-	}{
-		"valid": {object("each", 30), false}, "bad mode": {object("all", 30), true}, "bad interval": {object("each", 0), true},
-		"null interval": {nullInterval, true},
-	} {
-		resp := &validator.ObjectResponse{}
-		resource_notification_rule.RenotifyConfigValid().ValidateObject(ctx, validator.ObjectRequest{ConfigValue: c.value}, resp)
-		if resp.Diagnostics.HasError() != c.invalid {
-			t.Fatalf("%s: unexpected diagnostics %v", name, resp.Diagnostics)
-		}
-	}
-}
-
 func TestSlackValue_NullRenotifyToObjectValue(t *testing.T) {
 	ctx := context.Background()
-	renotifyTypes := resource_notification_rule.RenotifyValue{}.AttributeTypes(ctx)
+	renotifyTypes := resource_notification_rule.SlackRenotifyValue{}.AttributeTypes(ctx)
 	for name, renotify := range map[string]basetypes.ObjectValue{
 		"null":    types.ObjectNull(renotifyTypes),
 		"unknown": types.ObjectUnknown(renotifyTypes),

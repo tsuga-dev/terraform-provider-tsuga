@@ -82,3 +82,5 @@ tool (
 	github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
 	github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen
 )
+
+replace github.com/hashicorp/terraform-plugin-codegen-framework => github.com/tsuga-dev/terraform-plugin-codegen-framework v0.4.2-0.20261123141338-4daf1e6f6a53

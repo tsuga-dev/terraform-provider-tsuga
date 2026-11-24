@@ -116,8 +116,6 @@ github.com/hashicorp/terraform-exec v0.25.0 h1:Bkt6m3VkJqYh+laFMrWIpy9KHYFITpOyz
 github.com/hashicorp/terraform-exec v0.25.0/go.mod h1:dl9IwsCfklDU6I4wq9/StFDp7dNbH/h5AnfS1RmiUl8=
 github.com/hashicorp/terraform-json v0.27.3-0.20260213134036-298b8f6b673a h1:T7AMR21kjrbeEpN+KhGlyd31XXHsSZF5zg+ivfeYte4=
 github.com/hashicorp/terraform-json v0.27.3-0.20260213134036-298b8f6b673a/go.mod h1:yjb5C2W07l8lmAzdyVgOLji0/D2IoHkR3rusBzUO4O0=
-github.com/hashicorp/terraform-plugin-codegen-framework v0.4.1 h1:eaI/3dsu2T5QAXbA+7N+B+UBj20GdtYnsRuYypKh3S4=
-github.com/hashicorp/terraform-plugin-codegen-framework v0.4.1/go.mod h1:kpYM23L7NtcfaQdWAN0QFkV/lU0w16qJ2ddAPCI4zAg=
 github.com/hashicorp/terraform-plugin-codegen-openapi v0.3.0 h1:IKpc337XKk50QyQPSxLrHwdqSo1E2XqCMxFkWsZcTvc=
 github.com/hashicorp/terraform-plugin-codegen-openapi v0.3.0/go.mod h1:tT6wl80h7nsMBw+1yZRgJXi+Ys85PUai11weDqysvp4=
 github.com/hashicorp/terraform-plugin-codegen-spec v0.2.0 h1:91dQG1A/DxP6vRz9GiytDTrZTXDbhHPvmpYnAyWA/Vw=
@@ -214,6 +212,8 @@ github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81P
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
+github.com/tsuga-dev/terraform-plugin-codegen-framework v0.4.2-0.20261123141338-4daf1e6f6a53 h1:AECdJbqd7mcM9hwyuQ1i/4kZY+YK+aPgWMBVCKxPJJU=
+github.com/tsuga-dev/terraform-plugin-codegen-framework v0.4.2-0.20261123141338-4daf1e6f6a53/go.mod h1:B19RwNQtffa86UkBh8rw9ALTzvbYont0/W5XdU0NGy4=
 github.com/vmware-labs/yaml-jsonpath v0.3.2 h1:/5QKeCBGdsInyDCyVNLbXyilb61MXGi9NP674f9Hobk=
 github.com/vmware-labs/yaml-jsonpath v0.3.2/go.mod h1:U6whw1z03QyqgWdgXxvVnQ90zN1BWz5V+51Ewf8k+rQ=
 github.com/wk8/go-ordered-map/v2 v2.1.8 h1:5h/BUHu93oj4gIdvHHHGsScSTMijfx5PeYkE/fJgbpc=

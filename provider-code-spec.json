@@ -78,6 +78,1546 @@
   },
   "resources": [
     {
+      "name": "adaptive_notification_rule",
+      "schema": {
+        "attributes": [
+          {
+            "name": "fallback_target",
+            "single_nested": {
+              "computed_optional_required": "required",
+              "attributes": [
+                {
+                  "name": "config",
+                  "single_nested": {
+                    "computed_optional_required": "required",
+                    "attributes": [
+                      {
+                        "name": "email",
+                        "single_nested": {
+                          "computed_optional_required": "optional",
+                          "attributes": [
+                            {
+                              "name": "addresses",
+                              "list": {
+                                "computed_optional_required": "required",
+                                "element_type": {
+                                  "string": {}
+                                },
+                                "description": "Email addresses that will receive the alert",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "listvalidator.SizeBetween(1, 20)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "renotify",
+                              "single_nested": {
+                                "computed_optional_required": "optional",
+                                "attributes": [
+                                  {
+                                    "name": "mode",
+                                    "string": {
+                                      "computed_optional_required": "required",
+                                      "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "stringvalidator.OneOf(\n\"each\",\n)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "renotification_states",
+                                    "list": {
+                                      "computed_optional_required": "required",
+                                      "element_type": {
+                                        "string": {}
+                                      },
+                                      "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                              },
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"alert\", \"alert_no_data\"))"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "renotify_interval_minutes",
+                                    "int64": {
+                                      "computed_optional_required": "required",
+                                      "description": "Minimum number of minutes to wait after the previous notification.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                              }
+                                            ],
+                                            "schema_definition": "int64validator.AtLeast(1)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ],
+                                "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+                              }
+                            },
+                            {
+                              "name": "type",
+                              "string": {
+                                "computed_optional_required": "computed",
+                                "description": "Email target that sends directly to the listed addresses and does not require an integration."
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "google_chat",
+                        "single_nested": {
+                          "computed_optional_required": "optional",
+                          "attributes": [
+                            {
+                              "name": "integration_id",
+                              "string": {
+                                "computed_optional_required": "required",
+                                "description": "Identifier of the Google Chat integration to use",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "renotify",
+                              "single_nested": {
+                                "computed_optional_required": "optional",
+                                "attributes": [
+                                  {
+                                    "name": "mode",
+                                    "string": {
+                                      "computed_optional_required": "required",
+                                      "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "stringvalidator.OneOf(\n\"each\",\n)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "renotification_states",
+                                    "list": {
+                                      "computed_optional_required": "required",
+                                      "element_type": {
+                                        "string": {}
+                                      },
+                                      "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                              },
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"alert\", \"alert_no_data\"))"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "renotify_interval_minutes",
+                                    "int64": {
+                                      "computed_optional_required": "required",
+                                      "description": "Minimum number of minutes to wait after the previous notification.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                              }
+                                            ],
+                                            "schema_definition": "int64validator.AtLeast(1)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ],
+                                "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+                              }
+                            },
+                            {
+                              "name": "integration_name",
+                              "string": {
+                                "computed_optional_required": "computed",
+                                "description": "Human readable name of the Google Chat integration"
+                              }
+                            },
+                            {
+                              "name": "type",
+                              "string": {
+                                "computed_optional_required": "computed",
+                                "description": "Google Chat target backed by a configured Google Chat integration."
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "grafana_irm",
+                        "single_nested": {
+                          "computed_optional_required": "optional",
+                          "attributes": [
+                            {
+                              "name": "integration_id",
+                              "string": {
+                                "computed_optional_required": "required",
+                                "description": "Identifier of the Grafana IRM integration to use",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "renotify",
+                              "single_nested": {
+                                "computed_optional_required": "optional",
+                                "attributes": [
+                                  {
+                                    "name": "mode",
+                                    "string": {
+                                      "computed_optional_required": "required",
+                                      "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "stringvalidator.OneOf(\n\"each\",\n)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "renotification_states",
+                                    "list": {
+                                      "computed_optional_required": "required",
+                                      "element_type": {
+                                        "string": {}
+                                      },
+                                      "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                              },
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"alert\", \"alert_no_data\"))"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "renotify_interval_minutes",
+                                    "int64": {
+                                      "computed_optional_required": "required",
+                                      "description": "Minimum number of minutes to wait after the previous notification.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                              }
+                                            ],
+                                            "schema_definition": "int64validator.AtLeast(1)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ],
+                                "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+                              }
+                            },
+                            {
+                              "name": "integration_name",
+                              "string": {
+                                "computed_optional_required": "computed",
+                                "description": "Human readable name of the Grafana IRM integration"
+                              }
+                            },
+                            {
+                              "name": "type",
+                              "string": {
+                                "computed_optional_required": "computed",
+                                "description": "Grafana IRM target backed by a configured Grafana IRM integration."
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "incident_io",
+                        "single_nested": {
+                          "computed_optional_required": "optional",
+                          "attributes": [
+                            {
+                              "name": "integration_id",
+                              "string": {
+                                "computed_optional_required": "required",
+                                "description": "Identifier of the incident.io integration to use",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "renotify",
+                              "single_nested": {
+                                "computed_optional_required": "optional",
+                                "attributes": [
+                                  {
+                                    "name": "mode",
+                                    "string": {
+                                      "computed_optional_required": "required",
+                                      "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "stringvalidator.OneOf(\n\"each\",\n)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "renotification_states",
+                                    "list": {
+                                      "computed_optional_required": "required",
+                                      "element_type": {
+                                        "string": {}
+                                      },
+                                      "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                              },
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"alert\", \"alert_no_data\"))"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "renotify_interval_minutes",
+                                    "int64": {
+                                      "computed_optional_required": "required",
+                                      "description": "Minimum number of minutes to wait after the previous notification.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                              }
+                                            ],
+                                            "schema_definition": "int64validator.AtLeast(1)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ],
+                                "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+                              }
+                            },
+                            {
+                              "name": "integration_name",
+                              "string": {
+                                "computed_optional_required": "computed",
+                                "description": "Human readable name of the incident.io integration"
+                              }
+                            },
+                            {
+                              "name": "type",
+                              "string": {
+                                "computed_optional_required": "computed",
+                                "description": "incident.io target backed by a configured incident.io integration."
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "jira",
+                        "single_nested": {
+                          "computed_optional_required": "optional",
+                          "attributes": [
+                            {
+                              "name": "closed_status",
+                              "string": {
+                                "computed_optional_required": "optional",
+                                "description": "Jira status the alert ticket is moved to when the alert resolves. Only takes effect when the rule delivers recovery transitions.",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "integration_id",
+                              "string": {
+                                "computed_optional_required": "required",
+                                "description": "Identifier of the Jira integration to use",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "issue_type",
+                              "string": {
+                                "computed_optional_required": "required",
+                                "description": "Name of the Jira issue type created for alerts, like \"Bug\" or \"Task\".",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "open_status",
+                              "string": {
+                                "computed_optional_required": "optional",
+                                "description": "Jira status the alert ticket is moved to right after it is filed for a firing alert. A later transition between two firing states leaves the ticket status alone.",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "project_key",
+                              "string": {
+                                "computed_optional_required": "required",
+                                "description": "Key of the Jira project that alert issues are filed into, like \"OPS\".",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "integration_name",
+                              "string": {
+                                "computed_optional_required": "computed",
+                                "description": "Human readable name of the Jira integration"
+                              }
+                            },
+                            {
+                              "name": "type",
+                              "string": {
+                                "computed_optional_required": "computed",
+                                "description": "Jira target backed by a configured Jira integration. Jira targets file one issue per notification and do not support renotification."
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "microsoft_teams",
+                        "single_nested": {
+                          "computed_optional_required": "optional",
+                          "attributes": [
+                            {
+                              "name": "integration_id",
+                              "string": {
+                                "computed_optional_required": "required",
+                                "description": "Identifier of the Microsoft Teams integration to use",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "renotify",
+                              "single_nested": {
+                                "computed_optional_required": "optional",
+                                "attributes": [
+                                  {
+                                    "name": "mode",
+                                    "string": {
+                                      "computed_optional_required": "required",
+                                      "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "stringvalidator.OneOf(\n\"each\",\n)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "renotification_states",
+                                    "list": {
+                                      "computed_optional_required": "required",
+                                      "element_type": {
+                                        "string": {}
+                                      },
+                                      "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                              },
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"alert\", \"alert_no_data\"))"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "renotify_interval_minutes",
+                                    "int64": {
+                                      "computed_optional_required": "required",
+                                      "description": "Minimum number of minutes to wait after the previous notification.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                              }
+                                            ],
+                                            "schema_definition": "int64validator.AtLeast(1)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ],
+                                "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+                              }
+                            },
+                            {
+                              "name": "integration_name",
+                              "string": {
+                                "computed_optional_required": "computed",
+                                "description": "Human readable name of the Microsoft Teams integration"
+                              }
+                            },
+                            {
+                              "name": "type",
+                              "string": {
+                                "computed_optional_required": "computed",
+                                "description": "Microsoft Teams target backed by a configured Microsoft Teams integration."
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "pagerduty",
+                        "single_nested": {
+                          "computed_optional_required": "optional",
+                          "attributes": [
+                            {
+                              "name": "integration_id",
+                              "string": {
+                                "computed_optional_required": "required",
+                                "description": "Identifier of the PagerDuty integration to use",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "renotify",
+                              "single_nested": {
+                                "computed_optional_required": "optional",
+                                "attributes": [
+                                  {
+                                    "name": "mode",
+                                    "string": {
+                                      "computed_optional_required": "required",
+                                      "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "stringvalidator.OneOf(\n\"each\",\n)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "renotification_states",
+                                    "list": {
+                                      "computed_optional_required": "required",
+                                      "element_type": {
+                                        "string": {}
+                                      },
+                                      "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                              },
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"alert\", \"alert_no_data\"))"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "renotify_interval_minutes",
+                                    "int64": {
+                                      "computed_optional_required": "required",
+                                      "description": "Minimum number of minutes to wait after the previous notification.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                              }
+                                            ],
+                                            "schema_definition": "int64validator.AtLeast(1)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ],
+                                "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+                              }
+                            },
+                            {
+                              "name": "integration_name",
+                              "string": {
+                                "computed_optional_required": "computed",
+                                "description": "Human readable name of the PagerDuty integration"
+                              }
+                            },
+                            {
+                              "name": "type",
+                              "string": {
+                                "computed_optional_required": "computed",
+                                "description": "PagerDuty target backed by a configured PagerDuty integration."
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "servicenow",
+                        "single_nested": {
+                          "computed_optional_required": "optional",
+                          "attributes": [
+                            {
+                              "name": "integration_id",
+                              "string": {
+                                "computed_optional_required": "required",
+                                "description": "Identifier of the ServiceNow integration to use",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "renotify",
+                              "single_nested": {
+                                "computed_optional_required": "optional",
+                                "attributes": [
+                                  {
+                                    "name": "mode",
+                                    "string": {
+                                      "computed_optional_required": "required",
+                                      "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "stringvalidator.OneOf(\n\"each\",\n)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "renotification_states",
+                                    "list": {
+                                      "computed_optional_required": "required",
+                                      "element_type": {
+                                        "string": {}
+                                      },
+                                      "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                              },
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"alert\", \"alert_no_data\"))"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "renotify_interval_minutes",
+                                    "int64": {
+                                      "computed_optional_required": "required",
+                                      "description": "Minimum number of minutes to wait after the previous notification.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                              }
+                                            ],
+                                            "schema_definition": "int64validator.AtLeast(1)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ],
+                                "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+                              }
+                            },
+                            {
+                              "name": "integration_name",
+                              "string": {
+                                "computed_optional_required": "computed",
+                                "description": "Human readable name of the ServiceNow integration"
+                              }
+                            },
+                            {
+                              "name": "type",
+                              "string": {
+                                "computed_optional_required": "computed",
+                                "description": "ServiceNow target backed by a configured ServiceNow integration."
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "slack",
+                        "single_nested": {
+                          "computed_optional_required": "optional",
+                          "attributes": [
+                            {
+                              "name": "channel",
+                              "string": {
+                                "computed_optional_required": "required",
+                                "description": "Slack channel ID that receives the notification",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "integration_id",
+                              "string": {
+                                "computed_optional_required": "required",
+                                "description": "Slack workspace ID that receives the notification",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "renotify",
+                              "single_nested": {
+                                "computed_optional_required": "optional",
+                                "attributes": [
+                                  {
+                                    "name": "mode",
+                                    "string": {
+                                      "computed_optional_required": "required",
+                                      "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "stringvalidator.OneOf(\n\"each\",\n)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "renotification_states",
+                                    "list": {
+                                      "computed_optional_required": "required",
+                                      "element_type": {
+                                        "string": {}
+                                      },
+                                      "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                              },
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"alert\", \"alert_no_data\"))"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "renotify_interval_minutes",
+                                    "int64": {
+                                      "computed_optional_required": "required",
+                                      "description": "Minimum number of minutes to wait after the previous notification.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                              }
+                                            ],
+                                            "schema_definition": "int64validator.AtLeast(1)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ],
+                                "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+                              }
+                            },
+                            {
+                              "name": "integration_name",
+                              "string": {
+                                "computed_optional_required": "computed",
+                                "description": "Human readable name of the Slack integration"
+                              }
+                            },
+                            {
+                              "name": "type",
+                              "string": {
+                                "computed_optional_required": "computed",
+                                "description": "Slack target backed by a configured Slack integration."
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "squadcast",
+                        "single_nested": {
+                          "computed_optional_required": "optional",
+                          "attributes": [
+                            {
+                              "name": "integration_id",
+                              "string": {
+                                "computed_optional_required": "required",
+                                "description": "Identifier of the Squadcast integration to use",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "renotify",
+                              "single_nested": {
+                                "computed_optional_required": "optional",
+                                "attributes": [
+                                  {
+                                    "name": "mode",
+                                    "string": {
+                                      "computed_optional_required": "required",
+                                      "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "stringvalidator.OneOf(\n\"each\",\n)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "renotification_states",
+                                    "list": {
+                                      "computed_optional_required": "required",
+                                      "element_type": {
+                                        "string": {}
+                                      },
+                                      "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                              },
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"alert\", \"alert_no_data\"))"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "renotify_interval_minutes",
+                                    "int64": {
+                                      "computed_optional_required": "required",
+                                      "description": "Minimum number of minutes to wait after the previous notification.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                              }
+                                            ],
+                                            "schema_definition": "int64validator.AtLeast(1)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ],
+                                "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+                              }
+                            },
+                            {
+                              "name": "integration_name",
+                              "string": {
+                                "computed_optional_required": "computed",
+                                "description": "Human readable name of the Squadcast integration"
+                              }
+                            },
+                            {
+                              "name": "type",
+                              "string": {
+                                "computed_optional_required": "computed",
+                                "description": "Squadcast target backed by a configured Squadcast integration."
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "webhook",
+                        "single_nested": {
+                          "computed_optional_required": "optional",
+                          "attributes": [
+                            {
+                              "name": "integration_id",
+                              "string": {
+                                "computed_optional_required": "required",
+                                "description": "Identifier of the webhook integration to use",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "renotify",
+                              "single_nested": {
+                                "computed_optional_required": "optional",
+                                "attributes": [
+                                  {
+                                    "name": "mode",
+                                    "string": {
+                                      "computed_optional_required": "required",
+                                      "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "stringvalidator.OneOf(\n\"each\",\n)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "renotification_states",
+                                    "list": {
+                                      "computed_optional_required": "required",
+                                      "element_type": {
+                                        "string": {}
+                                      },
+                                      "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                              },
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"alert\", \"alert_no_data\"))"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "renotify_interval_minutes",
+                                    "int64": {
+                                      "computed_optional_required": "required",
+                                      "description": "Minimum number of minutes to wait after the previous notification.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                              }
+                                            ],
+                                            "schema_definition": "int64validator.AtLeast(1)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ],
+                                "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
+                              }
+                            },
+                            {
+                              "name": "integration_name",
+                              "string": {
+                                "computed_optional_required": "computed",
+                                "description": "Human readable name of the webhook integration"
+                              }
+                            },
+                            {
+                              "name": "type",
+                              "string": {
+                                "computed_optional_required": "computed",
+                                "description": "Webhook target backed by a configured webhook integration."
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ],
+                    "validators": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "terraform-provider-tsuga/internal/resource_notification_rule"
+                            }
+                          ],
+                          "schema_definition": "resource_notification_rule.ExactlyOneDestination()"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "id",
+                  "string": {
+                    "computed_optional_required": "required",
+                    "description": "Identifier of the notification target within this rule. Choose a stable ID that is unique among this rule's targets; Tsuga uses it with the rule ID for per-target delivery state such as rate limiting.",
+                    "validators": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "stringvalidator.LengthBetween(0, 250)"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "rate_limit",
+                  "single_nested": {
+                    "computed_optional_required": "optional",
+                    "attributes": [
+                      {
+                        "name": "max_messages",
+                        "int64": {
+                          "computed_optional_required": "required",
+                          "description": "Maximum number of notifications this target can send during the rate-limiting window. The ratio of `maxMessages` to `minutes` cannot exceed 100 notifications per minute.",
+                          "validators": [
+                            {
+                              "custom": {
+                                "imports": [
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                  }
+                                ],
+                                "schema_definition": "int64validator.AtLeast(1)"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "minutes",
+                        "int64": {
+                          "computed_optional_required": "required",
+                          "description": "Length of the rate-limiting window, in minutes. The ratio of `maxMessages` to `minutes` cannot exceed 100 notifications per minute.",
+                          "validators": [
+                            {
+                              "custom": {
+                                "imports": [
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                  }
+                                ],
+                                "schema_definition": "int64validator.AtLeast(1)"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ],
+                    "description": "Per-target rate limit used when sending notifications. If omitted, Tsuga allows up to 1000 notifications every 10 minutes for this target."
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "is_active",
+            "bool": {
+              "computed_optional_required": "required",
+              "description": "Set to true for the rule to send notifications when one of its monitors fires."
+            }
+          },
+          {
+            "name": "monitor_ids",
+            "list": {
+              "computed_optional_required": "optional",
+              "element_type": {
+                "string": {}
+              },
+              "description": "Monitors this rule reacts to. Only trace monitors and metric monitors over OTel span metrics are eligible. Omitting this attribute removes all monitors from the rule. Set at least one monitor or SLO.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.SizeAtMost(100)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "name",
+            "string": {
+              "computed_optional_required": "required",
+              "description": "Display name of the adaptive notification rule.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.LengthBetween(0, 250)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "owner",
+            "string": {
+              "computed_optional_required": "required",
+              "description": "Team ID that owns and manages the rule",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "slo_ids",
+            "list": {
+              "computed_optional_required": "optional",
+              "element_type": {
+                "string": {}
+              },
+              "description": "SLOs this rule reacts to. Only SLOs over traces or OTel span metrics are eligible. Omitting this attribute removes all SLOs from the rule. Set at least one monitor or SLO.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.SizeAtMost(100)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "tags",
+            "list_nested": {
+              "computed_optional_required": "computed_optional",
+              "nested_object": {
+                "attributes": [
+                  {
+                    "name": "key",
+                    "string": {
+                      "computed_optional_required": "required",
+                      "description": "Tag key to attach to the resource.",
+                      "validators": [
+                        {
+                          "custom": {
+                            "imports": [
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                              }
+                            ],
+                            "schema_definition": "stringvalidator.LengthAtMost(128)"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "value",
+                    "string": {
+                      "computed_optional_required": "required",
+                      "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected.",
+                      "validators": [
+                        {
+                          "custom": {
+                            "imports": [
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                              }
+                            ],
+                            "schema_definition": "stringvalidator.LengthAtMost(256)"
+                          }
+                        },
+                        {
+                          "custom": {
+                            "imports": [
+                              {
+                                "path": "regexp"
+                              },
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                              }
+                            ],
+                            "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^\\\\S(.*\\\\S)?$\"), \"\")"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "custom_type": {
+                  "import": {
+                    "path": "terraform-provider-tsuga/internal/resource_team"
+                  },
+                  "type": "resource_team.TagsType{ObjectType: types.ObjectType{AttrTypes: resource_team.TagsValue{}.AttributeTypes(ctx)}}",
+                  "value_type": "resource_team.TagsValue"
+                }
+              },
+              "description": "Key/value tags to apply to the resource. Tag policies may require specific keys or values.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.SizeAtMost(50)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "id",
+            "string": {
+              "computed_optional_required": "computed",
+              "description": "Unique identifier of the adaptive notification rule. Generated by Tsuga."
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "cloud_account",
       "schema": {
         "attributes": [
@@ -1481,38 +3021,74 @@
                               },
                               {
                                 "name": "renotify",
-                                "object": {
-                                  "attribute_types": [
+                                "single_nested": {
+                                  "computed_optional_required": "optional",
+                                  "attributes": [
                                     {
                                       "name": "mode",
-                                      "string": {}
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                                }
+                                              ],
+                                              "schema_definition": "stringvalidator.OneOf(\n\"each\",\n)"
+                                            }
+                                          }
+                                        ]
+                                      }
                                     },
                                     {
                                       "name": "renotification_states",
                                       "list": {
+                                        "computed_optional_required": "required",
                                         "element_type": {
                                           "string": {}
-                                        }
+                                        },
+                                        "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                                },
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                                }
+                                              ],
+                                              "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"alert\", \"alert_no_data\"))"
+                                            }
+                                          }
+                                        ]
                                       }
                                     },
                                     {
                                       "name": "renotify_interval_minutes",
-                                      "int64": {}
-                                    }
-                                  ],
-                                  "computed_optional_required": "optional",
-                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
-                                  "custom_type": {
-                                    "type": "RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}}",
-                                    "value_type": "RenotifyValue"
-                                  },
-                                  "validators": [
-                                    {
-                                      "custom": {
-                                        "schema_definition": "RenotifyConfigValid()"
+                                      "int64": {
+                                        "computed_optional_required": "required",
+                                        "description": "Minimum number of minutes to wait after the previous notification.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                                }
+                                              ],
+                                              "schema_definition": "int64validator.AtLeast(1)"
+                                            }
+                                          }
+                                        ]
                                       }
                                     }
-                                  ]
+                                  ],
+                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
                                 }
                               },
                               {
@@ -1558,38 +3134,74 @@
                               },
                               {
                                 "name": "renotify",
-                                "object": {
-                                  "attribute_types": [
+                                "single_nested": {
+                                  "computed_optional_required": "optional",
+                                  "attributes": [
                                     {
                                       "name": "mode",
-                                      "string": {}
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                                }
+                                              ],
+                                              "schema_definition": "stringvalidator.OneOf(\n\"each\",\n)"
+                                            }
+                                          }
+                                        ]
+                                      }
                                     },
                                     {
                                       "name": "renotification_states",
                                       "list": {
+                                        "computed_optional_required": "required",
                                         "element_type": {
                                           "string": {}
-                                        }
+                                        },
+                                        "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                                },
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                                }
+                                              ],
+                                              "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"alert\", \"alert_no_data\"))"
+                                            }
+                                          }
+                                        ]
                                       }
                                     },
                                     {
                                       "name": "renotify_interval_minutes",
-                                      "int64": {}
-                                    }
-                                  ],
-                                  "computed_optional_required": "optional",
-                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
-                                  "custom_type": {
-                                    "type": "RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}}",
-                                    "value_type": "RenotifyValue"
-                                  },
-                                  "validators": [
-                                    {
-                                      "custom": {
-                                        "schema_definition": "RenotifyConfigValid()"
+                                      "int64": {
+                                        "computed_optional_required": "required",
+                                        "description": "Minimum number of minutes to wait after the previous notification.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                                }
+                                              ],
+                                              "schema_definition": "int64validator.AtLeast(1)"
+                                            }
+                                          }
+                                        ]
                                       }
                                     }
-                                  ]
+                                  ],
+                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
                                 }
                               },
                               {
@@ -1635,38 +3247,74 @@
                               },
                               {
                                 "name": "renotify",
-                                "object": {
-                                  "attribute_types": [
+                                "single_nested": {
+                                  "computed_optional_required": "optional",
+                                  "attributes": [
                                     {
                                       "name": "mode",
-                                      "string": {}
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                                }
+                                              ],
+                                              "schema_definition": "stringvalidator.OneOf(\n\"each\",\n)"
+                                            }
+                                          }
+                                        ]
+                                      }
                                     },
                                     {
                                       "name": "renotification_states",
                                       "list": {
+                                        "computed_optional_required": "required",
                                         "element_type": {
                                           "string": {}
-                                        }
+                                        },
+                                        "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                                },
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                                }
+                                              ],
+                                              "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"alert\", \"alert_no_data\"))"
+                                            }
+                                          }
+                                        ]
                                       }
                                     },
                                     {
                                       "name": "renotify_interval_minutes",
-                                      "int64": {}
-                                    }
-                                  ],
-                                  "computed_optional_required": "optional",
-                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
-                                  "custom_type": {
-                                    "type": "RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}}",
-                                    "value_type": "RenotifyValue"
-                                  },
-                                  "validators": [
-                                    {
-                                      "custom": {
-                                        "schema_definition": "RenotifyConfigValid()"
+                                      "int64": {
+                                        "computed_optional_required": "required",
+                                        "description": "Minimum number of minutes to wait after the previous notification.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                                }
+                                              ],
+                                              "schema_definition": "int64validator.AtLeast(1)"
+                                            }
+                                          }
+                                        ]
                                       }
                                     }
-                                  ]
+                                  ],
+                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
                                 }
                               },
                               {
@@ -1829,38 +3477,74 @@
                               },
                               {
                                 "name": "renotify",
-                                "object": {
-                                  "attribute_types": [
+                                "single_nested": {
+                                  "computed_optional_required": "optional",
+                                  "attributes": [
                                     {
                                       "name": "mode",
-                                      "string": {}
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                                }
+                                              ],
+                                              "schema_definition": "stringvalidator.OneOf(\n\"each\",\n)"
+                                            }
+                                          }
+                                        ]
+                                      }
                                     },
                                     {
                                       "name": "renotification_states",
                                       "list": {
+                                        "computed_optional_required": "required",
                                         "element_type": {
                                           "string": {}
-                                        }
+                                        },
+                                        "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                                },
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                                }
+                                              ],
+                                              "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"alert\", \"alert_no_data\"))"
+                                            }
+                                          }
+                                        ]
                                       }
                                     },
                                     {
                                       "name": "renotify_interval_minutes",
-                                      "int64": {}
-                                    }
-                                  ],
-                                  "computed_optional_required": "optional",
-                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
-                                  "custom_type": {
-                                    "type": "RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}}",
-                                    "value_type": "RenotifyValue"
-                                  },
-                                  "validators": [
-                                    {
-                                      "custom": {
-                                        "schema_definition": "RenotifyConfigValid()"
+                                      "int64": {
+                                        "computed_optional_required": "required",
+                                        "description": "Minimum number of minutes to wait after the previous notification.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                                }
+                                              ],
+                                              "schema_definition": "int64validator.AtLeast(1)"
+                                            }
+                                          }
+                                        ]
                                       }
                                     }
-                                  ]
+                                  ],
+                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
                                 }
                               },
                               {
@@ -1906,38 +3590,74 @@
                               },
                               {
                                 "name": "renotify",
-                                "object": {
-                                  "attribute_types": [
+                                "single_nested": {
+                                  "computed_optional_required": "optional",
+                                  "attributes": [
                                     {
                                       "name": "mode",
-                                      "string": {}
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                                }
+                                              ],
+                                              "schema_definition": "stringvalidator.OneOf(\n\"each\",\n)"
+                                            }
+                                          }
+                                        ]
+                                      }
                                     },
                                     {
                                       "name": "renotification_states",
                                       "list": {
+                                        "computed_optional_required": "required",
                                         "element_type": {
                                           "string": {}
-                                        }
+                                        },
+                                        "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                                },
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                                }
+                                              ],
+                                              "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"alert\", \"alert_no_data\"))"
+                                            }
+                                          }
+                                        ]
                                       }
                                     },
                                     {
                                       "name": "renotify_interval_minutes",
-                                      "int64": {}
-                                    }
-                                  ],
-                                  "computed_optional_required": "optional",
-                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
-                                  "custom_type": {
-                                    "type": "RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}}",
-                                    "value_type": "RenotifyValue"
-                                  },
-                                  "validators": [
-                                    {
-                                      "custom": {
-                                        "schema_definition": "RenotifyConfigValid()"
+                                      "int64": {
+                                        "computed_optional_required": "required",
+                                        "description": "Minimum number of minutes to wait after the previous notification.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                                }
+                                              ],
+                                              "schema_definition": "int64validator.AtLeast(1)"
+                                            }
+                                          }
+                                        ]
                                       }
                                     }
-                                  ]
+                                  ],
+                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
                                 }
                               },
                               {
@@ -1983,38 +3703,74 @@
                               },
                               {
                                 "name": "renotify",
-                                "object": {
-                                  "attribute_types": [
+                                "single_nested": {
+                                  "computed_optional_required": "optional",
+                                  "attributes": [
                                     {
                                       "name": "mode",
-                                      "string": {}
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                                }
+                                              ],
+                                              "schema_definition": "stringvalidator.OneOf(\n\"each\",\n)"
+                                            }
+                                          }
+                                        ]
+                                      }
                                     },
                                     {
                                       "name": "renotification_states",
                                       "list": {
+                                        "computed_optional_required": "required",
                                         "element_type": {
                                           "string": {}
-                                        }
+                                        },
+                                        "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                                },
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                                }
+                                              ],
+                                              "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"alert\", \"alert_no_data\"))"
+                                            }
+                                          }
+                                        ]
                                       }
                                     },
                                     {
                                       "name": "renotify_interval_minutes",
-                                      "int64": {}
-                                    }
-                                  ],
-                                  "computed_optional_required": "optional",
-                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
-                                  "custom_type": {
-                                    "type": "RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}}",
-                                    "value_type": "RenotifyValue"
-                                  },
-                                  "validators": [
-                                    {
-                                      "custom": {
-                                        "schema_definition": "RenotifyConfigValid()"
+                                      "int64": {
+                                        "computed_optional_required": "required",
+                                        "description": "Minimum number of minutes to wait after the previous notification.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                                }
+                                              ],
+                                              "schema_definition": "int64validator.AtLeast(1)"
+                                            }
+                                          }
+                                        ]
                                       }
                                     }
-                                  ]
+                                  ],
+                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
                                 }
                               },
                               {
@@ -2079,38 +3835,74 @@
                               },
                               {
                                 "name": "renotify",
-                                "object": {
-                                  "attribute_types": [
+                                "single_nested": {
+                                  "computed_optional_required": "optional",
+                                  "attributes": [
                                     {
                                       "name": "mode",
-                                      "string": {}
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                                }
+                                              ],
+                                              "schema_definition": "stringvalidator.OneOf(\n\"each\",\n)"
+                                            }
+                                          }
+                                        ]
+                                      }
                                     },
                                     {
                                       "name": "renotification_states",
                                       "list": {
+                                        "computed_optional_required": "required",
                                         "element_type": {
                                           "string": {}
-                                        }
+                                        },
+                                        "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                                },
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                                }
+                                              ],
+                                              "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"alert\", \"alert_no_data\"))"
+                                            }
+                                          }
+                                        ]
                                       }
                                     },
                                     {
                                       "name": "renotify_interval_minutes",
-                                      "int64": {}
-                                    }
-                                  ],
-                                  "computed_optional_required": "optional",
-                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
-                                  "custom_type": {
-                                    "type": "RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}}",
-                                    "value_type": "RenotifyValue"
-                                  },
-                                  "validators": [
-                                    {
-                                      "custom": {
-                                        "schema_definition": "RenotifyConfigValid()"
+                                      "int64": {
+                                        "computed_optional_required": "required",
+                                        "description": "Minimum number of minutes to wait after the previous notification.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                                }
+                                              ],
+                                              "schema_definition": "int64validator.AtLeast(1)"
+                                            }
+                                          }
+                                        ]
                                       }
                                     }
-                                  ]
+                                  ],
+                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
                                 }
                               },
                               {
@@ -2156,38 +3948,74 @@
                               },
                               {
                                 "name": "renotify",
-                                "object": {
-                                  "attribute_types": [
+                                "single_nested": {
+                                  "computed_optional_required": "optional",
+                                  "attributes": [
                                     {
                                       "name": "mode",
-                                      "string": {}
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                                }
+                                              ],
+                                              "schema_definition": "stringvalidator.OneOf(\n\"each\",\n)"
+                                            }
+                                          }
+                                        ]
+                                      }
                                     },
                                     {
                                       "name": "renotification_states",
                                       "list": {
+                                        "computed_optional_required": "required",
                                         "element_type": {
                                           "string": {}
-                                        }
+                                        },
+                                        "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                                },
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                                }
+                                              ],
+                                              "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"alert\", \"alert_no_data\"))"
+                                            }
+                                          }
+                                        ]
                                       }
                                     },
                                     {
                                       "name": "renotify_interval_minutes",
-                                      "int64": {}
-                                    }
-                                  ],
-                                  "computed_optional_required": "optional",
-                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
-                                  "custom_type": {
-                                    "type": "RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}}",
-                                    "value_type": "RenotifyValue"
-                                  },
-                                  "validators": [
-                                    {
-                                      "custom": {
-                                        "schema_definition": "RenotifyConfigValid()"
+                                      "int64": {
+                                        "computed_optional_required": "required",
+                                        "description": "Minimum number of minutes to wait after the previous notification.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                                }
+                                              ],
+                                              "schema_definition": "int64validator.AtLeast(1)"
+                                            }
+                                          }
+                                        ]
                                       }
                                     }
-                                  ]
+                                  ],
+                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
                                 }
                               },
                               {
@@ -2233,38 +4061,74 @@
                               },
                               {
                                 "name": "renotify",
-                                "object": {
-                                  "attribute_types": [
+                                "single_nested": {
+                                  "computed_optional_required": "optional",
+                                  "attributes": [
                                     {
                                       "name": "mode",
-                                      "string": {}
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Renotification mode. `each` sends repeat notifications for each matching monitor alert that remains in a configured state.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                                }
+                                              ],
+                                              "schema_definition": "stringvalidator.OneOf(\n\"each\",\n)"
+                                            }
+                                          }
+                                        ]
+                                      }
                                     },
                                     {
                                       "name": "renotification_states",
                                       "list": {
+                                        "computed_optional_required": "required",
                                         "element_type": {
                                           "string": {}
-                                        }
+                                        },
+                                        "description": "Monitor alert states that trigger repeat notifications while the target remains configured for renotification.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                                },
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                                }
+                                              ],
+                                              "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"alert\", \"alert_no_data\"))"
+                                            }
+                                          }
+                                        ]
                                       }
                                     },
                                     {
                                       "name": "renotify_interval_minutes",
-                                      "int64": {}
-                                    }
-                                  ],
-                                  "computed_optional_required": "optional",
-                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition.",
-                                  "custom_type": {
-                                    "type": "RenotifyType{ObjectType: types.ObjectType{AttrTypes: RenotifyValue{}.AttributeTypes(ctx)}}",
-                                    "value_type": "RenotifyValue"
-                                  },
-                                  "validators": [
-                                    {
-                                      "custom": {
-                                        "schema_definition": "RenotifyConfigValid()"
+                                      "int64": {
+                                        "computed_optional_required": "required",
+                                        "description": "Minimum number of minutes to wait after the previous notification.",
+                                        "validators": [
+                                          {
+                                            "custom": {
+                                              "imports": [
+                                                {
+                                                  "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                                                }
+                                              ],
+                                              "schema_definition": "int64validator.AtLeast(1)"
+                                            }
+                                          }
+                                        ]
                                       }
                                     }
-                                  ]
+                                  ],
+                                  "description": "Configuration for repeat monitor notifications on this target. If omitted, Tsuga sends only the original notification for each alert transition."
                                 }
                               },
                               {
