@@ -7,13 +7,15 @@ resource "tsuga_notification_silence" "maintenance-window" {
 
   schedule = {
     recurring = {
-      # Maintenance window every Sunday from 2 AM to 6 AM
-      sunday = [
-        {
-          start_time = "02:00:00"
-          end_time   = "06:00:00"
-        }
-      ]
+      weekly_schedule = {
+        # Maintenance window every Sunday from 2 AM to 6 AM
+        sunday = [
+          {
+            start_time = "02:00:00"
+            end_time   = "06:00:00"
+          }
+        ]
+      }
     }
   }
 
@@ -46,70 +48,72 @@ resource "tsuga_notification_silence" "off-hours" {
 
   schedule = {
     recurring = {
-      # Silence low-priority alerts overnight on weekdays
-      monday = [
-        {
-          start_time = "00:00:00"
-          end_time   = "07:00:00"
-        },
-        {
-          start_time = "19:00:00"
-          end_time   = "23:59:00"
-        }
-      ]
-      tuesday = [
-        {
-          start_time = "00:00:00"
-          end_time   = "07:00:00"
-        },
-        {
-          start_time = "19:00:00"
-          end_time   = "23:59:00"
-        }
-      ]
-      wednesday = [
-        {
-          start_time = "00:00:00"
-          end_time   = "07:00:00"
-        },
-        {
-          start_time = "19:00:00"
-          end_time   = "23:59:00"
-        }
-      ]
-      thursday = [
-        {
-          start_time = "00:00:00"
-          end_time   = "07:00:00"
-        },
-        {
-          start_time = "19:00:00"
-          end_time   = "23:59:00"
-        }
-      ]
-      friday = [
-        {
-          start_time = "00:00:00"
-          end_time   = "07:00:00"
-        },
-        {
-          start_time = "19:00:00"
-          end_time   = "23:59:00"
-        }
-      ]
-      # Silence all day on weekends
-      saturday = [
-        {
-          start_time = "00:00:00"
-          end_time   = "23:59:00"
-        }
-      ]
-      sunday = [
-        {
-          start_time = "00:00:00"
-          end_time   = "23:59:00"
-        }
-      ]
+      weekly_schedule = {
+        # Silence low-priority alerts overnight on weekdays
+        monday = [
+          {
+            start_time = "00:00:00"
+            end_time   = "07:00:00"
+          },
+          {
+            start_time = "19:00:00"
+            end_time   = "23:59:00"
+          }
+        ]
+        tuesday = [
+          {
+            start_time = "00:00:00"
+            end_time   = "07:00:00"
+          },
+          {
+            start_time = "19:00:00"
+            end_time   = "23:59:00"
+          }
+        ]
+        wednesday = [
+          {
+            start_time = "00:00:00"
+            end_time   = "07:00:00"
+          },
+          {
+            start_time = "19:00:00"
+            end_time   = "23:59:00"
+          }
+        ]
+        thursday = [
+          {
+            start_time = "00:00:00"
+            end_time   = "07:00:00"
+          },
+          {
+            start_time = "19:00:00"
+            end_time   = "23:59:00"
+          }
+        ]
+        friday = [
+          {
+            start_time = "00:00:00"
+            end_time   = "07:00:00"
+          },
+          {
+            start_time = "19:00:00"
+            end_time   = "23:59:00"
+          }
+        ]
+        # Silence all day on weekends
+        saturday = [
+          {
+            start_time = "00:00:00"
+            end_time   = "23:59:00"
+          }
+        ]
+        sunday = [
+          {
+            start_time = "00:00:00"
+            end_time   = "23:59:00"
+          }
+        ]
+      }
     }
   }
 
@@ -161,12 +165,14 @@ resource "tsuga_notification_silence" "tokyo-maintenance" {
 
   schedule = {
     recurring = {
-      wednesday = [
-        {
-          start_time = "02:00:00"
-          end_time   = "04:00:00"
-        }
-      ]
+      weekly_schedule = {
+        wednesday = [
+          {
+            start_time = "02:00:00"
+            end_time   = "04:00:00"
+          }
+        ]
+      }
       time_zone = "Asia/Tokyo"
     }
   }
@@ -188,19 +194,21 @@ resource "tsuga_notification_silence" "deployment-silence" {
 
   schedule = {
     recurring = {
-      # Typical deployment windows on Tuesday and Thursday mornings
-      tuesday = [
-        {
-          start_time = "10:00:00"
-          end_time   = "12:00:00"
-        }
-      ]
-      thursday = [
-        {
-          start_time = "10:00:00"
-          end_time   = "12:00:00"
-        }
-      ]
+      weekly_schedule = {
+        # Typical deployment windows on Tuesday and Thursday mornings
+        tuesday = [
+          {
+            start_time = "10:00:00"
+            end_time   = "12:00:00"
+          }
+        ]
+        thursday = [
+          {
+            start_time = "10:00:00"
+            end_time   = "12:00:00"
+          }
+        ]
+      }
     }
   }
 

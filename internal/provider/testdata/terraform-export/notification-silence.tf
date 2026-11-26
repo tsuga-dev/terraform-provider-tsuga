@@ -3,6 +3,7 @@ resource "tsuga_notification_silence" "notification_silence" {
   name              = "Example"
   owner             = "team-123"
   priorities_filter = []
+  reason            = "Planned maintenance"
   schedule = {
     one_time = {
       end_time   = "2026-09-06T13:00:00"

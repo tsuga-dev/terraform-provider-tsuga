@@ -3,39 +3,9 @@ package teamsfilter
 import (
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
-
-// Schema returns the schema for a teams filter object.
-func Schema(description string) schema.Attribute {
-	return schema.SingleNestedAttribute{
-		Required:    true,
-		Description: description,
-		Attributes: map[string]schema.Attribute{
-			"type": schema.StringAttribute{
-				Required:    true,
-				Description: "Filter type: 'specific-teams' to apply to only specified teams, 'all-teams' to apply to all teams, 'all-public-teams' to apply to all public teams",
-				Validators: []validator.String{
-					stringvalidator.OneOf("specific-teams", "all-teams", "all-public-teams"),
-				},
-			},
-			"teams": schema.ListAttribute{
-				Optional:    true,
-				Description: "Team IDs to select (required when type is 'specific-teams')",
-				ElementType: types.StringType,
-				Validators: []validator.List{
-					listvalidator.SizeAtLeast(1),
-					listvalidator.SizeAtMost(100),
-				},
-			},
-		},
-	}
-}
 
 // Model represents a teams filter configuration.
 type Model struct {

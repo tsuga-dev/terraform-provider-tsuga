@@ -165,6 +165,19 @@ resources:
     delete:
       path: /v1/notification-integrations/{id}
       method: DELETE
+  notification_silence:
+    create:
+      path: /v1/notification-silences
+      method: POST
+    read:
+      path: /v1/notification-silences/{id}
+      method: GET
+    update:
+      path: /v1/notification-silences/{id}
+      method: PUT
+    delete:
+      path: /v1/notification-silences/{id}
+      method: DELETE
   operation_api_key:
     create:
       path: /v1/operation-api-keys

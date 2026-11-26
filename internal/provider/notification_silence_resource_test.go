@@ -28,18 +28,20 @@ resource "tsuga_notification_silence" "test-silence" {
 
   schedule = {
     recurring = {
-      monday = [
-        {
-          start_time = "00:00:00"
-          end_time   = "06:00:00"
-        }
-      ]
-      wednesday = [
-        {
-          start_time = "12:00:00"
-          end_time   = "14:00:00"
-        }
-      ]
+      weekly_schedule = {
+        monday = [
+          {
+            start_time = "00:00:00"
+            end_time   = "06:00:00"
+          }
+        ]
+        wednesday = [
+          {
+            start_time = "12:00:00"
+            end_time   = "14:00:00"
+          }
+        ]
+      }
     }
   }
 
@@ -71,10 +73,10 @@ resource "tsuga_notification_silence" "test-silence" {
 					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "teams_filter.teams.#", "1"),
 					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "transition_types_filter.#", "1"),
 					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "transition_types_filter.0", "triggered"),
-					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "schedule.recurring.monday.0.start_time", "00:00:00"),
-					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "schedule.recurring.monday.0.end_time", "06:00:00"),
-					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "schedule.recurring.wednesday.0.start_time", "12:00:00"),
-					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "schedule.recurring.wednesday.0.end_time", "14:00:00"),
+					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "schedule.recurring.weekly_schedule.monday.0.start_time", "00:00:00"),
+					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "schedule.recurring.weekly_schedule.monday.0.end_time", "06:00:00"),
+					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "schedule.recurring.weekly_schedule.wednesday.0.start_time", "12:00:00"),
+					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "schedule.recurring.weekly_schedule.wednesday.0.end_time", "14:00:00"),
 					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "tags.0.key", "env"),
 					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "tags.0.value", "test"),
 				),
@@ -95,18 +97,20 @@ resource "tsuga_notification_silence" "test-silence" {
 
   schedule = {
     recurring = {
-      monday = [
-        {
-          start_time = "00:00:00"
-          end_time   = "06:00:00"
-        }
-      ]
-      friday = [
-        {
-          start_time = "18:00:00"
-          end_time   = "23:59:00"
-        }
-      ]
+      weekly_schedule = {
+        monday = [
+          {
+            start_time = "00:00:00"
+            end_time   = "06:00:00"
+          }
+        ]
+        friday = [
+          {
+            start_time = "18:00:00"
+            end_time   = "23:59:00"
+          }
+        ]
+      }
     }
   }
 
@@ -132,10 +136,10 @@ resource "tsuga_notification_silence" "test-silence" {
 					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "teams_filter.type", "all-teams"),
 					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "priorities_filter.#", "1"),
 					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "transition_types_filter.#", "2"),
-					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "schedule.recurring.monday.0.start_time", "00:00:00"),
-					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "schedule.recurring.monday.0.end_time", "06:00:00"),
-					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "schedule.recurring.friday.0.start_time", "18:00:00"),
-					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "schedule.recurring.friday.0.end_time", "23:59:00"),
+					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "schedule.recurring.weekly_schedule.monday.0.start_time", "00:00:00"),
+					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "schedule.recurring.weekly_schedule.monday.0.end_time", "06:00:00"),
+					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "schedule.recurring.weekly_schedule.friday.0.start_time", "18:00:00"),
+					resource.TestCheckResourceAttr("tsuga_notification_silence.test-silence", "schedule.recurring.weekly_schedule.friday.0.end_time", "23:59:00"),
 				),
 			},
 		},

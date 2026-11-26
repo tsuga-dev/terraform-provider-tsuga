@@ -1,0 +1,22 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Silences to suppress notifications based on schedules and filters
+---
+
+# {{.Name}} ({{.Type}})
+
+Silences to suppress notifications based on schedules and filters
+
+Exactly one of `recurring` or `one_time` must be set in `schedule`. `recurring` takes its days of the week in `weekly_schedule`, such as `weekly_schedule.monday`.
+
+Times are fixed-width local times without a UTC offset, `HH:MM:SS` (e.g. `09:00:00`) in `recurring` windows, `YYYY-MM-DDTHH:MM:SS` (e.g. `2035-03-15T02:00:00`) in `one_time`.
+
+`teams_filter.type` is one of `specific-teams`, `all-teams` or `all-public-teams`; `teams` is required with `specific-teams`.
+
+## Example Usage
+
+{{ tffile "examples/resources/tsuga_notification_silence/resource.tf" }}
+
+{{ .SchemaMarkdown | trimspace }}

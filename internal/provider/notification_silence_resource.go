@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 var _ resource.Resource = (*notificationSilenceResource)(nil)
@@ -63,56 +64,33 @@ func (r *notificationSilenceResource) ValidateConfig(ctx context.Context, req re
 		return
 	}
 
-	// Validate schedule: exactly one of recurring or one_time must be set
-	if config.Schedule != nil {
-		scheduleSetCount := 0
-		if config.Schedule.Recurring != nil {
-			scheduleSetCount++
-		}
-		if config.Schedule.OneTime != nil {
-			scheduleSetCount++
-		}
-		if scheduleSetCount != 1 {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("schedule"),
-				"Invalid schedule configuration",
-				"Exactly one of 'recurring' or 'one_time' must be set in schedule.",
-			)
-		}
-
-		if config.Schedule.OneTime != nil {
-			resp.Diagnostics.Append(validateTimeWindow(
-				config.Schedule.OneTime.StartTime,
-				config.Schedule.OneTime.EndTime,
-				simpleDateTimeLayout,
-				path.Root("schedule").AtName("one_time"),
-			)...)
-		}
-		if config.Schedule.Recurring != nil {
-			resp.Diagnostics.Append(validateRecurringTimeOrder(ctx, config.Schedule.Recurring)...)
-		}
+	if oneTime := config.Schedule.OneTime; !oneTime.IsNull() && !oneTime.IsUnknown() {
+		attrs := oneTime.Attributes()
+		startTime, _ := attrs["start_time"].(types.String)
+		endTime, _ := attrs["end_time"].(types.String)
+		resp.Diagnostics.Append(validateTimeWindow(startTime, endTime, simpleDateTimeLayout, path.Root("schedule").AtName("one_time"))...)
+	}
+	if recurring := config.Schedule.Recurring; !recurring.IsNull() && !recurring.IsUnknown() {
+		resp.Diagnostics.Append(validateRecurringTimeOrder(ctx, recurring)...)
 	}
 
 	// Validate teams_filter: teams is required when type is "specific-teams"
-	if config.TeamsFilter != nil && !config.TeamsFilter.Type.IsNull() && !config.TeamsFilter.Type.IsUnknown() {
-		filterType := config.TeamsFilter.Type.ValueString()
-		if filterType == "specific-teams" {
-			if config.TeamsFilter.Teams.IsNull() {
-				resp.Diagnostics.AddAttributeError(
-					path.Root("teams_filter").AtName("teams"),
-					"Missing required attribute",
-					"teams is required when teams_filter.type is 'specific-teams'",
-				)
-			} else if !config.TeamsFilter.Teams.IsUnknown() && len(config.TeamsFilter.Teams.Elements()) == 0 {
-				resp.Diagnostics.AddAttributeError(
-					path.Root("teams_filter").AtName("teams"),
-					"Invalid attribute value",
-					"teams must contain at least one team ID when teams_filter.type is 'specific-teams'",
-				)
-			}
+	filter := config.TeamsFilter
+	if !filter.TeamsFilterType.IsNull() && !filter.TeamsFilterType.IsUnknown() && filter.TeamsFilterType.ValueString() == "specific-teams" {
+		if filter.Teams.IsNull() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("teams_filter").AtName("teams"),
+				"Missing required attribute",
+				"teams is required when teams_filter.type is 'specific-teams'",
+			)
+		} else if !filter.Teams.IsUnknown() && len(filter.Teams.Elements()) == 0 {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("teams_filter").AtName("teams"),
+				"Invalid attribute value",
+				"teams must contain at least one team ID when teams_filter.type is 'specific-teams'",
+			)
 		}
 	}
-
 }
 
 // Layouts for the API's `simple-date-time` and `simple-time` formats.
@@ -159,41 +137,38 @@ func validateTimeWindow(start, end types.String, layout string, p path.Path) dia
 	return diags
 }
 
-func validateRecurringTimeOrder(ctx context.Context, recurring *resource_notification_silence.RecurringScheduleModel) diag.Diagnostics {
+var weekdays = []string{"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"}
+
+func validateRecurringTimeOrder(ctx context.Context, recurring basetypes.ObjectValue) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	days := []struct {
-		name   string
-		ranges types.List
-	}{
-		{"monday", recurring.Monday},
-		{"tuesday", recurring.Tuesday},
-		{"wednesday", recurring.Wednesday},
-		{"thursday", recurring.Thursday},
-		{"friday", recurring.Friday},
-		{"saturday", recurring.Saturday},
-		{"sunday", recurring.Sunday},
+	weeklySchedule, _ := recurring.Attributes()["weekly_schedule"].(basetypes.ObjectValue)
+	if weeklySchedule.IsNull() || weeklySchedule.IsUnknown() {
+		return diags
 	}
 
-	for _, day := range days {
-		if day.ranges.IsNull() || day.ranges.IsUnknown() {
+	for _, day := range weekdays {
+		ranges, _ := weeklySchedule.Attributes()[day].(basetypes.ListValue)
+		if ranges.IsNull() || ranges.IsUnknown() {
 			continue
 		}
 
-		// A config can hold an unknown element (e.g. a window built from a
-		// computed value), so decode leniently and let the nil checks below skip it.
-		var ranges []resource_notification_silence.TimeRangeModel
-		diags.Append(day.ranges.ElementsAs(ctx, &ranges, true)...)
-		if diags.HasError() {
-			return diags
-		}
-
-		for i, timeRange := range ranges {
+		for i, element := range ranges.Elements() {
+			// A config can hold an unknown element (e.g. a window built from a computed value);
+			// its bounds read as null and are skipped.
+			timeRange, ok := element.(basetypes.ObjectValuable)
+			if !ok {
+				continue
+			}
+			object, objectDiags := timeRange.ToObjectValue(ctx)
+			diags.Append(objectDiags...)
+			startTime, _ := object.Attributes()["start_time"].(types.String)
+			endTime, _ := object.Attributes()["end_time"].(types.String)
 			diags.Append(validateTimeWindow(
-				timeRange.StartTime,
-				timeRange.EndTime,
+				startTime,
+				endTime,
 				simpleTimeLayout,
-				path.Root("schedule").AtName("recurring").AtName(day.name).AtListIndex(i),
+				path.Root("schedule").AtName("recurring").AtName("weekly_schedule").AtName(day).AtListIndex(i),
 			)...)
 		}
 	}
@@ -308,7 +283,7 @@ func (r *notificationSilenceResource) Update(ctx context.Context, req resource.U
 func (r *notificationSilenceResource) buildNotificationSilenceRequestBody(ctx context.Context, plan resource_notification_silence.NotificationSilenceModel) (map[string]any, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	teamsFilter, expandDiags := teamsfilter.Expand(ctx, plan.TeamsFilter)
+	teamsFilter, expandDiags := teamsfilter.Expand(ctx, &teamsfilter.Model{Type: plan.TeamsFilter.TeamsFilterType, Teams: plan.TeamsFilter.Teams})
 	diags.Append(expandDiags...)
 	prioritiesFilter, expandDiags := expandIntList(ctx, plan.PrioritiesFilter)
 	diags.Append(expandDiags...)
@@ -433,21 +408,11 @@ type notificationSilenceAPIData struct {
 }
 
 type notificationSilenceSchedule struct {
-	Type           string                 `json:"type"`
-	StartTime      string                 `json:"startTime,omitempty"`
-	EndTime        string                 `json:"endTime,omitempty"`
-	TimeZone       string                 `json:"timeZone,omitempty"`
-	WeeklySchedule *weeklyScheduleAPIData `json:"weeklySchedule,omitempty"`
-}
-
-type weeklyScheduleAPIData struct {
-	Monday    []timeRangeAPIData `json:"monday,omitempty"`
-	Tuesday   []timeRangeAPIData `json:"tuesday,omitempty"`
-	Wednesday []timeRangeAPIData `json:"wednesday,omitempty"`
-	Thursday  []timeRangeAPIData `json:"thursday,omitempty"`
-	Friday    []timeRangeAPIData `json:"friday,omitempty"`
-	Saturday  []timeRangeAPIData `json:"saturday,omitempty"`
-	Sunday    []timeRangeAPIData `json:"sunday,omitempty"`
+	Type           string                        `json:"type"`
+	StartTime      string                        `json:"startTime,omitempty"`
+	EndTime        string                        `json:"endTime,omitempty"`
+	TimeZone       string                        `json:"timeZone,omitempty"`
+	WeeklySchedule map[string][]timeRangeAPIData `json:"weeklySchedule,omitempty"`
 }
 
 type timeRangeAPIData struct {
@@ -455,68 +420,53 @@ type timeRangeAPIData struct {
 	EndTime   string `json:"endTime"`
 }
 
-func expandSchedule(ctx context.Context, schedule *resource_notification_silence.ScheduleModel) (map[string]any, diag.Diagnostics) {
+func expandSchedule(ctx context.Context, schedule resource_notification_silence.ScheduleValue) (map[string]any, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	if schedule == nil {
-		return nil, diags
-	}
 
-	if schedule.OneTime != nil {
+	if oneTime := schedule.OneTime; !oneTime.IsNull() && !oneTime.IsUnknown() {
+		attrs := oneTime.Attributes()
 		result := map[string]any{
 			"type":      "one-time",
-			"startTime": schedule.OneTime.StartTime.ValueString(),
-			"endTime":   schedule.OneTime.EndTime.ValueString(),
+			"startTime": attrs["start_time"].(types.String).ValueString(),
+			"endTime":   attrs["end_time"].(types.String).ValueString(),
 		}
-		if !schedule.OneTime.TimeZone.IsNull() && !schedule.OneTime.TimeZone.IsUnknown() {
-			result["timeZone"] = schedule.OneTime.TimeZone.ValueString()
+		if timeZone := attrs["time_zone"].(types.String); !timeZone.IsNull() && !timeZone.IsUnknown() {
+			result["timeZone"] = timeZone.ValueString()
 		}
 		return result, diags
 	}
 
-	if schedule.Recurring == nil {
+	recurring := schedule.Recurring
+	if recurring.IsNull() || recurring.IsUnknown() {
 		return nil, diags
 	}
 
+	configured, _ := recurring.Attributes()["weekly_schedule"].(basetypes.ObjectValue)
 	weeklySchedule := make(map[string]any)
-
-	days := []struct {
-		name string
-		list types.List
-	}{
-		{"monday", schedule.Recurring.Monday},
-		{"tuesday", schedule.Recurring.Tuesday},
-		{"wednesday", schedule.Recurring.Wednesday},
-		{"thursday", schedule.Recurring.Thursday},
-		{"friday", schedule.Recurring.Friday},
-		{"saturday", schedule.Recurring.Saturday},
-		{"sunday", schedule.Recurring.Sunday},
-	}
-
-	for _, day := range days {
-		if !day.list.IsNull() && !day.list.IsUnknown() {
-			var timeRanges []resource_notification_silence.TimeRangeModel
-			diags.Append(day.list.ElementsAs(ctx, &timeRanges, false)...)
-			if diags.HasError() {
-				return nil, diags
-			}
-
-			apiTimeRanges := make([]map[string]string, 0, len(timeRanges))
-			for _, tr := range timeRanges {
-				apiTimeRanges = append(apiTimeRanges, map[string]string{
-					"startTime": tr.StartTime.ValueString(),
-					"endTime":   tr.EndTime.ValueString(),
-				})
-			}
-			weeklySchedule[day.name] = apiTimeRanges
+	for _, day := range weekdays {
+		list, _ := configured.Attributes()[day].(basetypes.ListValue)
+		if list.IsNull() || list.IsUnknown() {
+			continue
 		}
+
+		timeRanges := make([]map[string]string, 0, len(list.Elements()))
+		for _, element := range list.Elements() {
+			object, objectDiags := element.(basetypes.ObjectValuable).ToObjectValue(ctx)
+			diags.Append(objectDiags...)
+			timeRanges = append(timeRanges, map[string]string{
+				"startTime": object.Attributes()["start_time"].(types.String).ValueString(),
+				"endTime":   object.Attributes()["end_time"].(types.String).ValueString(),
+			})
+		}
+		weeklySchedule[day] = timeRanges
 	}
 
 	result := map[string]any{
 		"type":           "recurring",
 		"weeklySchedule": weeklySchedule,
 	}
-	if !schedule.Recurring.TimeZone.IsNull() && !schedule.Recurring.TimeZone.IsUnknown() {
-		result["timeZone"] = schedule.Recurring.TimeZone.ValueString()
+	if timeZone := recurring.Attributes()["time_zone"].(types.String); !timeZone.IsNull() && !timeZone.IsUnknown() {
+		result["timeZone"] = timeZone.ValueString()
 	}
 	return result, diags
 }
@@ -548,6 +498,12 @@ func flattenNotificationSilence(ctx context.Context, data notificationSilenceAPI
 		notificationRuleIds = types.ListNull(types.StringType)
 	}
 
+	teamsFilterValue, teamsFilterDiags := resource_notification_silence.NewTeamsFilterValue(
+		resource_notification_silence.TeamsFilterValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{"type": teamsFilter.Type, "teams": teamsFilter.Teams},
+	)
+	diags.Append(teamsFilterDiags...)
+
 	state := resource_notification_silence.NotificationSilenceModel{
 		Id:                    types.StringValue(data.ID),
 		Name:                  types.StringValue(data.Name),
@@ -558,7 +514,7 @@ func flattenNotificationSilence(ctx context.Context, data notificationSilenceAPI
 		Schedule:              schedule,
 		NotificationRuleIds:   notificationRuleIds,
 		QueryString:           stringValueOrNull(data.QueryString),
-		TeamsFilter:           teamsFilter,
+		TeamsFilter:           teamsFilterValue,
 		PrioritiesFilter:      prioritiesFilter,
 		TransitionTypesFilter: transitionTypesFilter,
 	}
@@ -566,59 +522,57 @@ func flattenNotificationSilence(ctx context.Context, data notificationSilenceAPI
 	return state, diags
 }
 
-func flattenSchedule(ctx context.Context, schedule notificationSilenceSchedule) (*resource_notification_silence.ScheduleModel, diag.Diagnostics) {
+func flattenSchedule(ctx context.Context, schedule notificationSilenceSchedule) (resource_notification_silence.ScheduleValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	result := &resource_notification_silence.ScheduleModel{}
-
-	if schedule.Type == "one-time" {
-		result.OneTime = &resource_notification_silence.OneTimeScheduleModel{
-			StartTime: types.StringValue(schedule.StartTime),
-			EndTime:   types.StringValue(schedule.EndTime),
-			TimeZone:  stringValueOrNull(schedule.TimeZone),
-		}
-		return result, diags
+	attrTypes := resource_notification_silence.ScheduleValue{}.AttributeTypes(ctx)
+	oneTimeTypes := attrTypes["one_time"].(basetypes.ObjectType).AttrTypes
+	recurringTypes := attrTypes["recurring"].(basetypes.ObjectType).AttrTypes
+	values := map[string]attr.Value{
+		"one_time":  types.ObjectNull(oneTimeTypes),
+		"recurring": types.ObjectNull(recurringTypes),
 	}
 
-	if schedule.Type == "recurring" && schedule.WeeklySchedule != nil {
-		recurring := &resource_notification_silence.RecurringScheduleModel{}
-
-		timeRangeElemType := types.ObjectType{AttrTypes: resource_notification_silence.TimeRangeAttrTypes(ctx)}
-
-		flattenDayTimeRanges := func(ranges []timeRangeAPIData) (types.List, diag.Diagnostics) {
+	switch {
+	case schedule.Type == "one-time":
+		values["one_time"] = types.ObjectValueMust(oneTimeTypes, map[string]attr.Value{
+			"start_time": types.StringValue(schedule.StartTime),
+			"end_time":   types.StringValue(schedule.EndTime),
+			"time_zone":  stringValueOrNull(schedule.TimeZone),
+		})
+	case schedule.Type == "recurring" && schedule.WeeklySchedule != nil:
+		weeklyTypes := recurringTypes["weekly_schedule"].(basetypes.ObjectType).AttrTypes
+		weekly := map[string]attr.Value{}
+		for _, day := range weekdays {
+			elemType := weeklyTypes[day].(basetypes.ListType).ElemType
+			ranges := schedule.WeeklySchedule[day]
 			if len(ranges) == 0 {
-				return types.ListNull(timeRangeElemType), nil
+				weekly[day] = types.ListNull(elemType)
+				continue
 			}
-			values := make([]attr.Value, 0, len(ranges))
-			for _, tr := range ranges {
-				values = append(values, types.ObjectValueMust(resource_notification_silence.TimeRangeAttrTypes(ctx), map[string]attr.Value{
-					"start_time": types.StringValue(tr.StartTime),
-					"end_time":   types.StringValue(tr.EndTime),
-				}))
+
+			rangeTypes := elemType.(attr.TypeWithAttributeTypes).AttributeTypes()
+			elements := make([]attr.Value, 0, len(ranges))
+			for _, timeRange := range ranges {
+				object := types.ObjectValueMust(rangeTypes, map[string]attr.Value{
+					"start_time": types.StringValue(timeRange.StartTime),
+					"end_time":   types.StringValue(timeRange.EndTime),
+				})
+				element, elementDiags := elemType.(basetypes.ObjectTypable).ValueFromObject(ctx, object)
+				diags.Append(elementDiags...)
+				elements = append(elements, element)
 			}
-			return types.ListValue(timeRangeElemType, values)
+			list, listDiags := types.ListValue(elemType, elements)
+			diags.Append(listDiags...)
+			weekly[day] = list
 		}
-
-		var dayDiags diag.Diagnostics
-
-		recurring.Monday, dayDiags = flattenDayTimeRanges(schedule.WeeklySchedule.Monday)
-		diags.Append(dayDiags...)
-		recurring.Tuesday, dayDiags = flattenDayTimeRanges(schedule.WeeklySchedule.Tuesday)
-		diags.Append(dayDiags...)
-		recurring.Wednesday, dayDiags = flattenDayTimeRanges(schedule.WeeklySchedule.Wednesday)
-		diags.Append(dayDiags...)
-		recurring.Thursday, dayDiags = flattenDayTimeRanges(schedule.WeeklySchedule.Thursday)
-		diags.Append(dayDiags...)
-		recurring.Friday, dayDiags = flattenDayTimeRanges(schedule.WeeklySchedule.Friday)
-		diags.Append(dayDiags...)
-		recurring.Saturday, dayDiags = flattenDayTimeRanges(schedule.WeeklySchedule.Saturday)
-		diags.Append(dayDiags...)
-		recurring.Sunday, dayDiags = flattenDayTimeRanges(schedule.WeeklySchedule.Sunday)
-		diags.Append(dayDiags...)
-
-		recurring.TimeZone = stringValueOrNull(schedule.TimeZone)
-		result.Recurring = recurring
+		values["recurring"] = types.ObjectValueMust(recurringTypes, map[string]attr.Value{
+			"time_zone":       stringValueOrNull(schedule.TimeZone),
+			"weekly_schedule": types.ObjectValueMust(weeklyTypes, weekly),
+		})
 	}
 
+	result, resultDiags := resource_notification_silence.NewScheduleValue(attrTypes, values)
+	diags.Append(resultDiags...)
 	return result, diags
 }

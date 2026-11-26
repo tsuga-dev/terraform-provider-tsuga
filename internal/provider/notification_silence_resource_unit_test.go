@@ -2,12 +2,20 @@ package provider
 
 import (
 	"context"
-	"terraform-provider-tsuga/internal/resource_notification_silence"
+	"encoding/json"
+	"reflect"
 	"testing"
 
+	"terraform-provider-tsuga/internal/resource_notification_silence"
+	"terraform-provider-tsuga/internal/teamsfilter"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 func TestValidateTimeWindow_DateTimes(t *testing.T) {
@@ -86,36 +94,74 @@ func TestValidateTimeWindow_SkipsNullAndUnknown(t *testing.T) {
 	}
 }
 
+// recurringWith builds a recurring block from the schedule's own attribute types, with the given
+// days set (as already-built lists) and the others null.
+func recurringWith(t *testing.T, days map[string]attr.Value) basetypes.ObjectValue {
+	t.Helper()
+
+	ctx := context.Background()
+	recurringTypes := resource_notification_silence.ScheduleValue{}.AttributeTypes(ctx)["recurring"].(basetypes.ObjectType).AttrTypes
+	weeklyTypes := recurringTypes["weekly_schedule"].(basetypes.ObjectType).AttrTypes
+	values := map[string]attr.Value{}
+	for _, day := range weekdays {
+		if list, ok := days[day]; ok {
+			values[day] = list
+		} else {
+			values[day] = types.ListNull(weeklyTypes[day].(basetypes.ListType).ElemType)
+		}
+	}
+	return types.ObjectValueMust(recurringTypes, map[string]attr.Value{
+		"time_zone":       types.StringNull(),
+		"weekly_schedule": types.ObjectValueMust(weeklyTypes, values),
+	})
+}
+
+// ranges builds a day's list with one window; an empty start makes it an unknown window.
+func ranges(t *testing.T, day, start, end string) attr.Value {
+	t.Helper()
+
+	ctx := context.Background()
+	elemType := resource_notification_silence.ScheduleValue{}.AttributeTypes(ctx)["recurring"].(basetypes.ObjectType).AttrTypes["weekly_schedule"].(basetypes.ObjectType).AttrTypes[day].(basetypes.ListType).ElemType
+	rangeTypes := elemType.(attr.TypeWithAttributeTypes).AttributeTypes()
+
+	var element attr.Value
+	if start == "" {
+		var err error
+		element, err = elemType.ValueFromTerraform(ctx, tftypes.NewValue(elemType.TerraformType(ctx), tftypes.UnknownValue))
+		if err != nil {
+			t.Fatalf("failed to build an unknown time range: %v", err)
+		}
+	} else {
+		var diags diag.Diagnostics
+		object := types.ObjectValueMust(rangeTypes, map[string]attr.Value{"start_time": types.StringValue(start), "end_time": types.StringValue(end)})
+		element, diags = elemType.(basetypes.ObjectTypable).ValueFromObject(ctx, object)
+		if diags.HasError() {
+			t.Fatalf("failed to build a time range: %v", diags)
+		}
+	}
+	list, diags := types.ListValue(elemType, []attr.Value{element})
+	if diags.HasError() {
+		t.Fatalf("failed to build time ranges: %v", diags)
+	}
+	return list
+}
+
 func TestValidateRecurringTimeOrder(t *testing.T) {
 	ctx := context.Background()
-	elemType := types.ObjectType{AttrTypes: resource_notification_silence.TimeRangeAttrTypes(ctx)}
-
-	ranges := func(t *testing.T, start, end string) types.List {
-		list, diags := types.ListValueFrom(ctx, elemType, []resource_notification_silence.TimeRangeModel{{
-			StartTime: types.StringValue(start),
-			EndTime:   types.StringValue(end),
-		}})
-		if diags.HasError() {
-			t.Fatalf("failed to build time ranges: %v", diags)
-		}
-		return list
-	}
 
 	// A bad range on any day is reported, including the last one in the loop.
-	recurring := &resource_notification_silence.RecurringScheduleModel{
-		Monday:    ranges(t, "09:00:00", "17:00:00"),
-		Tuesday:   types.ListNull(elemType),
-		Wednesday: types.ListNull(elemType),
-		Thursday:  types.ListNull(elemType),
-		Friday:    types.ListNull(elemType),
-		Saturday:  types.ListNull(elemType),
-		Sunday:    ranges(t, "17:00:00", "09:00:00"),
-	}
+	recurring := recurringWith(t, map[string]attr.Value{
+		"monday": ranges(t, "monday", "09:00:00", "17:00:00"),
+		"sunday": ranges(t, "sunday", "17:00:00", "09:00:00"),
+	})
 	if diags := validateRecurringTimeOrder(ctx, recurring); !diags.HasError() {
 		t.Fatal("expected an error for a Sunday range ending before it starts")
 	}
 
-	recurring.Sunday = ranges(t, "09:00:00", "17:00:00")
+	recurring = recurringWith(t, map[string]attr.Value{
+		"monday": ranges(t, "monday", "09:00:00", "17:00:00"),
+		"sunday": ranges(t, "sunday", "09:00:00", "17:00:00"),
+	})
 	if diags := validateRecurringTimeOrder(ctx, recurring); diags.HasError() {
 		t.Fatalf("unexpected diagnostics for valid ranges: %v", diags)
 	}
@@ -123,24 +169,68 @@ func TestValidateRecurringTimeOrder(t *testing.T) {
 
 // An unknown window (e.g. built from a computed value) must not fail decoding.
 func TestValidateRecurringTimeOrder_UnknownElement(t *testing.T) {
-	ctx := context.Background()
-	elemType := types.ObjectType{AttrTypes: resource_notification_silence.TimeRangeAttrTypes(ctx)}
-
-	list, diags := types.ListValue(elemType, []attr.Value{types.ObjectUnknown(elemType.AttrTypes)})
-	if diags.HasError() {
-		t.Fatalf("failed to build list: %v", diags)
-	}
-
-	recurring := &resource_notification_silence.RecurringScheduleModel{
-		Monday:    list,
-		Tuesday:   types.ListNull(elemType),
-		Wednesday: types.ListNull(elemType),
-		Thursday:  types.ListNull(elemType),
-		Friday:    types.ListNull(elemType),
-		Saturday:  types.ListNull(elemType),
-		Sunday:    types.ListNull(elemType),
-	}
-	if diags := validateRecurringTimeOrder(ctx, recurring); diags.HasError() {
+	recurring := recurringWith(t, map[string]attr.Value{"monday": ranges(t, "monday", "", "")})
+	if diags := validateRecurringTimeOrder(context.Background(), recurring); diags.HasError() {
 		t.Fatalf("expected an unknown window to be skipped, got: %v", diags)
+	}
+}
+
+func TestExpandFlattenSchedule_RoundTrips(t *testing.T) {
+	ctx := context.Background()
+
+	cases := map[string]notificationSilenceSchedule{
+		"one-time": {Type: "one-time", StartTime: "2035-03-15T02:00:00", EndTime: "2035-03-15T06:00:00", TimeZone: "America/New_York"},
+		"recurring": {Type: "recurring", TimeZone: "UTC", WeeklySchedule: map[string][]timeRangeAPIData{
+			"monday": {{StartTime: "00:00:00", EndTime: "06:00:00"}, {StartTime: "12:00:00", EndTime: "14:00:00"}},
+			"sunday": {{StartTime: "02:00:00", EndTime: "06:00:00"}},
+		}},
+	}
+	for name, schedule := range cases {
+		t.Run(name, func(t *testing.T) {
+			flattened, diags := flattenSchedule(ctx, schedule)
+			if diags.HasError() {
+				t.Fatalf("unexpected diagnostics: %v", diags)
+			}
+			expanded, diags := expandSchedule(ctx, flattened)
+			if diags.HasError() {
+				t.Fatalf("unexpected diagnostics: %v", diags)
+			}
+
+			raw, _ := json.Marshal(expanded)
+			var back notificationSilenceSchedule
+			if err := json.Unmarshal(raw, &back); err != nil {
+				t.Fatalf("failed to decode the expanded schedule %s: %v", raw, err)
+			}
+			if !reflect.DeepEqual(back, schedule) {
+				t.Fatalf("got %+v, want %+v", back, schedule)
+			}
+		})
+	}
+}
+
+func TestFlattenNotificationSilence_FitsTheGeneratedSchema(t *testing.T) {
+	ctx := context.Background()
+
+	state, diags := flattenNotificationSilence(ctx, notificationSilenceAPIData{
+		ID:       "silence-1",
+		Name:     "silence",
+		Reason:   "maintenance",
+		Owner:    "team-1",
+		IsActive: true,
+		Schedule: notificationSilenceSchedule{Type: "recurring", WeeklySchedule: map[string][]timeRangeAPIData{
+			"friday": {{StartTime: "18:00:00", EndTime: "23:59:00"}},
+		}},
+		TeamsFilter:           teamsfilter.APITeamsFilter{Type: "specific-teams", Teams: []string{"team-1"}},
+		PrioritiesFilter:      []int64{1},
+		TransitionTypesFilter: []string{"triggered"},
+		Tags:                  []apiTag{{Key: "k", Value: "v"}},
+	})
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+
+	got := tfsdk.State{Schema: resource_notification_silence.NotificationSilenceResourceSchema(ctx)}
+	if d := got.Set(ctx, &state); d.HasError() {
+		t.Fatalf("flattened silence does not fit the schema: %v", d)
 	}
 }

@@ -259,6 +259,7 @@
     "resource": {
       "id": "resource-123",
       "name": "Example",
+      "reason": "Planned maintenance",
       "owner": "team-123",
       "tags": [],
       "isActive": true,

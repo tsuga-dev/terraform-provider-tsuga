@@ -53,6 +53,11 @@
  *    spec cannot express. tags use the shared resource_team tag type, as for the other
  *    resources. notification_rule: cluster_ids_filter defaults to an empty list, so omitting it
  *    clears the filter.
+ *  - notification_silence resource (its schedule and teamsFilter are expanded by expand-oneof.js):
+ *    the schedule blocks, the weekdays, time_zone, teams, query_string and notification_rule_ids are
+ *    plain optional (computed_optional would plan unselected blocks as `(known after apply)` and
+ *    keep a value dropped from the config); ExactlyOneOf across the schedule blocks, which the
+ *    spec cannot express; tags use the shared resource_team tag type.
  *  - custom_role resource (its teamScope is expanded from a discriminated oneOf by expand-oneof.js):
  *    `assets` becomes a map keyed by the spec's resource types, with a key OneOf, a value OneOf
  *    and a validator for the read-only types, all derived from the spec; team_ids and telemetry
@@ -207,7 +212,7 @@ for (const name of ["id", "key_last_characters"]) {
   );
 }
 
-for (const tagsResourceName of ["operation_api_key", "rum_public_token", "notification_rule", "adaptive_notification_rule", "notification_integration"]) {
+for (const tagsResourceName of ["operation_api_key", "rum_public_token", "notification_rule", "adaptive_notification_rule", "notification_integration", "notification_silence"]) {
   requireAttr(requireResource(tagsResourceName), "tags").list_nested.nested_object.custom_type = {
     import: {path: "terraform-provider-tsuga/internal/resource_team"},
     type: "resource_team.TagsType{ObjectType: types.ObjectType{AttrTypes: resource_team.TagsValue{}.AttributeTypes(ctx)}}",
@@ -274,17 +279,19 @@ const exactlyOneOf = (summary, noun) => [
   },
 ];
 
-// Notification rules (notification_rule `targets`, adaptive_notification_rule `fallback_target`).
 // Blocks expanded from a oneOf, and the given optional free text the response echoes, are plain
 // optional: codegen marks them computed_optional, which would plan the unselected blocks as
 // `(known after apply)` on every update and keep a value that was dropped from the config.
-// The spec cannot express that exactly one destination is set: validators.ExactlyOneOf.
-function patchNotificationRule(resource, targetAttributes, optionalNames) {
+function makeOptional(resource, names) {
   walkAttrs(resource.schema.attributes, (attr, kind, name) => {
-    if ((kind === "single_nested" || optionalNames.includes(name)) && attr.computed_optional_required === "computed_optional") {
+    if ((kind === "single_nested" || names.includes(name)) && attr.computed_optional_required === "computed_optional") {
       attr.computed_optional_required = "optional";
     }
   });
+}
+// The spec cannot express that exactly one destination is set: validators.ExactlyOneOf.
+function patchNotificationRule(resource, targetAttributes, optionalNames) {
+  makeOptional(resource, optionalNames);
   requireEntry(targetAttributes, "attribute", "config").single_nested.validators = exactlyOneOf("Invalid target config", "destination");
 }
 
@@ -357,6 +364,19 @@ integration.schema.attributes.push({
     description:
     "Secrets are write-only and never stored in state, so Terraform cannot detect when one changes. Set this to any new value after rotating a secret to have it sent again.",
   },
+});
+
+const notificationSilence = requireResource("notification_silence");
+makeOptional(notificationSilence, [
+  "teams", "time_zone", "query_string", "notification_rule_ids",
+  "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+]);
+
+requireAttr(notificationSilence, "schedule").single_nested.validators = exactlyOneOf("Invalid schedule", "schedule");
+// The spec's descriptions name sibling fields in camelCase; Terraform users see snake_case.
+walkAttrs(notificationSilence.schema.attributes, (attr) => {
+  attr.description &&= attr.description.replace(/`([a-z]+(?:[A-Z][a-z]*)+)`/g, (_, name) =>
+    `\`${name.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)}\``);
 });
 
 const adaptiveRule = requireResource("adaptive_notification_rule");

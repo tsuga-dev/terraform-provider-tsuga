@@ -152,6 +152,20 @@ const RULES = [
     },
   },
 
+  // tsuga_notification_silence: teamsFilter becomes one object with a `type` enum and the union of
+  // the variants' properties; schedule gets one block per type.
+  {
+    requests: [
+      ["/v1/notification-silences", "post"],
+      ["/v1/notification-silences/{id}", "put"],
+    ],
+    responses: [["/v1/notification-silences/{id}", "get"]],
+    apply(silence) {
+      silence.properties.teamsFilter = unionOneOf(silence.properties.teamsFilter);
+      silence.properties.schedule = expandOneOf(silence.properties.schedule);
+    },
+  },
+
   // tsuga_adaptive_notification_rule: the fallback target is one notification target.
   {
     requests: [

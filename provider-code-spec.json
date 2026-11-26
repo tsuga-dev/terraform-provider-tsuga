@@ -5599,6 +5599,676 @@
       }
     },
     {
+      "name": "notification_silence",
+      "schema": {
+        "attributes": [
+          {
+            "name": "is_active",
+            "bool": {
+              "computed_optional_required": "required",
+              "description": "Set to true for the silence to suppress matching notifications while its schedule is active. Set to false to keep the silence without suppressing anything."
+            }
+          },
+          {
+            "name": "name",
+            "string": {
+              "computed_optional_required": "required",
+              "description": "Display name of the silence",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.LengthBetween(0, 250)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "notification_rule_ids",
+            "list": {
+              "computed_optional_required": "optional",
+              "element_type": {
+                "string": {}
+              },
+              "description": "Notification rule IDs this silence applies to directly, matching any notification produced by one of these rules regardless of priority or transition type. Set only when `priorities_filter`, `transition_types_filter`, and `query_string` are not used to filter alerts.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      },
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.LengthBetween(0, 250))"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "owner",
+            "string": {
+              "computed_optional_required": "required",
+              "description": "Team ID that owns and manages the silence",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "priorities_filter",
+            "list": {
+              "computed_optional_required": "required",
+              "element_type": {
+                "int64": {}
+              },
+              "description": "Monitor priorities that must match for this silence to apply. An empty array matches every priority.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.SizeAtMost(5)"
+                  }
+                },
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      },
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.ValueInt64sAre(int64validator.OneOf(1, 2, 3, 4, 5))"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "query_string",
+            "string": {
+              "computed_optional_required": "optional",
+              "description": "Query on the alerting monitor tags and group-by dimensions, e.g. `env:prod AND service:bridge`. The monitor itself can be targeted with `monitor_id:<monitor id>`.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.LengthBetween(0, 10000)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "reason",
+            "string": {
+              "computed_optional_required": "required",
+              "description": "Free-text explanation of why notifications are being silenced, shown to other operators reviewing active silences.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.LengthBetween(1, 50000)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "schedule",
+            "single_nested": {
+              "computed_optional_required": "required",
+              "attributes": [
+                {
+                  "name": "one_time",
+                  "single_nested": {
+                    "computed_optional_required": "optional",
+                    "attributes": [
+                      {
+                        "name": "end_time",
+                        "string": {
+                          "computed_optional_required": "required",
+                          "description": "Local end date and time for the one-time silence. It must be after `start_time` and in the future."
+                        }
+                      },
+                      {
+                        "name": "start_time",
+                        "string": {
+                          "computed_optional_required": "required",
+                          "description": "Local start date and time for the one-time silence, interpreted in `time_zone` when provided."
+                        }
+                      },
+                      {
+                        "name": "time_zone",
+                        "string": {
+                          "computed_optional_required": "optional",
+                          "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
+                        }
+                      }
+                    ],
+                    "description": "One-time silence schedule with specific start and end times"
+                  }
+                },
+                {
+                  "name": "recurring",
+                  "single_nested": {
+                    "computed_optional_required": "optional",
+                    "attributes": [
+                      {
+                        "name": "time_zone",
+                        "string": {
+                          "computed_optional_required": "optional",
+                          "description": "IANA timezone identifier (e.g. \"America/New_York\"). Defaults to UTC if omitted."
+                        }
+                      },
+                      {
+                        "name": "weekly_schedule",
+                        "single_nested": {
+                          "computed_optional_required": "required",
+                          "attributes": [
+                            {
+                              "name": "friday",
+                              "list_nested": {
+                                "computed_optional_required": "optional",
+                                "nested_object": {
+                                  "attributes": [
+                                    {
+                                      "name": "end_time",
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Local end time for this recurring silence window on this day. It must be after `start_time`, and ranges on the same day cannot overlap."
+                                      }
+                                    },
+                                    {
+                                      "name": "start_time",
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                                      }
+                                    }
+                                  ]
+                                },
+                                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap.",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "listvalidator.SizeAtLeast(1)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "monday",
+                              "list_nested": {
+                                "computed_optional_required": "optional",
+                                "nested_object": {
+                                  "attributes": [
+                                    {
+                                      "name": "end_time",
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Local end time for this recurring silence window on this day. It must be after `start_time`, and ranges on the same day cannot overlap."
+                                      }
+                                    },
+                                    {
+                                      "name": "start_time",
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                                      }
+                                    }
+                                  ]
+                                },
+                                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap.",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "listvalidator.SizeAtLeast(1)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "saturday",
+                              "list_nested": {
+                                "computed_optional_required": "optional",
+                                "nested_object": {
+                                  "attributes": [
+                                    {
+                                      "name": "end_time",
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Local end time for this recurring silence window on this day. It must be after `start_time`, and ranges on the same day cannot overlap."
+                                      }
+                                    },
+                                    {
+                                      "name": "start_time",
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                                      }
+                                    }
+                                  ]
+                                },
+                                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap.",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "listvalidator.SizeAtLeast(1)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "sunday",
+                              "list_nested": {
+                                "computed_optional_required": "optional",
+                                "nested_object": {
+                                  "attributes": [
+                                    {
+                                      "name": "end_time",
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Local end time for this recurring silence window on this day. It must be after `start_time`, and ranges on the same day cannot overlap."
+                                      }
+                                    },
+                                    {
+                                      "name": "start_time",
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                                      }
+                                    }
+                                  ]
+                                },
+                                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap.",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "listvalidator.SizeAtLeast(1)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "thursday",
+                              "list_nested": {
+                                "computed_optional_required": "optional",
+                                "nested_object": {
+                                  "attributes": [
+                                    {
+                                      "name": "end_time",
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Local end time for this recurring silence window on this day. It must be after `start_time`, and ranges on the same day cannot overlap."
+                                      }
+                                    },
+                                    {
+                                      "name": "start_time",
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                                      }
+                                    }
+                                  ]
+                                },
+                                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap.",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "listvalidator.SizeAtLeast(1)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "tuesday",
+                              "list_nested": {
+                                "computed_optional_required": "optional",
+                                "nested_object": {
+                                  "attributes": [
+                                    {
+                                      "name": "end_time",
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Local end time for this recurring silence window on this day. It must be after `start_time`, and ranges on the same day cannot overlap."
+                                      }
+                                    },
+                                    {
+                                      "name": "start_time",
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                                      }
+                                    }
+                                  ]
+                                },
+                                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap.",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "listvalidator.SizeAtLeast(1)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "wednesday",
+                              "list_nested": {
+                                "computed_optional_required": "optional",
+                                "nested_object": {
+                                  "attributes": [
+                                    {
+                                      "name": "end_time",
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Local end time for this recurring silence window on this day. It must be after `start_time`, and ranges on the same day cannot overlap."
+                                      }
+                                    },
+                                    {
+                                      "name": "start_time",
+                                      "string": {
+                                        "computed_optional_required": "required",
+                                        "description": "Local start time for this recurring silence window on this day, using the schedule time zone."
+                                      }
+                                    }
+                                  ]
+                                },
+                                "description": "Silence windows for this day. Each window uses the schedule time zone, and windows on the same day cannot overlap.",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "listvalidator.SizeAtLeast(1)"
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ],
+                          "description": "Recurring silence windows keyed by day of week, evaluated in the schedule `time_zone` or in UTC when it is omitted. At least one day must be listed, and a day with no entry is never silenced. Each window covers `start_time` up to but not including `end_time`."
+                        }
+                      }
+                    ],
+                    "description": "Recurring weekly silence schedule"
+                  }
+                }
+              ],
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "terraform-provider-tsuga/internal/validators"
+                      }
+                    ],
+                    "schema_definition": "validators.ExactlyOneOf(\"Invalid schedule\", \"schedule\")"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "tags",
+            "list_nested": {
+              "computed_optional_required": "computed_optional",
+              "nested_object": {
+                "attributes": [
+                  {
+                    "name": "key",
+                    "string": {
+                      "computed_optional_required": "required",
+                      "description": "Tag key to attach to the resource.",
+                      "validators": [
+                        {
+                          "custom": {
+                            "imports": [
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                              }
+                            ],
+                            "schema_definition": "stringvalidator.LengthAtMost(128)"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "value",
+                    "string": {
+                      "computed_optional_required": "required",
+                      "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected.",
+                      "validators": [
+                        {
+                          "custom": {
+                            "imports": [
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                              }
+                            ],
+                            "schema_definition": "stringvalidator.LengthAtMost(256)"
+                          }
+                        },
+                        {
+                          "custom": {
+                            "imports": [
+                              {
+                                "path": "regexp"
+                              },
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                              }
+                            ],
+                            "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^\\\\S(.*\\\\S)?$\"), \"\")"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "custom_type": {
+                  "import": {
+                    "path": "terraform-provider-tsuga/internal/resource_team"
+                  },
+                  "type": "resource_team.TagsType{ObjectType: types.ObjectType{AttrTypes: resource_team.TagsValue{}.AttributeTypes(ctx)}}",
+                  "value_type": "resource_team.TagsValue"
+                }
+              },
+              "description": "Key/value tags to apply to the resource. Tag policies may require specific keys or values.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.SizeAtMost(50)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "teams_filter",
+            "single_nested": {
+              "computed_optional_required": "required",
+              "attributes": [
+                {
+                  "name": "teams",
+                  "list": {
+                    "computed_optional_required": "optional",
+                    "element_type": {
+                      "string": {}
+                    },
+                    "description": "Team IDs selected by this filter.",
+                    "validators": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                            }
+                          ],
+                          "schema_definition": "listvalidator.SizeBetween(1, 100)"
+                        }
+                      },
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                            },
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.LengthBetween(0, 250))"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "type",
+                  "string": {
+                    "computed_optional_required": "required",
+                    "description": "`specific-teams`: Match alert transitions associated with the listed teams. The caller must be allowed to access every listed team. Requires `teams`. `all-teams`: Match alert transitions for every team in the organization. Public API callers need an API key with `all` scope to create or update this filter. `all-public-teams`: Match alert transitions for all public teams. Public API callers need an API key with `all` or `owning-team-and-public` scope to create or update this filter.",
+                    "validators": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "stringvalidator.OneOf(\n\"specific-teams\",\n\"all-teams\",\n\"all-public-teams\",\n)"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ],
+              "description": "Team visibility filter used when matching alert transitions. Tsuga validates create and update requests against the caller permissions."
+            }
+          },
+          {
+            "name": "transition_types_filter",
+            "list": {
+              "computed_optional_required": "required",
+              "element_type": {
+                "string": {}
+              },
+              "description": "Alert state transitions that must match for this silence to apply. An empty array matches every transition type.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.SizeAtMost(3)"
+                  }
+                },
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      },
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"triggered\", \"resolved\", \"no-data\"))"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "id",
+            "string": {
+              "computed_optional_required": "computed",
+              "description": "Tsuga-generated notification silence ID assigned when the silence is created."
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "operation_api_key",
       "schema": {
         "attributes": [
