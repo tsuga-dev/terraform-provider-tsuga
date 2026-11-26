@@ -166,6 +166,18 @@ const RULES = [
     },
   },
 
+  // tsuga_tag_policy: configuration gets one block per type.
+  {
+    requests: [
+      ["/v1/tag-policies", "post"],
+      ["/v1/tag-policies/{id}", "put"],
+    ],
+    responses: [["/v1/tag-policies/{id}", "get"]],
+    apply(policy) {
+      policy.properties.configuration = expandOneOf(policy.properties.configuration);
+    },
+  },
+
   // tsuga_adaptive_notification_rule: the fallback target is one notification target.
   {
     requests: [

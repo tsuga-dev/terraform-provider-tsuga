@@ -6874,6 +6874,332 @@
       }
     },
     {
+      "name": "tag_policy",
+      "schema": {
+        "attributes": [
+          {
+            "name": "allowed_tag_values",
+            "list": {
+              "computed_optional_required": "required",
+              "element_type": {
+                "string": {}
+              },
+              "description": "Allowed values for `tagKey`. Leave empty to allow any value when the tag exists. Tsuga trims each submitted value before storing the policy.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.SizeAtMost(1000)"
+                  }
+                },
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      },
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.UTF8LengthBetween(1, 250))"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "configuration",
+            "single_nested": {
+              "computed_optional_required": "required",
+              "attributes": [
+                {
+                  "name": "telemetry",
+                  "single_nested": {
+                    "computed_optional_required": "optional",
+                    "attributes": [
+                      {
+                        "name": "asset_types",
+                        "list": {
+                          "computed_optional_required": "required",
+                          "element_type": {
+                            "string": {}
+                          },
+                          "description": "Telemetry signals covered by the policy. An empty array means logs, metrics, and traces.",
+                          "validators": [
+                            {
+                              "custom": {
+                                "imports": [
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                  },
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                  }
+                                ],
+                                "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"logs\", \"metrics\", \"traces\"))"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "drop_sample",
+                        "float64": {
+                          "computed_optional_required": "optional",
+                          "description": "Percentage of non-compliant telemetry datapoints to drop. Valid values are 0 through 100.",
+                          "validators": [
+                            {
+                              "custom": {
+                                "imports": [
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
+                                  }
+                                ],
+                                "schema_definition": "float64validator.Between(0, 100)"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "should_insert_warning",
+                        "bool": {
+                          "computed_optional_required": "required",
+                          "description": "When true, Tsuga annotates non-compliant telemetry with tag policy warnings instead of only measuring violations."
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "tsuga_asset",
+                  "single_nested": {
+                    "computed_optional_required": "optional",
+                    "attributes": [
+                      {
+                        "name": "asset_types",
+                        "list": {
+                          "computed_optional_required": "required",
+                          "element_type": {
+                            "string": {}
+                          },
+                          "description": "Tsuga-managed asset types covered by the policy. An empty array means all supported asset types.",
+                          "validators": [
+                            {
+                              "custom": {
+                                "imports": [
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                  },
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                  }
+                                ],
+                                "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.OneOf(\"ingestion-api-key\", \"operation-api-key\", \"rum-public-token\", \"dashboard\", \"log-route\", \"metric-route\", \"monitor\", \"notification-rule\", \"notification-silence\", \"rum-route\", \"slo\", \"span-route\"))"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ],
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "terraform-provider-tsuga/internal/validators"
+                      }
+                    ],
+                    "schema_definition": "validators.ExactlyOneOf(\"Invalid configuration\", \"configuration type\")"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "description",
+            "string": {
+              "computed_optional_required": "optional",
+              "description": "Optional user-provided policy description.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.UTF8LengthBetween(0, 250)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "is_active",
+            "bool": {
+              "computed_optional_required": "required",
+              "description": "Set to true for Tsuga to evaluate this policy. Reserved policies (for example the built-in `env` policy on ingestion API keys) reject a false value."
+            }
+          },
+          {
+            "name": "is_required",
+            "bool": {
+              "computed_optional_required": "required",
+              "description": "Set to true to require the tag. If false, allowed values still apply when the tag exists. Reserved policies reject a false value."
+            }
+          },
+          {
+            "name": "name",
+            "string": {
+              "computed_optional_required": "required",
+              "description": "Human-readable tag policy name.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.UTF8LengthBetween(0, 250)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "owner",
+            "string": {
+              "computed_optional_required": "required",
+              "description": "Team ID that will own and manage the policy.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.UTF8LengthBetween(1, 250)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "tag_key",
+            "string": {
+              "computed_optional_required": "required",
+              "description": "Tag key enforced by this policy. Tsuga trims surrounding whitespace before storing the policy.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.UTF8LengthBetween(1, 250)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "team_scope",
+            "single_nested": {
+              "computed_optional_required": "optional",
+              "attributes": [
+                {
+                  "name": "mode",
+                  "string": {
+                    "computed_optional_required": "required",
+                    "description": "`include` applies the policy only to listed teams. `exclude` applies it to all teams except the listed teams.",
+                    "validators": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "stringvalidator.OneOf(\n\"include\",\n\"exclude\",\n)"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "team_ids",
+                  "list": {
+                    "computed_optional_required": "required",
+                    "element_type": {
+                      "string": {}
+                    },
+                    "description": "Team IDs used by this policy scope.",
+                    "validators": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                            }
+                          ],
+                          "schema_definition": "listvalidator.SizeBetween(1, 100)"
+                        }
+                      },
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                            },
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.UTF8LengthBetween(0, 250))"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ],
+              "description": "Team scope to store for this policy. Omit this field to apply the policy to all teams."
+            }
+          },
+          {
+            "name": "id",
+            "string": {
+              "computed_optional_required": "computed",
+              "description": "Tsuga-generated tag policy ID assigned when the policy is created.",
+              "plan_modifiers": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+                      }
+                    ],
+                    "schema_definition": "stringplanmodifier.UseStateForUnknown()"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "team",
       "schema": {
         "attributes": [

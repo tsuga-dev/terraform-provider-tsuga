@@ -9,6 +9,7 @@ import (
 
 	"terraform-provider-tsuga/internal/resource_tag_policy"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -18,7 +19,6 @@ import (
 var _ resource.Resource = (*tagPolicyResource)(nil)
 var _ resource.ResourceWithConfigure = (*tagPolicyResource)(nil)
 var _ resource.ResourceWithImportState = (*tagPolicyResource)(nil)
-var _ resource.ResourceWithValidateConfig = (*tagPolicyResource)(nil)
 
 func NewTagPolicyResource() resource.Resource {
 	return &tagPolicyResource{}
@@ -49,40 +49,8 @@ func (r *tagPolicyResource) Metadata(_ context.Context, req resource.MetadataReq
 	resp.TypeName = req.ProviderTypeName + "_tag_policy"
 }
 
-func (r *tagPolicyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = resource_tag_policy.TagPolicyResourceSchema()
-}
-
-func (r *tagPolicyResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var config resource_tag_policy.TagPolicyModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Validate configuration: exactly one of telemetry or tsuga_asset must be set
-	if config.Configuration == nil {
-		return
-	}
-
-	telemetrySet := config.Configuration.Telemetry != nil
-	tsugaAssetSet := config.Configuration.TsugaAsset != nil
-
-	if !telemetrySet && !tsugaAssetSet {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("configuration"),
-			"Missing required configuration",
-			"Exactly one of 'telemetry' or 'tsuga_asset' must be configured.",
-		)
-	}
-
-	if telemetrySet && tsugaAssetSet {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("configuration"),
-			"Invalid configuration",
-			"Only one of 'telemetry' or 'tsuga_asset' can be configured, not both.",
-		)
-	}
+func (r *tagPolicyResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = resource_tag_policy.TagPolicyResourceSchema(ctx)
 }
 
 func (r *tagPolicyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -211,7 +179,7 @@ func (r *tagPolicyResource) buildTagPolicyRequestBody(ctx context.Context, plan 
 		requestBody["description"] = plan.Description.ValueString()
 	}
 
-	if plan.TeamScope != nil {
+	if !plan.TeamScope.IsNull() && !plan.TeamScope.IsUnknown() {
 		teamScope, teamDiags := expandTeamScope(ctx, plan.TeamScope)
 		diags.Append(teamDiags...)
 		if diags.HasError() {
@@ -318,14 +286,8 @@ type tagPolicyAPIConfiguration struct {
 	DropSample          *float64 `json:"dropSample,omitempty"`
 }
 
-func expandTeamScope(ctx context.Context, scope *resource_tag_policy.TeamScopeModel) (map[string]any, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	if scope == nil {
-		return nil, diags
-	}
-
-	teamIds, expandDiags := expandStringList(ctx, scope.TeamIds)
-	diags.Append(expandDiags...)
+func expandTeamScope(ctx context.Context, scope resource_tag_policy.TeamScopeValue) (map[string]any, diag.Diagnostics) {
+	teamIds, diags := expandStringList(ctx, scope.TeamIds)
 	if diags.HasError() {
 		return nil, diags
 	}
@@ -336,16 +298,13 @@ func expandTeamScope(ctx context.Context, scope *resource_tag_policy.TeamScopeMo
 	}, diags
 }
 
-func expandConfiguration(ctx context.Context, config *resource_tag_policy.ConfigurationModel) (map[string]any, diag.Diagnostics) {
+func expandConfiguration(ctx context.Context, config resource_tag_policy.ConfigurationValue) (map[string]any, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if config == nil {
-		diags.AddError("Invalid configuration", "Configuration is required.")
-		return nil, diags
-	}
-
-	if config.Telemetry != nil {
-		assetTypes, expandDiags := expandStringList(ctx, config.Telemetry.AssetTypes)
+	if known(config.Telemetry) {
+		telemetry, d := valueOf(config.Telemetry, resource_tag_policy.NewTelemetryValue)
+		diags.Append(d...)
+		assetTypes, expandDiags := expandStringList(ctx, telemetry.AssetTypes)
 		diags.Append(expandDiags...)
 		if diags.HasError() {
 			return nil, diags
@@ -354,18 +313,18 @@ func expandConfiguration(ctx context.Context, config *resource_tag_policy.Config
 		result := map[string]any{
 			"type":                "telemetry",
 			"assetTypes":          assetTypes,
-			"shouldInsertWarning": config.Telemetry.ShouldInsertWarning.ValueBool(),
+			"shouldInsertWarning": telemetry.ShouldInsertWarning.ValueBool(),
 		}
-
-		if !config.Telemetry.DropSample.IsNull() && !config.Telemetry.DropSample.IsUnknown() {
-			result["dropSample"] = config.Telemetry.DropSample.ValueFloat64()
+		if !telemetry.DropSample.IsNull() && !telemetry.DropSample.IsUnknown() {
+			result["dropSample"] = telemetry.DropSample.ValueFloat64()
 		}
-
 		return result, diags
 	}
 
-	if config.TsugaAsset != nil {
-		assetTypes, expandDiags := expandStringList(ctx, config.TsugaAsset.AssetTypes)
+	if known(config.TsugaAsset) {
+		tsugaAsset, d := valueOf(config.TsugaAsset, resource_tag_policy.NewTsugaAssetValue)
+		diags.Append(d...)
+		assetTypes, expandDiags := expandStringList(ctx, tsugaAsset.AssetTypes)
 		diags.Append(expandDiags...)
 		if diags.HasError() {
 			return nil, diags
@@ -387,48 +346,44 @@ func flattenTagPolicy(ctx context.Context, data tagPolicyAPIData) (resource_tag_
 	allowedTagValues, listDiags := types.ListValueFrom(ctx, types.StringType, data.AllowedTagValues)
 	diags.Append(listDiags...)
 
-	var teamScope *resource_tag_policy.TeamScopeModel
+	teamScopeTypes := resource_tag_policy.TeamScopeValue{}.AttributeTypes(ctx)
+	teamScope := resource_tag_policy.NewTeamScopeValueNull()
 	if data.TeamScope != nil {
 		teamIds, teamDiags := types.ListValueFrom(ctx, types.StringType, data.TeamScope.TeamIds)
 		diags.Append(teamDiags...)
-		teamScope = &resource_tag_policy.TeamScopeModel{
-			TeamIds: teamIds,
-			Mode:    types.StringValue(data.TeamScope.Mode),
-		}
+		teamScope = resource_tag_policy.NewTeamScopeValueMust(teamScopeTypes, map[string]attr.Value{
+			"team_ids": teamIds,
+			"mode":     types.StringValue(data.TeamScope.Mode),
+		})
 	}
 
 	configuration, configDiags := flattenConfiguration(ctx, data.Configuration)
 	diags.Append(configDiags...)
 
-	description := types.StringNull()
-	if data.Description != "" {
-		description = types.StringValue(data.Description)
-	}
-
-	owner := types.StringNull()
-	if data.Owner != "" {
-		owner = types.StringValue(data.Owner)
-	}
-
-	state := resource_tag_policy.TagPolicyModel{
+	return resource_tag_policy.TagPolicyModel{
 		Id:               types.StringValue(data.ID),
 		Name:             types.StringValue(data.Name),
-		Description:      description,
+		Description:      stringValueOrNull(data.Description),
 		IsActive:         types.BoolValue(data.IsActive),
 		TagKey:           types.StringValue(data.TagKey),
 		AllowedTagValues: allowedTagValues,
 		IsRequired:       types.BoolValue(data.IsRequired),
 		TeamScope:        teamScope,
 		Configuration:    configuration,
-		Owner:            owner,
-	}
-
-	return state, diags
+		Owner:            stringValueOrNull(data.Owner),
+	}, diags
 }
 
-func flattenConfiguration(ctx context.Context, config tagPolicyAPIConfiguration) (*resource_tag_policy.ConfigurationModel, diag.Diagnostics) {
+func flattenConfiguration(ctx context.Context, config tagPolicyAPIConfiguration) (resource_tag_policy.ConfigurationValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	result := &resource_tag_policy.ConfigurationModel{}
+
+	attrTypes := resource_tag_policy.ConfigurationValue{}.AttributeTypes(ctx)
+	telemetryTypes := resource_tag_policy.TelemetryValue{}.AttributeTypes(ctx)
+	tsugaAssetTypes := resource_tag_policy.TsugaAssetValue{}.AttributeTypes(ctx)
+	values := map[string]attr.Value{
+		"telemetry":   types.ObjectNull(telemetryTypes),
+		"tsuga_asset": types.ObjectNull(tsugaAssetTypes),
+	}
 
 	assetTypes, listDiags := types.ListValueFrom(ctx, types.StringType, config.AssetTypes)
 	diags.Append(listDiags...)
@@ -445,18 +400,18 @@ func flattenConfiguration(ctx context.Context, config tagPolicyAPIConfiguration)
 			shouldInsertWarning = types.BoolValue(*config.ShouldInsertWarning)
 		}
 
-		result.Telemetry = &resource_tag_policy.TelemetryConfigModel{
-			Type:                types.StringValue("telemetry"),
-			AssetTypes:          assetTypes,
-			ShouldInsertWarning: shouldInsertWarning,
-			DropSample:          dropSample,
-		}
+		values["telemetry"] = types.ObjectValueMust(telemetryTypes, map[string]attr.Value{
+			"asset_types":           assetTypes,
+			"should_insert_warning": shouldInsertWarning,
+			"drop_sample":           dropSample,
+		})
 	case "tsuga_asset":
-		result.TsugaAsset = &resource_tag_policy.TsugaAssetConfigModel{
-			Type:       types.StringValue("tsuga_asset"),
-			AssetTypes: assetTypes,
-		}
+		values["tsuga_asset"] = types.ObjectValueMust(tsugaAssetTypes, map[string]attr.Value{
+			"asset_types": assetTypes,
+		})
 	}
 
+	result, resultDiags := resource_tag_policy.NewConfigurationValue(attrTypes, values)
+	diags.Append(resultDiags...)
 	return result, diags
 }

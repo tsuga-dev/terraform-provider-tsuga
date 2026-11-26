@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - **Breaking:** `hide_time` and `hide_transition` were removed from `slack` targets of `tsuga_notification_rule` and `tsuga_adaptive_notification_rule`, because the Tsuga API no longer supports them. Remove them from your configuration.
+- **Breaking:** the read-only `type` of `tsuga_tag_policy` `configuration.telemetry` and `configuration.tsuga_asset` was removed, since the block itself names the type. Stop referencing it.
 
 ### Changed
 
@@ -27,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `name` of `tsuga_team`, `tsuga_ingestion_api_key`, `tsuga_operation_api_key` and `tsuga_rum_public_token` is checked as kebab-case at plan time, and so are the lengths of the list items of `team_override_fields` (`tsuga_ingestion_api_key`, `tsuga_rum_public_token`), `cluster_ids_filter` and email `addresses` (`tsuga_notification_rule`, `tsuga_adaptive_notification_rule`), as the API spec defines them, instead of failing at apply.
 - **Breaking:** `tsuga_notification_silence`: the day windows of `schedule.recurring` moved under `schedule.recurring.weekly_schedule` (`schedule.recurring.weekly_schedule.monday` instead of `schedule.recurring.monday`), as in the Tsuga API. Move them in your configuration.
 - `tsuga_notification_silence`: schema is now generated from the OpenAPI spec, with its descriptions. Apart from `weekly_schedule`, attribute names and nesting are unchanged, and the spec's limits (the allowed `priorities_filter` and `transition_types_filter` values, at least one window per weekday, and the lengths of text fields) are checked at plan time instead of failing at apply. `reason` is now required, as the API has always required it.
+- `tsuga_tag_policy`: schema is now generated from the OpenAPI spec, with its descriptions. Apart from the removed `type`, attribute names and nesting are unchanged. `configuration.tsuga_asset.asset_types` now accepts `span-route`, `asset_types` may be empty (the API reads it as every type), and the spec's limits (such as at most 1000 `allowed_tag_values`, the lengths of text fields and `drop_sample` between 0 and 100) are checked at plan time instead of failing at apply. `tag_key` may be up to 250 characters (it was 128).
 
 ## [3.2.0] - 2026-11-18
 

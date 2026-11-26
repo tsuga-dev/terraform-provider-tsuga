@@ -178,6 +178,19 @@ resources:
     delete:
       path: /v1/notification-silences/{id}
       method: DELETE
+  tag_policy:
+    create:
+      path: /v1/tag-policies
+      method: POST
+    read:
+      path: /v1/tag-policies/{id}
+      method: GET
+    update:
+      path: /v1/tag-policies/{id}
+      method: PUT
+    delete:
+      path: /v1/tag-policies/{id}
+      method: DELETE
   operation_api_key:
     create:
       path: /v1/operation-api-keys

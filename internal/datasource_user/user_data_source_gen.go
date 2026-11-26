@@ -29,7 +29,7 @@ func UserDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Identifier of the organization user to retrieve. Use the `id` returned by list users responses.",
 				MarkdownDescription: "Identifier of the organization user to retrieve. Use the `id` returned by list users responses.",
 				Validators: []validator.String{
-					stringvalidator.LengthBetween(1, 250),
+					stringvalidator.UTF8LengthBetween(1, 250),
 				},
 			},
 			"name": schema.StringAttribute{

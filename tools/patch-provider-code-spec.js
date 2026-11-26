@@ -58,6 +58,11 @@
  *    plain optional (computed_optional would plan unselected blocks as `(known after apply)` and
  *    keep a value dropped from the config); ExactlyOneOf across the schedule blocks, which the
  *    spec cannot express; tags use the shared resource_team tag type.
+ *  - tag_policy resource (its configuration is expanded from a discriminated oneOf by
+ *    expand-oneof.js): the configuration blocks, team_scope, description and drop_sample are plain
+ *    optional (computed_optional would plan unselected blocks as `(known after apply)` and keep a
+ *    value dropped from the config); ExactlyOneOf across telemetry and tsuga_asset, which the
+ *    spec cannot express; use_state_for_unknown on `id`.
  *  - custom_role resource (its teamScope is expanded from a discriminated oneOf by expand-oneof.js):
  *    `assets` becomes a map keyed by the spec's resource types, with a key OneOf, a value OneOf
  *    and a validator for the read-only types, all derived from the spec; team_ids and telemetry
@@ -74,7 +79,8 @@
  *    stored name when it is dropped from the config, so it could never be
  *    cleared); and adds use_state_for_unknown to `id`, as for the team resource.
  *  - every resource: validators tfplugingen does not generate, derived from the spec: list and
- *    set item constraints (enum, length, excluded literal) and the `kebab-case` string format.
+ *    set item constraints (enum, length, excluded literal), bounded numbers (as float64 with
+ *    Between) and the `kebab-case` string format.
  */
 const fs = require("fs");
 
@@ -379,6 +385,11 @@ walkAttrs(notificationSilence.schema.attributes, (attr) => {
     `\`${name.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)}\``);
 });
 
+const tagPolicy = requireResource("tag_policy");
+makeOptional(tagPolicy, ["description", "drop_sample"]);
+requireAttr(tagPolicy, "configuration").single_nested.validators = exactlyOneOf("Invalid configuration", "configuration type");
+requireAttr(tagPolicy, "id").string.plan_modifiers = planModifier(STRING_PLAN_MODIFIER, "stringplanmodifier.UseStateForUnknown()");
+
 const adaptiveRule = requireResource("adaptive_notification_rule");
 patchNotificationRule(
   adaptiveRule,
@@ -495,7 +506,8 @@ delete assets.single_nested;
 
 // tfplugingen emits neither the item constraints of list and set attributes nor format-based
 // string checks. Each is derived from the spec: item enums, item lengths, an item pattern that only
-// excludes one literal (`^(?!\*$)`, which Go's regexp cannot compile), and the `kebab-case` format.
+// excludes one literal (`^(?!\*$)`, which Go's regexp cannot compile), bounded numbers and the
+// `kebab-case` format.
 const ELEMENT_TYPES = {
   string: {pkg: "stringvalidator", each: "ValueStringsAre"},
   int64: {pkg: "int64validator", each: "ValueInt64sAre"},
@@ -541,6 +553,21 @@ function addSpecValidators(attributes = [], schema) {
           },
         ];
       }
+    } else if (kind === "number" && prop.minimum !== undefined && prop.maximum !== undefined) {
+      // The framework has no bounds validator for numbers, only for float64.
+      attr.float64 = {
+        ...attr.number,
+        validators: [
+          ...(attr.number.validators || []),
+          {
+            custom: {
+              imports: [{path: "github.com/hashicorp/terraform-plugin-framework-validators/float64validator"}],
+              schema_definition: `float64validator.Between(${prop.minimum}, ${prop.maximum})`,
+            },
+          },
+        ],
+      };
+      delete attr.number;
     } else if (kind === "string" && prop.format === "kebab-case") {
       attr.string.validators = [...(attr.string.validators || []), {custom: KEBAB_CASE}];
     } else if (kind === "single_nested") {
@@ -555,5 +582,8 @@ for (const [name, apiPath] of Object.entries(createRequestPaths())) {
   const body = apiSpec.paths[apiPath].post.requestBody.content["application/json"].schema;
   addSpecValidators(requireResource(name).schema.attributes, body);
 }
+
+// The API limits these strings in characters; LengthBetween counts bytes.
+tagPolicy.schema = JSON.parse(JSON.stringify(tagPolicy.schema).replaceAll("stringvalidator.LengthBetween(", "stringvalidator.UTF8LengthBetween("));
 
 fs.writeFileSync(specPath, JSON.stringify(spec, null, 2) + "\n");
