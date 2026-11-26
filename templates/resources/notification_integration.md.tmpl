@@ -1,0 +1,20 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Notification destinations (PagerDuty, webhook, Jira, etc.) used as targets by notification rules. Slack is not supported here because it is set up through an OAuth install flow in the Tsuga app.
+---
+
+# {{.Name}} ({{.Type}})
+
+Notification destinations (PagerDuty, webhook, Jira, etc.) used as targets by notification rules. Slack is not supported here because it is set up through an OAuth install flow in the Tsuga app.
+
+Exactly one block of `setting` must be set, and changing which one replaces the resource. A webhook's `authentication` takes exactly one of `bearer`, `basic`, `custom_header` or `none`; set `none = {}` to send the request unauthenticated.
+
+Secrets are write-only: they are sent to Tsuga but never stored in the plan or state, and Tsuga only returns their last characters in the `*_last_chars` attributes.
+
+## Example Usage
+
+{{ tffile "examples/resources/tsuga_notification_integration/resource.tf" }}
+
+{{ .SchemaMarkdown | trimspace }}

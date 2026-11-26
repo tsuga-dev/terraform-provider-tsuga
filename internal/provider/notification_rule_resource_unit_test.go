@@ -9,6 +9,7 @@ import (
 
 	"terraform-provider-tsuga/internal/apiclient"
 	"terraform-provider-tsuga/internal/resource_notification_rule"
+	"terraform-provider-tsuga/internal/validators"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -240,7 +241,7 @@ func TestExactlyOneDestination(t *testing.T) {
 	_, back := roundTrip(t, ctx, slackRule(t, renotifyJSON))
 	validate := func(cfg types.Object) string {
 		resp := &validator.ObjectResponse{}
-		resource_notification_rule.ExactlyOneDestination().ValidateObject(ctx, validator.ObjectRequest{ConfigValue: cfg}, resp)
+		validators.ExactlyOneOf("Invalid target config", "destination").ValidateObject(ctx, validator.ObjectRequest{ConfigValue: cfg}, resp)
 		if !resp.Diagnostics.HasError() {
 			return ""
 		}

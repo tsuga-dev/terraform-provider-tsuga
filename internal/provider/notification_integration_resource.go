@@ -14,13 +14,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 var _ resource.Resource = (*notificationIntegrationResource)(nil)
 var _ resource.ResourceWithConfigure = (*notificationIntegrationResource)(nil)
 var _ resource.ResourceWithImportState = (*notificationIntegrationResource)(nil)
-var _ resource.ResourceWithValidateConfig = (*notificationIntegrationResource)(nil)
 
 func NewNotificationIntegrationResource() resource.Resource {
 	return &notificationIntegrationResource{}
@@ -53,57 +54,24 @@ func (r *notificationIntegrationResource) Metadata(_ context.Context, req resour
 
 func (r *notificationIntegrationResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = resource_notification_integration.NotificationIntegrationResourceSchema(ctx)
+	markWriteOnlySecrets(resp.Schema.Attributes)
 }
 
-func (r *notificationIntegrationResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var config resource_notification_integration.NotificationIntegrationModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if config.Setting == nil {
-		return
-	}
-
-	if !exactlyOneSet(
-		config.Setting.GoogleChat != nil,
-		config.Setting.GrafanaIrm != nil,
-		config.Setting.IncidentIo != nil,
-		config.Setting.Jira != nil,
-		config.Setting.MicrosoftTeams != nil,
-		config.Setting.Pagerduty != nil,
-		config.Setting.Servicenow != nil,
-		config.Setting.Squadcast != nil,
-		config.Setting.Webhook != nil,
-	) {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("setting"),
-			"Invalid setting configuration",
-			"Exactly one of google_chat, grafana_irm, incident_io, jira, microsoft_teams, pagerduty, servicenow, squadcast, or webhook must be set.",
-		)
-	}
-
-	if config.Setting.Webhook != nil && config.Setting.Webhook.Authentication != nil {
-		auth := config.Setting.Webhook.Authentication
-		if !exactlyOneSet(auth.Bearer != nil, auth.Basic != nil, auth.CustomHeader != nil, auth.None != nil) {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("setting").AtName("webhook").AtName("authentication"),
-				"Invalid authentication configuration",
-				"Exactly one of bearer, basic, custom_header, or none must be set.",
-			)
+// The API never returns a secret, only its `<name>_last_chars`. Secrets are marked sensitive in the
+// generated schema (see patch-provider-code-spec.js); every sensitive string is also write-only
+// here, which the code spec cannot express.
+func markWriteOnlySecrets(attributes map[string]schema.Attribute) {
+	for name, attribute := range attributes {
+		switch a := attribute.(type) {
+		case schema.StringAttribute:
+			if a.Sensitive {
+				a.WriteOnly = true
+				attributes[name] = a
+			}
+		case schema.SingleNestedAttribute:
+			markWriteOnlySecrets(a.Attributes)
 		}
 	}
-}
-
-func exactlyOneSet(flags ...bool) bool {
-	count := 0
-	for _, flag := range flags {
-		if flag {
-			count++
-		}
-	}
-	return count == 1
 }
 
 func (r *notificationIntegrationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -125,7 +93,7 @@ func (r *notificationIntegrationResource) Create(ctx context.Context, req resour
 		return
 	}
 
-	newState, diags := r.createOrUpdateNotificationIntegration(ctx, http.MethodPost, "/v1/notification-integrations", requestBody, &plan, "create")
+	newState, diags := r.createOrUpdateNotificationIntegration(ctx, http.MethodPost, "/v1/notification-integrations", requestBody, plan, "create")
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -176,7 +144,7 @@ func (r *notificationIntegrationResource) readJSON(ctx context.Context, bodyRead
 		return
 	}
 
-	newState, diags := flattenNotificationIntegration(ctx, data, &state)
+	newState, diags := flattenNotificationIntegration(ctx, data, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -213,12 +181,14 @@ func (r *notificationIntegrationResource) Update(ctx context.Context, req resour
 		return
 	}
 	// The API keeps the stored mapping when the key is omitted, so an absent block must send null to unset it.
-	if config.Setting != nil && config.Setting.Webhook != nil && config.Setting.Webhook.EventNameMapping == nil {
-		requestBody["setting"].(map[string]any)["eventNameMapping"] = nil
+	if setting := requestBody["setting"].(map[string]any); setting["type"] == "webhook" {
+		if _, ok := setting["eventNameMapping"]; !ok {
+			setting["eventNameMapping"] = nil
+		}
 	}
 
 	apiPath := fmt.Sprintf("/v1/notification-integrations/%s", state.Id.ValueString())
-	newState, diags := r.createOrUpdateNotificationIntegration(ctx, http.MethodPut, apiPath, requestBody, &plan, "update")
+	newState, diags := r.createOrUpdateNotificationIntegration(ctx, http.MethodPut, apiPath, requestBody, plan, "update")
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -276,7 +246,7 @@ func (r *notificationIntegrationResource) buildNotificationIntegrationRequestBod
 	return requestBody, diags
 }
 
-func (r *notificationIntegrationResource) createOrUpdateNotificationIntegration(ctx context.Context, method, path string, requestBody map[string]any, plan *resource_notification_integration.NotificationIntegrationModel, operation string) (resource_notification_integration.NotificationIntegrationModel, diag.Diagnostics) {
+func (r *notificationIntegrationResource) createOrUpdateNotificationIntegration(ctx context.Context, method, path string, requestBody map[string]any, plan resource_notification_integration.NotificationIntegrationModel, operation string) (resource_notification_integration.NotificationIntegrationModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	httpResp, err := r.client.doRequest(ctx, method, path, requestBody)
@@ -318,318 +288,461 @@ type notificationIntegrationAPIData struct {
 	Tags    []apiTag               `json:"tags"`
 }
 
-// expandIntegrationSetting builds the API request body for the single setting variant that is
-// set on the plan. ValidateConfig already guarantees exactly one is set.
-func expandIntegrationSetting(ctx context.Context, setting *resource_notification_integration.IntegrationSettingModel) (map[string]any, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	if setting == nil {
-		diags.AddError("Invalid setting configuration", "setting is required.")
-		return nil, diags
-	}
+// writeOnlySecret stands in for a secret in the flattened state. Write-only secrets never reach the
+// state (the framework nulls them on the way out); the empty string is for the Terraform export,
+// which reads the flattened model directly and needs a non-null value to emit a variable.
+var writeOnlySecret = types.StringValue("")
 
-	switch {
-	case setting.GoogleChat != nil:
-		return map[string]any{
-			"type":       "google-chat",
-			"webhookUrl": setting.GoogleChat.WebhookUrl.ValueString(),
-		}, diags
-	case setting.GrafanaIrm != nil:
-		return map[string]any{
-			"type": "grafana-irm",
-			"url":  setting.GrafanaIrm.WebhookUrl.ValueString(),
-		}, diags
-	case setting.IncidentIo != nil:
-		return map[string]any{
-			"type":                "incident-io",
-			"alertSourceConfigId": setting.IncidentIo.AlertSourceConfigId.ValueString(),
-			"token":               setting.IncidentIo.Token.ValueString(),
-		}, diags
-	case setting.Jira != nil:
-		return map[string]any{
-			"type":     "jira",
-			"siteUrl":  setting.Jira.SiteUrl.ValueString(),
-			"email":    setting.Jira.Email.ValueString(),
-			"apiToken": setting.Jira.ApiToken.ValueString(),
-		}, diags
-	case setting.MicrosoftTeams != nil:
-		return map[string]any{
-			"type":       "microsoft-teams",
-			"webhookUrl": setting.MicrosoftTeams.WebhookUrl.ValueString(),
-		}, diags
-	case setting.Pagerduty != nil:
-		return map[string]any{
-			"type":           "pagerduty",
-			"integrationKey": setting.Pagerduty.IntegrationKey.ValueString(),
-		}, diags
-	case setting.Servicenow != nil:
-		return map[string]any{
-			"type":         "servicenow",
-			"instanceName": setting.Servicenow.InstanceName.ValueString(),
-			"username":     setting.Servicenow.Username.ValueString(),
-			"password":     setting.Servicenow.Password.ValueString(),
-		}, diags
-	case setting.Squadcast != nil:
-		return map[string]any{
-			"type":       "squadcast",
-			"webhookUrl": setting.Squadcast.WebhookUrl.ValueString(),
-		}, diags
-	case setting.Webhook != nil:
-		return expandWebhookSetting(ctx, setting.Webhook)
-	}
-
-	diags.AddError("Invalid setting configuration", "Exactly one of google_chat, grafana_irm, incident_io, jira, microsoft_teams, pagerduty, servicenow, squadcast, or webhook must be set.")
-	return nil, diags
+type integrationBlock interface {
+	basetypes.ObjectValuable
+	AttributeTypes(context.Context) map[string]attr.Type
 }
 
-func expandWebhookSetting(ctx context.Context, webhook *resource_notification_integration.WebhookSettingModel) (map[string]any, diag.Diagnostics) {
+func isSet(object basetypes.ObjectValue) bool {
+	return !object.IsNull() && !object.IsUnknown()
+}
+
+// typedBlock reads a nested object as its generated value type.
+func typedBlock[T integrationBlock](ctx context.Context, object basetypes.ObjectValue, newValue func(map[string]attr.Type, map[string]attr.Value) (T, diag.Diagnostics)) (T, diag.Diagnostics) {
+	return newValue(object.AttributeTypes(ctx), object.Attributes())
+}
+
+// newBlock builds a generated value type from its attributes, as the object its parent holds.
+func newBlock[T integrationBlock](ctx context.Context, newValue func(map[string]attr.Type, map[string]attr.Value) (T, diag.Diagnostics), values map[string]attr.Value) (basetypes.ObjectValue, diag.Diagnostics) {
+	var zero T
+	value, diags := newValue(zero.AttributeTypes(ctx), values)
+	if diags.HasError() {
+		return basetypes.ObjectValue{}, diags
+	}
+	object, objectDiags := value.ToObjectValue(ctx)
+	return object, append(diags, objectDiags...)
+}
+
+func nullBlock[T integrationBlock](ctx context.Context) basetypes.ObjectValue {
+	var zero T
+	object, _ := zero.ToObjectValue(ctx)
+	return object
+}
+
+func putString(m map[string]any, key string, value basetypes.StringValue) {
+	if !value.IsNull() && !value.IsUnknown() {
+		m[key] = value.ValueString()
+	}
+}
+
+func apiString(m map[string]interface{}, key string) types.String {
+	text, _ := m[key].(string)
+	return stringValueOrNull(text)
+}
+
+// expandIntegrationSetting builds the API request body for the single setting variant that is
+// set. The ExactlyOneOf validator already guarantees exactly one is set.
+func expandIntegrationSetting(ctx context.Context, setting resource_notification_integration.SettingValue) (map[string]any, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	result := map[string]any{}
+
+	switch {
+	case isSet(setting.GoogleChat):
+		block, d := typedBlock(ctx, setting.GoogleChat, resource_notification_integration.NewGoogleChatValue)
+		diags.Append(d...)
+		result["type"] = "google-chat"
+		putString(result, "webhookUrl", block.WebhookUrl)
+	case isSet(setting.GrafanaIrm):
+		block, d := typedBlock(ctx, setting.GrafanaIrm, resource_notification_integration.NewGrafanaIrmValue)
+		diags.Append(d...)
+		result["type"] = "grafana-irm"
+		putString(result, "url", block.Url)
+	case isSet(setting.IncidentIo):
+		block, d := typedBlock(ctx, setting.IncidentIo, resource_notification_integration.NewIncidentIoValue)
+		diags.Append(d...)
+		result["type"] = "incident-io"
+		putString(result, "alertSourceConfigId", block.AlertSourceConfigId)
+		putString(result, "token", block.Token)
+	case isSet(setting.Jira):
+		block, d := typedBlock(ctx, setting.Jira, resource_notification_integration.NewJiraValue)
+		diags.Append(d...)
+		result["type"] = "jira"
+		putString(result, "apiToken", block.ApiToken)
+		putString(result, "email", block.Email)
+		putString(result, "siteUrl", block.SiteUrl)
+	case isSet(setting.MicrosoftTeams):
+		block, d := typedBlock(ctx, setting.MicrosoftTeams, resource_notification_integration.NewMicrosoftTeamsValue)
+		diags.Append(d...)
+		result["type"] = "microsoft-teams"
+		putString(result, "webhookUrl", block.WebhookUrl)
+	case isSet(setting.Pagerduty):
+		block, d := typedBlock(ctx, setting.Pagerduty, resource_notification_integration.NewPagerdutyValue)
+		diags.Append(d...)
+		result["type"] = "pagerduty"
+		putString(result, "integrationKey", block.IntegrationKey)
+	case isSet(setting.Servicenow):
+		block, d := typedBlock(ctx, setting.Servicenow, resource_notification_integration.NewServicenowValue)
+		diags.Append(d...)
+		result["type"] = "servicenow"
+		putString(result, "instanceName", block.InstanceName)
+		putString(result, "password", block.Password)
+		putString(result, "username", block.Username)
+	case isSet(setting.Squadcast):
+		block, d := typedBlock(ctx, setting.Squadcast, resource_notification_integration.NewSquadcastValue)
+		diags.Append(d...)
+		result["type"] = "squadcast"
+		putString(result, "webhookUrl", block.WebhookUrl)
+	case isSet(setting.Webhook):
+		block, d := typedBlock(ctx, setting.Webhook, resource_notification_integration.NewWebhookValue)
+		diags.Append(d...)
+		diags.Append(expandWebhook(ctx, block, result)...)
+	default:
+		diags.AddError("Invalid setting configuration", "Exactly one variant must be set.")
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+	return result, diags
+}
+
+func expandWebhook(ctx context.Context, webhook resource_notification_integration.WebhookValue, result map[string]any) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	result := map[string]any{
-		"type":   "webhook",
-		"url":    webhook.Url.ValueString(),
-		"method": webhook.Method.ValueString(),
-	}
-
-	if a := webhook.Authentication; a != nil {
-		switch {
-		case a.Bearer != nil:
-			result["authentication"] = map[string]any{"type": "bearer", "token": a.Bearer.Token.ValueString()}
-		case a.Basic != nil:
-			result["authentication"] = map[string]any{"type": "basic", "username": a.Basic.Username.ValueString(), "password": a.Basic.Password.ValueString()}
-		case a.CustomHeader != nil:
-			result["authentication"] = map[string]any{"type": "custom-header", "key": a.CustomHeader.Key.ValueString(), "value": a.CustomHeader.Value.ValueString()}
-		case a.None != nil:
-			result["authentication"] = map[string]any{"type": "none"}
-		}
-	}
+	result["type"] = "webhook"
+	putString(result, "url", webhook.Url)
+	putString(result, "method", webhook.Method)
 
 	// The API requires customHeaders, so an omitted Terraform value has to send an empty map.
-	headers := make(map[string]string, len(webhook.CustomHeaders.Elements()))
+	headers := map[string]string{}
 	if !webhook.CustomHeaders.IsNull() && !webhook.CustomHeaders.IsUnknown() {
 		diags.Append(webhook.CustomHeaders.ElementsAs(ctx, &headers, false)...)
 	}
 	result["customHeaders"] = headers
 
-	if webhook.PayloadTemplate != nil {
-		var value any
-		if err := json.Unmarshal([]byte(webhook.PayloadTemplate.Value.ValueString()), &value); err != nil {
-			diags.AddAttributeError(
-				path.Root("setting").AtName("webhook").AtName("payload_template").AtName("value"),
-				"Invalid payload template",
-				fmt.Sprintf("value must be valid JSON: %s", err),
-			)
-			return nil, diags
-		}
-		result["payloadTemplate"] = map[string]any{
-			"type":  webhook.PayloadTemplate.Type.ValueString(),
-			"value": value,
-		}
+	if isSet(webhook.Authentication) {
+		authentication, d := expandAuthentication(ctx, webhook.Authentication)
+		diags.Append(d...)
+		result["authentication"] = authentication
 	}
 
-	if webhook.EventNameMapping != nil {
-		result["eventNameMapping"] = map[string]any{
-			"ok":    webhook.EventNameMapping.Ok.ValueString(),
-			"alert": webhook.EventNameMapping.Alert.ValueString(),
-		}
+	if isSet(webhook.EventNameMapping) {
+		mapping, d := typedBlock(ctx, webhook.EventNameMapping, resource_notification_integration.NewEventNameMappingValue)
+		diags.Append(d...)
+		names := map[string]any{}
+		putString(names, "alert", mapping.Alert)
+		putString(names, "ok", mapping.Ok)
+		result["eventNameMapping"] = names
 	}
 
+	if isSet(webhook.PayloadTemplate) {
+		template, d := typedBlock(ctx, webhook.PayloadTemplate, resource_notification_integration.NewPayloadTemplateValue)
+		diags.Append(d...)
+		payload, d := expandPayloadTemplate(template)
+		diags.Append(d...)
+		result["payloadTemplate"] = payload
+	}
+
+	return diags
+}
+
+func expandAuthentication(ctx context.Context, object basetypes.ObjectValue) (map[string]any, diag.Diagnostics) {
+	authentication, diags := typedBlock(ctx, object, resource_notification_integration.NewAuthenticationValue)
+	result := map[string]any{}
+
+	switch {
+	case isSet(authentication.Basic):
+		block, d := typedBlock(ctx, authentication.Basic, resource_notification_integration.NewBasicValue)
+		diags.Append(d...)
+		result["type"] = "basic"
+		putString(result, "username", block.Username)
+		putString(result, "password", block.Password)
+	case isSet(authentication.Bearer):
+		block, d := typedBlock(ctx, authentication.Bearer, resource_notification_integration.NewBearerValue)
+		diags.Append(d...)
+		result["type"] = "bearer"
+		putString(result, "token", block.Token)
+	case isSet(authentication.CustomHeader):
+		block, d := typedBlock(ctx, authentication.CustomHeader, resource_notification_integration.NewCustomHeaderValue)
+		diags.Append(d...)
+		result["type"] = "custom-header"
+		putString(result, "key", block.Key)
+		putString(result, "value", block.Value)
+	case isSet(authentication.None):
+		result["type"] = "none"
+	default:
+		diags.AddError("Invalid authentication configuration", "Exactly one variant must be set.")
+	}
 	return result, diags
+}
+
+// expandPayloadTemplate sends the template value as JSON, not as the string it is in Terraform.
+func expandPayloadTemplate(template resource_notification_integration.PayloadTemplateValue) (map[string]any, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var value any
+	if err := json.Unmarshal([]byte(template.Value.ValueString()), &value); err != nil {
+		diags.AddAttributeError(
+			path.Root("setting").AtName("webhook").AtName("payload_template").AtName("value"),
+			"Invalid payload template",
+			fmt.Sprintf("value must be valid JSON: %s", err),
+		)
+		return nil, diags
+	}
+	return map[string]any{"type": template.PayloadTemplateType.ValueString(), "value": value}, diags
 }
 
 // flattenNotificationIntegration builds the resource state from an API response. The API never
 // returns secret fields (tokens, passwords, webhook URLs) in full, only redacted "last chars"
-// forms, so secret fields are carried over from priorSetting (the plan just submitted, or the
-// previous state on a plain Read) instead of the API response.
+// forms, so secrets are set to the write-only placeholder rather than read from the response.
 // prior is the plan on create/update and the previous state on read; it supplies the values the
-// API does not return, such as the configured payload template text.
-func flattenNotificationIntegration(ctx context.Context, data notificationIntegrationAPIData, prior *resource_notification_integration.NotificationIntegrationModel) (resource_notification_integration.NotificationIntegrationModel, diag.Diagnostics) {
+// API does not return as written, such as the configured payload template text.
+func flattenNotificationIntegration(ctx context.Context, data notificationIntegrationAPIData, prior resource_notification_integration.NotificationIntegrationModel) (resource_notification_integration.NotificationIntegrationModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	tags, tagDiags := flattenTags(ctx, data.Tags)
 	diags.Append(tagDiags...)
 
-	var priorSetting *resource_notification_integration.IntegrationSettingModel
-	secretsVersion := types.StringNull()
-	if prior != nil {
-		priorSetting = prior.Setting
-		secretsVersion = prior.SecretsVersion
-	}
-	setting, settingDiags := flattenIntegrationSetting(data.Setting, priorSetting)
+	setting, settingDiags := flattenIntegrationSetting(ctx, data.Setting, prior.Setting)
 	diags.Append(settingDiags...)
 
-	state := resource_notification_integration.NotificationIntegrationModel{
+	return resource_notification_integration.NotificationIntegrationModel{
 		Id:             types.StringValue(data.ID),
 		Name:           types.StringValue(data.Name),
 		Owner:          types.StringValue(data.Owner),
 		Tags:           tags,
-		SecretsVersion: secretsVersion,
+		SecretsVersion: prior.SecretsVersion,
 		Setting:        setting,
-	}
-
-	return state, diags
+	}, diags
 }
 
-func flattenIntegrationSetting(apiSetting map[string]interface{}, prior *resource_notification_integration.IntegrationSettingModel) (*resource_notification_integration.IntegrationSettingModel, diag.Diagnostics) {
+func flattenIntegrationSetting(ctx context.Context, api map[string]interface{}, prior resource_notification_integration.SettingValue) (resource_notification_integration.SettingValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	settingType, _ := apiSetting["type"].(string)
-	result := &resource_notification_integration.IntegrationSettingModel{}
+	values := map[string]attr.Value{
+		"google_chat":     nullBlock[resource_notification_integration.GoogleChatValue](ctx),
+		"grafana_irm":     nullBlock[resource_notification_integration.GrafanaIrmValue](ctx),
+		"incident_io":     nullBlock[resource_notification_integration.IncidentIoValue](ctx),
+		"jira":            nullBlock[resource_notification_integration.JiraValue](ctx),
+		"microsoft_teams": nullBlock[resource_notification_integration.MicrosoftTeamsValue](ctx),
+		"pagerduty":       nullBlock[resource_notification_integration.PagerdutyValue](ctx),
+		"servicenow":      nullBlock[resource_notification_integration.ServicenowValue](ctx),
+		"squadcast":       nullBlock[resource_notification_integration.SquadcastValue](ctx),
+		"webhook":         nullBlock[resource_notification_integration.WebhookValue](ctx),
+	}
 
-	switch settingType {
+	var name string
+	var block basetypes.ObjectValue
+	var blockDiags diag.Diagnostics
+
+	apiType, _ := api["type"].(string)
+	switch apiType {
 	case "google-chat":
-		result.GoogleChat = &resource_notification_integration.WebhookUrlSettingModel{
-			WebhookUrl: writeOnlySecret,
-		}
+		name = "google_chat"
+		block, blockDiags = newBlock(ctx, resource_notification_integration.NewGoogleChatValue, map[string]attr.Value{
+			"webhook_url":            writeOnlySecret,
+			"webhook_url_last_chars": apiString(api, "webhookUrlLastChars"),
+		})
 	case "grafana-irm":
-		result.GrafanaIrm = &resource_notification_integration.WebhookUrlSettingModel{
-			WebhookUrl: writeOnlySecret,
-		}
+		name = "grafana_irm"
+		block, blockDiags = newBlock(ctx, resource_notification_integration.NewGrafanaIrmValue, map[string]attr.Value{
+			"url":            writeOnlySecret,
+			"url_last_chars": apiString(api, "urlLastChars"),
+		})
 	case "incident-io":
-		alertSourceConfigId, _ := apiSetting["alertSourceConfigId"].(string)
-		result.IncidentIo = &resource_notification_integration.IncidentIoSettingModel{
-			AlertSourceConfigId: types.StringValue(alertSourceConfigId),
-			Token:               writeOnlySecret,
-		}
+		name = "incident_io"
+		block, blockDiags = newBlock(ctx, resource_notification_integration.NewIncidentIoValue, map[string]attr.Value{
+			"alert_source_config_id": apiString(api, "alertSourceConfigId"),
+			"token":                  writeOnlySecret,
+			"token_last_chars":       apiString(api, "tokenLastChars"),
+		})
 	case "jira":
-		siteUrl, _ := apiSetting["siteUrl"].(string)
-		email, _ := apiSetting["email"].(string)
-		result.Jira = &resource_notification_integration.JiraSettingModel{
-			SiteUrl:  types.StringValue(siteUrl),
-			Email:    types.StringValue(email),
-			ApiToken: writeOnlySecret,
-		}
+		name = "jira"
+		block, blockDiags = newBlock(ctx, resource_notification_integration.NewJiraValue, map[string]attr.Value{
+			"api_token":            writeOnlySecret,
+			"api_token_last_chars": apiString(api, "apiTokenLastChars"),
+			"email":                apiString(api, "email"),
+			"site_url":             apiString(api, "siteUrl"),
+		})
 	case "microsoft-teams":
-		result.MicrosoftTeams = &resource_notification_integration.WebhookUrlSettingModel{
-			WebhookUrl: writeOnlySecret,
-		}
+		name = "microsoft_teams"
+		block, blockDiags = newBlock(ctx, resource_notification_integration.NewMicrosoftTeamsValue, map[string]attr.Value{
+			"webhook_url":            writeOnlySecret,
+			"webhook_url_last_chars": apiString(api, "webhookUrlLastChars"),
+		})
 	case "pagerduty":
-		result.Pagerduty = &resource_notification_integration.PagerdutySettingModel{
-			IntegrationKey: writeOnlySecret,
-		}
+		name = "pagerduty"
+		block, blockDiags = newBlock(ctx, resource_notification_integration.NewPagerdutyValue, map[string]attr.Value{
+			"integration_key":            writeOnlySecret,
+			"integration_key_last_chars": apiString(api, "integrationKeyLastChars"),
+		})
 	case "servicenow":
-		instanceName, _ := apiSetting["instanceName"].(string)
-		username, _ := apiSetting["username"].(string)
-		result.Servicenow = &resource_notification_integration.ServicenowSettingModel{
-			InstanceName: types.StringValue(instanceName),
-			Username:     types.StringValue(username),
-			Password:     writeOnlySecret,
-		}
+		name = "servicenow"
+		block, blockDiags = newBlock(ctx, resource_notification_integration.NewServicenowValue, map[string]attr.Value{
+			"instance_name":       apiString(api, "instanceName"),
+			"password":            writeOnlySecret,
+			"password_last_chars": apiString(api, "passwordLastChars"),
+			"username":            apiString(api, "username"),
+		})
 	case "squadcast":
-		result.Squadcast = &resource_notification_integration.WebhookUrlSettingModel{
-			WebhookUrl: writeOnlySecret,
-		}
+		name = "squadcast"
+		block, blockDiags = newBlock(ctx, resource_notification_integration.NewSquadcastValue, map[string]attr.Value{
+			"webhook_url":            writeOnlySecret,
+			"webhook_url_last_chars": apiString(api, "webhookUrlLastChars"),
+		})
 	case "webhook":
-		var webhookDiags diag.Diagnostics
-		var priorWebhook *resource_notification_integration.WebhookSettingModel
-		if prior != nil {
-			priorWebhook = prior.Webhook
-		}
-		result.Webhook, webhookDiags = flattenWebhookSetting(apiSetting, priorWebhook)
-		diags.Append(webhookDiags...)
+		name = "webhook"
+		block, blockDiags = flattenWebhookSetting(ctx, api, prior.Webhook)
 	default:
-		diags.AddError("API Error", fmt.Sprintf("Unknown notification integration setting type %q returned by the API.", settingType))
+		diags.AddError("API Error", fmt.Sprintf("Unknown notification integration type %q returned by the API.", apiType))
 	}
+	diags.Append(blockDiags...)
+	if diags.HasError() {
+		return resource_notification_integration.NewSettingValueNull(), diags
+	}
+	values[name] = block
 
-	return result, diags
+	setting, settingDiags := resource_notification_integration.NewSettingValue(resource_notification_integration.SettingValue{}.AttributeTypes(ctx), values)
+	diags.Append(settingDiags...)
+	return setting, diags
 }
 
-// priorStringOrEmpty reads a secret-carrying field off the prior setting (the plan just applied,
-// or the previous state on a plain Read). It returns an empty string, never null, so a fresh
-// `terraform import` with no prior secret produces a diff instead of a permanently null attribute.
-// Write-only secrets never reach the state: the framework nulls them on the way out. The empty
-// string is for the Terraform export, which reads this model directly and needs a non-null value
-// to emit a variable for the secret.
-var writeOnlySecret = types.StringValue("")
-
-func flattenWebhookSetting(apiSetting map[string]interface{}, prior *resource_notification_integration.WebhookSettingModel) (*resource_notification_integration.WebhookSettingModel, diag.Diagnostics) {
+func flattenWebhookSetting(ctx context.Context, api map[string]interface{}, priorObject basetypes.ObjectValue) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	method, _ := apiSetting["method"].(string)
-
-	result := &resource_notification_integration.WebhookSettingModel{
-		Url:    writeOnlySecret,
-		Method: types.StringValue(method),
+	var prior resource_notification_integration.WebhookValue
+	if isSet(priorObject) {
+		var d diag.Diagnostics
+		prior, d = typedBlock(ctx, priorObject, resource_notification_integration.NewWebhookValue)
+		diags.Append(d...)
 	}
 
-	if authRaw, ok := apiSetting["authentication"].(map[string]interface{}); ok {
-		result.Authentication = flattenWebhookAuthentication(authRaw)
+	authentication := nullBlock[resource_notification_integration.AuthenticationValue](ctx)
+	if raw, ok := api["authentication"].(map[string]interface{}); ok {
+		var d diag.Diagnostics
+		authentication, d = flattenAuthentication(ctx, raw)
+		diags.Append(d...)
 	}
 
-	if headersRaw, ok := apiSetting["customHeaders"].(map[string]interface{}); ok && len(headersRaw) > 0 {
+	eventNameMapping := nullBlock[resource_notification_integration.EventNameMappingValue](ctx)
+	if raw, ok := api["eventNameMapping"].(map[string]interface{}); ok {
+		var d diag.Diagnostics
+		eventNameMapping, d = newBlock(ctx, resource_notification_integration.NewEventNameMappingValue, map[string]attr.Value{
+			"alert": apiString(raw, "alert"),
+			"ok":    apiString(raw, "ok"),
+		})
+		diags.Append(d...)
+	}
+
+	payloadTemplate := nullBlock[resource_notification_integration.PayloadTemplateValue](ctx)
+	if raw, ok := api["payloadTemplate"].(map[string]interface{}); ok {
+		var d diag.Diagnostics
+		payloadTemplate, d = flattenPayloadTemplate(ctx, raw, prior.PayloadTemplate)
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return basetypes.ObjectValue{}, diags
+	}
+
+	webhook, d := newBlock(ctx, resource_notification_integration.NewWebhookValue, map[string]attr.Value{
+		"authentication":     authentication,
+		"custom_headers":     flattenCustomHeaders(api["customHeaders"], prior.CustomHeaders),
+		"event_name_mapping": eventNameMapping,
+		"method":             apiString(api, "method"),
+		"payload_template":   payloadTemplate,
+		"url":                writeOnlySecret,
+		"url_last_chars":     apiString(api, "urlLastChars"),
+	})
+	diags.Append(d...)
+	return webhook, diags
+}
+
+func flattenAuthentication(ctx context.Context, api map[string]interface{}) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	values := map[string]attr.Value{
+		"basic":         nullBlock[resource_notification_integration.BasicValue](ctx),
+		"bearer":        nullBlock[resource_notification_integration.BearerValue](ctx),
+		"custom_header": nullBlock[resource_notification_integration.CustomHeaderValue](ctx),
+		"none":          nullBlock[resource_notification_integration.NoneValue](ctx),
+	}
+
+	var name string
+	var block basetypes.ObjectValue
+	apiType, _ := api["type"].(string)
+	switch apiType {
+	case "basic":
+		name = "basic"
+		block, diags = newBlock(ctx, resource_notification_integration.NewBasicValue, map[string]attr.Value{
+			"password":            writeOnlySecret,
+			"password_last_chars": apiString(api, "passwordLastChars"),
+			"username":            apiString(api, "username"),
+		})
+	case "bearer":
+		name = "bearer"
+		block, diags = newBlock(ctx, resource_notification_integration.NewBearerValue, map[string]attr.Value{
+			"token":            writeOnlySecret,
+			"token_last_chars": apiString(api, "tokenLastChars"),
+		})
+	case "custom-header":
+		name = "custom_header"
+		block, diags = newBlock(ctx, resource_notification_integration.NewCustomHeaderValue, map[string]attr.Value{
+			"key":              apiString(api, "key"),
+			"value":            writeOnlySecret,
+			"value_last_chars": apiString(api, "valueLastChars"),
+		})
+	case "none":
+		name = "none"
+		block, diags = newBlock(ctx, resource_notification_integration.NewNoneValue, map[string]attr.Value{})
+	default:
+		diags.AddError("API Error", fmt.Sprintf("Unknown webhook authentication type %q returned by the API.", apiType))
+	}
+	if diags.HasError() {
+		return basetypes.ObjectValue{}, diags
+	}
+	values[name] = block
+
+	authentication, d := newBlock(ctx, resource_notification_integration.NewAuthenticationValue, values)
+	return authentication, append(diags, d...)
+}
+
+// flattenCustomHeaders reads the headers back in full, so an edit made in the app shows up as
+// drift. An explicitly configured empty map is not the same as an absent one.
+func flattenCustomHeaders(raw interface{}, prior basetypes.MapValue) basetypes.MapValue {
+	if headersRaw, ok := raw.(map[string]interface{}); ok && len(headersRaw) > 0 {
 		headers := make(map[string]attr.Value, len(headersRaw))
 		for k, v := range headersRaw {
 			s, _ := v.(string)
 			headers[k] = types.StringValue(s)
 		}
-		mapValue, mapDiags := types.MapValue(types.StringType, headers)
-		diags.Append(mapDiags...)
-		result.CustomHeaders = mapValue
-	} else if prior != nil && !prior.CustomHeaders.IsNull() && !prior.CustomHeaders.IsUnknown() &&
-		len(prior.CustomHeaders.Elements()) == 0 {
-		// An explicitly configured empty map is not the same as an absent one.
-		result.CustomHeaders = prior.CustomHeaders
-	} else {
-		result.CustomHeaders = types.MapNull(types.StringType)
+		return types.MapValueMust(types.StringType, headers)
 	}
-
-	if payloadTemplateRaw, ok := apiSetting["payloadTemplate"].(map[string]interface{}); ok {
-		templateType, _ := payloadTemplateRaw["type"].(string)
-		valueBytes, err := json.Marshal(payloadTemplateRaw["value"])
-		if err != nil {
-			diags.AddError("API Error", fmt.Sprintf("Unable to encode payload template value: %s", err))
-		} else {
-			// The API stores the template decoded, so keep the configured text when it holds the same value.
-			value := string(valueBytes)
-			if prior != nil && prior.PayloadTemplate != nil {
-				priorValue := prior.PayloadTemplate.Value.ValueString()
-				var priorDecoded any
-				if json.Unmarshal([]byte(priorValue), &priorDecoded) == nil &&
-					reflect.DeepEqual(priorDecoded, payloadTemplateRaw["value"]) {
-					value = priorValue
-				}
-			}
-			result.PayloadTemplate = &resource_notification_integration.WebhookPayloadTemplateModel{
-				Type:  types.StringValue(templateType),
-				Value: types.StringValue(value),
-			}
-		}
+	if !prior.IsNull() && !prior.IsUnknown() && len(prior.Elements()) == 0 {
+		return prior
 	}
-
-	if mappingRaw, ok := apiSetting["eventNameMapping"].(map[string]interface{}); ok {
-		ok1, _ := mappingRaw["ok"].(string)
-		alert, _ := mappingRaw["alert"].(string)
-		result.EventNameMapping = &resource_notification_integration.WebhookEventNameMappingModel{
-			Ok:    types.StringValue(ok1),
-			Alert: types.StringValue(alert),
-		}
-	}
-
-	return result, diags
+	return types.MapNull(types.StringType)
 }
 
-func flattenWebhookAuthentication(authRaw map[string]interface{}) *resource_notification_integration.WebhookAuthenticationModel {
-	apiString := func(field string) types.String {
-		value, _ := authRaw[field].(string)
-		return types.StringValue(value)
+// flattenPayloadTemplate encodes the template value as a JSON string. The API stores the template
+// decoded, so the configured text is kept when it holds the same value.
+func flattenPayloadTemplate(ctx context.Context, api map[string]interface{}, priorObject basetypes.ObjectValue) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	valueBytes, err := json.Marshal(api["value"])
+	if err != nil {
+		diags.AddError("API Error", fmt.Sprintf("Unable to encode payload template value: %s", err))
+		return basetypes.ObjectValue{}, diags
 	}
 
-	switch authRaw["type"] {
-	case "none":
-		return &resource_notification_integration.WebhookAuthenticationModel{
-			None: &resource_notification_integration.WebhookNoneAuthModel{},
-		}
-	case "bearer":
-		return &resource_notification_integration.WebhookAuthenticationModel{
-			Bearer: &resource_notification_integration.WebhookBearerAuthModel{Token: writeOnlySecret},
-		}
-	case "basic":
-		return &resource_notification_integration.WebhookAuthenticationModel{
-			Basic: &resource_notification_integration.WebhookBasicAuthModel{Username: apiString("username"), Password: writeOnlySecret},
-		}
-	case "custom-header":
-		return &resource_notification_integration.WebhookAuthenticationModel{
-			CustomHeader: &resource_notification_integration.WebhookCustomHeaderAuthModel{Key: apiString("key"), Value: writeOnlySecret},
+	value := string(valueBytes)
+	if isSet(priorObject) {
+		prior, d := typedBlock(ctx, priorObject, resource_notification_integration.NewPayloadTemplateValue)
+		diags.Append(d...)
+		var priorDecoded any
+		if json.Unmarshal([]byte(prior.Value.ValueString()), &priorDecoded) == nil && reflect.DeepEqual(priorDecoded, api["value"]) {
+			value = prior.Value.ValueString()
 		}
 	}
-	return nil
+
+	template, d := newBlock(ctx, resource_notification_integration.NewPayloadTemplateValue, map[string]attr.Value{
+		"type":  apiString(api, "type"),
+		"value": types.StringValue(value),
+	})
+	return template, append(diags, d...)
 }

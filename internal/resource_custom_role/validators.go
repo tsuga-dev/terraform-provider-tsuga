@@ -47,6 +47,39 @@ func (v readOnlyAssetsValidator) ValidateMap(_ context.Context, req validator.Ma
 	}
 }
 
+// requiredAssetsValidator rejects a map that lacks a key the spec marks as required.
+type requiredAssetsValidator struct {
+	keys []string
+}
+
+func requiredAssets(keys []string) validator.Map {
+	return requiredAssetsValidator{keys: keys}
+}
+
+func (v requiredAssetsValidator) Description(_ context.Context) string {
+	return fmt.Sprintf("%s must be set", quoteList(v.keys))
+}
+
+func (v requiredAssetsValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+func (v requiredAssetsValidator) ValidateMap(_ context.Context, req validator.MapRequest, resp *validator.MapResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	for _, key := range v.keys {
+		if _, ok := req.ConfigValue.Elements()[key]; !ok {
+			resp.Diagnostics.AddAttributeError(
+				req.Path,
+				"Missing required key",
+				fmt.Sprintf("assets must grant access on '%s', as 'read' or 'write'", key),
+			)
+		}
+	}
+}
+
 func quoteList(values []string) string {
 	quoted := make([]string, 0, len(values))
 	for _, value := range values {

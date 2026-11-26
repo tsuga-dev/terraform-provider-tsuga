@@ -118,6 +118,40 @@ const RULES = [
     },
   },
 
+  // tsuga_custom_role: teamScope becomes one object with a `type` enum and the union of the variants' properties.
+  {
+    requests: [
+      ["/v1/custom-roles", "post"],
+      ["/v1/custom-roles/{id}", "put"],
+    ],
+    responses: [["/v1/custom-roles/{id}", "get"]],
+    apply(role) {
+      role.properties.teamScope = unionOneOf(role.properties.teamScope);
+    },
+  },
+
+  // tsuga_notification_integration: setting becomes one block per integration. The webhook's
+  // authentication does the same, and its payloadTemplate becomes one object with a `type` enum
+  // and a `value` string: the spec types `value` as a free-form object, which tfplugingen cannot
+  // map, so the provider carries it as a JSON-encoded string. Responses carry no discriminator on
+  // these blocks either.
+  {
+    requests: [
+      ["/v1/notification-integrations", "post"],
+      ["/v1/notification-integrations/{id}", "put"],
+    ],
+    responses: [["/v1/notification-integrations/{id}", "get"]],
+    apply(integration) {
+      const setting = expandOneOf(integration.properties.setting);
+      const webhook = setting.properties.webhook.properties;
+      webhook.authentication = expandOneOf(webhook.authentication);
+      webhook.payloadTemplate = unionOneOf(webhook.payloadTemplate);
+      webhook.payloadTemplate.properties.value = {type: "string"};
+      webhook.payloadTemplate.required.push("value");
+      integration.properties.setting = setting;
+    },
+  },
+
   // tsuga_adaptive_notification_rule: the fallback target is one notification target.
   {
     requests: [

@@ -4,7 +4,7 @@
     "resourceType": "tsuga_team",
     "resource": {
       "id": "resource-123",
-      "name": "Example",
+      "name": "example",
       "owner": "team-123",
       "tags": [],
       "visibility": "public",
@@ -45,7 +45,7 @@
     "resourceType": "tsuga_ingestion_api_key",
     "resource": {
       "id": "resource-123",
-      "name": "Example",
+      "name": "example",
       "owner": "team-123",
       "tags": [],
       "key": "never-export-this-secret",

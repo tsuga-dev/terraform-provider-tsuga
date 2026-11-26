@@ -1,0 +1,16 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Custom global role granting its holders access to Tsuga assets within a team scope, and to telemetry signals
+---
+
+# {{.Name}} ({{.Type}})
+
+Custom global role granting its holders access to Tsuga assets within a team scope, and to telemetry signals
+
+## Example Usage
+
+{{ tffile "examples/resources/tsuga_custom_role/resource.tf" }}
+
+{{ .SchemaMarkdown | trimspace }}

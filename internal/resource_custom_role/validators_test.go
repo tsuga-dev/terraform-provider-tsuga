@@ -2,7 +2,6 @@ package resource_custom_role
 
 import (
 	"context"
-	"slices"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -40,13 +39,25 @@ func TestReadOnlyAssets(t *testing.T) {
 	}
 }
 
-func TestGeneratedAssetTypes(t *testing.T) {
-	if !slices.Contains(assetTypes, "team") {
-		t.Fatalf("assetTypes lacks the required 'team' key: %v", assetTypes)
+func TestRequiredAssets(t *testing.T) {
+	v := requiredAssets([]string{"team"})
+	cases := []struct {
+		name      string
+		value     types.Map
+		wantError bool
+	}{
+		{"key present", types.MapValueMust(types.StringType, map[string]attr.Value{"team": types.StringValue("read")}), false},
+		{"key missing", types.MapValueMust(types.StringType, map[string]attr.Value{"dashboard": types.StringValue("read")}), true},
+		{"null map skipped", types.MapNull(types.StringType), false},
+		{"unknown map skipped", types.MapUnknown(types.StringType), false},
 	}
-	for _, readOnly := range readOnlyAssetTypes {
-		if !slices.Contains(assetTypes, readOnly) {
-			t.Fatalf("read-only asset type %q is not an asset type", readOnly)
-		}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			resp := &validator.MapResponse{}
+			v.ValidateMap(context.Background(), validator.MapRequest{Path: path.Root("assets"), ConfigValue: tc.value}, resp)
+			if resp.Diagnostics.HasError() != tc.wantError {
+				t.Fatalf("hasError = %t, want %t: %v", resp.Diagnostics.HasError(), tc.wantError, resp.Diagnostics)
+			}
+		})
 	}
 }

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `tsuga_notification_integration`: read-only `*_last_chars` attributes (such as `token_last_chars`, `webhook_url_last_chars`) with the last characters of each secret, as the API returns them.
 - `tsuga_notification_rule`: `cluster_ids_filter`, the cluster IDs that must match for the rule to fire. Omitting it, or leaving it empty, matches every cluster; removing it from a rule clears the filter.
 
 ### Removed
@@ -17,9 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Breaking:** `grafana_irm` in `tsuga_notification_integration` exposes `url` and `url_last_chars`, as in the Tsuga API, instead of `webhook_url` and `webhook_url_last_chars`. Rename them in your configuration.
 - **Breaking:** `renotify` in `tsuga_notification_rule` targets and the `tsuga_adaptive_notification_rule` fallback target moved from `config` into each destination block (`config.slack.renotify` instead of `config.renotify`), as in the Tsuga API. Move it in your configuration.
 - `tsuga_notification_rule`: schema is now generated from the OpenAPI spec. Apart from `renotify`, attribute names and nesting are unchanged, and the spec's limits (such as the allowed `priorities_filter`, `transition_types_filter` and `renotification_states` values, at most 50 tags, and tag value format) are checked at plan time instead of failing at apply. `tsuga_adaptive_notification_rule` shares the target schema, so its `fallback_target` and `tags` get the same checks and descriptions.
 - `tsuga_adaptive_notification_rule`: schema is now generated from the OpenAPI spec, with its descriptions. Apart from `renotify`, attribute names and nesting are unchanged, and the spec's limits (such as at most 100 `monitor_ids`, at most 50 tags, tag value format and the allowed `renotification_states` values) are checked at plan time instead of failing at apply.
+- `tsuga_notification_integration`: schema is now generated from the OpenAPI spec, with its descriptions. Attribute names and nesting are unchanged, and the spec's limits (HTTPS URLs without credentials for `webhook_url`, `url` and `site_url`, and the lengths of the text fields) are checked at plan time instead of failing at apply.
+- `tsuga_custom_role`: schema is now generated from the OpenAPI spec, with its descriptions. Attribute names and nesting are unchanged. `name` is limited to 100 characters (it was 250), as the API requires, and the lengths of `team_ids`, `telemetry_query` and `values` items are checked at plan time.
+- `name` of `tsuga_team`, `tsuga_ingestion_api_key`, `tsuga_operation_api_key` and `tsuga_rum_public_token` is checked as kebab-case at plan time, and so are the lengths of the list items of `team_override_fields` (`tsuga_ingestion_api_key`, `tsuga_rum_public_token`), `cluster_ids_filter` and email `addresses` (`tsuga_notification_rule`, `tsuga_adaptive_notification_rule`), as the API spec defines them, instead of failing at apply.
 
 ## [3.2.0] - 2026-11-18
 

@@ -8,17 +8,81 @@ import (
 	"terraform-provider-tsuga/internal/resource_notification_integration"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
-func TestExpandIntegrationSetting_Pagerduty(t *testing.T) {
-	setting := &resource_notification_integration.IntegrationSettingModel{
-		Pagerduty: &resource_notification_integration.PagerdutySettingModel{
-			IntegrationKey: types.StringValue("abc123"),
-		},
-	}
+var testCtx = context.Background()
 
-	got, diags := expandIntegrationSetting(context.Background(), setting)
+// object builds an object of the given type from the attributes provided, the others being null.
+func object(t *testing.T, objectType attr.Type, provided map[string]attr.Value) basetypes.ObjectValue {
+	t.Helper()
+
+	attrTypes := objectType.(basetypes.ObjectType).AttrTypes
+	values := make(map[string]attr.Value, len(attrTypes))
+	for name, attrType := range attrTypes {
+		if value, ok := provided[name]; ok {
+			values[name] = value
+			continue
+		}
+		null, err := attrType.ValueFromTerraform(testCtx, tftypes.NewValue(attrType.TerraformType(testCtx), nil))
+		if err != nil {
+			t.Fatalf("failed to build a null %s: %v", name, err)
+		}
+		values[name] = null
+	}
+	return types.ObjectValueMust(attrTypes, values)
+}
+
+func str(value string) attr.Value { return types.StringValue(value) }
+
+// settingWith builds a setting with the one block set.
+func settingWith(t *testing.T, block string, fields map[string]attr.Value) resource_notification_integration.SettingValue {
+	t.Helper()
+
+	attrTypes := resource_notification_integration.SettingValue{}.AttributeTypes(testCtx)
+	return resource_notification_integration.NewSettingValueMust(attrTypes, object(t, types.ObjectType{AttrTypes: attrTypes}, map[string]attr.Value{
+		block: object(t, attrTypes[block], fields),
+	}).Attributes())
+}
+
+func webhookSetting(t *testing.T, fields map[string]attr.Value) resource_notification_integration.SettingValue {
+	t.Helper()
+
+	webhookType := resource_notification_integration.SettingValue{}.AttributeTypes(testCtx)["webhook"].(basetypes.ObjectType)
+	return settingWith(t, "webhook", withDefaults(fields, map[string]attr.Value{
+		"url":    str("https://example.com/hook"),
+		"method": str("POST"),
+		"authentication": object(t, webhookType.AttrTypes["authentication"], map[string]attr.Value{
+			"none": object(t, webhookType.AttrTypes["authentication"].(basetypes.ObjectType).AttrTypes["none"], nil),
+		}),
+	}))
+}
+
+func withDefaults(fields, defaults map[string]attr.Value) map[string]attr.Value {
+	merged := map[string]attr.Value{}
+	for k, v := range defaults {
+		merged[k] = v
+	}
+	for k, v := range fields {
+		merged[k] = v
+	}
+	return merged
+}
+
+func payloadTemplate(t *testing.T, templateType, value string) attr.Value {
+	t.Helper()
+
+	webhookType := resource_notification_integration.SettingValue{}.AttributeTypes(testCtx)["webhook"].(basetypes.ObjectType)
+	return object(t, webhookType.AttrTypes["payload_template"], map[string]attr.Value{"type": str(templateType), "value": str(value)})
+}
+
+func TestExpandIntegrationSetting_Pagerduty(t *testing.T) {
+	got, diags := expandIntegrationSetting(testCtx, settingWith(t, "pagerduty", map[string]attr.Value{"integration_key": str("abc123")}))
 	if diags.HasError() {
 		t.Fatalf("unexpected diagnostics: %v", diags)
 	}
@@ -29,17 +93,36 @@ func TestExpandIntegrationSetting_Pagerduty(t *testing.T) {
 	}
 }
 
-func TestNotificationIntegrationOwner_RoundTrips(t *testing.T) {
-	ctx := context.Background()
-	config := resource_notification_integration.NotificationIntegrationModel{
-		Name:  types.StringValue("Example"),
-		Owner: types.StringValue("team-123"),
-		Setting: &resource_notification_integration.IntegrationSettingModel{
-			Pagerduty: &resource_notification_integration.PagerdutySettingModel{IntegrationKey: types.StringValue("abc123")},
-		},
+func TestExpandIntegrationSetting_GrafanaIrmSendsUrl(t *testing.T) {
+	got, diags := expandIntegrationSetting(testCtx, settingWith(t, "grafana_irm", map[string]attr.Value{"url": str("https://grafana.example.com/hook")}))
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
 	}
 
-	body, diags := (&notificationIntegrationResource{}).buildNotificationIntegrationRequestBody(ctx, config)
+	want := map[string]any{"type": "grafana-irm", "url": "https://grafana.example.com/hook"}
+	if !mapsEqual(got, want) {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+
+	back, diags := flattenIntegrationSetting(testCtx, map[string]interface{}{"type": "grafana-irm", "urlLastChars": "hook"}, resource_notification_integration.SettingValue{})
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	grafana := back.GrafanaIrm.Attributes()
+	if !grafana["url_last_chars"].Equal(str("hook")) {
+		t.Fatalf("got %v, want url_last_chars read from urlLastChars", grafana)
+	}
+}
+
+func TestNotificationIntegrationOwner_RoundTrips(t *testing.T) {
+	config := resource_notification_integration.NotificationIntegrationModel{
+		Name:    types.StringValue("Example"),
+		Owner:   types.StringValue("team-123"),
+		Setting: settingWith(t, "pagerduty", map[string]attr.Value{"integration_key": str("abc123")}),
+		Tags:    types.ListNull(types.ObjectType{}),
+	}
+
+	body, diags := (&notificationIntegrationResource{}).buildNotificationIntegrationRequestBody(testCtx, config)
 	if diags.HasError() {
 		t.Fatalf("unexpected diagnostics: %v", diags)
 	}
@@ -50,12 +133,12 @@ func TestNotificationIntegrationOwner_RoundTrips(t *testing.T) {
 	prior := config
 	prior.Owner = types.StringValue("different-team")
 
-	state, diags := flattenNotificationIntegration(ctx, notificationIntegrationAPIData{
+	state, diags := flattenNotificationIntegration(testCtx, notificationIntegrationAPIData{
 		ID:      "resource-123",
 		Name:    "Example",
 		Owner:   "team-123",
 		Setting: map[string]interface{}{"type": "pagerduty", "integrationKeyLastChars": "c123"},
-	}, &prior)
+	}, prior)
 	if diags.HasError() {
 		t.Fatalf("unexpected diagnostics: %v", diags)
 	}
@@ -65,47 +148,55 @@ func TestNotificationIntegrationOwner_RoundTrips(t *testing.T) {
 }
 
 func TestExpandIntegrationSetting_NoneSet(t *testing.T) {
-	_, diags := expandIntegrationSetting(context.Background(), &resource_notification_integration.IntegrationSettingModel{})
+	attrTypes := resource_notification_integration.SettingValue{}.AttributeTypes(testCtx)
+	empty := resource_notification_integration.NewSettingValueMust(attrTypes, object(t, types.ObjectType{AttrTypes: attrTypes}, nil).Attributes())
+
+	_, diags := expandIntegrationSetting(testCtx, empty)
 	if !diags.HasError() {
 		t.Fatal("expected an error when no setting variant is set")
 	}
 }
 
 func TestFlattenIntegrationSetting_NeverReadsSecretsBack(t *testing.T) {
-	prior := &resource_notification_integration.IntegrationSettingModel{
-		Pagerduty: &resource_notification_integration.PagerdutySettingModel{IntegrationKey: types.StringValue("configured")},
-	}
-	got, diags := flattenIntegrationSetting(map[string]interface{}{"type": "pagerduty", "integrationKeyLastChars": "ured"}, prior)
+	prior := settingWith(t, "pagerduty", map[string]attr.Value{"integration_key": str("configured")})
+
+	got, diags := flattenIntegrationSetting(testCtx, map[string]interface{}{"type": "pagerduty", "integrationKeyLastChars": "ured"}, prior)
 	if diags.HasError() {
 		t.Fatalf("unexpected diagnostics: %v", diags)
 	}
-	if got.Pagerduty == nil || got.Pagerduty.IntegrationKey != writeOnlySecret {
-		t.Fatalf("got %+v, want the write-only placeholder rather than the prior secret", got.Pagerduty)
+	pagerduty := got.Pagerduty.Attributes()
+	if pagerduty["integration_key"] != writeOnlySecret {
+		t.Fatalf("got %v, want the write-only placeholder rather than the prior secret", pagerduty["integration_key"])
+	}
+	if !pagerduty["integration_key_last_chars"].Equal(str("ured")) {
+		t.Fatalf("got %v, want the last characters from the API", pagerduty["integration_key_last_chars"])
+	}
+}
+
+func TestFlattenIntegrationSetting_UnknownType(t *testing.T) {
+	_, diags := flattenIntegrationSetting(testCtx, map[string]interface{}{"type": "carrier-pigeon"}, resource_notification_integration.SettingValue{})
+	if !diags.HasError() {
+		t.Fatal("expected an error for an unknown integration type")
 	}
 }
 
 func TestWebhookPayloadTemplate_RoundTrips(t *testing.T) {
-	webhook := &resource_notification_integration.WebhookSettingModel{
-		Url:    types.StringValue("https://example.com/hook"),
-		Method: types.StringValue("POST"),
-		PayloadTemplate: &resource_notification_integration.WebhookPayloadTemplateModel{
-			Type:  types.StringValue("json"),
-			Value: types.StringValue(`{"status":"{{alert}}","nested":{"a":1,"b":[true,false,null]}}`),
-		},
-	}
+	setting := webhookSetting(t, map[string]attr.Value{
+		"payload_template": payloadTemplate(t, "json", `{"status":"{{alert}}","nested":{"a":1,"b":[true,false,null]}}`),
+	})
 
-	expanded, diags := expandWebhookSetting(context.Background(), webhook)
+	expanded, diags := expandIntegrationSetting(testCtx, setting)
 	if diags.HasError() {
 		t.Fatalf("unexpected diagnostics: %v", diags)
 	}
 
-	payloadTemplate, ok := expanded["payloadTemplate"].(map[string]any)
+	template, ok := expanded["payloadTemplate"].(map[string]any)
 	if !ok {
 		t.Fatalf("expected payloadTemplate to be a map, got %T", expanded["payloadTemplate"])
 	}
-	value, ok := payloadTemplate["value"].(map[string]any)
+	value, ok := template["value"].(map[string]any)
 	if !ok {
-		t.Fatalf("expected payloadTemplate.value to decode as a JSON object, got %T", payloadTemplate["value"])
+		t.Fatalf("expected payloadTemplate.value to decode as a JSON object, got %T", template["value"])
 	}
 	if value["status"] != "{{alert}}" {
 		t.Fatalf("got status %v, want {{alert}}", value["status"])
@@ -113,26 +204,32 @@ func TestWebhookPayloadTemplate_RoundTrips(t *testing.T) {
 
 	// Flatten as if the API echoed the same template back, and confirm the JSON string
 	// round-trips (semantically, since map key order is not guaranteed).
-	apiSetting := map[string]interface{}{
-		"type":         "webhook",
-		"urlLastChars": "hook",
-		"method":       "POST",
-		"payloadTemplate": map[string]interface{}{
-			"type":  "json",
-			"value": value,
-		},
-	}
-	flattened, diags := flattenWebhookSetting(apiSetting, nil)
+	flattened, diags := flattenIntegrationSetting(testCtx, map[string]interface{}{
+		"type":            "webhook",
+		"urlLastChars":    "hook",
+		"method":          "POST",
+		"payloadTemplate": map[string]interface{}{"type": "json", "value": value},
+	}, resource_notification_integration.SettingValue{})
 	if diags.HasError() {
 		t.Fatalf("unexpected diagnostics: %v", diags)
 	}
 
 	var roundTripped map[string]any
-	if err := json.Unmarshal([]byte(flattened.PayloadTemplate.Value.ValueString()), &roundTripped); err != nil {
+	text := flattened.Webhook.Attributes()["payload_template"].(basetypes.ObjectValue).Attributes()["value"].(basetypes.StringValue).ValueString()
+	if err := json.Unmarshal([]byte(text), &roundTripped); err != nil {
 		t.Fatalf("flattened payload template value is not valid JSON: %s", err)
 	}
 	if roundTripped["status"] != "{{alert}}" {
 		t.Fatalf("got status %v after round trip, want {{alert}}", roundTripped["status"])
+	}
+}
+
+func TestExpandIntegrationSetting_InvalidPayloadTemplate(t *testing.T) {
+	_, diags := expandIntegrationSetting(testCtx, webhookSetting(t, map[string]attr.Value{
+		"payload_template": payloadTemplate(t, "json", `{not json`),
+	}))
+	if !diags.HasError() {
+		t.Fatal("expected an error for a payload template that is not JSON")
 	}
 }
 
@@ -148,44 +245,33 @@ func mapsEqual(a, b map[string]any) bool {
 	return true
 }
 
-func TestExpandWebhookSetting_AlwaysSendsCustomHeaders(t *testing.T) {
-	webhook := &resource_notification_integration.WebhookSettingModel{
-		Url:           types.StringValue("https://example.com/hook"),
-		Method:        types.StringValue("POST"),
-		CustomHeaders: types.MapNull(types.StringType),
-		PayloadTemplate: &resource_notification_integration.WebhookPayloadTemplateModel{
-			Type:  types.StringValue("json"),
-			Value: types.StringValue(`{"a":1}`),
-		},
-	}
-
-	got, diags := expandWebhookSetting(context.Background(), webhook)
+func TestExpandIntegrationSetting_WebhookAlwaysSendsCustomHeaders(t *testing.T) {
+	got, diags := expandIntegrationSetting(testCtx, webhookSetting(t, map[string]attr.Value{
+		"payload_template": payloadTemplate(t, "json", `{"a":1}`),
+	}))
 	if diags.HasError() {
 		t.Fatalf("unexpected diagnostics: %v", diags)
 	}
 	headers, ok := got["customHeaders"].(map[string]string)
-	if !ok {
+	if !ok || len(headers) != 0 {
 		t.Fatalf("got customHeaders %#v, want an empty map", got["customHeaders"])
-	}
-	if len(headers) != 0 {
-		t.Fatalf("got %v, want an empty map", headers)
 	}
 }
 
-func TestExpandWebhookSetting_CustomHeaderAuthUsesApiSpelling(t *testing.T) {
-	webhook := &resource_notification_integration.WebhookSettingModel{
-		Url:    types.StringValue("https://example.com/hook"),
-		Method: types.StringValue("POST"),
-		Authentication: &resource_notification_integration.WebhookAuthenticationModel{
-			CustomHeader: &resource_notification_integration.WebhookCustomHeaderAuthModel{
-				Key:   types.StringValue("X-Api-Key"),
-				Value: types.StringValue("secret"),
-			},
-		},
-		CustomHeaders: types.MapNull(types.StringType),
-	}
+func authenticationWith(t *testing.T, variant string, fields map[string]attr.Value) attr.Value {
+	t.Helper()
 
-	got, diags := expandWebhookSetting(context.Background(), webhook)
+	webhookType := resource_notification_integration.SettingValue{}.AttributeTypes(testCtx)["webhook"].(basetypes.ObjectType)
+	authenticationType := webhookType.AttrTypes["authentication"]
+	return object(t, authenticationType, map[string]attr.Value{
+		variant: object(t, authenticationType.(basetypes.ObjectType).AttrTypes[variant], fields),
+	})
+}
+
+func TestExpandIntegrationSetting_CustomHeaderAuthUsesApiSpelling(t *testing.T) {
+	got, diags := expandIntegrationSetting(testCtx, webhookSetting(t, map[string]attr.Value{
+		"authentication": authenticationWith(t, "custom_header", map[string]attr.Value{"key": str("X-Api-Key"), "value": str("secret")}),
+	}))
 	if diags.HasError() {
 		t.Fatalf("unexpected diagnostics: %v", diags)
 	}
@@ -198,214 +284,184 @@ func TestExpandWebhookSetting_CustomHeaderAuthUsesApiSpelling(t *testing.T) {
 	}
 }
 
-func TestExpandWebhookSetting_NoneAuthentication(t *testing.T) {
-	webhook := &resource_notification_integration.WebhookSettingModel{
-		Url:            types.StringValue("https://example.com/hook"),
-		Method:         types.StringValue("POST"),
-		Authentication: &resource_notification_integration.WebhookAuthenticationModel{None: &resource_notification_integration.WebhookNoneAuthModel{}},
-		CustomHeaders:  types.MapNull(types.StringType),
-	}
-
-	got, diags := expandWebhookSetting(context.Background(), webhook)
+func TestExpandIntegrationSetting_NoneAuthentication(t *testing.T) {
+	got, diags := expandIntegrationSetting(testCtx, webhookSetting(t, nil))
 	if diags.HasError() {
 		t.Fatalf("unexpected diagnostics: %v", diags)
 	}
 	auth, ok := got["authentication"].(map[string]any)
-	if !ok || auth["type"] != "none" {
+	if !ok || !mapsEqual(auth, map[string]any{"type": "none"}) {
 		t.Fatalf("got authentication %#v, want the none variant", got["authentication"])
 	}
 }
 
-func TestFlattenWebhookSetting_MapsAuthenticationVariants(t *testing.T) {
-	flatten := func(auth map[string]interface{}) *resource_notification_integration.WebhookAuthenticationModel {
-		got, diags := flattenWebhookSetting(map[string]interface{}{
-			"type":           "webhook",
-			"urlLastChars":   "hook",
-			"method":         "POST",
-			"authentication": auth,
-		}, nil)
-		if diags.HasError() {
-			t.Fatalf("unexpected diagnostics: %v", diags)
-		}
-		return got.Authentication
-	}
+func flattenWebhook(t *testing.T, apiSetting map[string]interface{}, prior resource_notification_integration.SettingValue) map[string]attr.Value {
+	t.Helper()
 
-	if got := flatten(map[string]interface{}{"type": "none"}); got == nil || got.None == nil || got.Bearer != nil {
-		t.Fatalf("got %+v, want only the none block", got)
+	apiSetting["type"] = "webhook"
+	if _, ok := apiSetting["urlLastChars"]; !ok {
+		apiSetting["urlLastChars"] = "hook"
 	}
-
-	bearer := flatten(map[string]interface{}{"type": "bearer", "tokenLastChars": "cret"})
-	// Write-only: the secret is never read back, but the export path needs a non-null value.
-	if bearer == nil || bearer.Bearer == nil || bearer.Bearer.Token != writeOnlySecret || bearer.Basic != nil || bearer.CustomHeader != nil {
-		t.Fatalf("got %+v, want only the bearer block with the write-only placeholder", bearer)
+	if _, ok := apiSetting["method"]; !ok {
+		apiSetting["method"] = "POST"
 	}
-
-	basic := flatten(map[string]interface{}{"type": "basic", "username": "alice", "passwordLastChars": "cret"})
-	if basic == nil || basic.Basic == nil || basic.Basic.Username.ValueString() != "alice" || basic.Basic.Password != writeOnlySecret {
-		t.Fatalf("got %+v, want the basic block with the username read back", basic)
-	}
-}
-
-func TestFlattenWebhookSetting_ReadsCustomHeadersFromApi(t *testing.T) {
-	priorHeaders, diags := types.MapValue(types.StringType, map[string]attr.Value{
-		"X-Api-Key": types.StringValue("configured"),
-	})
+	got, diags := flattenIntegrationSetting(testCtx, apiSetting, prior)
 	if diags.HasError() {
 		t.Fatalf("unexpected diagnostics: %v", diags)
 	}
-	apiSetting := map[string]interface{}{
-		"type":          "webhook",
-		"urlLastChars":  "hook",
-		"method":        "POST",
-		"customHeaders": map[string]interface{}{"X-Api-Key": "rotated-in-app", "X-Added-In-App": "plain"},
+	return got.Webhook.Attributes()
+}
+
+func TestFlattenWebhookSetting_MapsAuthenticationVariants(t *testing.T) {
+	authentication := func(auth map[string]interface{}) map[string]attr.Value {
+		return flattenWebhook(t, map[string]interface{}{"authentication": auth}, resource_notification_integration.SettingValue{})["authentication"].(basetypes.ObjectValue).Attributes()
+	}
+	set := func(attributes map[string]attr.Value, name string) basetypes.ObjectValue {
+		return attributes[name].(basetypes.ObjectValue)
 	}
 
-	got, flattenDiags := flattenWebhookSetting(apiSetting, &resource_notification_integration.WebhookSettingModel{
-		Url:           types.StringValue("https://example.com/hook"),
-		CustomHeaders: priorHeaders,
-	})
-	if flattenDiags.HasError() {
-		t.Fatalf("unexpected diagnostics: %v", flattenDiags)
+	none := authentication(map[string]interface{}{"type": "none"})
+	if set(none, "none").IsNull() || !set(none, "bearer").IsNull() {
+		t.Fatalf("got %v, want only the none block", none)
 	}
+
+	bearer := authentication(map[string]interface{}{"type": "bearer", "tokenLastChars": "cret"})
+	// Write-only: the secret is never read back, but the export path needs a non-null value.
+	if set(bearer, "bearer").IsNull() || !set(bearer, "basic").IsNull() || !set(bearer, "custom_header").IsNull() ||
+		set(bearer, "bearer").Attributes()["token"] != writeOnlySecret {
+		t.Fatalf("got %v, want only the bearer block with the write-only placeholder", bearer)
+	}
+
+	basic := set(authentication(map[string]interface{}{"type": "basic", "username": "alice", "passwordLastChars": "cret"}), "basic").Attributes()
+	if !basic["username"].Equal(str("alice")) || basic["password"] != writeOnlySecret {
+		t.Fatalf("got %v, want the basic block with the username read back", basic)
+	}
+}
+
+func headersOf(t *testing.T, headers map[string]string) attr.Value {
+	t.Helper()
+
+	elements := map[string]attr.Value{}
+	for k, v := range headers {
+		elements[k] = str(v)
+	}
+	return types.MapValueMust(types.StringType, elements)
+}
+
+func TestFlattenWebhookSetting_ReadsCustomHeadersFromApi(t *testing.T) {
+	prior := webhookSetting(t, map[string]attr.Value{"custom_headers": headersOf(t, map[string]string{"X-Api-Key": "configured"})})
+
+	got := flattenWebhook(t, map[string]interface{}{
+		"customHeaders": map[string]interface{}{"X-Api-Key": "rotated-in-app", "X-Added-In-App": "plain"},
+	}, prior)
 	// Header values come back in full, so an edit made in the app must show up as drift.
-	headers := got.CustomHeaders.Elements()
-	if headers["X-Api-Key"] != types.StringValue("rotated-in-app") || headers["X-Added-In-App"] != types.StringValue("plain") {
+	headers := got["custom_headers"].(basetypes.MapValue).Elements()
+	if !headers["X-Api-Key"].Equal(str("rotated-in-app")) || !headers["X-Added-In-App"].Equal(str("plain")) {
 		t.Fatalf("got %v, want the API values", headers)
 	}
 }
 
 func TestFlattenWebhookSetting_PreservesConfiguredPayloadTemplateFormatting(t *testing.T) {
 	configured := "{\n  \"status\": \"{{alert}}\"\n}"
-	apiSetting := map[string]interface{}{
-		"type":         "webhook",
-		"urlLastChars": "hook",
-		"method":       "POST",
-		"payloadTemplate": map[string]interface{}{
-			"type":  "json",
-			"value": map[string]interface{}{"status": "{{alert}}"},
-		},
-	}
-	prior := &resource_notification_integration.WebhookSettingModel{
-		Url: types.StringValue("https://example.com/hook"),
-		PayloadTemplate: &resource_notification_integration.WebhookPayloadTemplateModel{
-			Type:  types.StringValue("json"),
-			Value: types.StringValue(configured),
-		},
-	}
+	prior := webhookSetting(t, map[string]attr.Value{"payload_template": payloadTemplate(t, "json", configured)})
 
-	got, diags := flattenWebhookSetting(apiSetting, prior)
-	if diags.HasError() {
-		t.Fatalf("unexpected diagnostics: %v", diags)
-	}
-	if got.PayloadTemplate.Value.ValueString() != configured {
-		t.Fatalf("got %q, want the configured string preserved", got.PayloadTemplate.Value.ValueString())
+	got := flattenWebhook(t, map[string]interface{}{
+		"payloadTemplate": map[string]interface{}{"type": "json", "value": map[string]interface{}{"status": "{{alert}}"}},
+	}, prior)
+	if value := got["payload_template"].(basetypes.ObjectValue).Attributes()["value"]; !value.Equal(str(configured)) {
+		t.Fatalf("got %v, want the configured string preserved", value)
 	}
 }
 
 func TestFlattenWebhookSetting_RewritesPayloadTemplateWhenItActuallyChanged(t *testing.T) {
-	apiSetting := map[string]interface{}{
-		"type":         "webhook",
-		"urlLastChars": "hook",
-		"method":       "POST",
-		"payloadTemplate": map[string]interface{}{
-			"type":  "json",
-			"value": map[string]interface{}{"status": "changed-in-app"},
-		},
-	}
-	prior := &resource_notification_integration.WebhookSettingModel{
-		Url: types.StringValue("https://example.com/hook"),
-		PayloadTemplate: &resource_notification_integration.WebhookPayloadTemplateModel{
-			Type:  types.StringValue("json"),
-			Value: types.StringValue(`{"status":"{{alert}}"}`),
-		},
-	}
+	prior := webhookSetting(t, map[string]attr.Value{"payload_template": payloadTemplate(t, "json", `{"status":"{{alert}}"}`)})
 
-	got, diags := flattenWebhookSetting(apiSetting, prior)
-	if diags.HasError() {
-		t.Fatalf("unexpected diagnostics: %v", diags)
-	}
-	if got.PayloadTemplate.Value.ValueString() != `{"status":"changed-in-app"}` {
-		t.Fatalf("got %q, want the API value so the drift is reported", got.PayloadTemplate.Value.ValueString())
+	got := flattenWebhook(t, map[string]interface{}{
+		"payloadTemplate": map[string]interface{}{"type": "json", "value": map[string]interface{}{"status": "changed-in-app"}},
+	}, prior)
+	if value := got["payload_template"].(basetypes.ObjectValue).Attributes()["value"]; !value.Equal(str(`{"status":"changed-in-app"}`)) {
+		t.Fatalf("got %v, want the API value so the drift is reported", value)
 	}
 }
 
 func TestFlattenWebhookSetting_KeepsAnExplicitlyEmptyCustomHeaderMap(t *testing.T) {
-	empty, diags := types.MapValue(types.StringType, map[string]attr.Value{})
-	if diags.HasError() {
-		t.Fatalf("unexpected diagnostics: %v", diags)
-	}
-	apiSetting := map[string]interface{}{
-		"type":          "webhook",
-		"urlLastChars":  "hook",
-		"method":        "POST",
-		"customHeaders": map[string]interface{}{},
-	}
+	prior := webhookSetting(t, map[string]attr.Value{"custom_headers": headersOf(t, nil)})
 
-	got, flattenDiags := flattenWebhookSetting(apiSetting, &resource_notification_integration.WebhookSettingModel{
-		Url:           types.StringValue("https://example.com/hook"),
-		CustomHeaders: empty,
-	})
-	if flattenDiags.HasError() {
-		t.Fatalf("unexpected diagnostics: %v", flattenDiags)
-	}
-	if got.CustomHeaders.IsNull() {
+	got := flattenWebhook(t, map[string]interface{}{"customHeaders": map[string]interface{}{}}, prior)
+	headers := got["custom_headers"].(basetypes.MapValue)
+	if headers.IsNull() {
 		t.Fatal("got null, want the configured empty map so the state matches the plan")
 	}
-	if len(got.CustomHeaders.Elements()) != 0 {
-		t.Fatalf("got %v, want an empty map", got.CustomHeaders)
+	if len(headers.Elements()) != 0 {
+		t.Fatalf("got %v, want an empty map", headers)
 	}
 }
 
 func TestFlattenWebhookSetting_ReportsCustomHeadersEmptiedOutOfBand(t *testing.T) {
-	priorHeaders, diags := types.MapValue(types.StringType, map[string]attr.Value{
-		"X-Api-Key": types.StringValue("secret"),
-	})
-	if diags.HasError() {
-		t.Fatalf("unexpected diagnostics: %v", diags)
-	}
-	apiSetting := map[string]interface{}{
-		"type":          "webhook",
-		"urlLastChars":  "hook",
-		"method":        "POST",
-		"customHeaders": map[string]interface{}{},
-	}
+	prior := webhookSetting(t, map[string]attr.Value{"custom_headers": headersOf(t, map[string]string{"X-Api-Key": "secret"})})
 
-	got, flattenDiags := flattenWebhookSetting(apiSetting, &resource_notification_integration.WebhookSettingModel{
-		Url:           types.StringValue("https://example.com/hook"),
-		CustomHeaders: priorHeaders,
-	})
-	if flattenDiags.HasError() {
-		t.Fatalf("unexpected diagnostics: %v", flattenDiags)
-	}
-	if !got.CustomHeaders.IsNull() {
-		t.Fatalf("got %v, want null so the removal is reported as drift", got.CustomHeaders)
+	got := flattenWebhook(t, map[string]interface{}{"customHeaders": map[string]interface{}{}}, prior)
+	if !got["custom_headers"].(basetypes.MapValue).IsNull() {
+		t.Fatalf("got %v, want null so the removal is reported as drift", got["custom_headers"])
 	}
 }
 
 func TestFlattenWebhookSetting_PreservesTemplateAcrossEquivalentNumberSpellings(t *testing.T) {
 	configured := `{"threshold":1e3,"ratio":1.0}`
-	apiSetting := map[string]interface{}{
-		"type":         "webhook",
-		"urlLastChars": "hook",
-		"method":       "POST",
-		"payloadTemplate": map[string]interface{}{
-			"type": "json",
-			// The API decodes and re-serialises, so it hands back the canonical spelling.
-			"value": map[string]interface{}{"threshold": float64(1000), "ratio": float64(1)},
-		},
-	}
+	prior := webhookSetting(t, map[string]attr.Value{"payload_template": payloadTemplate(t, "json", configured)})
 
-	got, diags := flattenWebhookSetting(apiSetting, &resource_notification_integration.WebhookSettingModel{
-		Url: types.StringValue("https://example.com/hook"),
-		PayloadTemplate: &resource_notification_integration.WebhookPayloadTemplateModel{
-			Type:  types.StringValue("json"),
-			Value: types.StringValue(configured),
+	got := flattenWebhook(t, map[string]interface{}{
+		// The API decodes and re-serialises, so it hands back the canonical spelling.
+		"payloadTemplate": map[string]interface{}{"type": "json", "value": map[string]interface{}{"threshold": float64(1000), "ratio": float64(1)}},
+	}, prior)
+	if value := got["payload_template"].(basetypes.ObjectValue).Attributes()["value"]; !value.Equal(str(configured)) {
+		t.Fatalf("got %v, want the configured spelling preserved", value)
+	}
+}
+
+func TestFlattenNotificationIntegration_FitsTheGeneratedSchema(t *testing.T) {
+	state, diags := flattenNotificationIntegration(testCtx, notificationIntegrationAPIData{
+		ID:    "integration-1",
+		Name:  "Example",
+		Owner: "team-1",
+		Setting: map[string]interface{}{
+			"type":           "webhook",
+			"urlLastChars":   "hook",
+			"method":         "POST",
+			"customHeaders":  map[string]interface{}{"X-Env": "dev"},
+			"authentication": map[string]interface{}{"type": "bearer", "tokenLastChars": "cret"},
+			"payloadTemplate": map[string]interface{}{
+				"type":  "json",
+				"value": map[string]interface{}{"status": "{{alert}}"},
+			},
+			"eventNameMapping": map[string]interface{}{"ok": "resolved", "alert": "firing"},
 		},
-	})
+		Tags: []apiTag{{Key: "env", Value: "dev"}},
+	}, resource_notification_integration.NotificationIntegrationModel{})
 	if diags.HasError() {
 		t.Fatalf("unexpected diagnostics: %v", diags)
 	}
-	if got.PayloadTemplate.Value.ValueString() != configured {
-		t.Fatalf("got %q, want the configured spelling preserved", got.PayloadTemplate.Value.ValueString())
+
+	got := tfsdk.State{Schema: resource_notification_integration.NotificationIntegrationResourceSchema(testCtx)}
+	if d := got.Set(testCtx, &state); d.HasError() {
+		t.Fatalf("flattened integration does not fit the schema: %v", d)
+	}
+}
+
+func TestSchema_MarksSecretsWriteOnly(t *testing.T) {
+	var resp resource.SchemaResponse
+	(&notificationIntegrationResource{}).Schema(testCtx, resource.SchemaRequest{}, &resp)
+
+	setting := resp.Schema.Attributes["setting"].(schema.SingleNestedAttribute)
+	pagerduty := setting.Attributes["pagerduty"].(schema.SingleNestedAttribute).Attributes
+	key := pagerduty["integration_key"].(schema.StringAttribute)
+	if !key.WriteOnly || !key.Sensitive {
+		t.Fatalf("integration_key: writeOnly=%t sensitive=%t, want both", key.WriteOnly, key.Sensitive)
+	}
+	if pagerduty["integration_key_last_chars"].(schema.StringAttribute).WriteOnly {
+		t.Fatal("integration_key_last_chars must not be write-only")
+	}
+	if setting.Attributes["jira"].(schema.SingleNestedAttribute).Attributes["email"].(schema.StringAttribute).WriteOnly {
+		t.Fatal("jira email is not a secret")
 	}
 }

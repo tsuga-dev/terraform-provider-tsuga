@@ -63,6 +63,7 @@ func RumPublicTokenResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Kebab-case name for the RUM public token.",
 				Validators: []validator.String{
 					stringvalidator.LengthBetween(1, 100),
+					stringvalidator.RegexMatches(regexp.MustCompile("^[a-z0-9]+(-[a-z0-9]+)*$"), "must be kebab-case: lowercase letters, digits and single hyphens"),
 				},
 			},
 			"owner": schema.StringAttribute{
@@ -110,6 +111,7 @@ func RumPublicTokenResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Array form.",
 				Validators: []validator.List{
 					listvalidator.SizeBetween(1, 3),
+					listvalidator.ValueStringsAre(stringvalidator.LengthBetween(1, 250)),
 				},
 			},
 			"token": schema.StringAttribute{

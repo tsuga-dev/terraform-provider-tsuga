@@ -114,6 +114,19 @@
                                       ],
                                       "schema_definition": "listvalidator.SizeBetween(1, 20)"
                                     }
+                                  },
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                        },
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.LengthBetween(0, 254))"
+                                    }
                                   }
                                 ]
                               }
@@ -1359,10 +1372,10 @@
                         "custom": {
                           "imports": [
                             {
-                              "path": "terraform-provider-tsuga/internal/resource_notification_rule"
+                              "path": "terraform-provider-tsuga/internal/validators"
                             }
                           ],
-                          "schema_definition": "resource_notification_rule.ExactlyOneDestination()"
+                          "schema_definition": "validators.ExactlyOneOf(\"Invalid target config\", \"destination\")"
                         }
                       }
                     ]
@@ -1462,6 +1475,19 @@
                     ],
                     "schema_definition": "listvalidator.SizeAtMost(100)"
                   }
+                },
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      },
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.LengthBetween(1, 250))"
+                  }
                 }
               ]
             }
@@ -1521,6 +1547,19 @@
                       }
                     ],
                     "schema_definition": "listvalidator.SizeAtMost(100)"
+                  }
+                },
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      },
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.LengthBetween(1, 250))"
                   }
                 }
               ]
@@ -2108,6 +2147,305 @@
       }
     },
     {
+      "name": "custom_role",
+      "schema": {
+        "attributes": [
+          {
+            "name": "assets",
+            "map": {
+              "computed_optional_required": "required",
+              "element_type": {
+                "string": {}
+              },
+              "description": "Access level granted per resource type, within the role team scope. An omitted resource type grants no access.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
+                      },
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "mapvalidator.KeysAre(stringvalidator.OneOf(\"database\", \"inventory\", \"queue\", \"service\", \"audit-log\", \"allowed-domains\", \"audit-log-stream-destination\", \"cluster-integration-config\", \"custom-usage-tag\", \"databricks-connection\", \"github-connection\", \"llm-provider\", \"retention-policy\", \"saml-config\", \"sensitive-data-scanner-rule\", \"service-target\", \"team-remap-config\", \"adaptive-notification-rule\", \"cloud-account\", \"dashboard-folder\", \"monitor-folder\", \"dashboard-report\", \"dashboard-share\", \"dashboard\", \"ingestion-api-key\", \"log-route\", \"metric-route\", \"rum-route\", \"span-route\", \"monitor\", \"notebook\", \"notification-integration\", \"notification-rule\", \"notification-silence\", \"operation-api-key\", \"quality-report\", \"rum-public-token\", \"sandbox-configuration\", \"slo\", \"synthetic-test\", \"synthetic-variable\", \"tag-policy\", \"user-invitation\", \"team\"))"
+                  }
+                },
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
+                      },
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "mapvalidator.ValueStringsAre(stringvalidator.OneOf(\"read\", \"write\"))"
+                  }
+                },
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework/schema/validator"
+                      }
+                    ],
+                    "schema_definition": "validator.Map(requiredAssets([]string{\"team\"}))"
+                  }
+                },
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework/schema/validator"
+                      }
+                    ],
+                    "schema_definition": "validator.Map(readOnlyAssets([]string{\"database\", \"inventory\", \"queue\", \"service\", \"audit-log\"}))"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "description",
+            "string": {
+              "computed_optional_required": "optional",
+              "description": "Free-form description of the custom role. Absent when not set.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.LengthBetween(0, 250)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "name",
+            "string": {
+              "computed_optional_required": "required",
+              "description": "Human-readable custom role name, unique across the account.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.LengthBetween(1, 100)"
+                  }
+                },
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "regexp"
+                      },
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[a-z0-9]+(-[a-z0-9]+)*$\"), \"must be kebab-case: lowercase letters, digits and single hyphens\")"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "team_scope",
+            "single_nested": {
+              "computed_optional_required": "required",
+              "attributes": [
+                {
+                  "name": "team_ids",
+                  "set": {
+                    "computed_optional_required": "optional",
+                    "element_type": {
+                      "string": {}
+                    },
+                    "description": "Team IDs the scope applies to.",
+                    "validators": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+                            }
+                          ],
+                          "schema_definition": "setvalidator.SizeBetween(1, 50)"
+                        }
+                      },
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+                            },
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "setvalidator.ValueStringsAre(stringvalidator.LengthBetween(1, 250))"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "type",
+                  "string": {
+                    "computed_optional_required": "required",
+                    "validators": [
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "stringvalidator.OneOf(\n\"all\",\n\"public\",\n\"specific\",\n\"all-except\",\n)"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ],
+              "description": "Teams the role grants its asset permissions on. `all` covers every team, `public` covers public teams only, `specific` covers the listed teams, and `all-except` covers every team but the listed ones."
+            }
+          },
+          {
+            "name": "telemetry",
+            "set": {
+              "computed_optional_required": "required",
+              "element_type": {
+                "string": {}
+              },
+              "description": "Telemetry signals the role can read. An empty array grants no telemetry access.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+                      },
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "setvalidator.ValueStringsAre(stringvalidator.OneOf(\"log\", \"metric\", \"trace\", \"rum\"))"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "telemetry_query",
+            "list_nested": {
+              "computed_optional_required": "optional",
+              "nested_object": {
+                "attributes": [
+                  {
+                    "name": "key",
+                    "string": {
+                      "computed_optional_required": "required",
+                      "description": "Attribute key matched against telemetry data points, such as `env` or `service.name`.",
+                      "validators": [
+                        {
+                          "custom": {
+                            "imports": [
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                              }
+                            ],
+                            "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "values",
+                    "list": {
+                      "computed_optional_required": "required",
+                      "element_type": {
+                        "string": {}
+                      },
+                      "description": "Values the attribute must equal for a data point to be kept. A data point matching any of them is kept.",
+                      "validators": [
+                        {
+                          "custom": {
+                            "imports": [
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                              }
+                            ],
+                            "schema_definition": "listvalidator.SizeBetween(1, 20)"
+                          }
+                        },
+                        {
+                          "custom": {
+                            "imports": [
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                              },
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                              }
+                            ],
+                            "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.LengthBetween(1, 250), stringvalidator.NoneOf(\"*\"))"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "description": "Additional restriction applied cluster-side to every telemetry query the role holder runs. Each entry keeps only the data points whose `key` matches one of `values`, and entries are combined with AND.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.SizeAtMost(3)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "id",
+            "string": {
+              "computed_optional_required": "computed",
+              "description": "Tsuga-generated custom role ID assigned at creation.",
+              "plan_modifiers": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+                      }
+                    ],
+                    "schema_definition": "stringplanmodifier.UseStateForUnknown()"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "custom_usage_tag",
       "schema": {
         "attributes": [
@@ -2340,6 +2678,19 @@
                     ],
                     "schema_definition": "stringvalidator.LengthBetween(1, 100)"
                   }
+                },
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "regexp"
+                      },
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[a-z0-9]+(-[a-z0-9]+)*$\"), \"must be kebab-case: lowercase letters, digits and single hyphens\")"
+                  }
                 }
               ]
             }
@@ -2454,6 +2805,19 @@
                       }
                     ],
                     "schema_definition": "listvalidator.SizeBetween(1, 3)"
+                  }
+                },
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      },
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.LengthBetween(1, 250))"
                   }
                 }
               ]
@@ -2666,6 +3030,858 @@
       }
     },
     {
+      "name": "notification_integration",
+      "schema": {
+        "attributes": [
+          {
+            "name": "name",
+            "string": {
+              "computed_optional_required": "required",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.LengthBetween(0, 250)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "owner",
+            "string": {
+              "computed_optional_required": "required",
+              "description": "ID of the team that will own the integration, determining which team members can view and manage it. Only an org admin or an admin of this team may set it.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "setting",
+            "single_nested": {
+              "computed_optional_required": "required",
+              "attributes": [
+                {
+                  "name": "google_chat",
+                  "single_nested": {
+                    "computed_optional_required": "optional",
+                    "attributes": [
+                      {
+                        "name": "webhook_url",
+                        "string": {
+                          "computed_optional_required": "required",
+                          "validators": [
+                            {
+                              "custom": {
+                                "imports": [
+                                  {
+                                    "path": "regexp"
+                                  },
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                  }
+                                ],
+                                "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^https://[^/?#@]*([/?#]|$)\"), \"\")"
+                              }
+                            }
+                          ],
+                          "sensitive": true
+                        }
+                      },
+                      {
+                        "name": "webhook_url_last_chars",
+                        "string": {
+                          "computed_optional_required": "computed"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "grafana_irm",
+                  "single_nested": {
+                    "computed_optional_required": "optional",
+                    "attributes": [
+                      {
+                        "name": "url",
+                        "string": {
+                          "computed_optional_required": "required",
+                          "validators": [
+                            {
+                              "custom": {
+                                "imports": [
+                                  {
+                                    "path": "regexp"
+                                  },
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                  }
+                                ],
+                                "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^https://[^/?#@]*([/?#]|$)\"), \"\")"
+                              }
+                            }
+                          ],
+                          "sensitive": true
+                        }
+                      },
+                      {
+                        "name": "url_last_chars",
+                        "string": {
+                          "computed_optional_required": "computed"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "incident_io",
+                  "single_nested": {
+                    "computed_optional_required": "optional",
+                    "attributes": [
+                      {
+                        "name": "alert_source_config_id",
+                        "string": {
+                          "computed_optional_required": "required",
+                          "validators": [
+                            {
+                              "custom": {
+                                "imports": [
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                  }
+                                ],
+                                "schema_definition": "stringvalidator.LengthBetween(0, 250)"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "token",
+                        "string": {
+                          "computed_optional_required": "required",
+                          "validators": [
+                            {
+                              "custom": {
+                                "imports": [
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                  }
+                                ],
+                                "schema_definition": "stringvalidator.LengthBetween(0, 250)"
+                              }
+                            }
+                          ],
+                          "sensitive": true
+                        }
+                      },
+                      {
+                        "name": "token_last_chars",
+                        "string": {
+                          "computed_optional_required": "computed"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "jira",
+                  "single_nested": {
+                    "computed_optional_required": "optional",
+                    "attributes": [
+                      {
+                        "name": "api_token",
+                        "string": {
+                          "computed_optional_required": "required",
+                          "description": "Atlassian API token minted for the account, used as the Basic auth password.",
+                          "validators": [
+                            {
+                              "custom": {
+                                "imports": [
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                  }
+                                ],
+                                "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                              }
+                            }
+                          ],
+                          "sensitive": true
+                        }
+                      },
+                      {
+                        "name": "email",
+                        "string": {
+                          "computed_optional_required": "required",
+                          "description": "Atlassian account email used together with the API token for Basic authentication.",
+                          "validators": [
+                            {
+                              "custom": {
+                                "imports": [
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                  }
+                                ],
+                                "schema_definition": "stringvalidator.LengthBetween(1, 254)"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "site_url",
+                        "string": {
+                          "computed_optional_required": "required",
+                          "description": "Base URL of the Jira Cloud site, like \"https://your-company.atlassian.net\". Tsuga files issues against this site.",
+                          "validators": [
+                            {
+                              "custom": {
+                                "imports": [
+                                  {
+                                    "path": "regexp"
+                                  },
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                  }
+                                ],
+                                "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^https://[^/?#@]*([/?#]|$)\"), \"\")"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "api_token_last_chars",
+                        "string": {
+                          "computed_optional_required": "computed"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "microsoft_teams",
+                  "single_nested": {
+                    "computed_optional_required": "optional",
+                    "attributes": [
+                      {
+                        "name": "webhook_url",
+                        "string": {
+                          "computed_optional_required": "required",
+                          "validators": [
+                            {
+                              "custom": {
+                                "imports": [
+                                  {
+                                    "path": "regexp"
+                                  },
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                  }
+                                ],
+                                "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^https://[^/?#@]*([/?#]|$)\"), \"\")"
+                              }
+                            }
+                          ],
+                          "sensitive": true
+                        }
+                      },
+                      {
+                        "name": "webhook_url_last_chars",
+                        "string": {
+                          "computed_optional_required": "computed"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "pagerduty",
+                  "single_nested": {
+                    "computed_optional_required": "optional",
+                    "attributes": [
+                      {
+                        "name": "integration_key",
+                        "string": {
+                          "computed_optional_required": "required",
+                          "validators": [
+                            {
+                              "custom": {
+                                "imports": [
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                  }
+                                ],
+                                "schema_definition": "stringvalidator.LengthBetween(0, 250)"
+                              }
+                            }
+                          ],
+                          "sensitive": true
+                        }
+                      },
+                      {
+                        "name": "integration_key_last_chars",
+                        "string": {
+                          "computed_optional_required": "computed"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "servicenow",
+                  "single_nested": {
+                    "computed_optional_required": "optional",
+                    "attributes": [
+                      {
+                        "name": "instance_name",
+                        "string": {
+                          "computed_optional_required": "required",
+                          "description": "Instance name of the ServiceNow instance. This corresponds to the subdomain part of the instance URL, like \"my-instance\" in \"my-instance.service-now.com\"",
+                          "validators": [
+                            {
+                              "custom": {
+                                "imports": [
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                  }
+                                ],
+                                "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "password",
+                        "string": {
+                          "computed_optional_required": "required",
+                          "validators": [
+                            {
+                              "custom": {
+                                "imports": [
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                  }
+                                ],
+                                "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                              }
+                            }
+                          ],
+                          "sensitive": true
+                        }
+                      },
+                      {
+                        "name": "username",
+                        "string": {
+                          "computed_optional_required": "required",
+                          "validators": [
+                            {
+                              "custom": {
+                                "imports": [
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                  }
+                                ],
+                                "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "password_last_chars",
+                        "string": {
+                          "computed_optional_required": "computed"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "squadcast",
+                  "single_nested": {
+                    "computed_optional_required": "optional",
+                    "attributes": [
+                      {
+                        "name": "webhook_url",
+                        "string": {
+                          "computed_optional_required": "required",
+                          "validators": [
+                            {
+                              "custom": {
+                                "imports": [
+                                  {
+                                    "path": "regexp"
+                                  },
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                  }
+                                ],
+                                "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^https://[^/?#@]*([/?#]|$)\"), \"\")"
+                              }
+                            }
+                          ],
+                          "sensitive": true
+                        }
+                      },
+                      {
+                        "name": "webhook_url_last_chars",
+                        "string": {
+                          "computed_optional_required": "computed"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "webhook",
+                  "single_nested": {
+                    "computed_optional_required": "optional",
+                    "attributes": [
+                      {
+                        "name": "authentication",
+                        "single_nested": {
+                          "computed_optional_required": "required",
+                          "attributes": [
+                            {
+                              "name": "basic",
+                              "single_nested": {
+                                "computed_optional_required": "optional",
+                                "attributes": [
+                                  {
+                                    "name": "password",
+                                    "string": {
+                                      "computed_optional_required": "required",
+                                      "description": "Basic authentication password.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                          }
+                                        }
+                                      ],
+                                      "sensitive": true
+                                    }
+                                  },
+                                  {
+                                    "name": "username",
+                                    "string": {
+                                      "computed_optional_required": "required",
+                                      "description": "Basic authentication username.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "password_last_chars",
+                                    "string": {
+                                      "computed_optional_required": "computed",
+                                      "description": "Redacted Basic authentication password: only its last 4 characters, masked as `****1234`."
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "bearer",
+                              "single_nested": {
+                                "computed_optional_required": "optional",
+                                "attributes": [
+                                  {
+                                    "name": "token",
+                                    "string": {
+                                      "computed_optional_required": "required",
+                                      "description": "Bearer token sent in the `Authorization` header.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                          }
+                                        }
+                                      ],
+                                      "sensitive": true
+                                    }
+                                  },
+                                  {
+                                    "name": "token_last_chars",
+                                    "string": {
+                                      "computed_optional_required": "computed",
+                                      "description": "Redacted bearer token: only its last 4 characters, masked as `****1234`."
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "custom_header",
+                              "single_nested": {
+                                "computed_optional_required": "optional",
+                                "attributes": [
+                                  {
+                                    "name": "key",
+                                    "string": {
+                                      "computed_optional_required": "required",
+                                      "description": "Name of the HTTP header sent with each request.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "value",
+                                    "string": {
+                                      "computed_optional_required": "required",
+                                      "description": "Value of the HTTP header.",
+                                      "validators": [
+                                        {
+                                          "custom": {
+                                            "imports": [
+                                              {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                              }
+                                            ],
+                                            "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                          }
+                                        }
+                                      ],
+                                      "sensitive": true
+                                    }
+                                  },
+                                  {
+                                    "name": "value_last_chars",
+                                    "string": {
+                                      "computed_optional_required": "computed",
+                                      "description": "Redacted header value: only its last 4 characters, masked as `****1234`."
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "none",
+                              "single_nested": {
+                                "computed_optional_required": "optional"
+                              }
+                            }
+                          ],
+                          "validators": [
+                            {
+                              "custom": {
+                                "imports": [
+                                  {
+                                    "path": "terraform-provider-tsuga/internal/validators"
+                                  }
+                                ],
+                                "schema_definition": "validators.ExactlyOneOf(\"Invalid webhook authentication\", \"authentication method\")"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "custom_headers",
+                        "map": {
+                          "computed_optional_required": "optional",
+                          "element_type": {
+                            "string": {}
+                          }
+                        }
+                      },
+                      {
+                        "name": "event_name_mapping",
+                        "single_nested": {
+                          "computed_optional_required": "optional",
+                          "attributes": [
+                            {
+                              "name": "alert",
+                              "string": {
+                                "computed_optional_required": "required",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "ok",
+                              "string": {
+                                "computed_optional_required": "required",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "stringvalidator.LengthBetween(1, 250)"
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "method",
+                        "string": {
+                          "computed_optional_required": "required",
+                          "validators": [
+                            {
+                              "custom": {
+                                "imports": [
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                  }
+                                ],
+                                "schema_definition": "stringvalidator.OneOf(\n\"POST\",\n\"PUT\",\n)"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "payload_template",
+                        "single_nested": {
+                          "computed_optional_required": "required",
+                          "attributes": [
+                            {
+                              "name": "type",
+                              "string": {
+                                "computed_optional_required": "required",
+                                "validators": [
+                                  {
+                                    "custom": {
+                                      "imports": [
+                                        {
+                                          "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                        }
+                                      ],
+                                      "schema_definition": "stringvalidator.OneOf(\n\"json\",\n\"form\",\n)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "value",
+                              "string": {
+                                "computed_optional_required": "required"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "url",
+                        "string": {
+                          "computed_optional_required": "required",
+                          "validators": [
+                            {
+                              "custom": {
+                                "imports": [
+                                  {
+                                    "path": "regexp"
+                                  },
+                                  {
+                                    "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                  }
+                                ],
+                                "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^https://[^/?#@]*([/?#]|$)\"), \"\")"
+                              }
+                            }
+                          ],
+                          "sensitive": true
+                        }
+                      },
+                      {
+                        "name": "url_last_chars",
+                        "string": {
+                          "computed_optional_required": "computed"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ],
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "terraform-provider-tsuga/internal/validators"
+                      }
+                    ],
+                    "schema_definition": "validators.ExactlyOneOf(\"Invalid integration setting\", \"integration\")"
+                  }
+                }
+              ],
+              "plan_modifiers": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+                      }
+                    ],
+                    "schema_definition": "settingTypeRequiresReplaceModifier{}"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "tags",
+            "list_nested": {
+              "computed_optional_required": "computed_optional",
+              "nested_object": {
+                "attributes": [
+                  {
+                    "name": "key",
+                    "string": {
+                      "computed_optional_required": "required",
+                      "description": "Tag key to attach to the resource.",
+                      "validators": [
+                        {
+                          "custom": {
+                            "imports": [
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                              }
+                            ],
+                            "schema_definition": "stringvalidator.LengthAtMost(128)"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "value",
+                    "string": {
+                      "computed_optional_required": "required",
+                      "description": "Tag value to attach to the resource. Leading or trailing whitespace is rejected.",
+                      "validators": [
+                        {
+                          "custom": {
+                            "imports": [
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                              }
+                            ],
+                            "schema_definition": "stringvalidator.LengthAtMost(256)"
+                          }
+                        },
+                        {
+                          "custom": {
+                            "imports": [
+                              {
+                                "path": "regexp"
+                              },
+                              {
+                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                              }
+                            ],
+                            "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^\\\\S(.*\\\\S)?$\"), \"\")"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "custom_type": {
+                  "import": {
+                    "path": "terraform-provider-tsuga/internal/resource_team"
+                  },
+                  "type": "resource_team.TagsType{ObjectType: types.ObjectType{AttrTypes: resource_team.TagsValue{}.AttributeTypes(ctx)}}",
+                  "value_type": "resource_team.TagsValue"
+                }
+              },
+              "description": "Key/value tags to apply to the resource. Tag policies may require specific keys or values.",
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.SizeAtMost(50)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "id",
+            "string": {
+              "computed_optional_required": "computed",
+              "description": "Identifier of the notification integration to retrieve. Use the `id` returned by notification integration list or create responses."
+            }
+          },
+          {
+            "name": "secrets_version",
+            "string": {
+              "computed_optional_required": "optional",
+              "description": "Secrets are write-only and never stored in state, so Terraform cannot detect when one changes. Set this to any new value after rotating a secret to have it sent again."
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "notification_rule",
       "schema": {
         "attributes": [
@@ -2692,7 +3908,22 @@
                   ],
                   "schema_definition": "listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{}))"
                 }
-              }
+              },
+              "validators": [
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      },
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.LengthBetween(1, 250))"
+                  }
+                }
+              ]
             }
           },
           {
@@ -2908,6 +4139,19 @@
                                           }
                                         ],
                                         "schema_definition": "listvalidator.SizeBetween(1, 20)"
+                                      }
+                                    },
+                                    {
+                                      "custom": {
+                                        "imports": [
+                                          {
+                                            "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                                          },
+                                          {
+                                            "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                          }
+                                        ],
+                                        "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.LengthBetween(0, 254))"
                                       }
                                     }
                                   ]
@@ -4152,7 +5396,12 @@
                       "validators": [
                         {
                           "custom": {
-                            "schema_definition": "ExactlyOneDestination()"
+                            "imports": [
+                              {
+                                "path": "terraform-provider-tsuga/internal/validators"
+                              }
+                            ],
+                            "schema_definition": "validators.ExactlyOneOf(\"Invalid target config\", \"destination\")"
                           }
                         }
                       ]
@@ -4264,6 +5513,19 @@
                           ],
                           "schema_definition": "listvalidator.SizeBetween(1, 100)"
                         }
+                      },
+                      {
+                        "custom": {
+                          "imports": [
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                            },
+                            {
+                              "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                            }
+                          ],
+                          "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.LengthBetween(0, 250))"
+                        }
                       }
                     ]
                   }
@@ -4361,6 +5623,19 @@
                       }
                     ],
                     "schema_definition": "stringvalidator.LengthBetween(1, 100)"
+                  }
+                },
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "regexp"
+                      },
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[a-z0-9]+(-[a-z0-9]+)*$\"), \"must be kebab-case: lowercase letters, digits and single hyphens\")"
                   }
                 }
               ]
@@ -4747,6 +6022,19 @@
                     ],
                     "schema_definition": "stringvalidator.LengthBetween(1, 100)"
                   }
+                },
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "regexp"
+                      },
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[a-z0-9]+(-[a-z0-9]+)*$\"), \"must be kebab-case: lowercase letters, digits and single hyphens\")"
+                  }
                 }
               ]
             }
@@ -4869,6 +6157,19 @@
                     ],
                     "schema_definition": "listvalidator.SizeBetween(1, 3)"
                   }
+                },
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+                      },
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "listvalidator.ValueStringsAre(stringvalidator.LengthBetween(1, 250))"
+                  }
                 }
               ]
             }
@@ -4939,6 +6240,19 @@
                       }
                     ],
                     "schema_definition": "stringvalidator.LengthBetween(1, 100)"
+                  }
+                },
+                {
+                  "custom": {
+                    "imports": [
+                      {
+                        "path": "regexp"
+                      },
+                      {
+                        "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                      }
+                    ],
+                    "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[a-z0-9]+(-[a-z0-9]+)*$\"), \"must be kebab-case: lowercase letters, digits and single hyphens\")"
                   }
                 }
               ]

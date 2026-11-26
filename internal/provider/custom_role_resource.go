@@ -9,11 +9,11 @@ import (
 
 	"terraform-provider-tsuga/internal/resource_custom_role"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 var _ resource.Resource = (*customRoleResource)(nil)
@@ -50,59 +50,39 @@ func (r *customRoleResource) Metadata(_ context.Context, req resource.MetadataRe
 	resp.TypeName = req.ProviderTypeName + "_custom_role"
 }
 
-func (r *customRoleResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = resource_custom_role.CustomRoleResourceSchema()
+func (r *customRoleResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = resource_custom_role.CustomRoleResourceSchema(ctx)
 }
 
 func (r *customRoleResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	// Read attributes one by one: the whole model cannot hold a team_scope object that is still unknown.
-	var assets types.Map
-	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("assets"), &assets)...)
-	var teamScope types.Object
-	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("team_scope"), &teamScope)...)
-	if resp.Diagnostics.HasError() {
+	var config resource_custom_role.CustomRoleModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() || config.TeamScope.IsNull() || config.TeamScope.IsUnknown() {
 		return
 	}
 
-	if !assets.IsNull() && !assets.IsUnknown() {
-		if _, ok := assets.Elements()["team"]; !ok {
+	scopeType, teamIds := config.TeamScope.TeamScopeType, config.TeamScope.TeamIds
+	if scopeType.IsNull() || scopeType.IsUnknown() || teamIds.IsUnknown() {
+		return
+	}
+
+	teamIdsPath := path.Root("team_scope").AtName("team_ids")
+	switch scopeType.ValueString() {
+	case "specific", "all-except":
+		if teamIds.IsNull() {
 			resp.Diagnostics.AddAttributeError(
-				path.Root("assets"),
-				"Missing required key",
-				"assets must grant access on 'team', as 'read' or 'write'",
+				teamIdsPath,
+				"Missing required attribute",
+				fmt.Sprintf("team_ids is required when team_scope.type is '%s'", scopeType.ValueString()),
 			)
 		}
-	}
-
-	if teamScope.IsNull() || teamScope.IsUnknown() {
-		return
-	}
-	var scope resource_custom_role.TeamScopeModel
-	resp.Diagnostics.Append(teamScope.As(ctx, &scope, basetypes.ObjectAsOptions{})...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if !scope.Type.IsNull() && !scope.Type.IsUnknown() && !scope.TeamIds.IsUnknown() {
-		scopeType := scope.Type.ValueString()
-		teamIdsPath := path.Root("team_scope").AtName("team_ids")
-		switch scopeType {
-		case "specific", "all-except":
-			if scope.TeamIds.IsNull() {
-				resp.Diagnostics.AddAttributeError(
-					teamIdsPath,
-					"Missing required attribute",
-					fmt.Sprintf("team_ids is required when team_scope.type is '%s'", scopeType),
-				)
-			}
-		default:
-			if !scope.TeamIds.IsNull() {
-				resp.Diagnostics.AddAttributeError(
-					teamIdsPath,
-					"Invalid attribute value",
-					fmt.Sprintf("team_ids must not be set when team_scope.type is '%s'", scopeType),
-				)
-			}
+	default:
+		if !teamIds.IsNull() {
+			resp.Diagnostics.AddAttributeError(
+				teamIdsPath,
+				"Invalid attribute value",
+				fmt.Sprintf("team_ids must not be set when team_scope.type is '%s'", scopeType.ValueString()),
+			)
 		}
 	}
 }
@@ -304,12 +284,9 @@ type customRoleAPITelemetryQuery struct {
 	Values []string `json:"values"`
 }
 
-func expandCustomRoleTeamScope(ctx context.Context, scope *resource_custom_role.TeamScopeModel) (customRoleAPITeamScope, diag.Diagnostics) {
-	if scope == nil {
-		return customRoleAPITeamScope{}, nil
-	}
+func expandCustomRoleTeamScope(ctx context.Context, scope resource_custom_role.TeamScopeValue) (customRoleAPITeamScope, diag.Diagnostics) {
 	teamIds, diags := expandStringSet(ctx, scope.TeamIds)
-	return customRoleAPITeamScope{Type: scope.Type.ValueString(), TeamIds: teamIds}, diags
+	return customRoleAPITeamScope{Type: scope.TeamScopeType.ValueString(), TeamIds: teamIds}, diags
 }
 
 func expandCustomRoleTelemetryQuery(ctx context.Context, query types.List) ([]customRoleAPITelemetryQuery, diag.Diagnostics) {
@@ -318,7 +295,7 @@ func expandCustomRoleTelemetryQuery(ctx context.Context, query types.List) ([]cu
 		return nil, diags
 	}
 
-	var entries []resource_custom_role.TelemetryQueryModel
+	var entries []resource_custom_role.TelemetryQueryValue
 	diags.Append(query.ElementsAs(ctx, &entries, false)...)
 	if diags.HasError() {
 		return nil, diags
@@ -387,7 +364,7 @@ func flattenCustomRole(ctx context.Context, data customRoleAPIData) (resource_cu
 	return state, diags
 }
 
-func flattenCustomRoleTeamScope(ctx context.Context, scope customRoleAPITeamScope) (*resource_custom_role.TeamScopeModel, diag.Diagnostics) {
+func flattenCustomRoleTeamScope(ctx context.Context, scope customRoleAPITeamScope) (resource_custom_role.TeamScopeValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	teamIds := types.SetNull(types.StringType)
@@ -397,27 +374,31 @@ func flattenCustomRoleTeamScope(ctx context.Context, scope customRoleAPITeamScop
 		diags.Append(teamDiags...)
 	}
 
-	return &resource_custom_role.TeamScopeModel{
-		Type:    types.StringValue(scope.Type),
-		TeamIds: teamIds,
-	}, diags
+	return resource_custom_role.NewTeamScopeValueMust(
+		resource_custom_role.TeamScopeValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{"type": types.StringValue(scope.Type), "team_ids": teamIds},
+	), diags
 }
 
 func flattenCustomRoleTelemetryQuery(ctx context.Context, entries []customRoleAPITelemetryQuery) (types.List, diag.Diagnostics) {
-	elemType := resource_custom_role.TelemetryQueryElemType
+	attrTypes := resource_custom_role.TelemetryQueryValue{}.AttributeTypes(ctx)
+	elemType := resource_custom_role.TelemetryQueryType{ObjectType: types.ObjectType{AttrTypes: attrTypes}}
 	if entries == nil {
 		return types.ListNull(elemType), nil
 	}
 
 	var diags diag.Diagnostics
-	models := make([]resource_custom_role.TelemetryQueryModel, 0, len(entries))
+	values := make([]attr.Value, 0, len(entries))
 	for _, entry := range entries {
-		values, valuesDiags := types.ListValueFrom(ctx, types.StringType, entry.Values)
+		entryValues, valuesDiags := types.ListValueFrom(ctx, types.StringType, entry.Values)
 		diags.Append(valuesDiags...)
-		models = append(models, resource_custom_role.TelemetryQueryModel{Key: types.StringValue(entry.Key), Values: values})
+		values = append(values, resource_custom_role.NewTelemetryQueryValueMust(attrTypes, map[string]attr.Value{
+			"key":    types.StringValue(entry.Key),
+			"values": entryValues,
+		}))
 	}
 
-	list, listDiags := types.ListValueFrom(ctx, elemType, models)
+	list, listDiags := types.ListValue(elemType, values)
 	diags.Append(listDiags...)
 	return list, diags
 }

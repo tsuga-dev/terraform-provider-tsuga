@@ -1,6 +1,6 @@
 resource "tsuga_team" "team" {
   description = "A team"
-  name        = "Example"
+  name        = "example"
   visibility  = "public"
 }
 

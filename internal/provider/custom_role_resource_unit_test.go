@@ -8,12 +8,22 @@ import (
 	"terraform-provider-tsuga/internal/resource_custom_role"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
+
+func teamScope(ctx context.Context, scopeType string, teamIds types.Set) resource_custom_role.TeamScopeValue {
+	return resource_custom_role.NewTeamScopeValueMust(
+		resource_custom_role.TeamScopeValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{"type": types.StringValue(scopeType), "team_ids": teamIds},
+	)
+}
 
 func TestCustomRoleRequestBody(t *testing.T) {
 	ctx := context.Background()
-	queryElemType := resource_custom_role.TelemetryQueryElemType
+	queryElemType := resource_custom_role.TelemetryQueryType{ObjectType: types.ObjectType{AttrTypes: resource_custom_role.TelemetryQueryValue{}.AttributeTypes(ctx)}}
 	assets := types.MapValueMust(types.StringType, map[string]attr.Value{
 		"team":           types.StringValue("read"),
 		"monitor-folder": types.StringValue("write"),
@@ -27,12 +37,9 @@ func TestCustomRoleRequestBody(t *testing.T) {
 		{
 			name: "specific scope with description and query cleared",
 			plan: resource_custom_role.CustomRoleModel{
-				Name:        types.StringValue("platform-on-call"),
-				Description: types.StringNull(),
-				TeamScope: &resource_custom_role.TeamScopeModel{
-					Type:    types.StringValue("specific"),
-					TeamIds: types.SetValueMust(types.StringType, []attr.Value{types.StringValue("team-1"), types.StringValue("team-2")}),
-				},
+				Name:           types.StringValue("platform-on-call"),
+				Description:    types.StringNull(),
+				TeamScope:      teamScope(ctx, "specific", types.SetValueMust(types.StringType, []attr.Value{types.StringValue("team-1"), types.StringValue("team-2")})),
 				Assets:         assets,
 				Telemetry:      types.SetValueMust(types.StringType, []attr.Value{}),
 				TelemetryQuery: types.ListNull(queryElemType),
@@ -45,14 +52,11 @@ func TestCustomRoleRequestBody(t *testing.T) {
 			plan: resource_custom_role.CustomRoleModel{
 				Name:        types.StringValue("readers"),
 				Description: types.StringValue("Reads production telemetry"),
-				TeamScope: &resource_custom_role.TeamScopeModel{
-					Type:    types.StringValue("all"),
-					TeamIds: types.SetNull(types.StringType),
-				},
-				Assets:    assets,
-				Telemetry: types.SetValueMust(types.StringType, []attr.Value{types.StringValue("log"), types.StringValue("trace")}),
+				TeamScope:   teamScope(ctx, "all", types.SetNull(types.StringType)),
+				Assets:      assets,
+				Telemetry:   types.SetValueMust(types.StringType, []attr.Value{types.StringValue("log"), types.StringValue("trace")}),
 				TelemetryQuery: types.ListValueMust(queryElemType, []attr.Value{
-					types.ObjectValueMust(queryElemType.AttrTypes, map[string]attr.Value{
+					resource_custom_role.NewTelemetryQueryValueMust(queryElemType.AttrTypes, map[string]attr.Value{
 						"key":    types.StringValue("context.env"),
 						"values": types.ListValueMust(types.StringType, []attr.Value{types.StringValue("production")}),
 					}),
@@ -83,7 +87,7 @@ func TestCustomRoleRequestBody(t *testing.T) {
 
 func TestFlattenCustomRole(t *testing.T) {
 	ctx := context.Background()
-	queryElemType := resource_custom_role.TelemetryQueryElemType
+	queryElemType := resource_custom_role.TelemetryQueryType{ObjectType: types.ObjectType{AttrTypes: resource_custom_role.TelemetryQueryValue{}.AttributeTypes(ctx)}}
 
 	t.Run("omitted fields read back as null", func(t *testing.T) {
 		data := customRoleAPIData{
@@ -102,7 +106,7 @@ func TestFlattenCustomRole(t *testing.T) {
 		if !state.Description.IsNull() {
 			t.Fatalf("description = %s, want null", state.Description)
 		}
-		if state.TeamScope.Type.ValueString() != "public" || !state.TeamScope.TeamIds.IsNull() {
+		if state.TeamScope.TeamScopeType.ValueString() != "public" || !state.TeamScope.TeamIds.IsNull() {
 			t.Fatalf("team_scope = %+v, want type public and null team_ids", state.TeamScope)
 		}
 		if !state.TelemetryQuery.IsNull() {
@@ -159,7 +163,7 @@ func TestFlattenCustomRole(t *testing.T) {
 			t.Fatalf("description = %s", state.Description)
 		}
 		wantTeamIds := types.SetValueMust(types.StringType, []attr.Value{types.StringValue("team-1")})
-		if state.TeamScope.Type.ValueString() != "all-except" || !state.TeamScope.TeamIds.Equal(wantTeamIds) {
+		if state.TeamScope.TeamScopeType.ValueString() != "all-except" || !state.TeamScope.TeamIds.Equal(wantTeamIds) {
 			t.Fatalf("team_scope = %+v, want type all-except and team_ids %s", state.TeamScope, wantTeamIds)
 		}
 		if got := state.Assets.Elements()["monitor"]; !got.Equal(types.StringValue("write")) {
@@ -171,7 +175,7 @@ func TestFlattenCustomRole(t *testing.T) {
 			t.Fatalf("telemetry = %s, want %s", state.Telemetry, wantTelemetry)
 		}
 		wantQuery := types.ListValueMust(queryElemType, []attr.Value{
-			types.ObjectValueMust(queryElemType.AttrTypes, map[string]attr.Value{
+			resource_custom_role.NewTelemetryQueryValueMust(queryElemType.AttrTypes, map[string]attr.Value{
 				"key":    types.StringValue("context.env"),
 				"values": types.ListValueMust(types.StringType, []attr.Value{types.StringValue("staging"), types.StringValue("dev")}),
 			}),
@@ -180,4 +184,44 @@ func TestFlattenCustomRole(t *testing.T) {
 			t.Fatalf("telemetry_query = %s, want %s", state.TelemetryQuery, wantQuery)
 		}
 	})
+}
+
+func TestFlattenCustomRole_FitsTheGeneratedSchema(t *testing.T) {
+	ctx := context.Background()
+
+	state, diags := flattenCustomRole(ctx, customRoleAPIData{
+		ID:             "role-1",
+		Name:           "platform-on-call",
+		TeamScope:      customRoleAPITeamScope{Type: "specific", TeamIds: []string{"team-1"}},
+		Assets:         map[string]string{"team": "read"},
+		Telemetry:      []string{"log"},
+		TelemetryQuery: []customRoleAPITelemetryQuery{{Key: "context.env", Values: []string{"prod"}}},
+	})
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+
+	got := tfsdk.State{Schema: resource_custom_role.CustomRoleResourceSchema(ctx)}
+	if d := got.Set(ctx, &state); d.HasError() {
+		t.Fatalf("flattened role does not fit the schema: %v", d)
+	}
+}
+
+func TestCustomRoleValidateConfig_ToleratesUnknownTeamScope(t *testing.T) {
+	ctx := context.Background()
+	schema := resource_custom_role.CustomRoleResourceSchema(ctx)
+	objectType := schema.Type().TerraformType(ctx)
+
+	values := map[string]tftypes.Value{}
+	for name, attrType := range objectType.(tftypes.Object).AttributeTypes {
+		values[name] = tftypes.NewValue(attrType, nil)
+	}
+	values["team_scope"] = tftypes.NewValue(objectType.(tftypes.Object).AttributeTypes["team_scope"], tftypes.UnknownValue)
+
+	req := resource.ValidateConfigRequest{Config: tfsdk.Config{Schema: schema, Raw: tftypes.NewValue(objectType, values)}}
+	var resp resource.ValidateConfigResponse
+	(&customRoleResource{}).ValidateConfig(ctx, req, &resp)
+	if resp.Diagnostics.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", resp.Diagnostics)
+	}
 }

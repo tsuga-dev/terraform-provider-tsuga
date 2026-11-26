@@ -139,6 +139,32 @@ resources:
     delete:
       path: /v1/adaptive-notification-rules/{id}
       method: DELETE
+  custom_role:
+    create:
+      path: /v1/custom-roles
+      method: POST
+    read:
+      path: /v1/custom-roles/{id}
+      method: GET
+    update:
+      path: /v1/custom-roles/{id}
+      method: PUT
+    delete:
+      path: /v1/custom-roles/{id}
+      method: DELETE
+  notification_integration:
+    create:
+      path: /v1/notification-integrations
+      method: POST
+    read:
+      path: /v1/notification-integrations/{id}
+      method: GET
+    update:
+      path: /v1/notification-integrations/{id}
+      method: PUT
+    delete:
+      path: /v1/notification-integrations/{id}
+      method: DELETE
   operation_api_key:
     create:
       path: /v1/operation-api-keys

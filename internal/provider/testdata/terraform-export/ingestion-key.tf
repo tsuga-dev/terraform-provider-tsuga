@@ -1,5 +1,5 @@
 resource "tsuga_ingestion_api_key" "ingestion_key" {
-  name  = "Example"
+  name  = "example"
   owner = "team-123"
   tags  = []
 }

@@ -63,6 +63,7 @@ func OperationApiKeyResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Kebab-case name for the operation API key.",
 				Validators: []validator.String{
 					stringvalidator.LengthBetween(1, 100),
+					stringvalidator.RegexMatches(regexp.MustCompile("^[a-z0-9]+(-[a-z0-9]+)*$"), "must be kebab-case: lowercase letters, digits and single hyphens"),
 				},
 			},
 			"owner": schema.StringAttribute{

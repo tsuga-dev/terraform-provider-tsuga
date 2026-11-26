@@ -16,8 +16,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"regexp"
 	"strings"
-	"terraform-provider-tsuga/internal/resource_notification_rule"
 	"terraform-provider-tsuga/internal/resource_team"
+	"terraform-provider-tsuga/internal/validators"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
@@ -38,6 +38,7 @@ func AdaptiveNotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 										MarkdownDescription: "Email addresses that will receive the alert",
 										Validators: []validator.List{
 											listvalidator.SizeBetween(1, 20),
+											listvalidator.ValueStringsAre(stringvalidator.LengthBetween(0, 254)),
 										},
 									},
 									"renotify": schema.SingleNestedAttribute{
@@ -771,7 +772,7 @@ func AdaptiveNotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 						},
 						Required: true,
 						Validators: []validator.Object{
-							resource_notification_rule.ExactlyOneDestination(),
+							validators.ExactlyOneOf("Invalid target config", "destination"),
 						},
 					},
 					"id": schema.StringAttribute{
@@ -835,6 +836,7 @@ func AdaptiveNotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Monitors this rule reacts to. Only trace monitors and metric monitors over OTel span metrics are eligible. Omitting this attribute removes all monitors from the rule. Set at least one monitor or SLO.",
 				Validators: []validator.List{
 					listvalidator.SizeAtMost(100),
+					listvalidator.ValueStringsAre(stringvalidator.LengthBetween(1, 250)),
 				},
 			},
 			"name": schema.StringAttribute{
@@ -860,6 +862,7 @@ func AdaptiveNotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "SLOs this rule reacts to. Only SLOs over traces or OTel span metrics are eligible. Omitting this attribute removes all SLOs from the rule. Set at least one monitor or SLO.",
 				Validators: []validator.List{
 					listvalidator.SizeAtMost(100),
+					listvalidator.ValueStringsAre(stringvalidator.LengthBetween(1, 250)),
 				},
 			},
 			"tags": schema.ListNestedAttribute{

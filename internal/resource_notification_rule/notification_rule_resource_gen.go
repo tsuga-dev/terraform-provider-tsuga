@@ -18,6 +18,7 @@ import (
 	"regexp"
 	"strings"
 	"terraform-provider-tsuga/internal/resource_team"
+	"terraform-provider-tsuga/internal/validators"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
@@ -31,7 +32,10 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 				Computed:            true,
 				Description:         "Cluster IDs that must match for this rule to fire. Omit it, or leave it empty, to match every cluster.",
 				MarkdownDescription: "Cluster IDs that must match for this rule to fire. Omit it, or leave it empty, to match every cluster.",
-				Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
+				Validators: []validator.List{
+					listvalidator.ValueStringsAre(stringvalidator.LengthBetween(1, 250)),
+				},
+				Default: listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -122,6 +126,7 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 											MarkdownDescription: "Email addresses that will receive the alert",
 											Validators: []validator.List{
 												listvalidator.SizeBetween(1, 20),
+												listvalidator.ValueStringsAre(stringvalidator.LengthBetween(0, 254)),
 											},
 										},
 										"renotify": schema.SingleNestedAttribute{
@@ -855,7 +860,7 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 							},
 							Required: true,
 							Validators: []validator.Object{
-								ExactlyOneDestination(),
+								validators.ExactlyOneOf("Invalid target config", "destination"),
 							},
 						},
 						"id": schema.StringAttribute{
@@ -917,6 +922,7 @@ func NotificationRuleResourceSchema(ctx context.Context) schema.Schema {
 						MarkdownDescription: "Team IDs selected by this filter.",
 						Validators: []validator.List{
 							listvalidator.SizeBetween(1, 100),
+							listvalidator.ValueStringsAre(stringvalidator.LengthBetween(0, 250)),
 						},
 					},
 					"type": schema.StringAttribute{

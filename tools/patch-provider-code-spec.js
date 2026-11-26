@@ -53,8 +53,12 @@
  *    spec cannot express. tags use the shared resource_team tag type, as for the other
  *    resources. notification_rule: cluster_ids_filter defaults to an empty list, so omitting it
  *    clears the filter.
- *  - every resource: list attributes whose spec items have an enum get a OneOf validator,
- *    which tfplugingen does not generate.
+ *  - custom_role resource (its teamScope is expanded from a discriminated oneOf by expand-oneof.js):
+ *    `assets` becomes a map keyed by the spec's resource types, with a key OneOf, a value OneOf
+ *    and a validator for the read-only types, all derived from the spec; team_ids and telemetry
+ *    are sets, as their order is irrelevant; description and telemetry_query are plain optional
+ *    so dropping them clears them (team_ids too, as the response omits it for the all and public
+ *    scopes); id uses use_state_for_unknown.
  *  - cloud_account resource (its request body is expanded from a discriminated
  *    oneOf by expand-oneof.js): the spec cannot express that exactly one of
  *    aws, gcp and azure is set, so adds ExactlyOneOf across them. Also makes
@@ -64,6 +68,8 @@
  *    account_friendly_name plain optional (computed_optional would keep the
  *    stored name when it is dropped from the config, so it could never be
  *    cleared); and adds use_state_for_unknown to `id`, as for the team resource.
+ *  - every resource: validators tfplugingen does not generate, derived from the spec: list and
+ *    set item constraints (enum, length, excluded literal) and the `kebab-case` string format.
  */
 const fs = require("fs");
 
@@ -201,7 +207,7 @@ for (const name of ["id", "key_last_characters"]) {
   );
 }
 
-for (const tagsResourceName of ["operation_api_key", "rum_public_token", "notification_rule", "adaptive_notification_rule"]) {
+for (const tagsResourceName of ["operation_api_key", "rum_public_token", "notification_rule", "adaptive_notification_rule", "notification_integration"]) {
   requireAttr(requireResource(tagsResourceName), "tags").list_nested.nested_object.custom_type = {
     import: {path: "terraform-provider-tsuga/internal/resource_team"},
     type: "resource_team.TagsType{ObjectType: types.ObjectType{AttrTypes: resource_team.TagsValue{}.AttributeTypes(ctx)}}",
@@ -256,22 +262,30 @@ function walkAttrs(attributes, fn) {
   }
 }
 
+// Exactly one attribute of an object is set, which the spec cannot express (a oneOf is lost when
+// expanded). internal/validators.ExactlyOneOf, placed on the object holding the blocks.
+const SHARED_VALIDATORS = "terraform-provider-tsuga/internal/validators";
+const exactlyOneOf = (summary, noun) => [
+  {
+    custom: {
+      imports: [{path: SHARED_VALIDATORS}],
+      schema_definition: `validators.ExactlyOneOf(${JSON.stringify(summary)}, ${JSON.stringify(noun)})`,
+    },
+  },
+];
+
 // Notification rules (notification_rule `targets`, adaptive_notification_rule `fallback_target`).
 // Blocks expanded from a oneOf, and the given optional free text the response echoes, are plain
 // optional: codegen marks them computed_optional, which would plan the unselected blocks as
 // `(known after apply)` on every update and keep a value that was dropped from the config.
-// The spec cannot express that exactly one destination is set: ExactlyOneDestination, in
-// resource_notification_rule/validators.go, so `qualify` prefixes it from other packages.
-function patchNotificationRule(resource, targetAttributes, optionalNames, qualify = false) {
+// The spec cannot express that exactly one destination is set: validators.ExactlyOneOf.
+function patchNotificationRule(resource, targetAttributes, optionalNames) {
   walkAttrs(resource.schema.attributes, (attr, kind, name) => {
     if ((kind === "single_nested" || optionalNames.includes(name)) && attr.computed_optional_required === "computed_optional") {
       attr.computed_optional_required = "optional";
     }
   });
-  const imports = qualify ? [{path: "terraform-provider-tsuga/internal/resource_notification_rule"}] : undefined;
-  const prefix = qualify ? "resource_notification_rule." : "";
-  const targetConfig = requireEntry(targetAttributes, "attribute", "config").single_nested;
-  targetConfig.validators = [{custom: {imports, schema_definition: `${prefix}ExactlyOneDestination()`}}];
+  requireEntry(targetAttributes, "attribute", "config").single_nested.validators = exactlyOneOf("Invalid target config", "destination");
 }
 
 const notificationRule = requireResource("notification_rule");
@@ -293,12 +307,63 @@ requireAttr(notificationRule, "cluster_ids_filter").list.default = {
   },
 };
 
+const integration = requireResource("notification_integration");
+// The API never returns a secret, only its `<name>_last_chars`: the secret request fields are
+// sensitive. They are also write-only, which the code spec cannot express; the resource's Schema
+// method marks every sensitive string write-only.
+const INTEGRATION_SECRETS = [
+  "setting.google_chat.webhook_url",
+  "setting.grafana_irm.url",
+  "setting.incident_io.token",
+  "setting.jira.api_token",
+  "setting.microsoft_teams.webhook_url",
+  "setting.pagerduty.integration_key",
+  "setting.servicenow.password",
+  "setting.squadcast.webhook_url",
+  "setting.webhook.authentication.basic.password",
+  "setting.webhook.authentication.bearer.token",
+  "setting.webhook.authentication.custom_header.value",
+  "setting.webhook.url",
+];
+for (const secretPath of INTEGRATION_SECRETS) {
+  let attributes = integration.schema.attributes;
+  let attr;
+  for (const name of secretPath.split(".")) {
+    if (!attributes) fail(`${secretPath} not found in ${integration.name}`);
+    attr = requireEntry(attributes, "attribute", name);
+    attributes = attr.single_nested?.attributes;
+  }
+  if (!attr.string) fail(`${secretPath} is not a string attribute in ${integration.name}`);
+  attr.string.sensitive = true;
+}
+walkAttrs(integration.schema.attributes, (attr, kind, name) => {
+  // custom_headers is required by the spec, but the provider sends {} when it is omitted.
+  if ((kind === "single_nested" && attr.computed_optional_required === "computed_optional") || name === "custom_headers") {
+    attr.computed_optional_required = "optional";
+  }
+});
+const integrationSetting = requireAttr(integration, "setting").single_nested;
+const authentication = requireAttr(integration, "authentication").single_nested;
+integrationSetting.validators = exactlyOneOf("Invalid integration setting", "integration");
+authentication.validators = exactlyOneOf("Invalid webhook authentication", "authentication method");
+// Changing which integration is set replaces the resource (the API cannot change the type);
+// settingTypeRequiresReplaceModifier lives in the resource package.
+integrationSetting.plan_modifiers = planModifier("github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier", "settingTypeRequiresReplaceModifier{}");
+// secrets_version is provider-only: write-only secrets are never in state, so Terraform cannot see a rotation.
+integration.schema.attributes.push({
+  name: "secrets_version",
+  string: {
+    computed_optional_required: "optional",
+    description:
+    "Secrets are write-only and never stored in state, so Terraform cannot detect when one changes. Set this to any new value after rotating a secret to have it sent again.",
+  },
+});
+
 const adaptiveRule = requireResource("adaptive_notification_rule");
 patchNotificationRule(
   adaptiveRule,
   requireAttr(adaptiveRule, "fallback_target").single_nested.attributes,
   ["open_status", "closed_status", "monitor_ids", "slo_ids"],
-  true,
 );
 // The provider always sends both lists, so omitting one clears it instead of keeping it as the API does.
 requireAttr(adaptiveRule, "monitor_ids").list.description =
@@ -308,9 +373,8 @@ requireAttr(adaptiveRule, "slo_ids").list.description =
   "SLOs this rule reacts to. Only SLOs over traces or OTel span metrics are eligible. " +
   "Omitting this attribute removes all SLOs from the rule. Set at least one monitor or SLO.";
 
-// tfplugingen skips the item enums of list attributes: add a OneOf validator for each, derived
-// from the expanded OpenAPI spec (argv[3]) along the create request body of every resource in
-// generator_config.yml.
+// The expanded OpenAPI spec (argv[3]) the generic steps below derive validators from, read along
+// the create request body of every resource in generator_config.yml.
 function createRequestPaths() {
   const paths = {};
   let section = null;
@@ -337,44 +401,139 @@ const propertyFor = (schema, name) => {
   return key && nonNull(properties[key]);
 };
 
-const ITEM_VALIDATORS = {
-  string: {pkg: "stringvalidator", each: "ValueStringsAre", literal: (v) => JSON.stringify(v)},
-  int64: {pkg: "int64validator", each: "ValueInt64sAre", literal: (v) => String(v)},
+// custom_role. The spec cannot express that `assets` is a map keyed by resource type (it is a closed
+// object, which codegen would turn into one attribute per type with the hyphens stripped), that
+// the order of team_ids and telemetry is irrelevant, or that dropping description or
+// telemetry_query from the config clears them rather than keeping the stored value.
+function listToSet(attr) {
+  attr.set = attr.list;
+  delete attr.list;
+  attr.set.validators = (attr.set.validators || [])
+    .filter((v) => !v.custom.schema_definition.includes("UniqueValues"))
+    .map((v) => ({
+      custom: {
+        imports: v.custom.imports.map((i) => ({path: i.path.replace("listvalidator", "setvalidator")})),
+        schema_definition: v.custom.schema_definition.replaceAll("listvalidator.", "setvalidator."),
+      },
+    }));
+}
+
+const customRole = requireResource("custom_role");
+requireAttr(customRole, "id").string.plan_modifiers = planModifier(
+  STRING_PLAN_MODIFIER,
+  "stringplanmodifier.UseStateForUnknown()",
+);
+requireAttr(customRole, "description").string.computed_optional_required = "optional";
+requireAttr(customRole, "telemetry_query").list_nested.computed_optional_required = "optional";
+for (const name of ["team_ids", "telemetry"]) {
+  listToSet(requireAttr(customRole, name));
+}
+// team_ids is only set for the specific and all-except scopes; the response omits it otherwise.
+requireAttr(customRole, "team_ids").set.computed_optional_required = "optional";
+const assets = requireAttr(customRole, "assets");
+const assetLevels = Object.fromEntries(
+  Object.entries(
+    JSON.parse(fs.readFileSync(process.argv[3], "utf8")).paths["/v1/custom-roles"].post.requestBody.content["application/json"].schema
+      .properties.assets.properties,
+  ).map(([assetType, property]) => [assetType, property.enum]),
+);
+const assetsSchema = JSON.parse(fs.readFileSync(process.argv[3], "utf8")).paths["/v1/custom-roles"].post.requestBody.content["application/json"].schema.properties.assets;
+const stringSlice = (values) => `[]string{${values.map((v) => JSON.stringify(v)).join(", ")}}`;
+const readOnlyAssetTypes = Object.keys(assetLevels).filter((t) => assetLevels[t].join() === "read");
+const mapValidator = (definition) => ({
+  custom: {
+    imports: [
+      {path: "github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"},
+      {path: "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"},
+    ],
+    schema_definition: definition,
+  },
+});
+assets.map = {
+  computed_optional_required: "required",
+  element_type: {string: {}},
+  description: assets.single_nested.description,
+  validators: [
+    mapValidator(`mapvalidator.KeysAre(stringvalidator.OneOf(${Object.keys(assetLevels).map((t) => JSON.stringify(t)).join(", ")}))`),
+    mapValidator('mapvalidator.ValueStringsAre(stringvalidator.OneOf("read", "write"))'),
+    // requiredAssets and readOnlyAssets (validators.go) check the spec's required keys, and reject `write` on the types the spec only allows `read` on.
+    {
+      custom: {
+        imports: [{path: "github.com/hashicorp/terraform-plugin-framework/schema/validator"}],
+        schema_definition: `validator.Map(requiredAssets(${stringSlice(assetsSchema.required)}))`,
+      },
+    },
+    {
+      custom: {
+        imports: [{path: "github.com/hashicorp/terraform-plugin-framework/schema/validator"}],
+        schema_definition: `validator.Map(readOnlyAssets(${stringSlice(readOnlyAssetTypes)}))`,
+      },
+    },
+  ],
+};
+delete assets.single_nested;
+
+// tfplugingen emits neither the item constraints of list and set attributes nor format-based
+// string checks. Each is derived from the spec: item enums, item lengths, an item pattern that only
+// excludes one literal (`^(?!\*$)`, which Go's regexp cannot compile), and the `kebab-case` format.
+const ELEMENT_TYPES = {
+  string: {pkg: "stringvalidator", each: "ValueStringsAre"},
+  int64: {pkg: "int64validator", each: "ValueInt64sAre"},
+};
+const literal = (value) => (typeof value === "string" ? JSON.stringify(value) : String(value));
+const KEBAB_CASE = {
+  imports: [{path: "regexp"}, {path: "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"}],
+  schema_definition:
+  'stringvalidator.RegexMatches(regexp.MustCompile("^[a-z0-9]+(-[a-z0-9]+)*$"), "must be kebab-case: lowercase letters, digits and single hyphens")',
 };
 
-function addItemEnumValidators(attributes, schema) {
+function itemRules(items) {
+  const rules = [];
+  if (items.enum) rules.push(`OneOf(${items.enum.map(literal).join(", ")})`);
+  if (items.minLength !== undefined && items.maxLength !== undefined) rules.push(`LengthBetween(${items.minLength}, ${items.maxLength})`);
+  else if (items.minLength !== undefined) rules.push(`LengthAtLeast(${items.minLength})`);
+  else if (items.maxLength !== undefined) rules.push(`LengthAtMost(${items.maxLength})`);
+  const excluded = items.pattern?.match(/^\^\(\?!(.+)\$\)$/);
+  if (excluded) rules.push(`NoneOf(${JSON.stringify(excluded[1].replace(/\\(.)/g, "$1"))})`);
+  return rules;
+}
+
+function addSpecValidators(attributes = [], schema) {
   for (const attr of attributes) {
     const kind = kindOf(attr);
     const prop = propertyFor(schema, attr.name);
     if (!prop) continue;
-    if (kind === "list") {
-      const items = nonNull(prop.items);
-      const handler = ITEM_VALIDATORS[Object.keys(attr.list.element_type)[0]];
-      if (items?.enum && handler) {
-        attr.list.validators = [
-          ...(attr.list.validators || []),
+    if (kind === "list" || kind === "set") {
+      const handler = ELEMENT_TYPES[Object.keys(attr[kind].element_type)[0]];
+      const rules = handler ? itemRules(nonNull(prop.items) || {}) : [];
+      if (rules.length) {
+        const pkg = `${kind}validator`;
+        attr[kind].validators = [
+          ...(attr[kind].validators || []),
           {
             custom: {
               imports: [
-                {path: "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"},
+                {path: `github.com/hashicorp/terraform-plugin-framework-validators/${pkg}`},
                 {path: `github.com/hashicorp/terraform-plugin-framework-validators/${handler.pkg}`},
               ],
-              schema_definition: `listvalidator.${handler.each}(${handler.pkg}.OneOf(${items.enum.map(handler.literal).join(", ")}))`,
+              schema_definition: `${pkg}.${handler.each}(${rules.map((rule) => `${handler.pkg}.${rule}`).join(", ")})`,
             },
           },
         ];
       }
+    } else if (kind === "string" && prop.format === "kebab-case") {
+      attr.string.validators = [...(attr.string.validators || []), {custom: KEBAB_CASE}];
     } else if (kind === "single_nested") {
-      addItemEnumValidators(attr.single_nested.attributes, prop);
+      addSpecValidators(attr.single_nested.attributes, prop);
     } else if (kind === "list_nested") {
-      addItemEnumValidators(attr.list_nested.nested_object.attributes, nonNull(prop.items));
+      addSpecValidators(attr.list_nested.nested_object.attributes, nonNull(prop.items));
     }
   }
 }
 
 for (const [name, apiPath] of Object.entries(createRequestPaths())) {
   const body = apiSpec.paths[apiPath].post.requestBody.content["application/json"].schema;
-  addItemEnumValidators(requireResource(name).schema.attributes, body);
+  addSpecValidators(requireResource(name).schema.attributes, body);
 }
 
 fs.writeFileSync(specPath, JSON.stringify(spec, null, 2) + "\n");
